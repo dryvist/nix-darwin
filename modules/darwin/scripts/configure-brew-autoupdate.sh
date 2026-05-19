@@ -13,9 +13,13 @@
 
 set -uo pipefail
 
+# All external utilities are called via absolute paths (BSD variants on macOS)
+# so writeShellApplication's runtimeInputs can stay empty — no Nix-managed
+# coreutils needed, and no risk of GNU stat shadowing BSD stat.
+
 prefix="[brew-autoupdate]"
-log() { echo "$(date '+%Y-%m-%d %H:%M:%S') $prefix INFO $*"; }
-warn() { echo "$(date '+%Y-%m-%d %H:%M:%S') $prefix WARN $*" >&2; }
+log() { echo "$(/bin/date '+%Y-%m-%d %H:%M:%S') $prefix INFO $*"; }
+warn() { echo "$(/bin/date '+%Y-%m-%d %H:%M:%S') $prefix WARN $*" >&2; }
 
 interval="${AUTOUPDATE_INTERVAL:-}"
 if [ -z "$interval" ]; then
@@ -38,8 +42,18 @@ if ! test -x /opt/homebrew/bin/brew; then
     exit 0
 fi
 
-# Delete existing autoupdate config (may not exist); start fresh with current flags.
+# Delete existing autoupdate config (no-op if absent). Best-effort: the start
+# below will surface the real outcome.
 /usr/bin/sudo -u "$brew_user" -H /opt/homebrew/bin/brew autoupdate delete 2>/dev/null || true
-/usr/bin/sudo -u "$brew_user" -H /opt/homebrew/bin/brew autoupdate start "$interval" --upgrade --greedy --cleanup || true
+
+# Start fresh with current flags. A failure here means the LaunchAgent was
+# not (re)installed; the activation must still succeed (existing LaunchAgent
+# from a prior run, if any, keeps running), but the warning makes the failure
+# visible instead of silent.
+if /usr/bin/sudo -u "$brew_user" -H /opt/homebrew/bin/brew autoupdate start "$interval" --upgrade --greedy --cleanup; then
+    log "brew autoupdate LaunchAgent (re)installed for $brew_user"
+else
+    warn "brew autoupdate start failed (exit $?); any existing LaunchAgent for $brew_user remains in place"
+fi
 
 exit 0
