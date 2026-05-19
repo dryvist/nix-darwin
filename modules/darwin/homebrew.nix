@@ -31,7 +31,7 @@
 # NOTE: nix-darwin does NOT support version pinning for individual homebrew packages.
 # To prevent upgrades for a specific package, pin it via `brew pin <package>`.
 
-{ lib, nix-ai, ... }:
+{ lib, pkgs, nix-ai, ... }:
 
 let
   # 30 hours in seconds — brew autoupdate requires interval in seconds
@@ -43,6 +43,12 @@ let
   # nix-ai and exported as a flake output, so each module stays
   # self-contained. See nix-ai/docs/architecture/per-agent-flakes.md.
   agentBrewFormulae = nix-ai.lib.brewFormulae or [ ];
+
+  configureBrewAutoupdateScript = pkgs.writeShellApplication {
+    name = "configure-brew-autoupdate";
+    runtimeInputs = [ ];
+    text = builtins.readFile ./scripts/configure-brew-autoupdate.sh;
+  };
 in
 {
   homebrew = {
@@ -227,24 +233,11 @@ in
     };
   };
 
-  # (Re)create the brew autoupdate LaunchAgent plist on every darwin-rebuild switch,
-  # ensuring the schedule and flags stay in sync with this configuration.
-  # Runs as the current user (determined by $SUDO_USER or console owner) because brew
-  # autoupdate creates a user-level LaunchAgent — running as root would install the
-  # plist for the wrong user. Delete first because `brew autoupdate start` exits
-  # non-zero if already configured.
+  # (Re)create the brew autoupdate LaunchAgent plist on every darwin-rebuild switch.
+  # All logic lives in scripts/configure-brew-autoupdate.sh; this binding only
+  # passes the configured interval through as an env var and invokes the script.
   system.activationScripts.postActivation.text = lib.mkAfter ''
-    echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Configuring brew autoupdate (every 30h, --upgrade --greedy --cleanup)..."
-    # /usr/bin/stat: force macOS BSD stat — bare 'stat' resolves to GNU stat (Nix coreutils),
-    # which ignores -f '%Su' and prints the full file report instead of the username.
-    _brew_user="''${SUDO_USER:-$(/usr/bin/stat -f '%Su' /dev/console 2>/dev/null)}"
-    if [ -z "$_brew_user" ] || [ "$_brew_user" = "root" ]; then
-      echo "$(date '+%Y-%m-%d %H:%M:%S') [WARN] Cannot determine brew user — skipping brew autoupdate configuration"
-    elif ! test -x /opt/homebrew/bin/brew; then
-      echo "$(date '+%Y-%m-%d %H:%M:%S') [WARN] /opt/homebrew/bin/brew not found — skipping autoupdate configuration"
-    else
-      sudo -u "$_brew_user" /opt/homebrew/bin/brew autoupdate delete 2>/dev/null || true
-      sudo -u "$_brew_user" /opt/homebrew/bin/brew autoupdate start ${toString autoupdateInterval} --upgrade --greedy --cleanup || true
-    fi
+    AUTOUPDATE_INTERVAL=${lib.escapeShellArg (toString autoupdateInterval)} \
+      ${lib.getExe configureBrewAutoupdateScript} || true
   '';
 }
