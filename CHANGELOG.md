@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.36.2](https://github.com/JacobPEvans/nix-darwin/compare/v1.36.1...v1.36.2) (2026-05-19)
+
+
+### Bug Fixes
+
+* **ci:** update jacobpevans-cc-plugins, not anthropics claude-code-plugins ([#1117](https://github.com/JacobPEvans/nix-darwin/issues/1117)) ([131c2de](https://github.com/JacobPEvans/nix-darwin/commit/131c2dea502bc0d776f824aed903e021afb525a6))
+
 ## [1.36.1](https://github.com/JacobPEvans/nix-darwin/compare/v1.36.0...v1.36.1) (2026-05-18)
 
 
