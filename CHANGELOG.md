@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.36.3](https://github.com/JacobPEvans/nix-darwin/compare/v1.36.2...v1.36.3) (2026-05-19)
+
+
+### Bug Fixes
+
+* **homebrew:** pass -H to sudo so brew bootsnap finds the user cache ([#1120](https://github.com/JacobPEvans/nix-darwin/issues/1120)) ([8195386](https://github.com/JacobPEvans/nix-darwin/commit/819538662d4b75d7311d2e694654e63f8682a191))
+
 ## [1.36.2](https://github.com/JacobPEvans/nix-darwin/compare/v1.36.1...v1.36.2) (2026-05-19)
 
 
