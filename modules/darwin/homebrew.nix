@@ -31,7 +31,12 @@
 # NOTE: nix-darwin does NOT support version pinning for individual homebrew packages.
 # To prevent upgrades for a specific package, pin it via `brew pin <package>`.
 
-{ lib, pkgs, nix-ai, ... }:
+{
+  lib,
+  pkgs,
+  nix-ai,
+  ...
+}:
 
 let
   # 30 hours in seconds — brew autoupdate requires interval in seconds
