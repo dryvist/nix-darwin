@@ -61,7 +61,7 @@ jobs:
 
       - name: Update JacobPEvans flake inputs
         if: inputs.target == 'jacobpevans'
-        run: nix flake update nix-home nix-ai ai-assistant-instructions claude-code-plugins
+        run: nix flake update nix-home nix-ai ai-assistant-instructions jacobpevans-cc-plugins
 
       - name: Validate flake
         run: nix flake check --no-build
