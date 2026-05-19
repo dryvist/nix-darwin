@@ -39,7 +39,7 @@ repos:
   # Config: .github/zizmor.yml for rule customization
   # See: https://docs.zizmor.sh/audits/
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.25.1
+    rev: v1.25.2
     hooks:
       - id: zizmor
         args: ['--persona=regular', '--min-severity=medium', '--min-confidence=medium']
