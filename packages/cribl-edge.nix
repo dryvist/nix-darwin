@@ -8,11 +8,16 @@
 }:
 stdenvNoCC.mkDerivation rec {
   pname = "cribl-edge";
-  version = "4.17.0-7e952fa7"; # cribl-edge
+  version = "4.18.0-dfc74421"; # cribl-edge
+
+  # Release directory is the semver portion of `version` (before the `-build`).
+  # Renovate's customManager only rewrites `version`, so the URL must derive
+  # the dir from it — hardcoding `/dl/4.17.0/` once broke this on a 4.18 bump.
+  releaseDir = lib.head (lib.splitString "-" version);
 
   src = fetchurl {
-    url = "https://cdn.cribl.io/dl/4.17.0/cribl-${version}-darwin-universal.pkg";
-    hash = "sha256-A9oKAVzMCAW3cIcJpYTyu3EXmOrZLA5pPxv3FZyUbLY=";
+    url = "https://cdn.cribl.io/dl/${releaseDir}/cribl-${version}-darwin-universal.pkg";
+    hash = "sha256-szztWYz4F5E+T/gj7T2BU6TqMdQT3qa95IpUk3V3rtA=";
   };
 
   nativeBuildInputs = [
