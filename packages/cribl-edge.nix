@@ -10,10 +10,14 @@ stdenvNoCC.mkDerivation rec {
   pname = "cribl-edge";
   version = "4.18.0-dfc74421"; # cribl-edge
 
-  # Release directory is the semver portion of `version` (before the `-build`).
-  # Renovate's customManager only rewrites `version`, so the URL must derive
-  # the dir from it — hardcoding `/dl/4.17.0/` once broke this on a 4.18 bump.
-  releaseDir = lib.head (lib.splitString "-" version);
+  # Release directory is the semver portion of `version`. Renovate's
+  # customManager only rewrites `version`, so the URL must derive the dir
+  # from it — hardcoding `/dl/4.17.0/` once broke this on a 4.18 bump.
+  releaseDir = lib.concatStringsSep "." [
+    (lib.versions.major version)
+    (lib.versions.minor version)
+    (lib.versions.patch version)
+  ];
 
   src = fetchurl {
     url = "https://cdn.cribl.io/dl/${releaseDir}/cribl-${version}-darwin-universal.pkg";
