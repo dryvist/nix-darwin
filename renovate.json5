@@ -17,7 +17,6 @@
 
   // Repository settings
   "baseBranches": ["main"],
-  "timezone": "America/New_York",
   "labels": ["dependencies", "renovate"],
   "assignees": ["@JacobPEvans"],
   "reviewers": ["@JacobPEvans"],
