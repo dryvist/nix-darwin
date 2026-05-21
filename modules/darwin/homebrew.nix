@@ -224,6 +224,7 @@ in
     masApps = {
       "Toggl Track" = 1291898086; # Time tracking
       "Monarch Money Tweaks" = 6753774259; # Personal finance enhancements
+      "Windows App" = 1295203466; # Microsoft Remote Desktop / Windows 365 / AVD client
       # NOTE: GoPro Quik (561350520) removed - no longer needed
 
       # Microsoft 365 bundle (https://apps.apple.com/us/app-bundle/microsoft-365/id1450038993)

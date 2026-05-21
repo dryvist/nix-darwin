@@ -56,7 +56,9 @@ in
       # Browsers
       "/Applications/Safari.app"
       "/Applications/Brave Browser.app"
-      "/Applications/Firefox.app"
+
+      # Remote Desktop
+      "/Applications/Windows App.app"
 
       # NOTE: Ollama runs headless via LaunchAgent, no dock icon needed.
       # NOTE: Additional AI tools (ChatGPT, Cursor) can be found in

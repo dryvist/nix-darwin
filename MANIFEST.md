@@ -197,6 +197,7 @@ via LaunchAgent) always installs the latest version rather than deferring to bui
 |-----|-----|
 | Toggl Track | 1291898086 |
 | Monarch Money Tweaks | 6753774259 |
+| Windows App | 1295203466 |
 | Microsoft Word | 462054704 |
 | Microsoft Excel | 462058435 |
 | Microsoft PowerPoint | 462062816 |
