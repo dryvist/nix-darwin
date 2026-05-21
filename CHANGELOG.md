@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.36.4](https://github.com/JacobPEvans/nix-darwin/compare/v1.36.3...v1.36.4) (2026-05-21)
+
+
+### Bug Fixes
+
+* **deps:** refresh gh-aw action SHA pins ([#1126](https://github.com/JacobPEvans/nix-darwin/issues/1126)) ([f11500f](https://github.com/JacobPEvans/nix-darwin/commit/f11500f6f5785beb5931f0f65c0b82aaed713501))
+
 ## [1.36.3](https://github.com/JacobPEvans/nix-darwin/compare/v1.36.2...v1.36.3) (2026-05-19)
 
 
