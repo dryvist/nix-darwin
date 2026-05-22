@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.37.0](https://github.com/JacobPEvans/nix-darwin/compare/v1.36.4...v1.37.0) (2026-05-22)
+
+
+### Features
+
+* **cribl-edge:** bump to 4.18.0 and fix cloud enrollment (URL + port) ([#1123](https://github.com/JacobPEvans/nix-darwin/issues/1123)) ([d9100d9](https://github.com/JacobPEvans/nix-darwin/commit/d9100d9109f15361cd7416516b4323273babc23d))
+
 ## [1.36.4](https://github.com/JacobPEvans/nix-darwin/compare/v1.36.3...v1.36.4) (2026-05-21)
 
 
