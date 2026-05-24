@@ -28,10 +28,12 @@ let
 
   watchdogScript = pkgs.writeShellApplication {
     name = "cribl-edge-watchdog";
-    runtimeInputs = [
-      pkgs.coreutils
-      pkgs.curl
-    ];
+    # No runtimeInputs — the script intentionally calls every system tool
+    # by absolute path (/bin/launchctl, /usr/bin/grep, /usr/bin/curl,
+    # /usr/bin/stat, /bin/date). This keeps the closure tiny and uses the
+    # macOS BSD variants, which is the right behavior on this platform
+    # (stat -f %m is BSD-specific; GNU coreutils would not understand it).
+    runtimeInputs = [ ];
     text = ''
       exec ${./scripts/cribl-edge-watchdog.sh} \
         "${cfg.secretsFile}" \
@@ -103,6 +105,14 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    # Ensure the log directory exists with the right ownership before launchd
+    # tries to open the stdout/stderr paths. /var/log exists by default on
+    # macOS so the no-op case is cheap; custom logDir overrides need this.
+    # Unique activation key avoids collision with other modules' postActivation.
+    system.activationScripts.cribl-edge-watchdog-logdir.text = ''
+      /bin/mkdir -p "${cfg.logDir}"
+    '';
+
     launchd.daemons.cribl-edge-watchdog = {
       serviceConfig = {
         Label = "com.nix-darwin.cribl-edge-watchdog";

@@ -48,12 +48,12 @@ if [ -z "$HEALTHCHECKS_IO_URL" ] && [ -z "$HEALTHCHECKS_LOCAL_URL" ]; then
 fi
 
 # Liveness gate 1: launchd reports the daemon as running.
-# `launchctl print` exits non-zero if the label isn't bootstrapped.
-if ! /bin/launchctl print "system/${DAEMON_LABEL}" >/dev/null 2>&1; then
+# Single `launchctl print` call — capture both exit status (daemon not
+# bootstrapped) and stdout (daemon state) in one syscall.
+if ! daemon_info=$(/bin/launchctl print "system/${DAEMON_LABEL}" 2>/dev/null); then
   exit 0
 fi
-if ! /bin/launchctl print "system/${DAEMON_LABEL}" 2>/dev/null \
-     | grep -q "state = running"; then
+if ! printf '%s\n' "$daemon_info" | /usr/bin/grep -q "state = running"; then
   exit 0
 fi
 
