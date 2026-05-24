@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.38.0](https://github.com/JacobPEvans/nix-darwin/compare/v1.37.0...v1.38.0) (2026-05-24)
+
+
+### Features
+
+* **cribl:** bump mac pack v0.1.0 -&gt; v0.3.0 (native 4.18 sources) ([ef10105](https://github.com/JacobPEvans/nix-darwin/commit/ef10105f9368f266a59e45585fbcdc42d9de6b46))
+
 ## [1.37.0](https://github.com/JacobPEvans/nix-darwin/compare/v1.36.4...v1.37.0) (2026-05-22)
 
 
