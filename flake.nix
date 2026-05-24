@@ -62,8 +62,12 @@
 
     # AI CLI ecosystem (Claude, Gemini, Copilot, MCP, marketplace)
     # Self-contained: injects its own flake inputs via _module.args
+    #
+    # Pinned to feat/automode-options branch until JacobPEvans/nix-ai
+    # merges the autoMode option scaffold; flip to default branch and
+    # `nix flake update nix-ai` after that lands.
     nix-ai = {
-      url = "github:JacobPEvans/nix-ai";
+      url = "github:JacobPEvans/nix-ai/feat/automode-options";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         home-manager.follows = "home-manager";

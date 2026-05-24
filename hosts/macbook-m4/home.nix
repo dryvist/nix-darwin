@@ -64,6 +64,28 @@
       # playwright@claude-skills (skills-only, no MCP) stays enabled.
       plugins.enabled."playwright@claude-plugins-official" = lib.mkForce false;
 
+      # Auto-mode classifier context. Tells Claude Code's auto-mode
+      # classifier (https://code.claude.com/docs/en/auto-mode-config)
+      # which infrastructure to treat as trusted/internal. Without it,
+      # the classifier defaults to trusting only the working repo and
+      # blocks routine cross-repo / cross-org / cloud / homelab ops.
+      # Lands at top-level `autoMode` in settings.json via nix-ai's
+      # programs.claude.settings.autoMode option.
+      settings.autoMode.environment = [
+        "$defaults"
+        "Single-developer personal homelab plus day-job (Splunk/Cribl architect). Public docs map: https://docs.jacobpevans.com (source github.com/JacobPEvans/docs) covers Infrastructure, Nix ecosystem, AI development, Observability, Security, and Tools surfaces."
+        "Source control: GitHub orgs github.com/JacobPEvans/* and github.com/dryvist/*. All public repos under both are trusted to clone, push, branch, and PR-mutate against. Force-push to feature branches is routine; force-push to main is off-limits."
+        "Workspace layout: ~/git/<repo>/main is the main-branch worktree. Feature work happens in ~/git/<repo>/<type>/<name>/ via git worktrees. Standard across every repo."
+        "Cloud: AWS via aws-vault profiles (terraform-aws, terraform-aws-bedrock); Proxmox cluster on the home LAN (terraform-proxmox plus ansible-proxmox-*). No multi-tenant production."
+        "Secrets stores: Doppler (ai-ci-automation/prd project carries AI/MCP keys); macOS Keychain (ai-secrets keychain holds ANTHROPIC_API_KEY etc.; elevate-access keychain holds elevated GH tokens via the RESTRICTED/PRIVATE/ADMIN tier system); Mozilla SOPS handles at-rest encryption; Bitwarden vault plus Bitwarden Secrets Manager. No long-lived AWS keys — OIDC handles CI."
+        "AI runtimes: local MLX server on this Mac (mlx-server devenv shell); Claude / Codex / Gemini / Copilot CLIs all routed through local dev shells; PAL MCP proxy handles multi-model orchestration; HuggingFace CLI handles model management."
+        "Observability stack: OpenTelemetry instrumentation → Cribl Stream → Splunk Enterprise (homelab). splunk-dev devenv shell on local Splunk work."
+        "Self-hosted runners: GitHub Actions self-hosted RunsOn runners labeled per the JacobPEvans/.github v3 catalog. Jobs targeting RunsOn labels are routine."
+        "Container deployment: LXC on Proxmox is the default in production homelab workloads. Docker only on vendor-locked images that require it (high-throughput network traffic must never flow through Docker's virtualized networking)."
+        "Nix-first: nix-darwin (macOS), nix-home (cross-platform user env), nix-ai (AI tooling), nix-devenv (reusable dev shells plus flakeModules.dev-hygiene), nix-claude-code (Claude Code declarative module). Flakes-only — never use nix-env."
+        "Pre-commit, linting, format: pre-commit hooks come from nix-devenv.flakeModules.dev-hygiene in Nix repos. zizmor policy from dryvist/.github (trusted publishers: actions/*, DeterminateSystems/*, googleapis/* may use ref-pins; everything else requires hash-pins)."
+      ];
+
       # Disable MCP servers that duplicate built-in tools, are demo/test, or are project-specific.
       # Servers remain defined (for type validation) but disabled = true excludes them from ~/.claude.json.
       # Project-specific servers (cribl, terraform, aws) are re-enabled via per-project .mcp.json.
