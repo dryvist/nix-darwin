@@ -85,9 +85,9 @@ in
       };
       packs = {
         cc-edge-the-mac-pack-io = pkgs.fetchzip {
-          url = "https://github.com/JacobPEvans/cc-edge-the-mac-pack-io/releases/download/v0.1.0/cc-edge-the-mac-pack-io-v0.1.0.crbl";
+          url = "https://github.com/JacobPEvans/cc-edge-the-mac-pack-io/releases/download/v0.3.0/cc-edge-the-mac-pack-io-v0.3.0.crbl";
           extension = "tar.gz";
-          hash = "sha256-QPVZA4Cvi5uSOiNMyC9dW5fhRTeaQGZm5MEgNkwDryU=";
+          hash = "sha256-rPPAkedltxT8RWgP2xXil1o6x13HQK+SRgihuheJAks=";
           stripRoot = false;
         };
       };
