@@ -45,6 +45,15 @@ in
       CRIBL_TOKEN = rootOnly // {
         sopsFile = ../../secrets/cribl-edge.yaml;
       };
+      # Cribl Edge watchdog heartbeat targets (Healthchecks URLs).
+      # Either may be empty in the encrypted file; an empty URL means the
+      # watchdog skips that endpoint (the upstream deadman was never armed).
+      HEALTHCHECKS_IO_URL = rootOnly // {
+        sopsFile = ../../secrets/cribl-edge.yaml;
+      };
+      HEALTHCHECKS_LOCAL_URL = rootOnly // {
+        sopsFile = ../../secrets/cribl-edge.yaml;
+      };
     };
 
     # Rendered template: assembles individual secrets into a single KEY=value file
@@ -54,6 +63,17 @@ in
         CRIBL_ORG_ID=${config.sops.placeholder."CRIBL_ORG_ID"}
         CRIBL_WORKSPACE_ID=${config.sops.placeholder."CRIBL_WORKSPACE_ID"}
         CRIBL_TOKEN=${config.sops.placeholder."CRIBL_TOKEN"}
+      '';
+    };
+
+    # Rendered template for the cribl-edge-watchdog LaunchDaemon. Kept
+    # separate from cribl-edge.env so the watchdog has no static dependency
+    # on the cribl-edge module's secrets shape — they are independent
+    # consumers that happen to share an encrypted source file.
+    templates."cribl-edge-watchdog.env" = rootOnly // {
+      content = ''
+        HEALTHCHECKS_IO_URL=${config.sops.placeholder."HEALTHCHECKS_IO_URL"}
+        HEALTHCHECKS_LOCAL_URL=${config.sops.placeholder."HEALTHCHECKS_LOCAL_URL"}
       '';
     };
   };

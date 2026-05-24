@@ -93,6 +93,17 @@ in
       };
     };
 
+    # --- Cribl Edge Watchdog (deadman) ---
+    # Posts a heartbeat to each configured Healthchecks endpoint every 5 min
+    # iff the Cribl Edge daemon is alive AND writing logs. When the chain is
+    # down — Mac off, daemon dead, daemon wedged — the heartbeats stop and
+    # both upstream Healthchecks instances (SaaS + self-hosted LXC) fire
+    # alerts independently of Splunk's own silence detector.
+    cribl-edge-watchdog = {
+      enable = true;
+      secretsFile = config.sops.templates."cribl-edge-watchdog.env".path;
+    };
+
     # --- Streamline Login Items ---
     # Persistently disable unwanted updaters and remove junk plists.
     # Edit these lists to add/remove services — enforced on every rebuild.

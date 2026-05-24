@@ -12,6 +12,7 @@ _:
     ./ai-volumes.nix
     ./auto-update-prevention.nix
     ./cribl-edge.nix
+    ./cribl-edge-watchdog.nix
     ./orbstack.nix
     ./raycast.nix
     ./streamline-login.nix
