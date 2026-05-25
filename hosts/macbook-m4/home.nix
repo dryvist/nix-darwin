@@ -65,10 +65,14 @@
       plugins.enabled."playwright@claude-plugins-official" = lib.mkForce false;
 
       # Auto-mode classifier trust context. Lives in its own file so it
-      # stays out of the home.nix file-size budget. See
+      # stays out of the home.nix file-size budget. The file is a
+      # function taking { userConfig, lib } so the GitHub username
+      # threads through from lib/user-config.nix. See
       # https://code.claude.com/docs/en/auto-mode-config and
       # ./automode-environment.nix.
-      settings.autoMode.environment = import ./automode-environment.nix;
+      settings.autoMode.environment = import ./automode-environment.nix {
+        inherit userConfig lib;
+      };
 
       # Disable MCP servers that duplicate built-in tools, are demo/test, or are project-specific.
       # Servers remain defined (for type validation) but disabled = true excludes them from ~/.claude.json.
