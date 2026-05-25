@@ -6,7 +6,7 @@
 
 [![CI Gate][ci-gate-img]][ci-gate-link] [![Nix Build][nix-build-img]][nix-build-link] [![Markdown Lint][md-lint-img]][md-lint-link]
 
-## What Is This?
+## What Is This
 
 A flakes-only nix-darwin configuration for M4 Max MacBook Pro. Manages macOS
 system-level settings: system packages, Dock, Finder, keyboard, security,
@@ -34,14 +34,14 @@ imported as flake inputs.
 
 ```bash
 # 1. Clone as a bare repo (worktree convention used throughout ~/git/)
-git clone --bare https://github.com/JacobPEvans/nix-darwin.git ~/git/nix-darwin
-cd ~/git/nix-darwin
+git clone --bare https://github.com/JacobPEvans/nix-darwin.git "${GIT_HOME_PUBLIC}/nix-darwin"
+cd "${GIT_HOME_PUBLIC}/nix-darwin"
 
 # 2. Create the main worktree
 git worktree add main main
 
 # 3. Build and activate for the first time
-cd ~/git/nix-darwin/main
+cd "${GIT_HOME_PUBLIC}/nix-darwin/main"
 sudo darwin-rebuild switch --flake .
 ```
 
