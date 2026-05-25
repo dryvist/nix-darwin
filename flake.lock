@@ -617,14 +617,15 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "nixpkgs-unstable": "nixpkgs-unstable_2"
+        "nixpkgs-unstable": "nixpkgs-unstable_2",
+        "orbstack-kubernetes": "orbstack-kubernetes"
       },
       "locked": {
-        "lastModified": 1779715131,
-        "narHash": "sha256-szryGNhNZWZCDgB4JY7C3TwgIoZ3nTM5icmWr2cm7Ho=",
+        "lastModified": 1779733776,
+        "narHash": "sha256-mh+vKshvn4Zj/Qz0r447X+tTkdBXK2Oyj+gnTi74IgI=",
         "owner": "JacobPEvans",
         "repo": "nix-home",
-        "rev": "9a3578a661c26364d1ab486e320350d2c5a3b559",
+        "rev": "6540ef806f2e5f1c6e45aa629a62efdee2c5004a",
         "type": "github"
       },
       "original": {
@@ -770,6 +771,22 @@
       "original": {
         "owner": "openai",
         "repo": "codex-plugin-cc",
+        "type": "github"
+      }
+    },
+    "orbstack-kubernetes": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1779727806,
+        "narHash": "sha256-oCP2oee7r+2j4+bxnIjLgpK1eKL/Ts3irga/ZnLhy/w=",
+        "owner": "JacobPEvans",
+        "repo": "orbstack-kubernetes",
+        "rev": "7621f8ec9d7d3b5d5403b7a0e1fe7ee8f3f04a0e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "JacobPEvans",
+        "repo": "orbstack-kubernetes",
         "type": "github"
       }
     },
