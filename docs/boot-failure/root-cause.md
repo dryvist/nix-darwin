@@ -100,7 +100,7 @@ This is a **tertiary issue** - even if the LaunchDaemon IS loaded, Issues 1 and 
 ## Service Architecture
 
 | Service Owner | Services | Boot Behavior |
-|---------------|----------|---------------|
+| --- | --- | --- |
 | **Determinate Nix** | `systems.determinate.nix-store` | ✅ Works - mounts `/nix` volume |
 | **Determinate Nix** | `systems.determinate.nix-daemon` | ✅ Works - socket activation |
 | **nix-darwin** | `org.nixos.darwin-store` | ⚠️ May need bootstrap |

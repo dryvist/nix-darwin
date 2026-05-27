@@ -12,7 +12,7 @@ ls -la /run/current-system && echo "✅ Boot succeeded" || echo "❌ Boot failed
 ## Log Files to Check
 
 | Log File | What It Shows |
-|----------|---------------|
+| --- | --- |
 | `/var/log/nix-boot-activation.log` | Boot-time symlink creation (our fix) |
 | `/var/log/determinate-nix-init.log` | Volume mount and Nix daemon startup |
 | `~/.local/log/nix-activation-recovery.log` | Login-time recovery attempts |

@@ -3,8 +3,8 @@
 ## Supported Versions
 
 | Version | Supported |
-| ------- | --------- |
-| main    | Yes       |
+| --- | --- |
+| main | Yes |
 | Everything else | Best effort |
 
 This is a Nix configuration repo. The attack surface is mostly "did someone commit something dumb." But if you find something, I want to know.

@@ -22,7 +22,7 @@ Understanding when `sudo` is needed prevents permission issues.
 ### Commands That REQUIRE sudo
 
 | Command | Why |
-|---------|-----|
+| --- | --- |
 | `darwin-rebuild switch` | Modifies system-level configs in /etc, /run |
 | `chown` on system files | Changing ownership requires root |
 | `mv/rm` in /etc | System config directory |
@@ -32,7 +32,7 @@ Understanding when `sudo` is needed prevents permission issues.
 ### Commands That Should NOT Use sudo
 
 | Command | Why |
-|---------|-----|
+| --- | --- |
 | `nix build` | Builds to user-accessible store |
 | `nix flake update` | Updates user's flake.lock |
 | `git commit/push` | User's repository |
@@ -373,7 +373,9 @@ and revoke permissions.
 
 This configuration uses multiple layers to ensure TCC permissions persist:
 
-1. **mac-app-util trampolines**: Apps in `home.packages` get stable wrapper apps at `~/Applications/Home Manager Trampolines/` that don't change paths across rebuilds
+1. **mac-app-util trampolines**: Apps in `home.packages` get stable wrapper
+   apps at `~/Applications/Home Manager Trampolines/` that don't change paths
+   across rebuilds
 
 2. **TCC-sensitive apps in home.packages**: Ghostty, Zoom, and OrbStack are in
    `home.packages` (see `hosts/macbook-m4/home.nix`) (not system packages) to get

@@ -99,7 +99,7 @@ If the symlink is updated and there are no `[ERROR]` messages, the build succeed
 ## Other Exit Codes
 
 | Code | Meaning | Action |
-|------|---------|--------|
+| --- | --- | --- |
 | 0 | Success | Everything worked |
 | 1 | Build failed | Check Nix evaluation errors |
 | 2 | Activation phase returned non-zero | Check symlink and logs |

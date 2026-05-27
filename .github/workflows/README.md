@@ -129,7 +129,7 @@ jobs:
 ### Reusable Workflows (Implementation)
 
 | Workflow | Purpose | Runner |
-|----------|---------|--------|
+| --- | --- | --- |
 | `_nix-build.yml` | Nix format, build, symlink verify | macOS |
 | `_nix-validate.yml` | Flake lint and check | Linux |
 | `_markdown-lint.yml` | Markdown formatting | Linux |
@@ -139,7 +139,7 @@ jobs:
 ### CI Gate (PR Orchestrator)
 
 | Check | Triggers On |
-|-------|-------------|
+| --- | --- |
 | Nix Build | `**.nix`, `flake.lock`, `modules/**`, `scripts/**` |
 | Nix Validate | `**.nix`, `flake.lock`, `modules/**`, `scripts/**` |
 | Markdown Lint | `**.md`, `.markdownlint.*` |
@@ -149,7 +149,7 @@ jobs:
 ### Other Workflows
 
 | Workflow | Purpose |
-|----------|---------|
+| --- | --- |
 | `review-code.yml` | Claude Code PR review |
 | `review-deps.yml` | Dependency update reviews |
 | `deps-update-flake.yml` | Unified flake.lock updates (schedule + instant sync) |
@@ -159,7 +159,7 @@ jobs:
 ### Required Secrets
 
 | Secret | Required By |
-|--------|-------------|
+| --- | --- |
 | `CLAUDE_OAUTH_TOKEN` | `review-code.yml` |
 
 Note: `deps-update-flake.yml` uses only `GITHUB_TOKEN` (no additional secrets needed).

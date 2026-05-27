@@ -86,7 +86,9 @@ The Nix store is the source of truth — pre-existing conflicting content is per
 
 **Solution**: None required - warnings are harmless.
 
-**Why**: Determinate Nix config uses forward-compatible settings for newer Nix versions. Current version (2.31.2) simply ignores them. No functionality is affected.
+**Why**: Determinate Nix config uses forward-compatible settings for newer
+Nix versions. Current version (2.31.2) simply ignores them. No functionality
+is affected.
 
 ## What Was Migrated
 
@@ -137,7 +139,9 @@ home-manager --version
 
 ## Lessons Learned
 
-1. **Determinate Nix conflicts** with nix-darwin's Nix management - use `determinateNix.enable = true` (official module handles `nix.enable = false` automatically)
+1. **Determinate Nix conflicts** with nix-darwin's Nix management — use
+   `determinateNix.enable = true` (official module handles
+   `nix.enable = false` automatically)
 2. **Nix is the source of truth** - home-manager removes conflicting files to place symlinks;
    back up anything important before first rebuild
 3. **Unknown setting warnings are harmless** - forward compatibility doesn't break functionality

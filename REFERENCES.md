@@ -15,7 +15,7 @@ External documentation and resources for this nix configuration.
 ## Nix Ecosystem
 
 | Resource | URL |
-|----------|-----|
+| --- | --- |
 | Nix Manual | <https://nix.dev/manual/nix/stable/> |
 | Nix Pills | <https://nixos.org/guides/nix-pills/> |
 | Nix Flakes Wiki | <https://wiki.nixos.org/wiki/Flakes> |
@@ -24,14 +24,14 @@ External documentation and resources for this nix configuration.
 ## nix-darwin
 
 | Resource | URL |
-|----------|-----|
+| --- | --- |
 | GitHub | <https://github.com/nix-darwin/nix-darwin> |
 | Options Reference | <https://nix-darwin.github.io/nix-darwin/manual/options.html> |
 
 ### Source Files (for understanding implementations)
 
 | Module | URL |
-|--------|-----|
+| --- | --- |
 | Dock | <https://raw.githubusercontent.com/nix-darwin/nix-darwin/master/modules/system/defaults/dock.nix> |
 | Finder | <https://raw.githubusercontent.com/nix-darwin/nix-darwin/master/modules/system/defaults/finder.nix> |
 | NSGlobalDomain | <https://raw.githubusercontent.com/nix-darwin/nix-darwin/master/modules/system/defaults/NSGlobalDomain.nix> |
@@ -44,14 +44,14 @@ External documentation and resources for this nix configuration.
 ## home-manager
 
 | Resource | URL |
-|----------|-----|
+| --- | --- |
 | GitHub | <https://github.com/nix-community/home-manager> |
 | Options Reference | <https://nix-community.github.io/home-manager/options.xhtml> |
 
 ## macOS Defaults
 
 | Resource | URL |
-|----------|-----|
+| --- | --- |
 | macos-defaults.com | <https://macos-defaults.com/> |
 | defaults-write.com | <https://www.defaults-write.com/> |
 | mathiasbynens/dotfiles | <https://github.com/mathiasbynens/dotfiles/blob/main/.macos> |
@@ -66,6 +66,6 @@ defaults find "keyword"               # Find setting by keyword
 ## Package Search
 
 | Resource | URL |
-|----------|-----|
+| --- | --- |
 | NixOS Packages | <https://search.nixos.org/packages> |
 | Homebrew | <https://formulae.brew.sh/> |
