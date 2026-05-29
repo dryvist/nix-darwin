@@ -115,23 +115,30 @@ in
   github = {
     tokens = {
       # Tiered GitHub PATs — each tier specifies its keychain service + DB.
-      # Restricted uses the unrestricted automation keychain (AI can access freely).
-      # All elevated tiers use a password-protected keychain (requires user unlock).
-      #   restricted → public repos (default)
+      # Auto-readable automation keychain (no password prompt; AI can access freely):
+      #   restricted → public repos
+      #   dryvist    → dryvist org repos (public + private) — the DEFAULT tier
+      # Password-protected keychain (requires interactive user unlock):
       #   private    → JacobPEvans-personal public + private repos
-      #   dryvist    → dryvist org repos (public + private)
       #   admin      → JacobPEvans-personal admin (rulesets, branch protection)
       #   orgAdmin   → dryvist org admin (org-level rulesets)
+      #
+      # NOTE: dryvist lives in the auto-readable keychain by deliberate choice —
+      # it is the default tier (see home.nix), so it must load without a password
+      # prompt on every shell. This means the dryvist token (write access to all
+      # dryvist repos) is freely readable by the user session and AI agents. This
+      # trades the former least-privilege RESTRICTED default for zero keychain
+      # popups, per an explicit decision on 2026-05-28.
       restricted = {
         service = "GH_PAT_RESTRICTED";
         keychain = "automation.keychain-db";
       };
-      private = {
-        service = "GH_PAT_PRIVATE";
-        keychain = "elevate-access.keychain-db";
-      };
       dryvist = {
         service = "GH_PAT_DRYVIST";
+        keychain = "automation.keychain-db";
+      };
+      private = {
+        service = "GH_PAT_PRIVATE";
         keychain = "elevate-access.keychain-db";
       };
       admin = {

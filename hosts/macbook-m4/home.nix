@@ -155,9 +155,13 @@
 
         source ${./gh-token-switching.zsh}
 
-        # Default to lowest privilege on every new shell
+        # Default to the dryvist tier on every new shell. dryvist's token lives
+        # in the auto-readable automation keychain, so this loads with no password
+        # prompt. This is NOT least-privilege — every shell + AI session defaults
+        # to dryvist write access — a deliberate popups-vs-privilege tradeoff
+        # (2026-05-28). Use gh-private / gh-admin / gh-org-admin to elevate further.
         unset GITHUB_TOKEN
-        gh-restricted
+        gh-dryvist
 
         # --- Custom-auth launchers for `claude` ---
         # Defines av-claude <profile>, gh-claude-restricted, gh-claude-private,
