@@ -146,8 +146,12 @@
         _GH_DB_RESTRICTED='${userConfig.github.tokens.restricted.keychain}'
         _GH_SVC_PRIVATE='${userConfig.github.tokens.private.service}'
         _GH_DB_PRIVATE='${userConfig.github.tokens.private.keychain}'
+        _GH_SVC_DRYVIST='${userConfig.github.tokens.dryvist.service}'
+        _GH_DB_DRYVIST='${userConfig.github.tokens.dryvist.keychain}'
         _GH_SVC_ADMIN='${userConfig.github.tokens.admin.service}'
         _GH_DB_ADMIN='${userConfig.github.tokens.admin.keychain}'
+        _GH_SVC_ORG_ADMIN='${userConfig.github.tokens.orgAdmin.service}'
+        _GH_DB_ORG_ADMIN='${userConfig.github.tokens.orgAdmin.keychain}'
 
         source ${./gh-token-switching.zsh}
 
@@ -157,7 +161,8 @@
 
         # --- Custom-auth launchers for `claude` ---
         # Defines av-claude <profile>, gh-claude-restricted, gh-claude-private,
-        # gh-claude-admin. Depends on the gh-* functions sourced above.
+        # gh-claude-dryvist, gh-claude-admin, gh-claude-org-admin. Depends on
+        # the gh-* functions sourced above.
         source ${./claude-launchers.zsh}
 
         # --- macOS setup ---

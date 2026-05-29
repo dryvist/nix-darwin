@@ -5,7 +5,9 @@
 #   av-claude <profile> [claude-args...]   aws-vault exec <profile> -- claude ...
 #   gh-claude-restricted [claude-args...]  claude with GITHUB_TOKEN from the RESTRICTED tier
 #   gh-claude-private    [claude-args...]  claude with GITHUB_TOKEN from the PRIVATE tier
+#   gh-claude-dryvist    [claude-args...]  claude with GITHUB_TOKEN from the DRYVIST tier
 #   gh-claude-admin      [claude-args...]  claude with GITHUB_TOKEN from the ADMIN tier
+#   gh-claude-org-admin  [claude-args...]  claude with GITHUB_TOKEN from the ORG_ADMIN tier
 #
 # Each gh-claude-* wrapper runs its underlying gh-* function (defined in
 # gh-token-switching.zsh) inside a subshell, so the GITHUB_TOKEN and
@@ -76,10 +78,26 @@ gh-claude-private() {
   )
 }
 
+gh-claude-dryvist() {
+  (
+    gh-dryvist >/dev/null \
+      && _claude_launchers_banner "github-token tier" "dryvist" \
+      && exec claude "$@"
+  )
+}
+
 gh-claude-admin() {
   (
     gh-admin >/dev/null \
       && _claude_launchers_banner "github-token tier" "admin" \
+      && exec claude "$@"
+  )
+}
+
+gh-claude-org-admin() {
+  (
+    gh-org-admin >/dev/null \
+      && _claude_launchers_banner "github-token tier" "org-admin" \
       && exec claude "$@"
   )
 }

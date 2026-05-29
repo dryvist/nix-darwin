@@ -30,10 +30,13 @@ in
     inherit homeDir;
 
     # Full name for git commits and other identity purposes
-    fullName = "JacobPEvans";
+    fullName = "JacobPEvans-personal";
 
-    # Primary email (GitHub noreply for privacy)
-    email = "20714140+JacobPEvans@users.noreply.github.com";
+    # Primary email (GitHub noreply for privacy).
+    # Uses the post-rename username form: the old `…+JacobPEvans@` noreply is no
+    # longer a verified email on the renamed account, which breaks GitHub
+    # signature verification (and signed-commit rulesets). Account id 20714140.
+    email = "20714140+JacobPEvans-personal@users.noreply.github.com";
   };
 
   # ==========================================================================
@@ -50,8 +53,10 @@ in
   # NOTE: These are PUBLIC key identifiers, NOT private keys.
   # Safe to commit - GitHub displays these on every signed commit.
   gpg = {
-    # Primary signing key ID (public identifier)
-    signingKey = "31652F22BF6AC286";
+    # Primary signing key ID (public identifier).
+    # Rotated after the JacobPEvans -> JacobPEvans-personal rename; the old key
+    # 31652F22BF6AC286 produces "Unverified" signatures on the renamed account.
+    signingKey = "1335F5D082489BBA";
   };
 
   # ==========================================================================
@@ -111,7 +116,12 @@ in
     tokens = {
       # Tiered GitHub PATs — each tier specifies its keychain service + DB.
       # Restricted uses the unrestricted automation keychain (AI can access freely).
-      # Private/Admin use a password-protected keychain (requires user unlock).
+      # All elevated tiers use a password-protected keychain (requires user unlock).
+      #   restricted → public repos (default)
+      #   private    → JacobPEvans-personal public + private repos
+      #   dryvist    → dryvist org repos (public + private)
+      #   admin      → JacobPEvans-personal admin (rulesets, branch protection)
+      #   orgAdmin   → dryvist org admin (org-level rulesets)
       restricted = {
         service = "GH_PAT_RESTRICTED";
         keychain = "automation.keychain-db";
@@ -120,8 +130,16 @@ in
         service = "GH_PAT_PRIVATE";
         keychain = "elevate-access.keychain-db";
       };
+      dryvist = {
+        service = "GH_PAT_DRYVIST";
+        keychain = "elevate-access.keychain-db";
+      };
       admin = {
         service = "GH_PAT_ADMIN";
+        keychain = "elevate-access.keychain-db";
+      };
+      orgAdmin = {
+        service = "GH_PAT_ORG_ADMIN";
         keychain = "elevate-access.keychain-db";
       };
     };
