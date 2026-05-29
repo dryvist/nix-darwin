@@ -30,7 +30,7 @@ in
     inherit homeDir;
 
     # Full name for git commits and other identity purposes
-    fullName = "JacobPEvans-personal";
+    fullName = "JacobPEvans";
 
     # Primary email (GitHub noreply for privacy)
     # Account renamed JacobPEvans -> JacobPEvans-personal; the noreply email and
