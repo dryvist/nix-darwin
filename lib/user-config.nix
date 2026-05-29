@@ -30,10 +30,10 @@ in
     inherit homeDir;
 
     # Full name for git commits and other identity purposes
-    fullName = "JacobPEvans";
+    fullName = "JacobPEvans-personal";
 
     # Primary email (GitHub noreply for privacy)
-    email = "20714140+JacobPEvans@users.noreply.github.com";
+    email = "20714140+JacobPEvans-personal@users.noreply.github.com";
   };
 
   # ==========================================================================
@@ -51,7 +51,7 @@ in
   # Safe to commit - GitHub displays these on every signed commit.
   gpg = {
     # Primary signing key ID (public identifier)
-    signingKey = "31652F22BF6AC286";
+    signingKey = "1335F5D082489BBA";
   };
 
   # ==========================================================================
