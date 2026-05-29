@@ -3,11 +3,11 @@
     "ai-assistant-instructions": {
       "flake": false,
       "locked": {
-        "lastModified": 1779659910,
-        "narHash": "sha256-OF+32NmMwnY3n43y0fJtDKhpaoOtV1LFVA/gPnTUecw=",
+        "lastModified": 1780035055,
+        "narHash": "sha256-33MrbVXUEGna0Q0XqTXgtfW+XtE/pGK5ycnNMvHHKzY=",
         "owner": "JacobPEvans",
         "repo": "ai-assistant-instructions",
-        "rev": "4dbcb15f1eba2b9058f1279ecbaa466de1f268a4",
+        "rev": "fd861a5b4f337df0f2c2e49872171c00d39cf342",
         "type": "github"
       },
       "original": {
@@ -147,11 +147,11 @@
     "claude-code-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1779509025,
-        "narHash": "sha256-wBp8SlJ/4dxup/P584MM9nke5CtMtciPn5NvrEQr8iM=",
+        "lastModified": 1780018937,
+        "narHash": "sha256-YZ9ToLuIfrRPOfilDcMbzkoqvKlpp5/QrBAuLMmECuI=",
         "owner": "anthropics",
         "repo": "claude-code",
-        "rev": "39e853e4074d90f27afdfb7ea601e0fc378bd0c5",
+        "rev": "2d5c3c6c85048de7a4426a91268076807ebaeba5",
         "type": "github"
       },
       "original": {
@@ -475,11 +475,11 @@
     "jacobpevans-cc-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1779660353,
-        "narHash": "sha256-Wst459BiRSLXaE2PtSpQk1wYMev0uhDlOTmW5ks7ZEo=",
+        "lastModified": 1779751691,
+        "narHash": "sha256-q62WKZmuo2C7bsauwosFCx3ULACD4Bl16enXjP9Az7M=",
         "owner": "JacobPEvans",
         "repo": "claude-code-plugins",
-        "rev": "36a6a281d5d4d1120c857e212eca6d061ca1c6bc",
+        "rev": "789cb43a15da309a889489266a4cfab6ca5067ec",
         "type": "github"
       },
       "original": {
@@ -596,11 +596,11 @@
         "wakatime": "wakatime"
       },
       "locked": {
-        "lastModified": 1779714826,
-        "narHash": "sha256-tfT20tSLox91AgLF5jQ88A6o/PrAZZAx+mkQBsWcgYY=",
+        "lastModified": 1780026654,
+        "narHash": "sha256-GmtJIMKXa0zSyZDALakQTPcPGr5M7/T2RG+lPHa0qBU=",
         "owner": "JacobPEvans",
         "repo": "nix-ai",
-        "rev": "6c4ab7cc745e3126fa49c8a8717a747fc2bc4887",
+        "rev": "aebe9c1f3475e60f6b90d757bd3f996601055e34",
         "type": "github"
       },
       "original": {
@@ -621,11 +621,11 @@
         "orbstack-kubernetes": "orbstack-kubernetes"
       },
       "locked": {
-        "lastModified": 1779733776,
-        "narHash": "sha256-mh+vKshvn4Zj/Qz0r447X+tTkdBXK2Oyj+gnTi74IgI=",
+        "lastModified": 1780031580,
+        "narHash": "sha256-T2KIkCfIPAbkME4AUrbf7Vktsn70i1ZqesvM83Z2P5s=",
         "owner": "JacobPEvans",
         "repo": "nix-home",
-        "rev": "6540ef806f2e5f1c6e45aa629a62efdee2c5004a",
+        "rev": "fc124db8b4296bc16b72058ccd74997f2436d644",
         "type": "github"
       },
       "original": {
@@ -728,11 +728,11 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1779495359,
-        "narHash": "sha256-KZ/9A3gvlKboDm2Kbv4A6KnfA9wMSfebyoEU91HeBn8=",
+        "lastModified": 1779813814,
+        "narHash": "sha256-MTRlb6MbtV8O9boJJeRYdqYV1IBvYZ8wXjIJXF6QDMQ=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "2b76bb8a3c79707f0d0903e486da6d9851654c3c",
+        "rev": "283ec1093a0e5aabd89aee53200d86aeb5b01401",
         "type": "github"
       },
       "original": {
