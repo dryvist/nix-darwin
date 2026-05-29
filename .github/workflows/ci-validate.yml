@@ -19,4 +19,4 @@ permissions:
 jobs:
   validate:
     name: Validate
-    uses: JacobPEvans/.github/.github/workflows/_nix-validate.yml@main
+    uses: JacobPEvans-personal/.github/.github/workflows/_nix-validate.yml@main

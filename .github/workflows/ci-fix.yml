@@ -28,7 +28,7 @@ jobs:
     #   github.event.workflow_run.conclusion == 'failure' &&
     #   github.event.workflow_run.head_branch != 'main'
     # --- END DISABLED ---
-    uses: JacobPEvans/ai-workflows/.github/workflows/ci-fix.yml@main
+    uses: dryvist/ai-workflows/.github/workflows/ci-fix.yml@main
     with:
       repo_context: "Nix flakes configuration for macOS and Linux systems"
       ci_structure: "ci-gate.yml (orchestrator calling _nix-validate, _nix-build, _markdown-lint, _file-size, _claude-settings)"
