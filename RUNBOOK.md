@@ -37,12 +37,16 @@ sudo darwin-rebuild --list-generations
 
 ## Shell Aliases
 
-Configured shell aliases make common tasks faster. All aliases are defined in nix-home (see [nix-home](https://github.com/JacobPEvans/nix-home) `modules/home-manager/zsh/aliases.nix`).
+Configured shell aliases make common tasks faster. All aliases are defined
+in nix-home (see [nix-home][nh-aliases]
+`modules/home-manager/zsh/aliases.nix`).
+
+[nh-aliases]: https://github.com/dryvist/nix-home
 
 ### Directory Listing
 
 | Alias | Command | Purpose |
-|-------|---------|---------|
+| --- | --- | --- |
 | `ll` | `ls -ahlFG -D '%Y-%m-%d %H:%M:%S'` | Long listing with human-readable sizes |
 | `ll@` | `ls -@ahlFG -D '%Y-%m-%d %H:%M:%S'` | Long listing with extended attributes (macOS) |
 | `llt` | `ls -ahltFG -D '%Y-%m-%d %H:%M:%S'` | Long listing sorted by modification time |
@@ -63,7 +67,7 @@ ll@
 ### Docker
 
 | Alias | Command | Purpose |
-|-------|---------|---------|
+| --- | --- | --- |
 | `dps` | `docker ps -a` | List all containers |
 | `dcu` | `docker compose up -d` | Start compose stack (detached) |
 | `dcd` | `docker compose down` | Stop compose stack |
@@ -71,14 +75,14 @@ ll@
 ### Nix / Darwin
 
 | Alias | Command | Purpose |
-|-------|---------|---------|
+| --- | --- | --- |
 | `d-r` | `sudo darwin-rebuild switch --flake .` | Rebuild system configuration |
 | `nf-u` | `nix flake update --flake .` | Update flake.lock to latest versions |
 
 ### AWS
 
 | Alias | Command | Purpose |
-|-------|---------|---------|
+| --- | --- | --- |
 | `av` | `aws-vault exec` | Execute command with AWS profile |
 | `avl` | `aws-vault list` | List profiles in vault |
 | `avd` | `aws-vault exec default --` | Execute with default profile |
@@ -88,7 +92,7 @@ ll@
 ### Other
 
 | Alias | Command | Purpose |
-|-------|---------|---------|
+| --- | --- | --- |
 | `python` | `python3` | Use Python 3 by default |
 | `tgz` | `tar --disable-copyfile --exclude='.DS_Store' -czf` | Create tar.gz (macOS-friendly) |
 
@@ -193,7 +197,7 @@ certain brew commands. There is no background daemon.
 **How homebrew packages stay current:**
 
 | Method | Trigger | What Happens |
-|--------|---------|--------------|
+| --- | --- | --- |
 | darwin-rebuild | `sudo darwin-rebuild switch --flake .` | Upgrades all packages (primary method) |
 | Manual update | `brew update && brew upgrade` | Immediate update when needed |
 | Passive auto-update | Running `brew install/upgrade/etc` | Index updated if >5 minutes stale |
@@ -362,7 +366,7 @@ the standard "update and rebuild" workflow in [Updating Packages](#updating-pack
 Renovate creates PRs on a schedule based on package criticality:
 
 | Package Group | Schedule | Auto-merge |
-|---------------|----------|------------|
+| --- | --- | --- |
 | Critical Infrastructure (nixpkgs, darwin, home-manager) | Mon/Thu 3am | No |
 | AI Tools (claude-code-plugins, etc.) | Sun/Wed/Fri 10pm | Yes (patch/minor) |
 | npm Packages (cclint, chatgpt-cli, gh-copilot) | Monday 10pm | Yes (patch/minor) |

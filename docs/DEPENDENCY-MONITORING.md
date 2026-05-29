@@ -12,8 +12,8 @@ This repository uses a **complementary dependency update strategy** combining:
 ## Update Automation Layers
 
 | Layer | Role | What Updates | When | Auto-merge |
-|-------|------|--------------|------|------------|
-| **Renovate Bot** (Primary) | Proactive updates | Critical infrastructure, AI tools, npm packages | Daily 7am (critical/AI), Mon (npm) | Yes (varies by group) |
+| --- | --- | --- | --- | --- |
+| **Renovate Bot** (Primary) | Proactive updates | Critical infra, AI tools, npm | Daily 7am (critical/AI), Mon (npm) | Yes (varies by group) |
 | **Custom Workflow** (Fallback) | Safety net | All inputs IF no Renovate PR exists | Tue/Fri (all), daily (AI-focused) | No |
 | **repository_dispatch** | Rapid response | ai-assistant-instructions only | Instant (on push to source) | No |
 | **workflow_dispatch** | Manual | Any inputs | On demand | No |
@@ -47,7 +47,7 @@ It provides native Nix flake support and can scan arbitrary files for package ve
 ### Update Schedule by Package Group
 
 | Group | Packages | Schedule | Auto-merge |
-|-------|----------|----------|------------|
+| --- | --- | --- | --- |
 | **Critical Infrastructure** | nixpkgs, darwin, home-manager, ai-assistant-instructions | Daily after 7am | No (manual review) |
 | **AI Tools** | claude-code-plugins, nix-ai, anthropics, etc. | Daily after 7am | Yes (all types) |
 | **npm Packages** | cclint, chatgpt-cli, gh-copilot | Monday 10pm | Yes (patch/minor) |
@@ -135,7 +135,7 @@ A single workflow handles all flake input updates with verified commit signature
 ### Update Strategy
 
 | Day | Inputs Updated |
-|-----|----------------|
+| --- | --- |
 | Monday, Wednesday, Thursday, Saturday, Sunday | AI-focused inputs (9 total) |
 | Tuesday, Friday | ALL flake inputs |
 | repository_dispatch event | ai-assistant-instructions only (fast sync) |

@@ -24,13 +24,18 @@ repos:
       - id: check-merge-conflict
       - id: detect-private-key
 
-  # Markdown linting (using markdownlint-cli2 which reads .markdownlint-cli2.jsonc)
-  # Config file has "fix: true" to auto-fix issues
+  # Markdown linting (uses .markdownlint-cli2.yaml — canonical from dryvist/.github)
   - repo: https://github.com/DavidAnson/markdownlint-cli2
     rev: v0.22.1
     hooks:
       - id: markdownlint-cli2
         files: \.md$
+
+  # Secrets scanning (per dryvist canonical hybrid secrets stack)
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
 
   # GitHub Actions security scanner - zizmor
   # Detects: excessive permissions, template injection, credential leakage,

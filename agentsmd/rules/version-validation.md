@@ -26,7 +26,9 @@ When suggesting or pinning package versions, AI agents MUST:
 - ALWAYS use actual current date when evaluating version freshness
 - If unsure of current date, ask user to confirm
 
-**Why this matters**: Claude Sonnet suggested crush without version pin, human pinned to v0.1.1 (released early 2024) thinking it was recent, but latest was v0.30.0.
+**Why this matters**: Claude Sonnet suggested crush without version pin,
+human pinned to v0.1.1 (released early 2024) thinking it was recent, but
+latest was v0.30.0.
 
 ### 3. Understand Validation Triggers
 

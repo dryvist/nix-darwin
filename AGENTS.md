@@ -23,7 +23,7 @@ Local quick checks (formatting, linting, dead code) run automatically on every c
 
 ```bash
 nix flake check         # full flake check (run in CI)
-nix fmt                 # format all Nix files (alejandra)
+nix fmt                 # format all Nix files (nixfmt-tree)
 statix check            # static analysis
 deadnix                 # dead code detection
 ```
@@ -88,8 +88,10 @@ cd <branch>
 ### Package placement
 
 See the `nix-package-placement` rule — lives in
-[ai-assistant-instructions/agentsmd/rules/nix-package-placement.md](https://github.com/JacobPEvans/ai-assistant-instructions/blob/main/agentsmd/rules/nix-package-placement.md)
-and auto-loads via path-scoping when `.nix` / `flake.*` files are in context.
+[ai-assistant-instructions][nix-pkg-placement] and auto-loads via
+path-scoping when `.nix` / `flake.*` files are in context.
+
+[nix-pkg-placement]: https://github.com/JacobPEvans/ai-assistant-instructions/blob/main/agentsmd/rules/nix-package-placement.md
 Contains the full decision matrix for the nix repos including homebrew constraints
 and on-demand patterns.
 
@@ -98,15 +100,42 @@ and on-demand patterns.
 | Repo | Scope | Used via |
 | ---- | ----- | -------- |
 | **nix-darwin** (this repo) | macOS system config (Dock, Finder, Homebrew, security) | nix-darwin |
-| [nix-ai](https://github.com/JacobPEvans/nix-ai) | AI CLI ecosystem (Claude, Gemini, Copilot, MCP) | home-manager |
-| [nix-devenv](https://github.com/JacobPEvans/nix-devenv) | Reusable dev shells (Terraform, Ansible, K8s, AI/ML) | nix develop |
-| [nix-home](https://github.com/JacobPEvans/nix-home) | User environment (dotfiles, dev tools, LaunchAgents) | home-manager |
+| [nix-ai](https://github.com/dryvist/nix-ai) | AI CLI ecosystem (Claude, Gemini, Copilot, MCP) | home-manager |
+| [nix-devenv](https://github.com/dryvist/nix-devenv) | Reusable dev shells (Terraform, Ansible, K8s, AI/ML) | nix develop |
+| [nix-home](https://github.com/dryvist/nix-home) | User environment (dotfiles, dev tools, LaunchAgents) | home-manager |
 
 ## PR Rules
 
 - Never auto-merge without explicit user approval
 - 50-comment limit per PR
 - Batch commits locally, push once
+
+## Tooling baseline (inherited from dryvist/.github)
+
+- **Markdown lint:** `markdownlint-cli2` with the canonical
+  `.markdownlint-cli2.yaml` synced from
+  [`dryvist/.github`](https://github.com/dryvist/.github).
+  `MD013 line_length: 160`; no 80-char heading/code restrictions.
+  `CHANGELOG.md`, `.github/aw/**`, and `worktrees/**` are ignored.
+  `MD024` strict-by-default everywhere actually linted — never disabled
+  across the board.
+- **Pre-commit hooks**: see `.pre-commit-config.yaml`. Stack:
+  `pre-commit/pre-commit-hooks@v6.0.0` meta-pack,
+  `DavidAnson/markdownlint-cli2@v0.22.1`,
+  `gitleaks/gitleaks@v8.30.1`,
+  `zizmorcore/zizmor-pre-commit`,
+  `semgrep/pre-commit`, plus local `nixfmt`, `statix`, `deadnix`,
+  `lychee`, and repo-specific validators.
+- **Out of scope for the current canonical-alignment PR**: adopting the
+  `nix-devenv` `flakeModules.dev-hygiene` module requires migrating
+  this flake from traditional outputs to `flake-parts` — a larger
+  architectural change tracked separately. Same with switching
+  `nixpkgs.url` to `nixos-unstable` (high-risk runtime change for the
+  user's primary machine config).
+
+Do NOT commit local copies of `.markdownlint-cli2.{jsonc,yaml}` that
+drift from the dryvist canonical, and do NOT re-introduce leniency
+rules to work around stale tooling.
 
 ## Secrets
 

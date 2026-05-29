@@ -99,7 +99,7 @@ flake.nix
 ## Configuration Layers
 
 | Layer | Scope | Location | Managed By |
-|-------|-------|----------|------------|
+| --- | --- | --- | --- |
 | System | macOS settings, packages | `modules/darwin/` | nix-darwin |
 | User | AI tools, dev env, activation helpers | nix-ai, nix-home (flake inputs) | home-manager |
 | Host | Machine-specific | `hosts/<name>/` | Both |

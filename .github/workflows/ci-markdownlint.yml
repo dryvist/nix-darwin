@@ -23,4 +23,4 @@ permissions:
 jobs:
   lint:
     name: Lint Markdown
-    uses: JacobPEvans/.github/.github/workflows/_markdown-lint.yml@main
+    uses: JacobPEvans-personal/.github/.github/workflows/_markdown-lint.yml@main

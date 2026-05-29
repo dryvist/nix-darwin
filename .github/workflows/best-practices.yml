@@ -29,5 +29,5 @@ jobs:
 
   recommend:
     if: github.event_name != 'schedule'
-    uses: JacobPEvans/ai-workflows/.github/workflows/best-practices.yml@main
+    uses: dryvist/ai-workflows/.github/workflows/best-practices.yml@main
     secrets: inherit

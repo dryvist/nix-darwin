@@ -146,18 +146,27 @@
         _GH_DB_RESTRICTED='${userConfig.github.tokens.restricted.keychain}'
         _GH_SVC_PRIVATE='${userConfig.github.tokens.private.service}'
         _GH_DB_PRIVATE='${userConfig.github.tokens.private.keychain}'
+        _GH_SVC_DRYVIST='${userConfig.github.tokens.dryvist.service}'
+        _GH_DB_DRYVIST='${userConfig.github.tokens.dryvist.keychain}'
         _GH_SVC_ADMIN='${userConfig.github.tokens.admin.service}'
         _GH_DB_ADMIN='${userConfig.github.tokens.admin.keychain}'
+        _GH_SVC_ORG_ADMIN='${userConfig.github.tokens.orgAdmin.service}'
+        _GH_DB_ORG_ADMIN='${userConfig.github.tokens.orgAdmin.keychain}'
 
         source ${./gh-token-switching.zsh}
 
-        # Default to lowest privilege on every new shell
+        # Default to the dryvist tier on every new shell. dryvist's token lives
+        # in the auto-readable automation keychain, so this loads with no password
+        # prompt. This is NOT least-privilege — every shell + AI session defaults
+        # to dryvist write access — a deliberate popups-vs-privilege tradeoff
+        # (2026-05-28). Use gh-private / gh-admin / gh-org-admin to elevate further.
         unset GITHUB_TOKEN
-        gh-restricted
+        gh-dryvist
 
         # --- Custom-auth launchers for `claude` ---
         # Defines av-claude <profile>, gh-claude-restricted, gh-claude-private,
-        # gh-claude-admin. Depends on the gh-* functions sourced above.
+        # gh-claude-dryvist, gh-claude-admin, gh-claude-org-admin. Depends on
+        # the gh-* functions sourced above.
         source ${./claude-launchers.zsh}
 
         # --- macOS setup ---

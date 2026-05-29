@@ -110,7 +110,7 @@ jobs:
     name: Nix Validate
     needs: changes
     if: needs.changes.outputs.nix == 'true'
-    uses: JacobPEvans/.github/.github/workflows/_nix-validate.yml@main
+    uses: JacobPEvans-personal/.github/.github/workflows/_nix-validate.yml@main
     with:
       # Linux `nix flake check --all-systems` needs more disk/RAM for
       # darwin-source substitution; m7+c7 family with s3-cache fits.
@@ -121,7 +121,7 @@ jobs:
     name: Markdown Lint
     needs: changes
     if: needs.changes.outputs.markdown == 'true'
-    uses: JacobPEvans/.github/.github/workflows/_markdown-lint.yml@main
+    uses: JacobPEvans-personal/.github/.github/workflows/_markdown-lint.yml@main
     with:
       runner_label: ${{ github.event.pull_request.head.repo.full_name == github.repository && format('runs-on={0}/runner=2cpu-linux-x64', github.run_id) || 'ubuntu-latest' }}
 
@@ -135,7 +135,7 @@ jobs:
     name: File Size
     needs: changes
     if: needs.changes.outputs.nix == 'true' || needs.changes.outputs.markdown == 'true'
-    uses: JacobPEvans/.github/.github/workflows/_file-size.yml@main
+    uses: JacobPEvans-personal/.github/.github/workflows/_file-size.yml@main
     with:
       runner_label: ${{ github.event.pull_request.head.repo.full_name == github.repository && format('runs-on={0}/runner=2cpu-linux-x64', github.run_id) || 'ubuntu-latest' }}
 

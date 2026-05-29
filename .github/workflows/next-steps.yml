@@ -29,5 +29,5 @@ jobs:
 
   analyze:
     if: github.event_name != 'schedule'
-    uses: JacobPEvans/ai-workflows/.github/workflows/next-steps.yml@main
+    uses: dryvist/ai-workflows/.github/workflows/next-steps.yml@main
     secrets: inherit

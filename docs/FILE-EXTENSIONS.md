@@ -58,7 +58,7 @@ programs.file-extensions = {
 Here are the most commonly used UTI (Uniform Type Identifier) values:
 
 | UTI | Description | Standard Extensions |
-|-----|-------------|---------------------|
+| --- | --- | --- |
 | `public.tar-archive` | TAR archives (including gzipped) | `.tar`, `.tar.gz`, `.tgz` |
 | `public.zip-archive` | ZIP archives | `.zip` |
 | `public.gzip-archive` | GZIP compressed files | `.gz` |

@@ -1,14 +1,17 @@
 # GitHub token context switching — principle of least privilege
 # Tokens are tiered PATs stored in macOS Keychain.
 # Restricted: automation.keychain-db (unrestricted, AI can access freely)
-# Private/Admin: elevate-access.keychain-db (password-protected, requires user unlock)
-# Usage: gh-restricted | gh-private | gh-admin | gh-token-status
+# Elevated (private/dryvist/admin/org-admin): elevate-access.keychain-db
+#   (password-protected, requires user unlock)
+# Usage: gh-restricted | gh-private | gh-dryvist | gh-admin | gh-org-admin | gh-token-status
 #
 # REQUIRES (set by caller in home.nix initContent):
 #   _KC_AI_ACCOUNT        keychain account name (e.g. ai-cli-coder)
 #   _GH_SVC_RESTRICTED, _GH_DB_RESTRICTED
 #   _GH_SVC_PRIVATE,    _GH_DB_PRIVATE
+#   _GH_SVC_DRYVIST,    _GH_DB_DRYVIST
 #   _GH_SVC_ADMIN,      _GH_DB_ADMIN
+#   _GH_SVC_ORG_ADMIN,  _GH_DB_ORG_ADMIN
 
 _gh_switch_token() {
   local svc="$1" db="$2" mode="$3" desc="$4"
@@ -49,11 +52,19 @@ gh-restricted() {
 }
 
 gh-private() {
-  _gh_switch_token "$_GH_SVC_PRIVATE" "$_GH_DB_PRIVATE" "PRIVATE" "+ private repos"
+  _gh_switch_token "$_GH_SVC_PRIVATE" "$_GH_DB_PRIVATE" "PRIVATE" "+ JacobPEvans-personal private repos"
+}
+
+gh-dryvist() {
+  _gh_switch_token "$_GH_SVC_DRYVIST" "$_GH_DB_DRYVIST" "DRYVIST" "+ dryvist org repos (public + private)"
 }
 
 gh-admin() {
-  _gh_switch_token "$_GH_SVC_ADMIN" "$_GH_DB_ADMIN" "ADMIN" "full access"
+  _gh_switch_token "$_GH_SVC_ADMIN" "$_GH_DB_ADMIN" "ADMIN" "JacobPEvans-personal admin"
+}
+
+gh-org-admin() {
+  _gh_switch_token "$_GH_SVC_ORG_ADMIN" "$_GH_DB_ORG_ADMIN" "ORG_ADMIN" "dryvist org admin"
 }
 
 gh-token-status() {

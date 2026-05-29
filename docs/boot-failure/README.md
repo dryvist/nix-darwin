@@ -7,7 +7,7 @@ Quick recovery guide for nix-darwin boot failures where the system appears broke
 After a system restart, you may experience:
 
 | Symptom | What You'll See |
-|---------|-----------------|
+| --- | --- |
 | Empty PATH | `echo $PATH` shows nothing or only `/usr/bin:/bin` |
 | Commands not found | `darwin-rebuild: command not found` |
 | Missing symlink | `ls /run/current-system` returns "No such file or directory" |

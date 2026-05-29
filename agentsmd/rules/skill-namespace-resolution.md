@@ -81,7 +81,7 @@ Result: WRONG - Error again
 ## Common Namespace Confusion Patterns
 
 | Situation | ❌ Wrong | ✓ Correct | Why |
-|-----------|----------|-----------|-----|
+| --- | --- | --- | --- |
 | Error shows `pr-review-toolkit:code-reviewer` | `superpowers:code-reviewer` | Copy exact string | Trust system output |
 | Unsure of full namespace | Use only the skill name without namespace | Use `namespace:skill-name` | Exact format required |
 | Want to guess based on task type | Assume a namespace | Copy from error list | Error lists are authoritative |

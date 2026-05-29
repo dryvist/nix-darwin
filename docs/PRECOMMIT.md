@@ -77,7 +77,7 @@ This repository uses 4 groups of pre-commit tools, organized by purpose:
 **Purpose:** Enforce consistent code formatting and whitespace
 
 | Tool | What It Does | Language |
-|------|--------------|----------|
+| --- | --- | --- |
 | **Trailing Whitespace** | Removes trailing spaces | All files |
 | **End-of-File Fixer** | Ensures files end with newline | All files |
 | **Nix Formatting** | Formats Nix code to RFC style | Nix (`*.nix`) |
@@ -90,7 +90,7 @@ This repository uses 4 groups of pre-commit tools, organized by purpose:
 **Purpose:** Catch code quality issues and anti-patterns
 
 | Tool | What It Does | Language |
-|------|--------------|----------|
+| --- | --- | --- |
 | **YAML Syntax** | Validates YAML structure | YAML (`*.yaml`, `*.yml`) |
 | **JSON Syntax** | Validates JSON structure | JSON (`*.json`) |
 | **Nix Linting (statix)** | Catches Nix anti-patterns and code smells | Nix (`*.nix`) |
@@ -110,7 +110,7 @@ deadnix -L --fail .
 **Purpose:** Validate documentation integrity
 
 | Tool | What It Does | Language |
-|------|--------------|----------|
+| --- | --- | --- |
 | **Lychee** | Checks links in markdown/HTML for validity | Markdown, HTML |
 | **File Size Check** | Warns on large files (6KB warn, 12KB fail) | Markdown, Nix |
 
@@ -125,7 +125,7 @@ default, so slowdown is offset by parallelization.
 **Purpose:** Prevent committing secrets and sensitive data
 
 | Tool | What It Does |
-|------|--------------|
+| --- | --- |
 | **Detect Private Keys** | Blocks committing SSH keys, API tokens, credentials |
 | **Merge Conflict Markers** | Detects unresolved merge conflicts |
 | **Large Files** | Prevents committing files over 500KB |

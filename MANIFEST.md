@@ -17,7 +17,7 @@ Each entry lists the source file where it is declared.
 Source: `modules/darwin/common.nix`
 
 | Package | Description |
-|---------|-------------|
+| --- | --- |
 | git | Version control |
 | gnupg | GPG encryption and signing |
 | vim | Text editor |
@@ -27,7 +27,7 @@ Source: `modules/darwin/common.nix`
 Source: `modules/darwin/common.nix`
 
 | Package | Description |
-|---------|-------------|
+| --- | --- |
 | bat | Better cat with syntax highlighting |
 | delta | Better git diff viewer with syntax highlighting |
 | eza | Modern ls replacement with git integration |
@@ -54,7 +54,7 @@ Source: `modules/darwin/common.nix`
 Source: `modules/darwin/common.nix`
 
 | Package | Description |
-|---------|-------------|
+| --- | --- |
 | mas | Mac App Store CLI |
 
 ---
@@ -66,20 +66,20 @@ Source: nix-home (`home.packages` via flake input)
 ### Runtimes
 
 | Package | Description |
-|---------|-------------|
+| --- | --- |
 | bun | Fast all-in-one JavaScript runtime (provides bunx) |
 
 ### Git Workflow
 
 | Package | Description |
-|---------|-------------|
+| --- | --- |
 | git-flow-next | Modern git-flow workflow tool (custom buildGoModule, gittower/git-flow-next v1.0.0) |
 | git-bug | Distributed bug tracker embedded in git (`git bug` command) |
 
 ### Pre-commit and Linters
 
 | Package | Description |
-|---------|-------------|
+| --- | --- |
 | pre-commit | Git pre-commit hook framework |
 | shellcheck | Shell script static analysis |
 | shfmt | Shell script formatter |
@@ -89,7 +89,7 @@ Source: nix-home (`home.packages` via flake input)
 ### Nix Tooling
 
 | Package | Description |
-|---------|-------------|
+| --- | --- |
 | nixfmt-rfc-style | Official Nix formatter (RFC 166) |
 | statix | Nix linter - catches anti-patterns |
 | deadnix | Find unused code in .nix files |
@@ -100,7 +100,7 @@ Source: nix-home (`home.packages` via flake input)
 ### Security and Credentials
 
 | Package | Description |
-|---------|-------------|
+| --- | --- |
 | bitwarden-cli | CLI for Bitwarden password manager (bw) |
 | bws | Bitwarden Secrets Manager CLI |
 | doppler | Doppler secrets manager CLI |
@@ -108,7 +108,7 @@ Source: nix-home (`home.packages` via flake input)
 ### Remote Shell
 
 | Package | Description |
-|---------|-------------|
+| --- | --- |
 | mosh | Resilient mobile shell using UDP |
 
 ### Visualization & Diagramming
@@ -118,7 +118,7 @@ On-demand via `nix run nixpkgs#d2` and `nix run nixpkgs#mermaid-cli` — not ins
 ### Python
 
 | Package | Description |
-|---------|-------------|
+| --- | --- |
 | pyright | Static type checker for Python (global: IDEs require it in PATH) |
 | python314 | Python 3.14 (primary runtime) |
 | uv | Fast Python package manager (also runs EOL versions) |
@@ -131,7 +131,7 @@ On-demand via `nix run nixpkgs#d2` and `nix run nixpkgs#mermaid-cli` — not ins
 Source: `modules/darwin/common.nix`
 
 | Package | Description |
-|---------|-------------|
+| --- | --- |
 | bitwarden-desktop | Password manager desktop app |
 | raycast | Productivity launcher (replaces Spotlight) |
 | swiftbar | Menu bar customization |
@@ -146,7 +146,7 @@ The `programs.orbstack` module (`modules/darwin/apps/orbstack.nix`) still manage
 Source: `hosts/macbook-m4/home.nix`
 
 | Package | Description |
-|---------|-------------|
+| --- | --- |
 | chatgpt | OpenAI ChatGPT desktop app |
 | claudebar | Menu bar AI coding assistant quota monitoring |
 | code-cursor | Cursor AI IDE (VS Code fork) |
@@ -164,7 +164,7 @@ Source: `modules/darwin/homebrew.nix`
 ### Brews
 
 | Package | Description |
-|---------|-------------|
+| --- | --- |
 | ccusage | Claude Code usage analyzer |
 | block-goose-cli | Block's Goose AI agent |
 | gemini-cli | Google Gemini CLI (moved from nixpkgs) |
@@ -176,7 +176,7 @@ All casks use `greedy = true` so that `brew upgrade --greedy` (run by `brew auto
 via LaunchAgent) always installs the latest version rather than deferring to built-in auto-updaters.
 
 | Package | greedy | Description |
-|---------|--------|-------------|
+| --- | --- | --- |
 | obsidian | yes | Knowledge base / note-taking |
 | shortwave | yes | AI-powered email client |
 | wispr-flow | yes | AI-powered voice dictation |
@@ -194,7 +194,7 @@ via LaunchAgent) always installs the latest version rather than deferring to bui
 ### Mac App Store
 
 | App | ID |
-|-----|-----|
+| --- | --- |
 | Toggl Track | 1291898086 |
 | Monarch Money Tweaks | 6753774259 |
 | Windows App | 1295203466 |
@@ -212,7 +212,7 @@ via LaunchAgent) always installs the latest version rather than deferring to bui
 Managed by nix-darwin modules but installed externally (not via nixpkgs or Homebrew).
 
 | Service | Source | Description |
-|---------|--------|-------------|
+| --- | --- | --- |
 | Cribl Edge | `modules/darwin/apps/cribl-edge.nix` | Log collection agent (installed via .pkg, Nix manages LaunchDaemon + ACLs) |
 
 ---
@@ -220,7 +220,7 @@ Managed by nix-darwin modules but installed externally (not via nixpkgs or Homeb
 ## macOS System Settings
 
 | Category | Source | Key Settings |
-|----------|--------|--------------|
+| --- | --- | --- |
 | Dock | `modules/darwin/dock/` | App layout, behavior, appearance, hot corners |
 | Finder | `modules/darwin/finder.nix` | Preferences |
 | Keyboard | `modules/darwin/keyboard.nix` | Key repeat, input settings |
@@ -242,7 +242,7 @@ Source: `hosts/macbook-m4/home.nix`
 Custom MCP server entries added to `programs.claude.mcpServers` at the host level.
 
 | Server | Command | Description |
-|--------|---------|-------------|
+| --- | --- | --- |
 | splunk | `doppler-mcp splunk-mcp-connect` | Splunk REST API via mcp-remote, secrets injected by Doppler |
 
 ---
