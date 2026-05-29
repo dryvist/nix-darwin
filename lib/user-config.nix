@@ -33,7 +33,10 @@ in
     fullName = "JacobPEvans";
 
     # Primary email (GitHub noreply for privacy)
-    email = "20714140+JacobPEvans@users.noreply.github.com";
+    # Account renamed JacobPEvans -> JacobPEvans-personal; the noreply email and
+    # signing key below must match the renamed account or commits fail signature
+    # verification (bad_email). fullName is display-only and does not affect it.
+    email = "20714140+JacobPEvans-personal@users.noreply.github.com";
   };
 
   # ==========================================================================
@@ -50,8 +53,8 @@ in
   # NOTE: These are PUBLIC key identifiers, NOT private keys.
   # Safe to commit - GitHub displays these on every signed commit.
   gpg = {
-    # Primary signing key ID (public identifier)
-    signingKey = "31652F22BF6AC286";
+    # Primary signing key ID (public identifier) for the JacobPEvans-personal account
+    signingKey = "1335F5D082489BBA";
   };
 
   # ==========================================================================
