@@ -42,7 +42,7 @@ sudo darwin-rebuild switch --flake ~/.config/nix
 Or manually install hooks (if not using full rebuild):
 
 ```bash
-cd ~/git/nix-darwin
+cd ${GIT_HOME_PUBLIC}/nix-darwin
 pre-commit install
 ```
 

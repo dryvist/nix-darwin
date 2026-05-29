@@ -24,9 +24,9 @@ If the user passes additional arguments (e.g. "also update X" or "fix Y"), handl
 
 This repo uses a bare git repo with worktrees:
 
-- `~/git/nix-darwin/` - bare repo (do not cd here directly)
-- `~/git/nix-darwin/main/` - main branch worktree
-- `~/git/nix-darwin/<branch-name>/` - feature worktrees
+- `${GIT_HOME_PUBLIC}/nix-darwin/` - bare repo (do not cd here directly)
+- `${GIT_HOME_PUBLIC}/nix-darwin/main/` - main branch worktree
+- `${GIT_HOME_PUBLIC}/nix-darwin/<branch-name>/` - feature worktrees
 
 ## Steps
 
@@ -35,7 +35,7 @@ This repo uses a bare git repo with worktrees:
 **IMPORTANT**: Update the main worktree before starting:
 
 ```bash
-cd ~/git/nix-darwin/main
+cd ${GIT_HOME_PUBLIC}/nix-darwin/main
 git fetch origin
 git pull origin main
 git status
@@ -50,7 +50,7 @@ Branch/worktree name format: `chore/flake-update-YYYY-MM-DD` (replace with today
 Check if worktree already exists, otherwise create it:
 
 ```bash
-cd ~/git/nix-darwin
+cd ${GIT_HOME_PUBLIC}/nix-darwin
 # Check if worktree exists
 if [ -d "chore/flake-update-YYYY-MM-DD" ]; then
   cd chore/flake-update-YYYY-MM-DD
@@ -184,7 +184,7 @@ gh pr merge --auto --squash --delete-branch
 Switch back to the main worktree while waiting for auto-merge:
 
 ```bash
-cd ~/git/nix-darwin/main
+cd ${GIT_HOME_PUBLIC}/nix-darwin/main
 ```
 
 ### 10. Report Summary
@@ -199,5 +199,5 @@ Tell the user:
 
 **DO NOT wait for checks** - auto-merge handles this automatically.
 
-**Note**: The worktree at `~/git/nix-darwin/chore/flake-update-YYYY-MM-DD/` should be
+**Note**: The worktree at `${GIT_HOME_PUBLIC}/nix-darwin/chore/flake-update-YYYY-MM-DD/` should be
 removed manually after the PR is merged (`/wrap-up` or `/clean_gone`).

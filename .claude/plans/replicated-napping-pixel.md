@@ -141,9 +141,9 @@ modules/home-manager/ai-cli/
 
 ```bash
 # Test jsondiff is globally available in Python 3.12 dev shell
-nix develop ~/git/nix-darwin/main/shells/python312 \
+nix develop ${GIT_HOME_PUBLIC}/nix-darwin/main/shells/python312 \
   --command python -c "import jsondiff; print('jsondiff OK')"
 
 # Full flake check
-nix flake check ~/git/nix-darwin/main
+nix flake check ${GIT_HOME_PUBLIC}/nix-darwin/main
 ```

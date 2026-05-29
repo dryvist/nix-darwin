@@ -16,4 +16,4 @@ unset _brew_dir _brew_stamp
 # Clean up .DS_Store files in common directories.
 # Single find across all dirs; -exec rm {} + batches args for fewer rm invocations.
 # Runs in the background to avoid blocking shell startup.
-{ find ~/.config/ ~/git/ ~/obsidian/ -name ".DS_Store" -depth -exec rm {} + 2>/dev/null; } &!
+{ find ~/.config/ "${GIT_HOME}/" ~/obsidian/ -name ".DS_Store" -depth -exec rm {} + 2>/dev/null; } &!

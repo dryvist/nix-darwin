@@ -51,7 +51,7 @@ pass before merge. You may run it locally to verify before pushing, but it is no
 ## Worktree Workflow
 
 ```bash
-cd ~/git/nix-darwin
+cd ${GIT_HOME_PUBLIC}/nix-darwin
 git fetch origin
 git worktree add <branch> -b <branch> origin/main
 cd <branch>

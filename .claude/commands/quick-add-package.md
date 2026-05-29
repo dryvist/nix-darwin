@@ -44,16 +44,16 @@ Per project rules: nixpkgs first, Homebrew only when package is unavailable in n
 
 Create a dedicated worktree for the change (NEVER work on main).
 
-**From the bare repo root** (`~/git/nix-darwin`):
+**From the bare repo root** (`${GIT_HOME_PUBLIC}/nix-darwin`):
 
 ```bash
-cd ~/git/nix-darwin
+cd ${GIT_HOME_PUBLIC}/nix-darwin
 git fetch origin
 git worktree add feat/add-<pkg-name> -b feat/add-<pkg-name> origin/main
 cd feat/add-<pkg-name>
 ```
 
-The worktree is created at `~/git/nix-darwin/feat/add-<pkg-name>/`.
+The worktree is created at `${GIT_HOME_PUBLIC}/nix-darwin/feat/add-<pkg-name>/`.
 
 ### 4. Determine Installation Location
 
@@ -131,7 +131,7 @@ Once the PR is merged, clean up your local environment:
 
 ```bash
 # Navigate to the bare repo root
-cd ~/git/nix-darwin
+cd ${GIT_HOME_PUBLIC}/nix-darwin
 
 # Remove the worktree
 git worktree remove feat/add-<pkg-name>

@@ -38,7 +38,7 @@ _: {
 
     # Show full POSIX path in window title
     # Default: false
-    # Example: "/Users/<username>/git/project" instead of "project"
+    # Example: "${GIT_HOME}/project" instead of "project"
     _FXShowPosixPathInTitle = true;
 
     # Default view style for new windows
