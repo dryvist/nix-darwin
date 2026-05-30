@@ -5,13 +5,13 @@
       "locked": {
         "lastModified": 1780035055,
         "narHash": "sha256-33MrbVXUEGna0Q0XqTXgtfW+XtE/pGK5ycnNMvHHKzY=",
-        "owner": "JacobPEvans",
+        "owner": "dryvist",
         "repo": "ai-assistant-instructions",
         "rev": "fd861a5b4f337df0f2c2e49872171c00d39cf342",
         "type": "github"
       },
       "original": {
-        "owner": "JacobPEvans",
+        "owner": "dryvist",
         "repo": "ai-assistant-instructions",
         "type": "github"
       }
@@ -1183,15 +1183,15 @@
     "jacobpevans-cc-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1779751691,
-        "narHash": "sha256-q62WKZmuo2C7bsauwosFCx3ULACD4Bl16enXjP9Az7M=",
-        "owner": "JacobPEvans",
+        "lastModified": 1780052734,
+        "narHash": "sha256-4d1Dh3+w3WYUNLMum1rtzdJmp27XSVld4Y0KwLpUJEU=",
+        "owner": "dryvist",
         "repo": "claude-code-plugins",
-        "rev": "789cb43a15da309a889489266a4cfab6ca5067ec",
+        "rev": "799d4af7d0ec560d3fc4f8b15ef2b921746ea4ff",
         "type": "github"
       },
       "original": {
-        "owner": "JacobPEvans",
+        "owner": "dryvist",
         "repo": "claude-code-plugins",
         "type": "github"
       }
@@ -1303,13 +1303,13 @@
       "locked": {
         "lastModified": 1780162734,
         "narHash": "sha256-dpIwD/6cHFAq/FdMFVxZYIUL2kHEvco4YA38zfCEDto=",
-        "owner": "JacobPEvans",
+        "owner": "dryvist",
         "repo": "nix-ai",
         "rev": "20fbd459106af6770bea3b2f905fb77479c1f694",
         "type": "github"
       },
       "original": {
-        "owner": "JacobPEvans",
+        "owner": "dryvist",
         "repo": "nix-ai",
         "type": "github"
       }
@@ -1408,13 +1408,13 @@
       "locked": {
         "lastModified": 1780031580,
         "narHash": "sha256-T2KIkCfIPAbkME4AUrbf7Vktsn70i1ZqesvM83Z2P5s=",
-        "owner": "JacobPEvans",
+        "owner": "dryvist",
         "repo": "nix-home",
         "rev": "fc124db8b4296bc16b72058ccd74997f2436d644",
         "type": "github"
       },
       "original": {
-        "owner": "JacobPEvans",
+        "owner": "dryvist",
         "repo": "nix-home",
         "type": "github"
       }
