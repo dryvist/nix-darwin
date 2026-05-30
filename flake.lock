@@ -99,23 +99,27 @@
     "cachix": {
       "inputs": {
         "devenv": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv"
         ],
         "flake-compat": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
           "flake-compat"
         ],
         "git-hooks": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
           "git-hooks"
         ],
         "nixpkgs": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -140,12 +144,14 @@
     "cachix_2": {
       "inputs": {
         "devenv": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
           "crate2nix"
         ],
         "flake-compat": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -172,6 +178,7 @@
     "cachix_3": {
       "inputs": {
         "devenv": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -179,6 +186,7 @@
           "crate2nix_stable"
         ],
         "flake-compat": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -356,6 +364,7 @@
         "flake-parts": "flake-parts_4",
         "nix-test-runner": "nix-test-runner_2",
         "nixpkgs": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -381,6 +390,7 @@
       "inputs": {
         "cachix": "cachix_3",
         "crate2nix_stable": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -497,6 +507,7 @@
         "nix": "nix_2",
         "nixd": "nixd",
         "nixpkgs": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "nixpkgs"
@@ -520,6 +531,7 @@
     "devshell": {
       "inputs": {
         "nixpkgs": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -545,6 +557,7 @@
     "devshell_2": {
       "inputs": {
         "nixpkgs": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -732,6 +745,7 @@
     "flake-parts_2": {
       "inputs": {
         "nixpkgs-lib": [
+          "nix-ai",
           "nix-claude-code",
           "nixpkgs"
         ]
@@ -753,6 +767,7 @@
     "flake-parts_3": {
       "inputs": {
         "nixpkgs-lib": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -778,6 +793,7 @@
     "flake-parts_4": {
       "inputs": {
         "nixpkgs-lib": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -802,6 +818,7 @@
     "flake-parts_5": {
       "inputs": {
         "nixpkgs-lib": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -845,6 +862,7 @@
     "git-hooks": {
       "inputs": {
         "flake-compat": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -854,6 +872,7 @@
         ],
         "gitignore": "gitignore",
         "nixpkgs": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -905,6 +924,7 @@
     "git-hooks_2": {
       "inputs": {
         "flake-compat": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -915,6 +935,7 @@
         ],
         "gitignore": "gitignore_2",
         "nixpkgs": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -941,6 +962,7 @@
     "git-hooks_3": {
       "inputs": {
         "flake-compat": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -948,6 +970,7 @@
         ],
         "gitignore": "gitignore_5",
         "nixpkgs": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -973,6 +996,7 @@
         "flake-compat": "flake-compat_6",
         "gitignore": "gitignore_6",
         "nixpkgs": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "nixpkgs"
@@ -995,6 +1019,7 @@
     "gitignore": {
       "inputs": {
         "nixpkgs": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -1021,6 +1046,7 @@
     "gitignore_2": {
       "inputs": {
         "nixpkgs": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -1048,6 +1074,7 @@
     "gitignore_3": {
       "inputs": {
         "nixpkgs": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -1074,6 +1101,7 @@
     "gitignore_4": {
       "inputs": {
         "nixpkgs": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -1099,6 +1127,7 @@
     "gitignore_5": {
       "inputs": {
         "nixpkgs": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -1123,6 +1152,7 @@
     "gitignore_6": {
       "inputs": {
         "nixpkgs": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "git-hooks",
@@ -1192,6 +1222,22 @@
       },
       "original": {
         "owner": "dryvist",
+        "repo": "claude-code-plugins",
+        "type": "github"
+      }
+    },
+    "jacobpevans-cc-plugins_2": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1779660353,
+        "narHash": "sha256-Wst459BiRSLXaE2PtSpQk1wYMev0uhDlOTmW5ks7ZEo=",
+        "owner": "JacobPEvans",
+        "repo": "claude-code-plugins",
+        "rev": "36a6a281d5d4d1120c857e212eca6d061ca1c6bc",
+        "type": "github"
+      },
+      "original": {
+        "owner": "JacobPEvans",
         "repo": "claude-code-plugins",
         "type": "github"
       }
@@ -1289,9 +1335,7 @@
           "home-manager"
         ],
         "karpathy-skills": "karpathy-skills",
-        "nix-claude-code": [
-          "nix-claude-code"
-        ],
+        "nix-claude-code": "nix-claude-code",
         "nixpkgs": [
           "nixpkgs"
         ],
@@ -1301,11 +1345,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1780178954,
-        "narHash": "sha256-e90irW6XOlQI0ZU2YcwNoVaCxRNwsHJt81LYQmJnEa8=",
+        "lastModified": 1780182805,
+        "narHash": "sha256-CaHBlSm7VPwF41PpLBr05fJCfEYUx9jp6ygSwBqDFKw=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "0725d035f5dd8edab1f89adf7451846b7eddc284",
+        "rev": "110a4a6bcc925e19134dcdbf359ad28769a6b9f1",
         "type": "github"
       },
       "original": {
@@ -1317,6 +1361,7 @@
     "nix-claude-code": {
       "inputs": {
         "ai-assistant-instructions": [
+          "nix-ai",
           "ai-assistant-instructions"
         ],
         "anthropic-agent-skills": "anthropic-agent-skills",
@@ -1327,6 +1372,7 @@
         "cc-dev-tools": "cc-dev-tools",
         "cc-marketplace": "cc-marketplace",
         "claude-code-plugins": [
+          "nix-ai",
           "claude-code-plugins"
         ],
         "claude-code-plugins-plus": "claude-code-plugins-plus",
@@ -1337,15 +1383,15 @@
         "fabric-src": "fabric-src_2",
         "flake-parts": "flake-parts_2",
         "home-manager": [
+          "nix-ai",
           "home-manager"
         ],
         "huggingface-skills": "huggingface-skills",
-        "jacobpevans-cc-plugins": [
-          "jacobpevans-cc-plugins"
-        ],
+        "jacobpevans-cc-plugins": "jacobpevans-cc-plugins_2",
         "lunar-claude": "lunar-claude",
         "nix-devenv": "nix-devenv",
         "nixpkgs": [
+          "nix-ai",
           "nixpkgs"
         ],
         "obsidian-skills": "obsidian-skills",
@@ -1375,6 +1421,7 @@
         "dryvist-github": "dryvist-github",
         "git-hooks": "git-hooks_4",
         "nixpkgs": [
+          "nix-ai",
           "nix-claude-code",
           "nixpkgs"
         ],
@@ -1454,35 +1501,41 @@
     "nix_2": {
       "inputs": {
         "flake-compat": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
           "flake-compat"
         ],
         "flake-parts": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
           "flake-parts"
         ],
         "git-hooks-nix": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
           "git-hooks"
         ],
         "nixpkgs": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
           "nixpkgs"
         ],
         "nixpkgs-23-11": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv"
         ],
         "nixpkgs-regression": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv"
@@ -1506,12 +1559,14 @@
     "nixd": {
       "inputs": {
         "flake-parts": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
           "flake-parts"
         ],
         "nixpkgs": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -1756,6 +1811,7 @@
     "pre-commit-hooks": {
       "inputs": {
         "flake-compat": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -1765,6 +1821,7 @@
         ],
         "gitignore": "gitignore_3",
         "nixpkgs": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -1790,6 +1847,7 @@
     "pre-commit-hooks_2": {
       "inputs": {
         "flake-compat": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -1798,6 +1856,7 @@
         ],
         "gitignore": "gitignore_4",
         "nixpkgs": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -1829,7 +1888,6 @@
         "jacobpevans-cc-plugins": "jacobpevans-cc-plugins",
         "mac-app-util": "mac-app-util",
         "nix-ai": "nix-ai",
-        "nix-claude-code": "nix-claude-code",
         "nix-home": "nix-home",
         "nixpkgs": "nixpkgs_6",
         "pal-mcp-server": "pal-mcp-server",
@@ -1840,6 +1898,7 @@
     "rust-overlay": {
       "inputs": {
         "nixpkgs": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -1934,6 +1993,7 @@
     "treefmt-nix_2": {
       "inputs": {
         "nixpkgs": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "devenv",
@@ -1958,6 +2018,7 @@
     "treefmt-nix_3": {
       "inputs": {
         "nixpkgs": [
+          "nix-ai",
           "nix-claude-code",
           "nix-devenv",
           "nixpkgs"

@@ -60,33 +60,16 @@
       flake = false;
     };
 
-    # Declarative Claude Code module — owns programs.claude.* options,
-    # plugins, marketplaces, hooks, MCP submodule typing, and the CI
-    # settings.json fixture. nix-ai consumes this; nix-darwin pulls it
-    # in directly so Renovate's marketplace edge-pins still cascade.
-    nix-claude-code = {
-      url = "github:dryvist/nix-claude-code";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        home-manager.follows = "home-manager";
-        jacobpevans-cc-plugins.follows = "jacobpevans-cc-plugins";
-        ai-assistant-instructions.follows = "ai-assistant-instructions";
-        claude-code-plugins.follows = "claude-code-plugins";
-      };
-    };
-
-    # AI CLI ecosystem (Claude, Gemini, Copilot, MCP, marketplace)
-    # Self-contained: injects its own flake inputs via _module.args.
-    # Claude Code config now flows through nix-claude-code; nix-ai
-    # delegates programs.claude.* to that module.
+    # AI CLI ecosystem (Claude, Gemini, Copilot, MCP, marketplace).
+    # Only AI flake nix-darwin imports — Claude/Gemini/Codex/MCP config
+    # all flow through nix-ai. nix-claude-code is consumed transitively
+    # via nix-ai (kept off nix-darwin's top-level inputs to avoid pulling
+    # 24 marketplace inputs + nix-devenv dev-tooling into our lock).
     nix-ai = {
       url = "github:dryvist/nix-ai";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         home-manager.follows = "home-manager";
-        # Route nix-ai's nix-claude-code through the top-level pin so a
-        # single Renovate PR cascades through both consumers.
-        nix-claude-code.follows = "nix-claude-code";
         ai-assistant-instructions.follows = "ai-assistant-instructions";
         claude-code-plugins.follows = "claude-code-plugins";
         pal-mcp-server.follows = "pal-mcp-server";

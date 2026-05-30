@@ -12,7 +12,7 @@
     ":dependencyDashboard",
     ":semanticCommits",
     ":enablePreCommit",
-    "local>JacobPEvans-personal/.github:renovate-presets"
+    "local>dryvist/.github"
   ],
 
   // Repository settings
@@ -49,43 +49,54 @@
   ],
 
   // Package grouping and scheduling strategy
+  //
+  // matchPackageNames uses GitHub repo paths (owner/repo), not flake input names.
+  // Internal-flakes rule sits LAST so it overrides minimumReleaseAge for
+  // dryvist/* and JacobPEvans-personal/* — these merge immediately, never wait.
   "packageRules": [
-    // GROUP 1: Critical infrastructure (Daily 7am with automerge)
-    // Note: matchPackageNames uses GitHub repo paths (owner/repo), not flake input names
+    // GROUP 1: External critical infrastructure (Daily 7am, 2-day delay for nixpkgs cache lag)
     {
-      "description": "Critical system inputs - daily updates at 7am",
+      "description": "External critical system inputs - 2-day delay for nixpkgs-25.11-darwin Hydra eval lag",
       "matchDatasources": ["git-refs"],
       "matchPackageNames": [
         "NixOS/nixpkgs",
         "nix-darwin/nix-darwin",
         "nix-community/home-manager",
-        "Mic92/sops-nix",
-        "dryvist/ai-assistant-instructions",
-        "dryvist/nix-home"
+        "Mic92/sops-nix"
       ],
       "groupName": "critical-infrastructure",
       "schedule": ["after 7am"],
-      "minimumReleaseAge": "2 days" // Wait 2 days — nixpkgs-25.11-darwin Hydra eval lags 24-48h behind raw branch
+      "minimumReleaseAge": "2 days"
     },
 
-    // GROUP 2: AI tools (Daily 7am)
-    // Note: matchPackageNames uses GitHub repo paths (owner/repo), not flake input names
+    // GROUP 2: External AI tooling (Daily 7am)
     {
-      "description": "AI-focused flake inputs - daily updates at 7am",
+      "description": "External AI-focused flake inputs - daily updates at 7am",
       "matchDatasources": ["git-refs"],
       "matchPackageNames": [
         "anthropics/**",
-        "obra/superpowers-marketplace",
-        "dryvist/claude-code-plugins",
-        "dryvist/nix-ai",
-        "dryvist/nix-claude-code"
+        "obra/superpowers-marketplace"
       ],
-      "groupName": "ai-tools",
-      "minimumReleaseAge": "1 day",
+      "groupName": "ai-tools-external",
       "schedule": ["after 7am every day"]
     },
 
-    // GROUP 3: GitHub Actions - Weekly Monday 7am
+    // GROUP 3: Internal flakes — merge instantly. Never wait for releases on
+    // first-party repos. This rule overrides any prior group's minimumReleaseAge.
+    {
+      "description": "Internal JacobPEvans/dryvist flake inputs - merge immediately, no release-age delay",
+      "matchDatasources": ["git-refs"],
+      "matchPackageNames": [
+        "dryvist/**",
+        "JacobPEvans/**",
+        "JacobPEvans-personal/**"
+      ],
+      "groupName": "internal-flakes",
+      "minimumReleaseAge": "0 days",
+      "automerge": true
+    },
+
+    // GROUP 4: GitHub Actions - Weekly Monday 7am
     {
       "description": "GitHub Actions updates - weekly at 7am Monday",
       "matchManagers": ["github-actions"],
@@ -93,7 +104,7 @@
       "schedule": ["after 7am on Monday"]
     },
 
-    // GROUP 4: Cribl Edge - Weekly Monday 7am
+    // GROUP 5: Cribl Edge - Weekly Monday 7am
     {
       "description": "Cribl Edge version - weekly at 7am Monday",
       "matchDatasources": ["custom.cribl-edge"],
