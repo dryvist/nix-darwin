@@ -77,9 +77,11 @@
         "anthropics/**",
         "obra/superpowers-marketplace",
         "JacobPEvans/claude-code-plugins",
-        "JacobPEvans/nix-ai"
+        "JacobPEvans/nix-ai",
+        "dryvist/nix-claude-code"
       ],
       "groupName": "ai-tools",
+      "minimumReleaseAge": "1 day",
       "schedule": ["after 7am every day"]
     },
 
