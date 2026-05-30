@@ -32,39 +32,7 @@
         "type": "github"
       }
     },
-    "anthropic-agent-skills_2": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1779199866,
-        "narHash": "sha256-GMXFJSePrpEvhzMQ82YI9Z10BDkuFK/lXUDELclvQ4c=",
-        "owner": "anthropics",
-        "repo": "skills",
-        "rev": "690f15cac7f7b4c055c5ab109c79ed9259934081",
-        "type": "github"
-      },
-      "original": {
-        "owner": "anthropics",
-        "repo": "skills",
-        "type": "github"
-      }
-    },
     "axton-obsidian-visual-skills": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1770862721,
-        "narHash": "sha256-28hLlKPifZ0GT3vc3eYuIN0C2DQm6vtZhJIKEomRp0M=",
-        "owner": "axtonliu",
-        "repo": "axton-obsidian-visual-skills",
-        "rev": "1265976d9746a84858b4b7b42fb86a215aa93de9",
-        "type": "github"
-      },
-      "original": {
-        "owner": "axtonliu",
-        "repo": "axton-obsidian-visual-skills",
-        "type": "github"
-      }
-    },
-    "axton-obsidian-visual-skills_2": {
       "flake": false,
       "locked": {
         "lastModified": 1770862721,
@@ -96,22 +64,6 @@
         "type": "github"
       }
     },
-    "bills-claude-skills_2": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1772306604,
-        "narHash": "sha256-PyQSIuAzLXuah9qvfXSiiXedprtwvq/d7rzaAan7xTA=",
-        "owner": "BillChirico",
-        "repo": "bills-claude-skills",
-        "rev": "3a7e65e88949e3f98a75ea296b53e478e2b5995c",
-        "type": "github"
-      },
-      "original": {
-        "owner": "BillChirico",
-        "repo": "bills-claude-skills",
-        "type": "github"
-      }
-    },
     "bitwarden-marketplace": {
       "flake": false,
       "locked": {
@@ -128,39 +80,7 @@
         "type": "github"
       }
     },
-    "bitwarden-marketplace_2": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1779222438,
-        "narHash": "sha256-j2Job6LH/j/r/7HjJgu/XZXoJM7PPExXan1TYtdjLa0=",
-        "owner": "bitwarden",
-        "repo": "ai-plugins",
-        "rev": "dacfbfaa83a454d40a42558ccef7783d6ec70be8",
-        "type": "github"
-      },
-      "original": {
-        "owner": "bitwarden",
-        "repo": "ai-plugins",
-        "type": "github"
-      }
-    },
     "browser-use-skills": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1779564354,
-        "narHash": "sha256-ChZBjEkQbiONTkp6qB7ONrFNEmlkVLJeTP78xzEuVGs=",
-        "owner": "browser-use",
-        "repo": "browser-use",
-        "rev": "d21b3da4ac9c341d66ee064264abda67af36eab3",
-        "type": "github"
-      },
-      "original": {
-        "owner": "browser-use",
-        "repo": "browser-use",
-        "type": "github"
-      }
-    },
-    "browser-use-skills_2": {
       "flake": false,
       "locked": {
         "lastModified": 1779564354,
@@ -286,22 +206,6 @@
     "cc-dev-tools": {
       "flake": false,
       "locked": {
-        "lastModified": 1779687312,
-        "narHash": "sha256-G83sue12mUh78A/oe3wGMRIzUEB0eBbMmbSpzLJJTsM=",
-        "owner": "Lucklyric",
-        "repo": "cc-dev-tools",
-        "rev": "8d60780c972c10a903b1a553ca29d5dbc71ea2f2",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Lucklyric",
-        "repo": "cc-dev-tools",
-        "type": "github"
-      }
-    },
-    "cc-dev-tools_2": {
-      "flake": false,
-      "locked": {
         "lastModified": 1777301179,
         "narHash": "sha256-mLJftGTU06SLQ98g2yqYdNAWj2OPwjxNhuvDnITr9vM=",
         "owner": "Lucklyric",
@@ -316,22 +220,6 @@
       }
     },
     "cc-marketplace": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1768758615,
-        "narHash": "sha256-BnH8+reZQRy4st+5zwA1EEDLIc2nVIp8CVBizUIkjXo=",
-        "owner": "ananddtyagi",
-        "repo": "cc-marketplace",
-        "rev": "b643305146890bda9b2e694d2c42206ae4d0a4df",
-        "type": "github"
-      },
-      "original": {
-        "owner": "ananddtyagi",
-        "repo": "cc-marketplace",
-        "type": "github"
-      }
-    },
-    "cc-marketplace_2": {
       "flake": false,
       "locked": {
         "lastModified": 1768758615,
@@ -382,22 +270,6 @@
     "claude-code-plugins-plus": {
       "flake": false,
       "locked": {
-        "lastModified": 1779672981,
-        "narHash": "sha256-NtuCu16Z9bpeybo6or7XS/65b8d3ii4rnbKL6c04rcY=",
-        "owner": "jeremylongshore",
-        "repo": "claude-code-plugins-plus",
-        "rev": "c2cae823174b4ed9830f3c4d0282aa7e54b9cb10",
-        "type": "github"
-      },
-      "original": {
-        "owner": "jeremylongshore",
-        "repo": "claude-code-plugins-plus",
-        "type": "github"
-      }
-    },
-    "claude-code-plugins-plus_2": {
-      "flake": false,
-      "locked": {
         "lastModified": 1779647122,
         "narHash": "sha256-Bf/Bg/9jT6ss11Q047Kl7UOgZiqlJZN5SBPVV6vifOY=",
         "owner": "jeremylongshore",
@@ -412,22 +284,6 @@
       }
     },
     "claude-code-workflows": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1779670854,
-        "narHash": "sha256-YpMOSgofEqheuu8beu8TroaT8JwQB+M1+bBV/hUeLls=",
-        "owner": "wshobson",
-        "repo": "agents",
-        "rev": "9b6b4c1254c42be711c1a58416201c9f78873ac8",
-        "type": "github"
-      },
-      "original": {
-        "owner": "wshobson",
-        "repo": "agents",
-        "type": "github"
-      }
-    },
-    "claude-code-workflows_2": {
       "flake": false,
       "locked": {
         "lastModified": 1779666935,
@@ -459,22 +315,6 @@
         "type": "github"
       }
     },
-    "claude-cookbooks_2": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1779659099,
-        "narHash": "sha256-ExC1ZFhhf7+74syQK96PZ7yYf0kyY756SJZZXXkacms=",
-        "owner": "anthropics",
-        "repo": "claude-cookbooks",
-        "rev": "3c30b020594de29a7f24ee579c511ac3ac45fb6a",
-        "type": "github"
-      },
-      "original": {
-        "owner": "anthropics",
-        "repo": "claude-cookbooks",
-        "type": "github"
-      }
-    },
     "claude-plugins-official": {
       "flake": false,
       "locked": {
@@ -491,39 +331,7 @@
         "type": "github"
       }
     },
-    "claude-plugins-official_2": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1779659326,
-        "narHash": "sha256-zKNCeUQoCVZaJfP+eVmFD9G6du8Iu8p7TZPBcdF3ujs=",
-        "owner": "anthropics",
-        "repo": "claude-plugins-official",
-        "rev": "1b527e2ee74e6dbd198e22cd41701c3b6f47dfec",
-        "type": "github"
-      },
-      "original": {
-        "owner": "anthropics",
-        "repo": "claude-plugins-official",
-        "type": "github"
-      }
-    },
     "claude-skills": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1778765226,
-        "narHash": "sha256-fkE535x4714uhlg2p3rPiasnUE8bTyfPXKzFfPBao+w=",
-        "owner": "secondsky",
-        "repo": "claude-skills",
-        "rev": "5e92b7170451adf347b8719ee984e147f3eabbea",
-        "type": "github"
-      },
-      "original": {
-        "owner": "secondsky",
-        "repo": "claude-skills",
-        "type": "github"
-      }
-    },
-    "claude-skills_2": {
       "flake": false,
       "locked": {
         "lastModified": 1778765226,
@@ -1372,22 +1180,6 @@
         "type": "github"
       }
     },
-    "huggingface-skills_2": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1779366435,
-        "narHash": "sha256-cxE620PeDYvy01TWJ4MQmMYoLaNujB2qq2lIZRHbBls=",
-        "owner": "huggingface",
-        "repo": "skills",
-        "rev": "6592035ef09a74249f2d60083c6a178960d267c6",
-        "type": "github"
-      },
-      "original": {
-        "owner": "huggingface",
-        "repo": "skills",
-        "type": "github"
-      }
-    },
     "jacobpevans-cc-plugins": {
       "flake": false,
       "locked": {
@@ -1404,39 +1196,23 @@
         "type": "github"
       }
     },
-    "jacobpevans-cc-plugins_2": {
+    "karpathy-skills": {
       "flake": false,
       "locked": {
-        "lastModified": 1780052734,
-        "narHash": "sha256-4d1Dh3+w3WYUNLMum1rtzdJmp27XSVld4Y0KwLpUJEU=",
-        "owner": "JacobPEvans",
-        "repo": "claude-code-plugins",
-        "rev": "799d4af7d0ec560d3fc4f8b15ef2b921746ea4ff",
+        "lastModified": 1776679504,
+        "narHash": "sha256-4z/wRdYH7UXRzF8RJU0sw8xbpx0BW/7CBv5sVEC2knY=",
+        "owner": "forrestchang",
+        "repo": "andrej-karpathy-skills",
+        "rev": "2c606141936f1eeef17fa3043a72095b4765b9c2",
         "type": "github"
       },
       "original": {
-        "owner": "JacobPEvans",
-        "repo": "claude-code-plugins",
+        "owner": "forrestchang",
+        "repo": "andrej-karpathy-skills",
         "type": "github"
       }
     },
     "lunar-claude": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1779127581,
-        "narHash": "sha256-vVuusVSjnxxYXG1b59R6wDr/H1XycCza+UMCgxt+SOw=",
-        "owner": "basher83",
-        "repo": "lunar-claude",
-        "rev": "6e38da2b65467ca16203e8e1f451fd804f7780de",
-        "type": "github"
-      },
-      "original": {
-        "owner": "basher83",
-        "repo": "lunar-claude",
-        "type": "github"
-      }
-    },
-    "lunar-claude_2": {
       "flake": false,
       "locked": {
         "lastModified": 1779127581,
@@ -1505,6 +1281,44 @@
         "ai-assistant-instructions": [
           "ai-assistant-instructions"
         ],
+        "claude-code-plugins": [
+          "claude-code-plugins"
+        ],
+        "fabric-src": "fabric-src",
+        "home-manager": [
+          "home-manager"
+        ],
+        "karpathy-skills": "karpathy-skills",
+        "nix-claude-code": [
+          "nix-claude-code"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "nixpkgs-unstable": "nixpkgs-unstable",
+        "pal-mcp-server": [
+          "pal-mcp-server"
+        ]
+      },
+      "locked": {
+        "lastModified": 1780162734,
+        "narHash": "sha256-dpIwD/6cHFAq/FdMFVxZYIUL2kHEvco4YA38zfCEDto=",
+        "owner": "JacobPEvans",
+        "repo": "nix-ai",
+        "rev": "20fbd459106af6770bea3b2f905fb77479c1f694",
+        "type": "github"
+      },
+      "original": {
+        "owner": "JacobPEvans",
+        "repo": "nix-ai",
+        "type": "github"
+      }
+    },
+    "nix-claude-code": {
+      "inputs": {
+        "ai-assistant-instructions": [
+          "ai-assistant-instructions"
+        ],
         "anthropic-agent-skills": "anthropic-agent-skills",
         "axton-obsidian-visual-skills": "axton-obsidian-visual-skills",
         "bills-claude-skills": "bills-claude-skills",
@@ -1520,81 +1334,26 @@
         "claude-cookbooks": "claude-cookbooks",
         "claude-plugins-official": "claude-plugins-official",
         "claude-skills": "claude-skills",
-        "fabric-src": "fabric-src",
-        "home-manager": [
-          "home-manager"
-        ],
-        "huggingface-skills": "huggingface-skills",
-        "jacobpevans-cc-plugins": "jacobpevans-cc-plugins_2",
-        "lunar-claude": "lunar-claude",
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "nixpkgs-unstable": "nixpkgs-unstable",
-        "obsidian-skills": "obsidian-skills",
-        "openai-codex": "openai-codex",
-        "pal-mcp-server": [
-          "pal-mcp-server"
-        ],
-        "superpowers-marketplace": "superpowers-marketplace",
-        "vct-cribl-pack-validator-skills": "vct-cribl-pack-validator-skills",
-        "visual-explainer-marketplace": "visual-explainer-marketplace",
-        "wakatime": "wakatime"
-      },
-      "locked": {
-        "lastModified": 1780026654,
-        "narHash": "sha256-GmtJIMKXa0zSyZDALakQTPcPGr5M7/T2RG+lPHa0qBU=",
-        "owner": "JacobPEvans",
-        "repo": "nix-ai",
-        "rev": "aebe9c1f3475e60f6b90d757bd3f996601055e34",
-        "type": "github"
-      },
-      "original": {
-        "owner": "JacobPEvans",
-        "repo": "nix-ai",
-        "type": "github"
-      }
-    },
-    "nix-claude-code": {
-      "inputs": {
-        "ai-assistant-instructions": [
-          "ai-assistant-instructions"
-        ],
-        "anthropic-agent-skills": "anthropic-agent-skills_2",
-        "axton-obsidian-visual-skills": "axton-obsidian-visual-skills_2",
-        "bills-claude-skills": "bills-claude-skills_2",
-        "bitwarden-marketplace": "bitwarden-marketplace_2",
-        "browser-use-skills": "browser-use-skills_2",
-        "cc-dev-tools": "cc-dev-tools_2",
-        "cc-marketplace": "cc-marketplace_2",
-        "claude-code-plugins": [
-          "claude-code-plugins"
-        ],
-        "claude-code-plugins-plus": "claude-code-plugins-plus_2",
-        "claude-code-workflows": "claude-code-workflows_2",
-        "claude-cookbooks": "claude-cookbooks_2",
-        "claude-plugins-official": "claude-plugins-official_2",
-        "claude-skills": "claude-skills_2",
         "fabric-src": "fabric-src_2",
         "flake-parts": "flake-parts_2",
         "home-manager": [
           "home-manager"
         ],
-        "huggingface-skills": "huggingface-skills_2",
+        "huggingface-skills": "huggingface-skills",
         "jacobpevans-cc-plugins": [
           "jacobpevans-cc-plugins"
         ],
-        "lunar-claude": "lunar-claude_2",
+        "lunar-claude": "lunar-claude",
         "nix-devenv": "nix-devenv",
         "nixpkgs": [
           "nixpkgs"
         ],
-        "obsidian-skills": "obsidian-skills_2",
-        "openai-codex": "openai-codex_2",
-        "superpowers-marketplace": "superpowers-marketplace_2",
-        "vct-cribl-pack-validator-skills": "vct-cribl-pack-validator-skills_2",
-        "visual-explainer-marketplace": "visual-explainer-marketplace_2",
-        "wakatime": "wakatime_2"
+        "obsidian-skills": "obsidian-skills",
+        "openai-codex": "openai-codex",
+        "superpowers-marketplace": "superpowers-marketplace",
+        "vct-cribl-pack-validator-skills": "vct-cribl-pack-validator-skills",
+        "visual-explainer-marketplace": "visual-explainer-marketplace",
+        "wakatime": "wakatime"
       },
       "locked": {
         "lastModified": 1780156176,
@@ -1946,39 +1705,7 @@
         "type": "github"
       }
     },
-    "obsidian-skills_2": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1779638361,
-        "narHash": "sha256-KwmnZrHkl/LqMLF+P0YnIqEpL3lGa6DSRUTgqYK1fes=",
-        "owner": "kepano",
-        "repo": "obsidian-skills",
-        "rev": "553ef99aa3306dd23f268e1ba9af752577684f69",
-        "type": "github"
-      },
-      "original": {
-        "owner": "kepano",
-        "repo": "obsidian-skills",
-        "type": "github"
-      }
-    },
     "openai-codex": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1776544913,
-        "narHash": "sha256-zWddz18c3E15TPuEvjMkBkrwiFlK3ZqIG5YP5xX6ZII=",
-        "owner": "openai",
-        "repo": "codex-plugin-cc",
-        "rev": "807e03ac9d5aa23bc395fdec8c3767500a86b3cf",
-        "type": "github"
-      },
-      "original": {
-        "owner": "openai",
-        "repo": "codex-plugin-cc",
-        "type": "github"
-      }
-    },
-    "openai-codex_2": {
       "flake": false,
       "locked": {
         "lastModified": 1776544913,
@@ -2169,22 +1896,6 @@
         "type": "github"
       }
     },
-    "superpowers-marketplace_2": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1779510867,
-        "narHash": "sha256-nnApq4Eu/8N+Z34JxwRmDgdje2AIG6OR1nGHRS4WBQk=",
-        "owner": "obra",
-        "repo": "superpowers-marketplace",
-        "rev": "6be22035d873c31ca246db4f4932a1098aea46fc",
-        "type": "github"
-      },
-      "original": {
-        "owner": "obra",
-        "repo": "superpowers-marketplace",
-        "type": "github"
-      }
-    },
     "systems": {
       "locked": {
         "lastModified": 1689347925,
@@ -2282,22 +1993,6 @@
         "type": "github"
       }
     },
-    "vct-cribl-pack-validator-skills_2": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1774484708,
-        "narHash": "sha256-cQEbj7K2HcFlL7vUVFYKsjlgZbzQqbVcAtw2QX7H4WQ=",
-        "owner": "VisiCore",
-        "repo": "vct-cribl-pack-validator",
-        "rev": "eaf3b3f17f77faf6825c587dfdd552f8a9837926",
-        "type": "github"
-      },
-      "original": {
-        "owner": "VisiCore",
-        "repo": "vct-cribl-pack-validator",
-        "type": "github"
-      }
-    },
     "visual-explainer-marketplace": {
       "flake": false,
       "locked": {
@@ -2314,39 +2009,7 @@
         "type": "github"
       }
     },
-    "visual-explainer-marketplace_2": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1777310126,
-        "narHash": "sha256-82RYY9txFLhj24oVyvvcXEm6F1RRyRTIXXf8vAJzeoE=",
-        "owner": "nicobailon",
-        "repo": "visual-explainer",
-        "rev": "8f1d0e38ab0f265632a31d2fd032f7b730c98c15",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nicobailon",
-        "repo": "visual-explainer",
-        "type": "github"
-      }
-    },
     "wakatime": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1778860224,
-        "narHash": "sha256-zZGx6rYgVXtyhoLy7w4tDFVGioEUqpWcXVIzFN4NfAE=",
-        "owner": "wakatime",
-        "repo": "claude-code-wakatime",
-        "rev": "3915f4ec19d4fedf2a1a2a644f1138cd72e956da",
-        "type": "github"
-      },
-      "original": {
-        "owner": "wakatime",
-        "repo": "claude-code-wakatime",
-        "type": "github"
-      }
-    },
-    "wakatime_2": {
       "flake": false,
       "locked": {
         "lastModified": 1778860224,
