@@ -1301,11 +1301,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1780162734,
-        "narHash": "sha256-dpIwD/6cHFAq/FdMFVxZYIUL2kHEvco4YA38zfCEDto=",
+        "lastModified": 1780178954,
+        "narHash": "sha256-e90irW6XOlQI0ZU2YcwNoVaCxRNwsHJt81LYQmJnEa8=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "20fbd459106af6770bea3b2f905fb77479c1f694",
+        "rev": "0725d035f5dd8edab1f89adf7451846b7eddc284",
         "type": "github"
       },
       "original": {

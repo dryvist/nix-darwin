@@ -69,21 +69,6 @@ in
   };
 
   # ==========================================================================
-  # AI Assistant Configuration
-  # ==========================================================================
-  # ai-assistant-instructions content comes from the Nix store (flake input);
-  # no local-repo path is needed for runtime use.
-  ai = {
-    # Claude Code settings JSON Schema URL (official schema store)
-    # Used by: nix-ai's validateClaudeSettings activation hook.
-    # NOTE: Plan called for deletion here AND in nix-ai. Reverted because
-    # nix-ai/modules/default.nix:106 still references it. Delete in a
-    # follow-up after nix-ai stops consuming it (move to inline constant
-    # or pull from nix-claude-code.lib).
-    claudeSchemaUrl = "https://json.schemastore.org/claude-code-settings.json";
-  };
-
-  # ==========================================================================
   # Logging Configuration
   # ==========================================================================
   logging = {
