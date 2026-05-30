@@ -44,11 +44,11 @@
     # Direct inputs for independent updating (follows into nix-ai)
     # These are non-flake repos — zero transitive deps, always a 6-line flake.lock diff
     jacobpevans-cc-plugins = {
-      url = "github:JacobPEvans/claude-code-plugins";
+      url = "github:dryvist/claude-code-plugins";
       flake = false;
     };
     ai-assistant-instructions = {
-      url = "github:JacobPEvans/ai-assistant-instructions";
+      url = "github:dryvist/ai-assistant-instructions";
       flake = false;
     };
     claude-code-plugins = {
@@ -60,15 +60,16 @@
       flake = false;
     };
 
-    # AI CLI ecosystem (Claude, Gemini, Copilot, MCP, marketplace)
-    # Self-contained: injects its own flake inputs via _module.args
+    # AI CLI ecosystem (Claude, Gemini, Copilot, MCP, marketplace).
+    # Only AI flake nix-darwin imports — Claude/Gemini/Codex/MCP config
+    # all flow through nix-ai. nix-claude-code is consumed transitively
+    # via nix-ai (kept off nix-darwin's top-level inputs to avoid pulling
+    # 24 marketplace inputs + nix-devenv dev-tooling into our lock).
     nix-ai = {
-      url = "github:JacobPEvans/nix-ai";
+      url = "github:dryvist/nix-ai";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         home-manager.follows = "home-manager";
-        # Independent update paths — no need to update nix-ai for these
-        jacobpevans-cc-plugins.follows = "jacobpevans-cc-plugins";
         ai-assistant-instructions.follows = "ai-assistant-instructions";
         claude-code-plugins.follows = "claude-code-plugins";
         pal-mcp-server.follows = "pal-mcp-server";
@@ -77,7 +78,7 @@
 
     # Cross-platform home-manager modules (git, zsh, vscode, monitoring, shells)
     nix-home = {
-      url = "github:JacobPEvans/nix-home";
+      url = "github:dryvist/nix-home";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
     };

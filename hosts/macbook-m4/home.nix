@@ -59,41 +59,9 @@
   };
 
   programs = {
-    claude = {
-      # Disable playwright plugin globally — only useful in specific projects.
-      # playwright@claude-skills (skills-only, no MCP) stays enabled.
-      plugins.enabled."playwright@claude-plugins-official" = lib.mkForce false;
-
-      # Disable MCP servers that duplicate built-in tools, are demo/test, or are project-specific.
-      # Servers remain defined (for type validation) but disabled = true excludes them from ~/.claude.json.
-      # Project-specific servers (cribl, terraform, aws) are re-enabled via per-project .mcp.json.
-      mcpServers =
-        lib.genAttrs
-          [
-            "everything" # Demo/test — not useful in production
-            "filesystem" # Duplicates built-in Read/Write/Glob/Edit tools
-            "fetch" # Duplicates built-in WebFetch tool
-            "git" # Duplicates built-in git via Bash(git:*)
-            "github" # Duplicates github@claude-plugins-official plugin
-            "cribl" # Project-specific — available via per-project .mcp.json
-            "terraform" # Project-specific — available via per-project .mcp.json
-            "cloudflare" # Not actively used — disable until needed
-            "exa" # Not actively used — disable until needed
-            "firecrawl" # Not actively used — disable until needed
-            "docker" # Not actively used — disable until needed
-          ]
-          (_: {
-            disabled = true;
-          })
-        // {
-          splunk = {
-            command = "doppler-mcp";
-            args = [ "splunk-mcp-connect" ];
-            # TLS bypass for self-signed cert is scoped inside splunk-mcp-connect,
-            # not here, to avoid leaking NODE_TLS_REJECT_UNAUTHORIZED to doppler-mcp.
-          };
-        };
-    };
+    # Claude Code config (plugin disables, MCP server overrides) moved to
+    # nix-ai/modules/claude-config.nix in dryvist/nix-ai#853 — Claude config
+    # doesn't belong in nix-darwin (host-specific opinion lives in nix-ai).
 
     # Local MLX inference server (vllm-mlx + llama-swap proxy on :11434).
     # Brings the existing vllm-mlx LaunchAgent under Nix management — without
