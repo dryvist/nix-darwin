@@ -3,11 +3,11 @@
     "ai-assistant-instructions": {
       "flake": false,
       "locked": {
-        "lastModified": 1780035055,
-        "narHash": "sha256-33MrbVXUEGna0Q0XqTXgtfW+XtE/pGK5ycnNMvHHKzY=",
+        "lastModified": 1780253562,
+        "narHash": "sha256-11l9fkOia2ofZm2Zut36S8ITyugBTvfEiwpVGv82yIs=",
         "owner": "dryvist",
         "repo": "ai-assistant-instructions",
-        "rev": "fd861a5b4f337df0f2c2e49872171c00d39cf342",
+        "rev": "d7582b455b84e425520d0a0b7fabd869bce74b20",
         "type": "github"
       },
       "original": {
@@ -147,11 +147,11 @@
     "claude-code-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1780018937,
-        "narHash": "sha256-YZ9ToLuIfrRPOfilDcMbzkoqvKlpp5/QrBAuLMmECuI=",
+        "lastModified": 1780256562,
+        "narHash": "sha256-0zOI9h29AzvoQLGXb8PMzULMbfRLNNREKXTZ/jFUjPc=",
         "owner": "anthropics",
         "repo": "claude-code",
-        "rev": "2d5c3c6c85048de7a4426a91268076807ebaeba5",
+        "rev": "8bae02d5319c619f84f51476188e5b28b2e5816b",
         "type": "github"
       },
       "original": {
@@ -602,11 +602,11 @@
     "jacobpevans-cc-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1780052734,
-        "narHash": "sha256-4d1Dh3+w3WYUNLMum1rtzdJmp27XSVld4Y0KwLpUJEU=",
+        "lastModified": 1780253774,
+        "narHash": "sha256-Sg7ZTUvCUPq13pNx2lU9YPxpC5IoyAUh23P8/xzpKOg=",
         "owner": "dryvist",
         "repo": "claude-code-plugins",
-        "rev": "799d4af7d0ec560d3fc4f8b15ef2b921746ea4ff",
+        "rev": "3cfe3e6eb7501dfdc77028e5780dee0e9c76c356",
         "type": "github"
       },
       "original": {
@@ -833,11 +833,11 @@
         "orbstack-kubernetes": "orbstack-kubernetes"
       },
       "locked": {
-        "lastModified": 1780031580,
-        "narHash": "sha256-T2KIkCfIPAbkME4AUrbf7Vktsn70i1ZqesvM83Z2P5s=",
+        "lastModified": 1780253603,
+        "narHash": "sha256-8axD/QRArfeyRqKyV897vKeMHIZT2Ps75xCaMVWM1Hk=",
         "owner": "dryvist",
         "repo": "nix-home",
-        "rev": "fc124db8b4296bc16b72058ccd74997f2436d644",
+        "rev": "56d9791c5c7d6dfb761ad1b00f63d95fba981237",
         "type": "github"
       },
       "original": {
@@ -940,11 +940,11 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1779813814,
-        "narHash": "sha256-MTRlb6MbtV8O9boJJeRYdqYV1IBvYZ8wXjIJXF6QDMQ=",
+        "lastModified": 1779975975,
+        "narHash": "sha256-gvG59uDld9KrCg6rD9eQtGGGUbKNf51dngL5SPB/xng=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "283ec1093a0e5aabd89aee53200d86aeb5b01401",
+        "rev": "4d66785aca79f0b08eb560a82672f55859af59ca",
         "type": "github"
       },
       "original": {
