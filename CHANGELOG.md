@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.39.0](https://github.com/dryvist/nix-darwin/compare/v1.38.1...v1.39.0) (2026-06-01)
+
+
+### Features
+
+* **claude:** adopt nix-claude-code module ([#1160](https://github.com/dryvist/nix-darwin/issues/1160)) ([83f987f](https://github.com/dryvist/nix-darwin/commit/83f987fe488e547289f8caeed99e2887f2d35b35))
+* **tokens:** formalize DRYVIST/ORG_ADMIN tiers, dryvist default, post-rename signing fix ([#1153](https://github.com/dryvist/nix-darwin/issues/1153)) ([20357b8](https://github.com/dryvist/nix-darwin/commit/20357b84e94acd0398c86ad2a7f134b8d32bd411))
+
+
+### Bug Fixes
+
+* **ci:** retarget reusable-workflow uses: refs to current org homes ([#1154](https://github.com/dryvist/nix-darwin/issues/1154)) ([c9a66a5](https://github.com/dryvist/nix-darwin/commit/c9a66a5ec89888ed22d1c72ecfdeb4e7de3181a7))
+* **homebrew:** declare claude-code@latest cask to match install ([#1167](https://github.com/dryvist/nix-darwin/issues/1167)) ([b40291d](https://github.com/dryvist/nix-darwin/commit/b40291d0b59c67c6ac3aa98e059124c865e07a09))
+* **identity:** keep fullName "JacobPEvans" for cross-repo consistency ([#1157](https://github.com/dryvist/nix-darwin/issues/1157)) ([56b3689](https://github.com/dryvist/nix-darwin/commit/56b3689976bf797788363fb7b1bbc34a82c67847)), closes [#1155](https://github.com/dryvist/nix-darwin/issues/1155)
+* **identity:** point git identity at renamed JacobPEvans-personal account ([#1155](https://github.com/dryvist/nix-darwin/issues/1155)) ([a2ac84b](https://github.com/dryvist/nix-darwin/commit/a2ac84bfdb7a491195b4875e3239ff8f8e38e4f4))
+
 ## [1.38.1](https://github.com/JacobPEvans/nix-darwin/compare/v1.38.0...v1.38.1) (2026-05-25)
 
 
