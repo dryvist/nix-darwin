@@ -137,9 +137,11 @@ in
         greedy = true;
       } # Claude desktop app (not in nixpkgs for Darwin)
       {
-        name = "claude-code";
+        name = "claude-code@latest";
         greedy = true;
-      } # Claude Code CLI
+      } # Claude Code CLI — the @latest cask tracks the newest release (the
+      # plain `claude-code` cask lags; declaring @latest matches what's
+      # actually installed and stops the rebuild's brew-bundle binary conflict)
 
       # --- OpenAI ---
       # OpenAI Codex CLI (AI coding agent) - migrated from homebrew/core to cask
