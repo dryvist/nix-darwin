@@ -196,11 +196,12 @@ in
         name = "microsoft-teams";
         greedy = true;
       }
-      # PowerShell 7 — cross-platform successor to Windows PowerShell 5.1.
+      # PowerShell 7 preview — cross-platform successor to Windows PowerShell 5.1.
       # Includes a built-in Windows PowerShell 5.1 compatibility layer so legacy
       # scripts run without modification. (PS 5.1 itself is Windows-only.)
+      # Note: Homebrew only ships powershell@preview; there is no stable cask.
       {
-        name = "powershell";
+        name = "powershell@preview";
         greedy = true;
       }
 
