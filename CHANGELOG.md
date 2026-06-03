@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.40.0](https://github.com/dryvist/nix-darwin/compare/v1.39.0...v1.40.0) (2026-06-03)
+
+
+### Features
+
+* **ci:** receive update-flake-input dispatch from nix-ai ([#1174](https://github.com/dryvist/nix-darwin/issues/1174)) ([09ddd30](https://github.com/dryvist/nix-darwin/commit/09ddd30e10d03b90cf5e7b1b41a4024fe12fb447))
+
+
+### Bug Fixes
+
+* **ci:** repoint release-please caller to org-native reusable workflow ([#1171](https://github.com/dryvist/nix-darwin/issues/1171)) ([1ae9a40](https://github.com/dryvist/nix-darwin/commit/1ae9a40c4acab75a197ebe4a7311bb9519ce31d6))
+* **homebrew:** drop Shortwave for Apple Mail; move bitwarden-desktop to cask ([#1181](https://github.com/dryvist/nix-darwin/issues/1181)) ([e770edb](https://github.com/dryvist/nix-darwin/commit/e770edb34ecf69a98b6b4a83160f376fcd5f9313))
+
 ## [1.39.0](https://github.com/dryvist/nix-darwin/compare/v1.38.1...v1.39.0) (2026-06-01)
 
 
