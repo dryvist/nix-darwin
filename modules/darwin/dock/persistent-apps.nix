@@ -40,7 +40,7 @@ in
       "${homeDir}/Applications/Home Manager Apps/Visual Studio Code.app"
 
       # Communication
-      "/Applications/Shortwave.app" # AI-powered email client (homebrew cask)
+      "/System/Applications/Mail.app" # Apple Mail (system app)
       "/Applications/Microsoft Outlook.app"
       "/Applications/Microsoft Teams.app"
       "/Applications/Slack.app"

@@ -132,7 +132,6 @@ Source: `modules/darwin/common.nix`
 
 | Package | Description |
 | --- | --- |
-| bitwarden-desktop | Password manager desktop app |
 | raycast | Productivity launcher (replaces Spotlight) |
 | swiftbar | Menu bar customization |
 
@@ -178,7 +177,7 @@ via LaunchAgent) always installs the latest version rather than deferring to bui
 | Package | greedy | Description |
 | --- | --- | --- |
 | obsidian | yes | Knowledge base / note-taking |
-| shortwave | yes | AI-powered email client |
+| bitwarden | yes | Password manager desktop app (moved from nixpkgs — EOL electron_39) |
 | wispr-flow | yes | AI-powered voice dictation |
 | voiceink | yes | Voice-to-text app (local whisper) |
 | claude | yes | Anthropic Claude desktop app (not in nixpkgs for Darwin) |

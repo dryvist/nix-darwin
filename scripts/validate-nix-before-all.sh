@@ -17,7 +17,7 @@ EXCLUSIONS=(
   "claude:Not available for aarch64-darwin (only x86_64-linux)"
   "claude-code:Intentionally using homebrew due to recent nixpkgs latency on latest packages"
   "gemini-cli:Intentionally using homebrew due to recent nixpkgs latency on latest packages"
-  "shortwave:Different apps - nixpkgs=radio client, homebrew=email client"
+  "bitwarden:nixpkgs build pins EOL electron_39 (insecure); cask uses Bitwarden's maintained build"
   "orbstack:Cask preferred over nixpkgs for TCC permission stability (nixpkgs symlink changes on rebuild, forcing TCC re-grant)"
   "postman:Nixpkgs version lags significantly behind upstream, causing Squirrel/ShipIt schema mismatch errors"
 )

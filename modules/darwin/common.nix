@@ -77,7 +77,8 @@ in
     # ========================================================================
     # GUI applications (system-level, in /Applications/Nix Apps/)
     # ========================================================================
-    bitwarden-desktop # Password manager desktop app
+    # bitwarden-desktop moved to a Homebrew cask (`bitwarden`) — the nixpkgs
+    # build pins EOL/insecure electron_39. See modules/darwin/homebrew.nix.
     raycast # Productivity launcher (replaces Spotlight)
     swiftbar # Menu bar customization
   ];
