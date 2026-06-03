@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.40.1](https://github.com/dryvist/nix-darwin/compare/v1.40.0...v1.40.1) (2026-06-03)
+
+
+### Bug Fixes
+
+* **homebrew:** add powershell@preview cask ([#1184](https://github.com/dryvist/nix-darwin/issues/1184)) ([d88f8ff](https://github.com/dryvist/nix-darwin/commit/d88f8ff2212d109c0e69fdba64969262db571845))
+
 ## [1.40.0](https://github.com/dryvist/nix-darwin/compare/v1.39.0...v1.40.0) (2026-06-03)
 
 
