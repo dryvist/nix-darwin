@@ -118,10 +118,18 @@ in
         name = "obsidian";
         greedy = true;
       } # Knowledge base / note-taking
+      # Bitwarden desktop password manager. Cask, NOT nixpkgs: the nixpkgs
+      # `bitwarden-desktop` build pins `electron_39`, which is now EOL and
+      # flagged insecure, so `darwin-rebuild` refuses to evaluate it. Bitwarden
+      # upstream still pins electron_39 even on its latest release, so bumping
+      # nixpkgs does not help. This cask is Bitwarden's own signed build
+      # (independent of nixpkgs' from-source electron), so it sidesteps the EOL
+      # flag and stays current via greedy auto-update. Moved here from
+      # modules/darwin/common.nix systemPackages.
       {
-        name = "shortwave";
+        name = "bitwarden";
         greedy = true;
-      } # AI-powered email client
+      } # Password manager desktop app (ex-nixpkgs; EOL electron_39)
       {
         name = "wispr-flow";
         greedy = true;
