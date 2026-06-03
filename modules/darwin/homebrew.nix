@@ -196,6 +196,13 @@ in
         name = "microsoft-teams";
         greedy = true;
       }
+      # PowerShell 7 — cross-platform successor to Windows PowerShell 5.1.
+      # Includes a built-in Windows PowerShell 5.1 compatibility layer so legacy
+      # scripts run without modification. (PS 5.1 itself is Windows-only.)
+      {
+        name = "powershell";
+        greedy = true;
+      }
 
       # --- Browsers ---
       # Firefox is in nixpkgs (firefox-bin) but installs to /nix/store/<hash>
