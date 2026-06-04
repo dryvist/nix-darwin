@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.42.1](https://github.com/dryvist/nix-darwin/compare/v1.42.0...v1.42.1) (2026-06-04)
+
+
+### Bug Fixes
+
+* **homebrew:** drop powershell@preview cask, migrate to nix-devenv ([#1195](https://github.com/dryvist/nix-darwin/issues/1195)) ([c3249b1](https://github.com/dryvist/nix-darwin/commit/c3249b1800648ef63d25e134348d62ce85d879a0))
+
 ## [1.42.0](https://github.com/dryvist/nix-darwin/compare/v1.41.0...v1.42.0) (2026-06-04)
 
 
