@@ -106,6 +106,13 @@
         # HuggingFace - for huggingface MCP server and hf CLI (model downloads)
         export HF_TOKEN=''${HF_TOKEN:-"$(_get_keychain_secret 'HF_TOKEN' "$_KC_AI_ACCOUNT" "$_KC_AI_DB")"}
 
+        # Local MLX model id — consumed by services.aiStack.defaultLocalModelId
+        # in this same module via `builtins.getEnv` at `darwin-rebuild --impure`
+        # time. Lives in the no-password automation keychain alongside HF_TOKEN
+        # (also retrievable from Doppler `gh-workflow-tokens` / `prd` and the
+        # dryvist `AI_MODEL_LOCAL_LLM` org variable).
+        export AI_MODEL_LOCAL_LLM=''${AI_MODEL_LOCAL_LLM:-"$(_get_keychain_secret 'AI_MODEL_LOCAL_LLM' "$_KC_AI_ACCOUNT" "$_KC_AI_DB")"}
+
         unset -f _get_keychain_secret  # No longer needed after init
         unset _KC_USER _KC_AI_DB  # _KC_AI_ACCOUNT persists for runtime gh-token switching
 
@@ -142,6 +149,27 @@
       '';
     };
   };
+
+  # AI Stack — required option since dryvist/nix-ai#878 collapsed the role
+  # registry to a single configurable physical model id. The value is read
+  # from the `AI_MODEL_LOCAL_LLM` env var, which the shell-initContent block
+  # above exports from the no-password automation keychain (matching the
+  # HF_TOKEN pattern). `darwin-rebuild switch --impure` is required so
+  # `builtins.getEnv` resolves; running darwin-rebuild from an interactive
+  # zsh inherits the env var that the initContent has already set.
+  #
+  # If the keychain entry is missing or the env var is otherwise unset, the
+  # build fails fast with a message naming the keychain item.
+  services.aiStack.defaultLocalModelId =
+    let
+      raw = builtins.getEnv "AI_MODEL_LOCAL_LLM";
+    in
+    if raw == "" then
+      throw "AI_MODEL_LOCAL_LLM env var is unset. Verify the automation-keychain item `AI_MODEL_LOCAL_LLM` exists and that `darwin-rebuild switch --impure` is invoked from a shell where the initContent above has already exported it."
+    else if (builtins.match ".*/.*" raw) != null then
+      raw
+    else
+      "mlx-community/${raw}";
 
   home = {
     # ========================================================================
