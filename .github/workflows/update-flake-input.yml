@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
     inputs:
       input_name:
-        description: Flake input to update (default: nix-ai)
+        description: "Flake input to update (default: nix-ai)"
         type: string
         default: nix-ai
 
