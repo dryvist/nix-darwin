@@ -10,7 +10,7 @@
 # synthesis on this side). Build fails fast with a message naming the
 # keychain item if the env is unset.
 
-{ ... }:
+_:
 
 {
   services.aiStack.defaultLocalModelId =
