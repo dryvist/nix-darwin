@@ -158,18 +158,18 @@
   # `builtins.getEnv` resolves; running darwin-rebuild from an interactive
   # zsh inherits the env var that the initContent has already set.
   #
-  # If the keychain entry is missing or the env var is otherwise unset, the
-  # build fails fast with a message naming the keychain item.
+  # The keychain value must be the **full** physical model id (e.g. the
+  # full `mlx-community/...` form) — this consumer reads it verbatim, no
+  # prefix synthesis. If the env var is unset, the build fails fast with
+  # a message naming the keychain item.
   services.aiStack.defaultLocalModelId =
     let
       raw = builtins.getEnv "AI_MODEL_LOCAL_LLM";
     in
     if raw == "" then
-      throw "AI_MODEL_LOCAL_LLM env var is unset. Verify the automation-keychain item `AI_MODEL_LOCAL_LLM` exists and that `darwin-rebuild switch --impure` is invoked from a shell where the initContent above has already exported it."
-    else if (builtins.match ".*/.*" raw) != null then
-      raw
+      throw "AI_MODEL_LOCAL_LLM env var is unset. Verify the automation-keychain item `AI_MODEL_LOCAL_LLM` exists (full physical model id, not just the suffix) and that `darwin-rebuild switch --impure` is invoked from a shell where the initContent above has already exported it."
     else
-      "mlx-community/${raw}";
+      raw;
 
   home = {
     # ========================================================================
