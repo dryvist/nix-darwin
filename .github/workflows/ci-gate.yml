@@ -110,10 +110,7 @@ jobs:
     name: Nix Validate
     needs: changes
     if: needs.changes.outputs.nix == 'true'
-    # Local copy of the shared workflow. It originally diverged only to inject
-    # `AI_MODEL_LOCAL_LLM` (now committed in lib/user-config.nix, injection
-    # removed). FOLLOW-UP: re-sync to / replace with the shared workflow.
-    uses: ./.github/workflows/_nix-validate.yml
+    uses: JacobPEvans-personal/.github/.github/workflows/_nix-validate.yml@main
     with:
       # Linux `nix flake check --all-systems` needs more disk/RAM for
       # darwin-source substitution; m7+c7 family with s3-cache fits.
