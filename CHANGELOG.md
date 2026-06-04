@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.42.0](https://github.com/dryvist/nix-darwin/compare/v1.41.0...v1.42.0) (2026-06-04)
+
+
+### Features
+
+* **mlx:** file-first AI_MODEL_LOCAL_LLM read + disable HF autodiscover ([#1192](https://github.com/dryvist/nix-darwin/issues/1192)) ([d7dbe38](https://github.com/dryvist/nix-darwin/commit/d7dbe38ccedcda088ab30b7cc9799d04c52ea9f5))
+
 ## [1.41.0](https://github.com/dryvist/nix-darwin/compare/v1.40.2...v1.41.0) (2026-06-04)
 
 
