@@ -196,14 +196,12 @@ in
         name = "microsoft-teams";
         greedy = true;
       }
-      # PowerShell 7 preview — cross-platform successor to Windows PowerShell 5.1.
-      # Includes a built-in Windows PowerShell 5.1 compatibility layer so legacy
-      # scripts run without modification. (PS 5.1 itself is Windows-only.)
-      # Note: Homebrew only ships powershell@preview; there is no stable cask.
-      {
-        name = "powershell@preview";
-        greedy = true;
-      }
+      # PowerShell migrated to the nix-devenv `windows` dev shell (stable pwsh
+      # from nixpkgs): `nix develop github:dryvist/nix-devenv?dir=shells/windows`.
+      # Moved off the always-on cask per nix-package-placement (project-scoped
+      # toolchain → nix-devenv). cleanup="none", so the previously-installed
+      # cask is left in place; run `brew uninstall --cask powershell@preview`
+      # to remove it.
 
       # --- Browsers ---
       # Firefox is in nixpkgs (firefox-bin) but installs to /nix/store/<hash>
