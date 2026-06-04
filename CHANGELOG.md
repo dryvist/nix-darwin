@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.40.2](https://github.com/dryvist/nix-darwin/compare/v1.40.1...v1.40.2) (2026-06-04)
+
+
+### Bug Fixes
+
+* **ci:** quote workflow_dispatch description to avoid YAML parse error ([#1188](https://github.com/dryvist/nix-darwin/issues/1188)) ([aec06a3](https://github.com/dryvist/nix-darwin/commit/aec06a32e8c94e4fa6246b9974501a4d72da450f))
+
 ## [1.40.1](https://github.com/dryvist/nix-darwin/compare/v1.40.0...v1.40.1) (2026-06-03)
 
 
