@@ -19,6 +19,9 @@
     # (no-password automation keychain). Extracted to keep this file under
     # the per-file size cap.
     ./services-ai-stack.nix
+    # Disables nix-ai's auto-discovery of locally-cached HF models so the
+    # registry stays at the single defaultLocalModelId entry.
+    ./mlx-no-autodiscover.nix
   ];
 
   # ==========================================================================

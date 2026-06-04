@@ -1,24 +1,39 @@
 # AI Stack — local model id supplier
 #
-# Required option since dryvist/nix-ai#878 collapsed the role registry to a
-# single configurable physical model id. Reads from the `AI_MODEL_LOCAL_LLM`
-# env var, which the home.nix shell-initContent block exports from the
-# no-password automation keychain. `darwin-rebuild switch --impure` is
-# required so `builtins.getEnv` resolves.
+# Required option since dryvist/nix-ai#878 collapsed the role registry to
+# one configurable physical model id. Two-source lookup, file first then
+# env fallback.
 #
-# The keychain value must be the full physical model id (no prefix
-# synthesis on this side). Build fails fast with a message naming the
-# keychain item if the env is unset.
+# Primary: file at the path below. Populated from the no-password
+# automation keychain item by the home.nix activation hook. Reading from
+# a file sidesteps macOS sudo env-reset policy on this host, which strips
+# arbitrary env vars. Root reads user files, so privileged rebuilds work
+# without env passthrough.
+#
+# Fallback: AI_MODEL_LOCAL_LLM env var. Used by CI runners (workflow
+# injects the value from the dryvist org variable) and on first rebuild
+# before the activation hook has run.
+#
+# The value must be the full physical model id; this consumer reads it
+# verbatim. Build fails fast with a clear message when neither source
+# is populated.
 
-_:
+{ config, ... }:
 
+let
+  modelIdPath = "${config.home.homeDirectory}/.config/ai-stack/local-model-id";
+  fromFile =
+    if builtins.pathExists modelIdPath then
+      builtins.replaceStrings [ "\n" ] [ "" ] (builtins.readFile modelIdPath)
+    else
+      "";
+  fromEnv = builtins.getEnv "AI_MODEL_LOCAL_LLM";
+  raw = if fromFile != "" then fromFile else fromEnv;
+in
 {
   services.aiStack.defaultLocalModelId =
-    let
-      raw = builtins.getEnv "AI_MODEL_LOCAL_LLM";
-    in
     if raw == "" then
-      throw "AI_MODEL_LOCAL_LLM env var is unset. Verify the automation-keychain item `AI_MODEL_LOCAL_LLM` exists (full physical model id) and that `darwin-rebuild switch --impure` is invoked from a shell where the home.nix initContent has already exported it."
+      throw "services.aiStack.defaultLocalModelId not set. Neither ${modelIdPath} nor the AI_MODEL_LOCAL_LLM env var is populated. The file is refreshed from the AI_MODEL_LOCAL_LLM automation-keychain item by the home.nix activation hook; in CI the env var is injected from the dryvist org variable."
     else
       raw;
 }
