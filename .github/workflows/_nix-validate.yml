@@ -1,15 +1,10 @@
 # Reusable: Nix Validate (local copy)
 #
-# Local copy of JacobPEvans-personal/.github/.github/workflows/_nix-validate.yml@main
-# with one addition: the `Check flake` step exports `AI_MODEL_LOCAL_LLM`
-# from the dryvist org variable so `builtins.getEnv` calls in the
-# host config (`hosts/macbook-m4/services-ai-stack.nix`) resolve at
-# evaluation time.
-#
-# The shared workflow accepts only `runner_label` + `all_systems` inputs;
-# `env:` cannot be injected from the caller into a reusable workflow's
-# steps. This local copy is the workaround. Re-sync from the shared
-# workflow when it gains generic env-input support.
+# Local copy of JacobPEvans-personal/.github/.github/workflows/_nix-validate.yml@main.
+# This copy originally diverged only to inject `AI_MODEL_LOCAL_LLM` for an
+# eval-time `builtins.getEnv`; that sourcing was removed (the value is now
+# committed in `lib/user-config.nix`), so the copy no longer needs to diverge.
+# FOLLOW-UP: re-sync to / replace this local copy with the shared workflow.
 
 name: _nix-validate
 
@@ -79,12 +74,8 @@ jobs:
 
       - name: Check flake
         env:
-          # Org-variable injection so `builtins.getEnv "AI_MODEL_LOCAL_LLM"`
-          # resolves at evaluation time inside the imported home config.
-          # See `hosts/macbook-m4/services-ai-stack.nix` for the reader.
-          AI_MODEL_LOCAL_LLM: ${{ vars.AI_MODEL_LOCAL_LLM }}
           ALL_SYSTEMS_FLAG: ${{ inputs.all_systems && '--all-systems' || '' }}
-        run: nix flake check $ALL_SYSTEMS_FLAG --print-build-logs --show-trace --keep-going --impure
+        run: nix flake check $ALL_SYSTEMS_FLAG --print-build-logs --show-trace --keep-going
 
       - name: Save Nix Store Cache
         if: github.event_name == 'push' && steps.nix-cache.outputs.cache-hit != 'true'

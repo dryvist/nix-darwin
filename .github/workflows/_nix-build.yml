@@ -57,14 +57,6 @@ jobs:
         run: echo "start=$(date +%s)" >> "$GITHUB_OUTPUT"
 
       - name: Build Home Manager
-        env:
-          # Sourced from the dryvist org variable `AI_MODEL_LOCAL_LLM`.
-          # Read by `services.aiStack.defaultLocalModelId` in
-          # `hosts/macbook-m4/services-ai-stack.nix` via `builtins.getEnv`.
-          # The `--impure` flag downstream picks up the var; without it the
-          # option throws (intentional — fail loud on misconfig at deploy
-          # time, but CI gets the value from the org var here).
-          AI_MODEL_LOCAL_LLM: ${{ vars.AI_MODEL_LOCAL_LLM }}
         run: ./scripts/workflows/build-hm.sh result-hm
 
       - name: Verify Nix Symlinks

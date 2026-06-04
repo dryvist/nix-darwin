@@ -139,6 +139,18 @@ in
   };
 
   # ==========================================================================
+  # AI Stack Configuration
+  # ==========================================================================
+  ai = {
+    # Local MLX physical model id consumed at Nix eval time by
+    # services.aiStack.defaultLocalModelId (hosts/macbook-m4/services-ai-stack.nix).
+    # Non-secret — a public Hugging Face model name. Committed here like every
+    # other eval-time identifier so evaluation stays pure (no --impure, no
+    # keychain/env/file sourcing). Change the model via a reviewed commit.
+    defaultLocalModelId = "mlx-community/Qwen3.6-35B-A3B-mxfp4";
+  };
+
+  # ==========================================================================
   # Nix/NixOS Configuration
   # ==========================================================================
   nix = {

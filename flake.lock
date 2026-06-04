@@ -750,11 +750,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1780538651,
-        "narHash": "sha256-raZCj49HMswSMX+lsTfKENtfuKaPWPrbHXNSZ63r3wY=",
+        "lastModified": 1780578549,
+        "narHash": "sha256-9SRM9LL5a6jeBypZnzEiUk7QgBX4nK7Qt2m/93CZo5U=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "ddf97fbe8ddc97f23b16c14d8d10aa80457b8d57",
+        "rev": "bb5fe9af99a64cbdb91517859519a64e31cb5549",
         "type": "github"
       },
       "original": {
