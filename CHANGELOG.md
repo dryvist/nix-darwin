@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.41.0](https://github.com/dryvist/nix-darwin/compare/v1.40.2...v1.41.0) (2026-06-04)
+
+
+### Features
+
+* **mlx:** wire services.aiStack.defaultLocalModelId from automation keychain ([f30c357](https://github.com/dryvist/nix-darwin/commit/f30c357b978f7c309bce7d068a326d2127583a64))
+
 ## [1.40.2](https://github.com/dryvist/nix-darwin/compare/v1.40.1...v1.40.2) (2026-06-04)
 
 
