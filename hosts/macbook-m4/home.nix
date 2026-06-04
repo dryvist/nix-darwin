@@ -15,9 +15,9 @@
 
 {
   imports = [
-    # services.aiStack.defaultLocalModelId — supplied from AI_MODEL_LOCAL_LLM
-    # (no-password automation keychain). Extracted to keep this file under
-    # the per-file size cap.
+    # services.aiStack.defaultLocalModelId — supplied from the committed
+    # lib/user-config.nix (non-secret model id). Extracted to keep this file
+    # under the per-file size cap.
     ./services-ai-stack.nix
     # Disables nix-ai's auto-discovery of locally-cached HF models so the
     # registry stays at the single defaultLocalModelId entry.
@@ -115,13 +115,6 @@
 
         # HuggingFace - for huggingface MCP server and hf CLI (model downloads)
         export HF_TOKEN=''${HF_TOKEN:-"$(_get_keychain_secret 'HF_TOKEN' "$_KC_AI_ACCOUNT" "$_KC_AI_DB")"}
-
-        # Local MLX model id — consumed by services.aiStack.defaultLocalModelId
-        # in this same module via `builtins.getEnv` at `darwin-rebuild --impure`
-        # time. Lives in the no-password automation keychain alongside HF_TOKEN
-        # (also retrievable from Doppler `gh-workflow-tokens` / `prd` and the
-        # dryvist `AI_MODEL_LOCAL_LLM` org variable).
-        export AI_MODEL_LOCAL_LLM=''${AI_MODEL_LOCAL_LLM:-"$(_get_keychain_secret 'AI_MODEL_LOCAL_LLM' "$_KC_AI_ACCOUNT" "$_KC_AI_DB")"}
 
         unset -f _get_keychain_secret  # No longer needed after init
         unset _KC_USER _KC_AI_DB  # _KC_AI_ACCOUNT persists for runtime gh-token switching

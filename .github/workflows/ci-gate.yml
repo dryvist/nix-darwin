@@ -110,11 +110,9 @@ jobs:
     name: Nix Validate
     needs: changes
     if: needs.changes.outputs.nix == 'true'
-    # Local copy of the shared workflow so the `Check flake` step can inject
-    # `AI_MODEL_LOCAL_LLM` from the dryvist org variable — reusable workflow
-    # calls can't propagate env to the called workflow's steps, and the
-    # shared workflow doesn't (yet) accept a generic env input. Re-sync from
-    # the shared workflow when it gains env-input support.
+    # Local copy of the shared workflow. It originally diverged only to inject
+    # `AI_MODEL_LOCAL_LLM` (now committed in lib/user-config.nix, injection
+    # removed). FOLLOW-UP: re-sync to / replace with the shared workflow.
     uses: ./.github/workflows/_nix-validate.yml
     with:
       # Linux `nix flake check --all-systems` needs more disk/RAM for
