@@ -14,6 +14,13 @@
 }:
 
 {
+  imports = [
+    # services.aiStack.defaultLocalModelId — supplied from AI_MODEL_LOCAL_LLM
+    # (no-password automation keychain). Extracted to keep this file under
+    # the per-file size cap.
+    ./services-ai-stack.nix
+  ];
+
   # ==========================================================================
   # macOS Application Management (copyApps for TCC stability)
   # ==========================================================================
@@ -149,27 +156,6 @@
       '';
     };
   };
-
-  # AI Stack — required option since dryvist/nix-ai#878 collapsed the role
-  # registry to a single configurable physical model id. The value is read
-  # from the `AI_MODEL_LOCAL_LLM` env var, which the shell-initContent block
-  # above exports from the no-password automation keychain (matching the
-  # HF_TOKEN pattern). `darwin-rebuild switch --impure` is required so
-  # `builtins.getEnv` resolves; running darwin-rebuild from an interactive
-  # zsh inherits the env var that the initContent has already set.
-  #
-  # The keychain value must be the **full** physical model id (e.g. the
-  # full `mlx-community/...` form) — this consumer reads it verbatim, no
-  # prefix synthesis. If the env var is unset, the build fails fast with
-  # a message naming the keychain item.
-  services.aiStack.defaultLocalModelId =
-    let
-      raw = builtins.getEnv "AI_MODEL_LOCAL_LLM";
-    in
-    if raw == "" then
-      throw "AI_MODEL_LOCAL_LLM env var is unset. Verify the automation-keychain item `AI_MODEL_LOCAL_LLM` exists (full physical model id, not just the suffix) and that `darwin-rebuild switch --impure` is invoked from a shell where the initContent above has already exported it."
-    else
-      raw;
 
   home = {
     # ========================================================================
