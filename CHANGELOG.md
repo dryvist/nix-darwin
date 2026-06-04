@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.42.2](https://github.com/dryvist/nix-darwin/compare/v1.42.1...v1.42.2) (2026-06-04)
+
+
+### Bug Fixes
+
+* **ai-stack:** source defaultLocalModelId from committed config ([cd0f29f](https://github.com/dryvist/nix-darwin/commit/cd0f29fb22e169c1c1de65645072c5a065afc23a))
+
 ## [1.42.1](https://github.com/dryvist/nix-darwin/compare/v1.42.0...v1.42.1) (2026-06-04)
 
 
