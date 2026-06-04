@@ -833,11 +833,11 @@
         "orbstack-kubernetes": "orbstack-kubernetes"
       },
       "locked": {
-        "lastModified": 1780538559,
-        "narHash": "sha256-xqhjLyAX5VBdr6eERQ6d4uI34WudM73pQUix+BwTYU4=",
+        "lastModified": 1780545043,
+        "narHash": "sha256-Mg592o/TKJy1pn0kvU0HJkX8474uyFYXzWzcIgvzCi8=",
         "owner": "dryvist",
         "repo": "nix-home",
-        "rev": "5b73f32de0b371bfb75e7b9dd4c9d0cbfa30c8b9",
+        "rev": "16ff396f49f7a9c15db21269f2ea3ce007e3424c",
         "type": "github"
       },
       "original": {
@@ -1042,11 +1042,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1777944972,
-        "narHash": "sha256-VfGRo1qTBKOe3s2gOv8LSoA6Fk19PvBlwQ1ECN0Evn8=",
+        "lastModified": 1780547341,
+        "narHash": "sha256-Gq8KNx5A7hBB3uGJaj6eQfLDIz5YdLu92gqBcvHvoUo=",
         "owner": "Mic92",
         "repo": "sops-nix",
-        "rev": "c591bf665727040c6cc5cb409079acb22dcce33c",
+        "rev": "9ed65852b6257fbeae4355bc24ecfea307ca759a",
         "type": "github"
       },
       "original": {
