@@ -166,7 +166,7 @@ Source: `modules/darwin/homebrew.nix`
 | --- | --- |
 | ccusage | Claude Code usage analyzer |
 | block-goose-cli | Block's Goose AI agent |
-| gemini-cli | Google Gemini CLI (moved from nixpkgs) |
+| antigravity-cli | Google Gemini CLI (moved from nixpkgs) |
 | whisperkit-cli | Swift native on-device speech recognition (Apple Silicon) |
 
 ### Casks
