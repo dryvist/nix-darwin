@@ -166,7 +166,6 @@ Source: `modules/darwin/homebrew.nix`
 | --- | --- |
 | ccusage | Claude Code usage analyzer |
 | block-goose-cli | Block's Goose AI agent |
-| antigravity-cli | Google Gemini CLI (moved from nixpkgs) |
 | whisperkit-cli | Swift native on-device speech recognition (Apple Silicon) |
 
 ### Casks
@@ -183,7 +182,9 @@ via LaunchAgent) always installs the latest version rather than deferring to bui
 | claude | yes | Anthropic Claude desktop app (not in nixpkgs for Darwin) |
 | claude-code | yes | Anthropic Claude Code CLI |
 | codex | yes | OpenAI Codex CLI (moved from nixpkgs; migrated from homebrew/core to cask) |
-| antigravity | yes | Google AI-powered IDE (Gemini 3) |
+| antigravity | yes | Google AI-powered agent orchestrator (Gemini 3) |
+| antigravity-cli | yes | Google terminal interface for agents (agy command) |
+| antigravity-ide | yes | Google AI-powered IDE environment |
 | lm-studio | yes | Local LLM inference UI + OpenAI-compatible API server |
 | postman | yes | API development environment (moved from nixpkgs — version lag caused schema mismatch) |
 | orbstack | yes | Container/Linux VM runtime — cask for TCC permission stability |

@@ -14,6 +14,7 @@ fi
 # Format: "package-name:reason"
 EXCLUSIONS=(
   "antigravity:Intentionally using homebrew due to nixpkgs version lag (requires Gemini 3.1 Pro support)"
+  "antigravity-ide:Intentionally using homebrew for early access to Google agent IDE"
   "claude:Not available for aarch64-darwin (only x86_64-linux)"
   "claude-code:Intentionally using homebrew due to recent nixpkgs latency on latest packages"
   "antigravity-cli:Intentionally using homebrew due to recent nixpkgs latency on latest packages"
