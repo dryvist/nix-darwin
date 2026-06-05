@@ -14,9 +14,10 @@ fi
 # Format: "package-name:reason"
 EXCLUSIONS=(
   "antigravity:Intentionally using homebrew due to nixpkgs version lag (requires Gemini 3.1 Pro support)"
+  "antigravity-ide:Intentionally using homebrew for early access to Google agent IDE"
   "claude:Not available for aarch64-darwin (only x86_64-linux)"
   "claude-code:Intentionally using homebrew due to recent nixpkgs latency on latest packages"
-  "gemini-cli:Intentionally using homebrew due to recent nixpkgs latency on latest packages"
+  "antigravity-cli:Intentionally using homebrew due to recent nixpkgs latency on latest packages"
   "bitwarden:nixpkgs build pins EOL electron_39 (insecure); cask uses Bitwarden's maintained build"
   "orbstack:Cask preferred over nixpkgs for TCC permission stability (nixpkgs symlink changes on rebuild, forcing TCC re-grant)"
   "postman:Nixpkgs version lags significantly behind upstream, causing Squirrel/ShipIt schema mismatch errors"
@@ -33,14 +34,14 @@ fi
 brews=$(awk '
   /brews = \[/ {in_brews=1; next}
   /\];/ && in_brews {in_brews=0; next}
-  in_brews {print}
+  in_brews && ! /^[[:space:]]*#/ {print}
 ' "$HOMEBREW_FILE" | grep '"' | sed 's/.*"\([^"]*\)".*/\1/' || true)
 
 # Extract cask packages (casks = [...])
 casks=$(awk '
   /casks = \[/ {in_casks=1; next}
   /\];/ && in_casks {in_casks=0; next}
-  in_casks {print}
+  in_casks && ! /^[[:space:]]*#/ {print}
 ' "$HOMEBREW_FILE" | grep '"' | sed 's/.*"\([^"]*\)".*/\1/' || true)
 
 if [[ -z "$brews" ]] && [[ -z "$casks" ]]; then
@@ -79,7 +80,7 @@ while IFS= read -r package; do
   [[ -z "$package" ]] && continue
 
   # Validate package name contains only safe characters
-  if ! [[ "$package" =~ ^[a-zA-Z0-9._-]+$ ]]; then
+  if ! [[ "$package" =~ ^[a-zA-Z0-9._@-]+$ ]]; then
     echo "✗ INVALID: '$package' (brew) contains unsafe characters"
     violations+="  - $package (brew) - invalid characters\n"
     ((failed++))
@@ -109,7 +110,7 @@ while IFS= read -r package; do
   [[ -z "$package" ]] && continue
 
   # Validate package name contains only safe characters
-  if ! [[ "$package" =~ ^[a-zA-Z0-9._-]+$ ]]; then
+  if ! [[ "$package" =~ ^[a-zA-Z0-9._@-]+$ ]]; then
     echo "✗ INVALID: '$package' (cask) contains unsafe characters"
     violations+="  - $package (cask) - invalid characters\n"
     ((failed++))

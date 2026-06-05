@@ -69,15 +69,12 @@ in
     };
     taps = [
       "homebrew/autoupdate" # Background auto-update via launchd (brew autoupdate)
+      "google/antigravity" # Google Antigravity agents (agy command)
+      "anthropics/tap" # Anthropic platform tools (ant command)
     ];
     brews = [
       # CLI tools (only if not available in nixpkgs)
       "ccusage" # Claude Code usage analyzer - not in nixpkgs
-
-      # Gemini CLI (Google Gemini AI assistant)
-      # - Moved from nixpkgs due to severe version lag (v0.23 vs v0.29 upstream)
-      # - Homebrew version is required for Gemini 3.1 Pro support
-      "gemini-cli"
 
       # --- AI Agent Tools (homebrew-only; home-manager cannot manage brew formulas) ---
 
@@ -111,7 +108,7 @@ in
       # unreliable (require the app to be open, can be dismissed, etc.), so greedy
       # ensures updates land deterministically via brew autoupdate.
       # NOTE: ChatGPT and Cursor are in nixpkgs - see home.packages.
-      # NOTE: Antigravity and gemini-cli are in homebrew (above).
+      # NOTE: Antigravity and antigravity-cli are in homebrew (above).
 
       # --- Productivity / Communication ---
       {
@@ -170,7 +167,15 @@ in
       {
         name = "antigravity";
         greedy = true;
-      } # Google's AI-powered IDE (Gemini 3) - moved from nixpkgs for Gemini 3.1 Pro support
+      } # Google's AI-powered agent orchestrator (Gemini 3)
+      {
+        name = "antigravity-cli";
+        greedy = true;
+      } # Google's terminal interface for agents (agy command)
+      {
+        name = "antigravity-ide";
+        greedy = true;
+      } # Google's AI-powered IDE environment
 
       # --- API Development ---
       {
