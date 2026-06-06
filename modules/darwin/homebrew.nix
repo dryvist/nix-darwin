@@ -49,6 +49,12 @@ let
   # self-contained. See nix-ai/docs/architecture/per-agent-flakes.md.
   agentBrewFormulae = nix-ai.lib.brewFormulae or [ ];
 
+  # AI-tool taps and casks owned by nix-ai (lib/homebrew.nix).
+  # Trust is handled declaratively by nix-ai's home-manager module via
+  # ~/.homebrew/trust.json — no brew trust command needed.
+  agentHomebrewTaps = nix-ai.lib.homebrewTaps or [ ];
+  agentHomebrewCasks = nix-ai.lib.homebrewCasks or [ ];
+
   configureBrewAutoupdateScript = pkgs.writeShellApplication {
     name = "configure-brew-autoupdate";
     runtimeInputs = [ ];
@@ -69,9 +75,7 @@ in
     };
     taps = [
       "homebrew/autoupdate" # Background auto-update via launchd (brew autoupdate)
-      "google/antigravity" # Google Antigravity agents (agy command)
-      "anthropics/tap" # Anthropic platform tools (ant command)
-    ];
+    ] ++ agentHomebrewTaps; # AI-tool taps declared in nix-ai/lib/homebrew.nix
     brews = [
       # CLI tools (only if not available in nixpkgs)
       "ccusage" # Claude Code usage analyzer - not in nixpkgs
@@ -108,7 +112,8 @@ in
       # unreliable (require the app to be open, can be dismissed, etc.), so greedy
       # ensures updates land deterministically via brew autoupdate.
       # NOTE: ChatGPT and Cursor are in nixpkgs - see home.packages.
-      # NOTE: Antigravity and antigravity-cli are in homebrew (above).
+      # NOTE: AI-tool casks (claude-code@latest, antigravity suite) are appended
+      # below from nix-ai.lib.homebrewCasks (source: nix-ai/lib/homebrew.nix).
 
       # --- Productivity / Communication ---
       {
@@ -141,12 +146,7 @@ in
         name = "claude";
         greedy = true;
       } # Claude desktop app (not in nixpkgs for Darwin)
-      {
-        name = "claude-code@latest";
-        greedy = true;
-      } # Claude Code CLI — the @latest cask tracks the newest release (the
-      # plain `claude-code` cask lags; declaring @latest matches what's
-      # actually installed and stops the rebuild's brew-bundle binary conflict)
+      # claude-code@latest moved to nix-ai/lib/homebrew.nix
 
       # --- OpenAI ---
       # OpenAI Codex CLI (AI coding agent) - migrated from homebrew/core to cask
@@ -163,19 +163,7 @@ in
         greedy = true;
       }
 
-      # --- Google Gemini ---
-      {
-        name = "antigravity";
-        greedy = true;
-      } # Google's AI-powered agent orchestrator (Gemini 3)
-      {
-        name = "antigravity-cli";
-        greedy = true;
-      } # Google's terminal interface for agents (agy command)
-      {
-        name = "antigravity-ide";
-        greedy = true;
-      } # Google's AI-powered IDE environment
+      # antigravity suite moved to nix-ai/lib/homebrew.nix
 
       # --- API Development ---
       {
@@ -237,7 +225,8 @@ in
         name = "openwebstart";
         greedy = true;
       }
-    ];
+    ]
+    ++ agentHomebrewCasks; # AI-tool casks from nix-ai/lib/homebrew.nix
 
     # Mac App Store apps (requires signed into App Store)
     # Find app IDs: mas search <name> or https://github.com/mas-cli/mas
