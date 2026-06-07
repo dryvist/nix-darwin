@@ -22,20 +22,15 @@ If the user passes additional arguments (e.g. "also update X" or "fix Y"), handl
 
 ## Repository Structure
 
-This repo uses a bare git repo with worktrees:
-
-- `${GIT_HOME_PUBLIC}/nix-darwin/` - bare repo (do not cd here directly)
-- `${GIT_HOME_PUBLIC}/nix-darwin/main/` - main branch worktree
-- `${GIT_HOME_PUBLIC}/nix-darwin/<branch-name>/` - feature worktrees
+Work in a worktree on its own branch — never on main.
 
 ## Steps
 
-### 1. Sync Main Worktree First
+### 1. Sync Main First
 
-**IMPORTANT**: Update the main worktree before starting:
+**IMPORTANT**: Update main before starting:
 
 ```bash
-cd ${GIT_HOME_PUBLIC}/nix-darwin/main
 git fetch origin
 git pull origin main
 git status
@@ -43,23 +38,9 @@ git status
 
 If there are uncommitted changes, **STOP** and report to the user.
 
-### 2. Create or Switch to Feature Worktree
+### 2. Work in a Feature Worktree
 
-Branch/worktree name format: `chore/flake-update-YYYY-MM-DD` (replace with today's date)
-
-Check if worktree already exists, otherwise create it:
-
-```bash
-cd ${GIT_HOME_PUBLIC}/nix-darwin
-# Check if worktree exists
-if [ -d "chore/flake-update-YYYY-MM-DD" ]; then
-  cd chore/flake-update-YYYY-MM-DD
-  git pull origin main  # Update with latest main
-else
-  git worktree add chore/flake-update-YYYY-MM-DD -b chore/flake-update-YYYY-MM-DD origin/main
-  cd chore/flake-update-YYYY-MM-DD
-fi
-```
+Work in a worktree named for the update (e.g. `chore/flake-update-YYYY-MM-DD`, replacing with today's date).
 
 ### Security Note
 
@@ -179,13 +160,9 @@ Enable auto-merge (this will merge automatically when checks pass):
 gh pr merge --auto --squash --delete-branch
 ```
 
-### 9. Return to Main Worktree
+### 9. Return to Main
 
-Switch back to the main worktree while waiting for auto-merge:
-
-```bash
-cd ${GIT_HOME_PUBLIC}/nix-darwin/main
-```
+Switch back to main while waiting for auto-merge.
 
 ### 10. Report Summary
 
@@ -195,9 +172,8 @@ Tell the user:
 2. The PR URL
 3. Any warnings or errors found (from Step 6 output)
 4. That auto-merge is enabled and will merge when checks pass
-5. They can run `git pull` in the main worktree after the PR merges
+5. They can pull main after the PR merges
 
 **DO NOT wait for checks** - auto-merge handles this automatically.
 
-**Note**: The worktree at `${GIT_HOME_PUBLIC}/nix-darwin/chore/flake-update-YYYY-MM-DD/` should be
-removed manually after the PR is merged (`/wrap-up` or `/clean_gone`).
+**Note**: Remove the worktree and merged branch after the PR is merged (`/wrap-up` or `/clean_gone`).
