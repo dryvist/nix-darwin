@@ -127,23 +127,45 @@ in
     };
   };
 
-  # --- Apple Silicon Tunables ---
-  # Wired-memory ceiling, App Nap, Spotlight + TM excludes for AI caches.
-  # See modules/darwin/apple-silicon-tunables.nix for option semantics.
-  system.appleSiliconTunables.enable = true;
-
-  # --- Energy & Sleep Configuration ---
-  system.energy = {
-    enable = true;
-    displaysleep = 30; # Display sleeps after 30 minutes
-    sleep = {
-      ac = 0; # Never sleep when plugged in (AC power)
-      battery = 60; # Sleep after 1 hour on battery
+  # ==========================================================================
+  # System-Level Tuning (inference performance, power, limits, network)
+  # ==========================================================================
+  system = {
+    # --- Apple Silicon Tunables ---
+    # Wired-memory ceiling, pmset perf flags, App Nap, Spotlight + TM excludes,
+    # Metal debug-env guard. See modules/darwin/apple-silicon-tunables.nix.
+    appleSiliconTunables = {
+      enable = true;
+      # High Power Mode is the biggest sustained-throughput lever on the laptop
+      # but cannot be set via CLI; this drives a verify/nudge at activation.
+      # Set it once: System Settings -> Battery -> Energy Mode -> High Power.
+      energyMode = "high";
+      # pmset perf flags (lowPowerMode / powerNap / proximityWake off) and the
+      # Metal debug-env guard use the module's safe-win defaults.
     };
-    # Set disksleep to non-zero when battery sleep is non-zero (Apple best practice)
-    # This ensures optimal power state transition on battery (Safe Sleep requires this)
-    disksleep = 10; # Disk optimizes power after 10 minutes (before system sleep at 60)
-    wakeOnMagicPacket = true;
-    autoRestartOnPowerLoss = true;
+
+    # --- Resource Limits (file descriptors / processes) ---
+    # Raise kern.maxfiles* + launchctl maxfiles to 524288 for large mmap'd models.
+    resourceLimits.enable = true;
+
+    # --- Network Tuning (socket buffers) ---
+    # Exposed but OFF — enable + set buffers only if LAN model-serving becomes a
+    # measured bottleneck. Loopback inference does not need it.
+    networkTuning.enable = false;
+
+    # --- Energy & Sleep Configuration ---
+    energy = {
+      enable = true;
+      displaysleep = 30; # Display sleeps after 30 minutes
+      sleep = {
+        ac = 0; # Never sleep when plugged in (AC power)
+        battery = 60; # Sleep after 1 hour on battery
+      };
+      # Set disksleep to non-zero when battery sleep is non-zero (Apple best practice)
+      # This ensures optimal power state transition on battery (Safe Sleep requires this)
+      disksleep = 10; # Disk optimizes power after 10 minutes (before system sleep at 60)
+      wakeOnMagicPacket = true;
+      autoRestartOnPowerLoss = true;
+    };
   };
 }

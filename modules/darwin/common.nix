@@ -30,6 +30,8 @@ in
     ./nix-storage.nix
     ./ws-monitor.nix
     ./apple-silicon-tunables.nix
+    ./system-limits.nix
+    ./network-tuning.nix
   ];
 
   # --- Nixpkgs Configuration ---
