@@ -75,7 +75,8 @@ in
     };
     taps = [
       "homebrew/autoupdate" # Background auto-update via launchd (brew autoupdate)
-    ] ++ agentHomebrewTaps; # AI-tool taps declared in nix-ai/lib/homebrew.nix
+    ]
+    ++ agentHomebrewTaps; # AI-tool taps declared in nix-ai/lib/homebrew.nix
     brews = [
       # CLI tools (only if not available in nixpkgs)
       "ccusage" # Claude Code usage analyzer - not in nixpkgs
