@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.42.3](https://github.com/dryvist/nix-darwin/compare/v1.42.2...v1.42.3) (2026-06-07)
+
+
+### Bug Fixes
+
+* **homebrew:** nixfmt-required whitespace in taps list append ([#1214](https://github.com/dryvist/nix-darwin/issues/1214)) ([ac93fa1](https://github.com/dryvist/nix-darwin/commit/ac93fa1a42d773b1d2d4d2ab4d07181afc1eb31c))
+
 ## [1.42.2](https://github.com/dryvist/nix-darwin/compare/v1.42.1...v1.42.2) (2026-06-04)
 
 
