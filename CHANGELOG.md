@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.43.0](https://github.com/dryvist/nix-darwin/compare/v1.42.3...v1.43.0) (2026-06-08)
+
+
+### Features
+
+* **homebrew:** integrate with nix-ai trustedTaps option for aws/tap ([#1226](https://github.com/dryvist/nix-darwin/issues/1226)) ([66ddd9b](https://github.com/dryvist/nix-darwin/commit/66ddd9be3ced677efd5efa15a4fbe70cc022a04b))
+
 ## [1.42.3](https://github.com/dryvist/nix-darwin/compare/v1.42.2...v1.42.3) (2026-06-07)
 
 
