@@ -75,6 +75,7 @@ in
     };
     taps = [
       "homebrew/autoupdate" # Background auto-update via launchd (brew autoupdate)
+      "aws/tap" # AWS SAM CLI and other AWS tools
     ]
     ++ agentHomebrewTaps; # AI-tool taps declared in nix-ai/lib/homebrew.nix
     brews = [
