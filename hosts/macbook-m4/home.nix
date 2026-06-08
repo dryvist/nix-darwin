@@ -10,6 +10,7 @@
   pkgs,
   lib,
   userConfig,
+  osConfig,
   ...
 }:
 
@@ -23,6 +24,10 @@
     # registry stays at the single defaultLocalModelId entry.
     ./mlx-no-autodiscover.nix
   ];
+
+  # Share system-level Homebrew taps with nix-ai's trust.json
+  programs.ai-homebrew.trustedTaps = osConfig.homebrew.taps;
+
 
   # ==========================================================================
   # macOS Application Management (copyApps for TCC stability)
