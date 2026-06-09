@@ -25,9 +25,10 @@
     ./mlx-no-autodiscover.nix
   ];
 
-  # Share system-level Homebrew taps with nix-ai's trust.json
-  programs.ai-homebrew.trustedTaps = osConfig.homebrew.taps;
-
+  # Share system-level Homebrew taps with nix-ai's trust.json.
+  # homebrew.taps merges to a list of tap submodules ({ name, ... });
+  # trustedTaps expects plain tap names, so extract them.
+  programs.ai-homebrew.trustedTaps = map (tap: tap.name) osConfig.homebrew.taps;
 
   # ==========================================================================
   # macOS Application Management (copyApps for TCC stability)
