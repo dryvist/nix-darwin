@@ -25,8 +25,10 @@
     ./mlx-no-autodiscover.nix
   ];
 
-  # Share system-level Homebrew taps with nix-ai's trust.json
-  programs.ai-homebrew.trustedTaps = osConfig.homebrew.taps;
+  # Share system-level Homebrew taps with nix-ai's trust.json.
+  # homebrew.taps entries can be strings or submodule attrsets (nix-darwin
+  # normalizes to attrsets with a `name`); the nix-ai option takes strings.
+  programs.ai-homebrew.trustedTaps = map (t: if builtins.isString t then t else t.name) osConfig.homebrew.taps;
 
 
   # ==========================================================================
@@ -83,6 +85,12 @@
     # this, the registry at services.aiStack.models is materialized to nothing
     # and llama-swap.json drifts from whatever was last activated by hand.
     mlx.enable = true;
+    # Multi-turn agent clients re-prefill 5-40K-token contexts; the 8192 MB
+    # default left no room for paged-cache prefix reuse (constant ~700-token
+    # hits) and cold prefill ran ~270 tok/s. Measured 2026-06-10 with these
+    # values: identical-prefix re-request dropped 21.8K -> 63 prefill tokens.
+    mlx.cacheMemoryMb = 16384;
+    mlx.prefillBatchSize = 2048;
 
     # macOS-specific zsh overrides
     # Base zsh config provided by nix-home (sharedModule).
