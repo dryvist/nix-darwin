@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.43.1](https://github.com/dryvist/nix-darwin/compare/v1.43.0...v1.43.1) (2026-06-10)
+
+
+### Bug Fixes
+
+* **ai:** swap local LLM default to Qwen3-30B-A3B-Instruct-2507 + unbreak main build ([#1230](https://github.com/dryvist/nix-darwin/issues/1230)) ([5a8a28a](https://github.com/dryvist/nix-darwin/commit/5a8a28aeb6a39a50943a73b816b21565068e5905))
+
 ## [1.43.0](https://github.com/dryvist/nix-darwin/compare/v1.42.3...v1.43.0) (2026-06-08)
 
 
