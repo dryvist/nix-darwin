@@ -25,8 +25,10 @@
     ./mlx-no-autodiscover.nix
   ];
 
-  # Share system-level Homebrew taps with nix-ai's trust.json
-  programs.ai-homebrew.trustedTaps = osConfig.homebrew.taps;
+  # Share system-level Homebrew taps with nix-ai's trust.json.
+  # homebrew.taps entries can be strings or submodule attrsets (nix-darwin
+  # normalizes to attrsets with a `name`); the nix-ai option takes strings.
+  programs.ai-homebrew.trustedTaps = map (t: if builtins.isString t then t else t.name) osConfig.homebrew.taps;
 
 
   # ==========================================================================
