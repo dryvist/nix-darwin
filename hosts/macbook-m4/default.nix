@@ -130,7 +130,16 @@ in
   # --- Apple Silicon Tunables ---
   # Wired-memory ceiling, App Nap, Spotlight + TM excludes for AI caches.
   # See modules/darwin/apple-silicon-tunables.nix for option semantics.
-  system.appleSiliconTunables.enable = true;
+  system.appleSiliconTunables = {
+    enable = true;
+    # 104000 (not the module's 118000 default): guarantee 24 GB of unwirable
+    # headroom. At 118000 only ~10 GB was guaranteed pageable and the desktop
+    # working set alone exceeds 25 GB, so any large resident MLX model pushed
+    # the host into compressor + swap saturation (nix-mac-performance RC14;
+    # 2026-06-10 snapshot: swap 94 % with a single healthy 53 GB worker).
+    # Still fits the largest model in use (~75 GB resident).
+    wiredLimitMb = 104000;
+  };
 
   # --- Energy & Sleep Configuration ---
   system.energy = {
