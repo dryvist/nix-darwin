@@ -5,7 +5,7 @@
 #
 # This file imports darwin modules and configures host-specific settings.
 
-{ pkgs, config, ... }:
+{ pkgs, ... }:
 
 let
   # User-specific configuration (hostname, identity, etc.)
@@ -74,14 +74,73 @@ in
     };
 
     # --- Cribl Edge ---
-    # Log collection agent managed by Cribl Cloud.
-    # Nix invokes Cribl Cloud's install-edge.sh on every rebuild and manages the LaunchDaemon.
-    # Cribl Cloud manages all runtime configuration after enrollment.
-    # Sensitive values (org ID, workspace ID, token) fetched from Doppler at activation time.
+    # Log collection agent, standalone + GitOps-managed (this file owns the
+    # node's config; Cribl Cloud fleets are reserved for Linux machines).
+    # Inline sources/pipelines below cover the local LLM stack; events ship
+    # over Cribl TCP to the HAProxy-fronted Stream workers (port value from
+    # terraform-proxmox constants service_ports.cribl_s2s) which forward to
+    # the Splunk `llm` index. See docs/CRIBL-GITOPS.md.
     cribl-edge = {
       enable = true;
-      cloud = {
-        secretsFile = config.sops.templates."cribl-edge.env".path;
+      mode = "standalone";
+      standalone.configFiles = {
+        "inputs.yml" = ''
+          inputs:
+            in_llm_logs:
+              type: file
+              disabled: false
+              mode: manual
+              filenames:
+                - ${userConfig.user.homeDir}/Library/Logs/vllm-mlx/vllm-mlx.log
+                - ${userConfig.user.homeDir}/Library/Logs/vllm-mlx/vllm-mlx.error.log
+              sendToRoutes: false
+              connections:
+                - pipeline: llm_logs
+                  output: cribl_stream
+            in_system_metrics:
+              type: system_metrics
+              disabled: false
+              sendToRoutes: false
+              connections:
+                - pipeline: llm_metrics
+                  output: cribl_stream
+        '';
+        "outputs.yml" = ''
+          outputs:
+            cribl_stream:
+              type: cribl_tcp
+              # Bare hostname — resolves via the LAN search domain; fronted by
+              # HAProxy, load-balanced across the Cribl Stream workers.
+              host: haproxy
+              port: 10300
+              pqEnabled: true
+        '';
+        # Model-server logs: the manager (Go) and its workers (Python) share
+        # the same two files; sourcetype is derived per line.
+        "pipelines/llm_logs/conf.yml" = ''
+          output: default
+          functions:
+            - id: eval
+              filter: "true"
+              conf:
+                add:
+                  - name: index
+                    value: "'llm'"
+                  - name: sourcetype
+                    value: "_raw.match(/^(INFO|DEBUG|WARNING|ERROR|CRITICAL):/) ? 'vllm:mlx' : 'llamaswap'"
+        '';
+        "pipelines/llm_metrics/conf.yml" = ''
+          output: default
+          functions:
+            - id: eval
+              filter: "true"
+              conf:
+                add:
+                  - name: index
+                    value: "'llm'"
+                  - name: sourcetype
+                    value: "'mlx:metrics'"
+        '';
       };
       packs = {
         cc-edge-the-mac-pack-io = pkgs.fetchzip {

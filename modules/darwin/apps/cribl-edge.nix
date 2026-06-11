@@ -5,17 +5,25 @@
 # packages/cribl-edge.nix and is immutable in the Nix store. Mutable state
 # (config, queues, logs) lives under cfg.dataDir (default /opt/cribl-data).
 #
-# Fleet enrollment happens at first start via `cribl mode-managed-edge`:
-# if instance.yml doesn't exist in dataDir, the startScript enrolls with
-# Cribl Cloud using CRIBL_ORG_ID / CRIBL_WORKSPACE_ID / CRIBL_TOKEN from the
-# sops-rendered secrets file. Subsequent starts skip enrollment and run
-# `cribl server` directly. After enrollment Cribl Cloud manages all runtime
-# configuration for the edge node.
+# Two management modes (mode option):
+#
+#   managed    — Fleet enrollment at first start via `cribl mode-managed-edge`
+#                using credentials from the sops-rendered secrets file; Cribl
+#                Cloud owns runtime configuration after enrollment.
+#                FLEET POLICY: Cribl Cloud fleets are reserved for Linux
+#                machines (VMs/containers/servers). Do not enroll macOS hosts.
+#
+#   standalone — GitOps: this module owns the node's configuration. Declarative
+#                config files (standalone.configFiles) are rendered from the
+#                Nix store into <dataDir>/local/cribl/ on every activation —
+#                the config-as-code layout documented by Cribl (inputs.yml,
+#                outputs.yml, pipelines/<name>/conf.yml). Any stale fleet
+#                enrollment state is retired at startup. See docs/CRIBL-GITOPS.md.
 #
 # Secrets are provided via sops-nix (modules/darwin/sops.nix), which decrypts
 # age-encrypted credentials to a root-only (0400) KEY=value file at activation
 # time. The startScript parses this file line-by-line — no `source`, no shell
-# eval — and only exports recognized CRIBL_* keys.
+# eval — and only exports recognized CRIBL_* keys. (Managed mode only.)
 #
 # Service runs as root (temporary — revert serviceUser/serviceGroup to cribl:cribl when ready).
 
@@ -40,12 +48,25 @@ let
     runtimeInputs = [ pkgs.coreutils ];
     text = ''
       exec ${./scripts/cribl-edge-start.sh} \
-        "${cfg.cloud.secretsFile}" \
+        "${if cfg.cloud.secretsFile != null then cfg.cloud.secretsFile else "/dev/null"}" \
         "${cfg.dataDir}" \
         "${cfg.package}/opt/cribl" \
-        "${cfg.cloud.group}"
+        "${cfg.cloud.group}" \
+        "${cfg.mode}"
     '';
   };
+
+  # Render each declarative standalone config file into the Nix store; the
+  # activation script installs them under <dataDir>/local/cribl/.
+  standaloneConfigInstall = lib.concatStringsSep "\n" (
+    lib.mapAttrsToList (relPath: text: ''
+      /usr/bin/install -d -o ${cfg.serviceUser} -g ${cfg.serviceGroup} \
+        "$(/usr/bin/dirname "${cfg.dataDir}/local/cribl/${relPath}")"
+      /usr/bin/install -m 0644 -o ${cfg.serviceUser} -g ${cfg.serviceGroup} \
+        ${pkgs.writeText (builtins.replaceStrings [ "/" ] [ "-" ] relPath) text} \
+        "${cfg.dataDir}/local/cribl/${relPath}"
+    '') cfg.standalone.configFiles
+  );
 in
 {
   options.programs.cribl-edge = {
@@ -75,13 +96,48 @@ in
       description = "Group to run the Cribl Edge service as.";
     };
 
+    mode = lib.mkOption {
+      type = lib.types.enum [
+        "managed"
+        "standalone"
+      ];
+      default = "managed";
+      description = ''
+        managed = Cribl Cloud fleet owns runtime config (Linux-only fleet
+        policy — do not enroll macOS hosts). standalone = this module owns
+        config via standalone.configFiles (GitOps).
+      '';
+    };
+
+    standalone = {
+      configFiles = lib.mkOption {
+        type = lib.types.attrsOf lib.types.lines;
+        default = { };
+        description = ''
+          Declarative Cribl config files for standalone mode, keyed by path
+          relative to <dataDir>/local/cribl/ (the config-as-code location
+          documented by Cribl). Installed on every activation. Cribl reloads
+          local config changes without a daemon restart.
+        '';
+        example = lib.literalExpression ''
+          {
+            "inputs.yml" = "inputs: ...";
+            "outputs.yml" = "outputs: ...";
+            "pipelines/llm_logs/conf.yml" = "output: default ...";
+          }
+        '';
+      };
+    };
+
     cloud = {
       secretsFile = lib.mkOption {
-        type = lib.types.str;
+        type = lib.types.nullOr lib.types.str;
+        default = null;
         description = ''
           Path to a root-readable KEY=value file containing CRIBL_ORG_ID,
           CRIBL_WORKSPACE_ID, and CRIBL_TOKEN. Use the sops-nix rendered
           template: config.sops.templates."cribl-edge.env".path
+          Required when mode = "managed"; unused in standalone mode.
         '';
         example = "/run/secrets/rendered/cribl-edge.env";
       };
@@ -89,7 +145,7 @@ in
       group = lib.mkOption {
         type = lib.types.str;
         default = "default_fleet";
-        description = "Fleet group name.";
+        description = "Fleet group name (managed mode only).";
       };
     };
 
@@ -105,10 +161,19 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = cfg.mode != "managed" || cfg.cloud.secretsFile != null;
+        message = "programs.cribl-edge: cloud.secretsFile is required when mode = \"managed\".";
+      }
+    ];
+
     # Always ensure dataDir + logs subdir exist with correct ownership so the
-    # launchd job can write, whether or not any packs are declared.
+    # launchd job can write, whether or not any packs are declared. In
+    # standalone mode, also install the declarative config files.
     system.activationScripts.postActivation.text = ''
       ${./scripts/cribl-edge-activate.sh} "${cfg.dataDir}" "${cfg.serviceUser}:${cfg.serviceGroup}"
+      ${lib.optionalString (cfg.mode == "standalone") standaloneConfigInstall}
       ${lib.optionalString (cfg.packs != { }) (
         lib.concatStringsSep "\n" (
           lib.mapAttrsToList (name: src: ''
