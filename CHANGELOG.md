@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.44.0](https://github.com/dryvist/nix-darwin/compare/v1.43.1...v1.44.0) (2026-06-11)
+
+
+### Features
+
+* **tunables:** lower iogpu wired limit to 104000 for 24GB pageable headroom ([#1233](https://github.com/dryvist/nix-darwin/issues/1233)) ([50d36b5](https://github.com/dryvist/nix-darwin/commit/50d36b5f089e3e162e21fa0b567d4d1f2500d0f4))
+
 ## [1.43.1](https://github.com/dryvist/nix-darwin/compare/v1.43.0...v1.43.1) (2026-06-10)
 
 
