@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.46.1](https://github.com/dryvist/nix-darwin/compare/v1.46.0...v1.46.1) (2026-06-12)
+
+
+### Bug Fixes
+
+* **ci:** repoint shared workflows to dryvist hub ([#1242](https://github.com/dryvist/nix-darwin/issues/1242)) ([572f0d0](https://github.com/dryvist/nix-darwin/commit/572f0d0081867bc5f310c4d258e27a58c9c99722))
+
 ## [1.46.0](https://github.com/dryvist/nix-darwin/compare/v1.45.0...v1.46.0) (2026-06-12)
 
 
