@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.45.0](https://github.com/dryvist/nix-darwin/compare/v1.44.0...v1.45.0) (2026-06-12)
+
+
+### Features
+
+* **homebrew:** add Apple container runtime ([#1239](https://github.com/dryvist/nix-darwin/issues/1239)) ([6affebc](https://github.com/dryvist/nix-darwin/commit/6affebc356d62230639cd8d4342e529b786dd617))
+
 ## [1.44.0](https://github.com/dryvist/nix-darwin/compare/v1.43.1...v1.44.0) (2026-06-11)
 
 
