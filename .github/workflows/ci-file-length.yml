@@ -22,4 +22,4 @@ permissions:
 jobs:
   check:
     name: Check File Sizes
-    uses: JacobPEvans-personal/.github/.github/workflows/_file-size.yml@main
+    uses: dryvist/.github/.github/workflows/_file-size.yml@main
