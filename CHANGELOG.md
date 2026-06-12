@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.46.0](https://github.com/dryvist/nix-darwin/compare/v1.45.0...v1.46.0) (2026-06-12)
+
+
+### Features
+
+* **cribl-edge:** standalone GitOps mode + inline LLM-stack sources ([#1235](https://github.com/dryvist/nix-darwin/issues/1235)) ([0a21177](https://github.com/dryvist/nix-darwin/commit/0a211776824c859a20f610b5e46240a8035988d4))
+
 ## [1.45.0](https://github.com/dryvist/nix-darwin/compare/v1.44.0...v1.45.0) (2026-06-12)
 
 
