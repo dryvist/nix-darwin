@@ -19,6 +19,7 @@ EXCLUSIONS=(
   "claude-code:Intentionally using homebrew due to recent nixpkgs latency on latest packages"
   "antigravity-cli:Intentionally using homebrew due to recent nixpkgs latency on latest packages"
   "bitwarden:nixpkgs build pins EOL electron_39 (insecure); cask uses Bitwarden's maintained build"
+  "container:Homebrew tracks Apple container 1.0.0 while nixpkgs is still 0.12.3; use current upstream runtime"
   "orbstack:Cask preferred over nixpkgs for TCC permission stability (nixpkgs symlink changes on rebuild, forcing TCC re-grant)"
   "postman:Nixpkgs version lags significantly behind upstream, causing Squirrel/ShipIt schema mismatch errors"
 )
@@ -33,14 +34,14 @@ fi
 # Extract brew packages (brews = [...])
 brews=$(awk '
   /brews = \[/ {in_brews=1; next}
-  /\];/ && in_brews {in_brews=0; next}
+  /^[[:space:]]*\][[:space:]]*(;|$|\+\+)/ && in_brews {in_brews=0; next}
   in_brews && ! /^[[:space:]]*#/ {print}
 ' "$HOMEBREW_FILE" | grep '"' | sed 's/.*"\([^"]*\)".*/\1/' || true)
 
 # Extract cask packages (casks = [...])
 casks=$(awk '
   /casks = \[/ {in_casks=1; next}
-  /\];/ && in_casks {in_casks=0; next}
+  /^[[:space:]]*\][[:space:]]*(;|$|\+\+)/ && in_casks {in_casks=0; next}
   in_casks && ! /^[[:space:]]*#/ {print}
 ' "$HOMEBREW_FILE" | grep '"' | sed 's/.*"\([^"]*\)".*/\1/' || true)
 

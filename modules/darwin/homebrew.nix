@@ -81,6 +81,9 @@ in
     brews = [
       # CLI tools (only if not available in nixpkgs)
       "ccusage" # Claude Code usage analyzer - not in nixpkgs
+      # Apple container CLI/runtime. Homebrew tracks current upstream while
+      # nixpkgs lags by a major release.
+      "container"
 
       # --- AI Agent Tools (homebrew-only; home-manager cannot manage brew formulas) ---
 
