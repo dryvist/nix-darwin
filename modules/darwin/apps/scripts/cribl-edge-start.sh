@@ -2,12 +2,14 @@
 # Cribl Edge startup script.
 #
 # Arguments (set by the Nix wrapper in cribl-edge.nix):
-#   $1 = path to sops-rendered KEY=value secrets file (root-only 0400)
+#   $1 = path to sops-rendered KEY=value secrets file (root-only 0400;
+#        /dev/null in standalone mode)
 #   $2 = CRIBL_VOLUME_DIR (mutable state / data dir)
 #   $3 = CRIBL_HOME (read-only path into the Nix store package)
 #   $4 = Cribl fleet group name (default; overridden by the URL's `?group=` if present)
+#   $5 = mode: "managed" (default) or "standalone"
 #
-# Responsibilities:
+# Responsibilities (managed mode):
 #   1. Safely load credentials from the secrets file without shell eval.
 #      Two formats are honored, in order of preference:
 #        a) CRIBL_DIST_MASTER_URL=tls://TOKEN@HOST:PORT?group=GROUP
@@ -19,6 +21,12 @@
 #      marker so subsequent starts skip enrollment. Enrollment failures are
 #      fatal — launchd retries via ThrottleInterval.
 #   4. exec `cribl server`.
+#
+# Responsibilities (standalone mode):
+#   1. Retire any leftover fleet-enrollment state (moved aside, never
+#      deleted) so the node runs purely from its local config — which the
+#      nix-darwin activation renders into local/cribl/ (GitOps).
+#   2. exec `cribl server`.
 
 set -euo pipefail
 
@@ -28,8 +36,27 @@ SECRETS_FILE="${1:?secrets file path required}"
 CRIBL_VOLUME_DIR="${2:?volume dir required}"
 CRIBL_HOME="${3:?cribl home required}"
 CRIBL_GROUP="${4:?cribl fleet group required}"
+CRIBL_MODE="${5:-managed}"
 
 export CRIBL_VOLUME_DIR CRIBL_HOME
+
+if [ "$CRIBL_MODE" = "standalone" ]; then
+  mkdir -p "$CRIBL_VOLUME_DIR" "$CRIBL_VOLUME_DIR/logs"
+  # Retire managed-mode enrollment state. Moved (not deleted) so the prior
+  # fleet identity is recoverable; the marker dir is created once.
+  _retired="$CRIBL_VOLUME_DIR/retired-managed-state"
+  for _f in "$CRIBL_VOLUME_DIR/.enrolled" \
+            "$CRIBL_VOLUME_DIR/local/_system/instance.yml" \
+            "$CRIBL_VOLUME_DIR/local/edge/instance.yml"; do
+    if [ -e "$_f" ]; then
+      mkdir -p "$_retired"
+      mv "$_f" "$_retired/$(basename "$_f").$(date +%Y%m%d%H%M%S)"
+      echo "$(ts) [INFO] Standalone mode: retired managed-state file $_f"
+    fi
+  done
+  echo "$(ts) [INFO] Starting Cribl Edge standalone (config: local/cribl, GitOps-managed)."
+  exec "$CRIBL_HOME/bin/cribl" server
+fi
 
 if [ ! -r "$SECRETS_FILE" ]; then
   echo "$(ts) [ERROR] Cribl secrets file not readable: $SECRETS_FILE" >&2
