@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.47.0](https://github.com/dryvist/nix-darwin/compare/v1.46.1...v1.47.0) (2026-06-13)
+
+
+### Features
+
+* **cribl-stream:** add local Cribl Stream node in Apple container ([#1244](https://github.com/dryvist/nix-darwin/issues/1244)) ([358db35](https://github.com/dryvist/nix-darwin/commit/358db35f69f064441ae2a2ba471a23f1f3c44403))
+
 ## [1.46.1](https://github.com/dryvist/nix-darwin/compare/v1.46.0...v1.46.1) (2026-06-12)
 
 
