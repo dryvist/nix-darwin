@@ -27,12 +27,12 @@ in
     enable = lib.mkEnableOption "Apple Silicon system tunables for AI workloads";
 
     wiredLimitMb = lib.mkOption {
-      type = lib.types.ints.positive;
+      type = lib.types.ints.unsigned;
       default = 118000;
       description = ''
         iogpu.wired_limit_mb — wired-memory ceiling for the IOGPU subsystem.
-        Default 118000 = ~92% of a 128 GB host. Re-applied at every boot via
-        a one-shot launchd daemon.
+        0 = OS default (~75% of RAM). Re-applied at every boot via a one-shot
+        launchd daemon.
       '';
     };
 

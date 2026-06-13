@@ -80,6 +80,8 @@ in
     # over Cribl TCP to the HAProxy-fronted Stream workers (port value from
     # terraform-proxmox constants service_ports.cribl_s2s) which forward to
     # the Splunk `llm` index. See docs/CRIBL-GITOPS.md.
+    # NOTE: the local-Stream cutover (→127.0.0.1:10301) is reverted while the
+    # containerized Stream's CPU/DNS issue is fixed — see cribl-stream below.
     cribl-edge = {
       enable = true;
       mode = "standalone";
@@ -109,9 +111,8 @@ in
           outputs:
             cribl_stream:
               type: cribl_tcp
-              # Bare hostname — resolves via the LAN search domain; fronted by
-              # HAProxy, load-balanced across the Cribl Stream workers.
-              host: haproxy
+              # Homelab HAProxy (FQDN), load-balanced across the Cribl Stream workers.
+              host: haproxy.pve.jacobpevans.com
               port: 10300
               pqEnabled: true
         '';
@@ -149,6 +150,56 @@ in
           hash = "sha256-rPPAkedltxT8RWgP2xXil1o6x13HQK+SRgihuheJAks=";
           stripRoot = false;
         };
+      };
+    };
+
+    # --- Cribl Stream (local egress aggregator, Apple container) ---
+    # Single-instance Cribl Stream in an Apple `container`: local sources ship to
+    # 127.0.0.1:10301 and it forwards to the Proxmox Stream tier (haproxy:10300).
+    # Resource-capped (cpus/memory/single worker) and given the LAN DNS resolver +
+    # search domain; the output queue is bounded. See docs/CRIBL-GITOPS.md.
+    cribl-stream = {
+      enable = true;
+      user = userConfig.user.name;
+      inputPort = 10301;
+      apiPort = 9000;
+      cpus = 1;
+      memory = "1g";
+      maxWorkers = 1;
+      dnsServers = userConfig.host.lanDnsServers;
+      dnsSearch = [ userConfig.host.lanSearchDomain ];
+      configFiles = {
+        "inputs.yml" = ''
+          inputs:
+            in_edge_s2s:
+              type: cribl_tcp
+              disabled: false
+              host: 0.0.0.0
+              port: 10301
+              sendToRoutes: false
+              connections:
+                - pipeline: passthrough
+                  output: proxmox_stream
+        '';
+        "outputs.yml" = ''
+          outputs:
+            proxmox_stream:
+              type: cribl_tcp
+              # Homelab HAProxy (FQDN), load-balanced across the Proxmox Cribl Stream workers.
+              host: haproxy.pve.jacobpevans.com
+              port: 10300
+              pqEnabled: true
+              # Bounded on-disk queue: cap size and drop when full.
+              pqMaxFileSize: 256 MB
+              pqMaxSize: 1 GB
+              pqOnBackpressure: drop
+        '';
+        # Passthrough for now; index/sourcetype enrichment moves here from Edge
+        # once Edge is repointed (Edge captures, Stream enriches + egresses).
+        "pipelines/passthrough/conf.yml" = ''
+          output: default
+          functions: []
+        '';
       };
     };
 
@@ -197,7 +248,7 @@ in
     # the host into compressor + swap saturation (nix-mac-performance RC14;
     # 2026-06-10 snapshot: swap 94 % with a single healthy 53 GB worker).
     # Still fits the largest model in use (~75 GB resident).
-    wiredLimitMb = 104000;
+    wiredLimitMb = 0; # OS default (~96 GB on 128 GB); leave headroom for the rest of the system
   };
 
   # --- Energy & Sleep Configuration ---
