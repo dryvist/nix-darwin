@@ -45,6 +45,11 @@ in
   host = {
     # Network hostname (used for networking.hostName, ComputerName, etc.)
     name = "jevans-mbp";
+
+    # LAN DNS resolver(s) and search domain (match the host resolver). Used to
+    # give containers the same name resolution as the host. Non-secret.
+    lanDnsServers = [ "10.0.1.1" ];
+    lanSearchDomain = "jacobpevans.com";
   };
 
   # ==========================================================================
@@ -75,7 +80,7 @@ in
     syslog = {
       # Remote syslog server for centralized log collection
       # Logs are forwarded via macOS built-in syslogd to HAProxy -> Cribl Edge -> Splunk
-      server = "haproxy.jacobpevans.com";
+      server = "haproxy.pve.jacobpevans.com";
       port = 1514;
       # Protocol: udp or tcp
       protocol = "udp";
