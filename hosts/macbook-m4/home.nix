@@ -157,10 +157,11 @@
         unset GITHUB_TOKEN
         gh-dryvist
 
-        # --- Custom-auth launchers for `claude` ---
-        # Defines av-claude <profile>, gh-claude-restricted, gh-claude-private,
-        # gh-claude-dryvist, gh-claude-admin, gh-claude-org-admin. Depends on
-        # the gh-* functions sourced above.
+        # --- Custom-auth launcher for `claude` ---
+        # Defines av-claude <profile> (aws-vault exec <profile> -- claude). The
+        # gh-claude-* GitHub-token relaunch wrappers were removed as unused; to
+        # run claude under a non-default tier, switch the parent shell with the
+        # gh-* functions sourced above first.
         source ${./claude-launchers.zsh}
 
         # --- macOS setup ---
