@@ -26,9 +26,11 @@
   ];
 
   # Share system-level Homebrew taps with nix-ai's trust.json.
-  # homebrew.taps merges to a list of tap submodules ({ name, ... });
-  # trustedTaps expects plain tap names, so extract them.
-  programs.ai-homebrew.trustedTaps = map (tap: tap.name) osConfig.homebrew.taps;
+  # homebrew.taps entries can be strings or submodule attrsets (nix-darwin
+  # normalizes to attrsets with a `name`); the nix-ai option takes strings.
+  programs.ai-homebrew.trustedTaps = map (
+    t: if builtins.isString t then t else t.name
+  ) osConfig.homebrew.taps;
 
   # ==========================================================================
   # macOS Application Management (copyApps for TCC stability)
@@ -83,7 +85,15 @@
     # Brings the existing vllm-mlx LaunchAgent under Nix management — without
     # this, the registry at services.aiStack.models is materialized to nothing
     # and llama-swap.json drifts from whatever was last activated by hand.
-    mlx.enable = true;
+    mlx = {
+      enable = true;
+      # Multi-turn agent clients re-prefill 5-40K-token contexts; the 8192 MB
+      # default left no room for paged-cache prefix reuse (constant ~700-token
+      # hits) and cold prefill ran ~270 tok/s. Measured 2026-06-10 with these
+      # values: identical-prefix re-request dropped 21.8K -> 63 prefill tokens.
+      cacheMemoryMb = 16384;
+      prefillBatchSize = 2048;
+    };
 
     # macOS-specific zsh overrides
     # Base zsh config provided by nix-home (sharedModule).
@@ -147,10 +157,11 @@
         unset GITHUB_TOKEN
         gh-dryvist
 
-        # --- Custom-auth launchers for `claude` ---
-        # Defines av-claude <profile>, gh-claude-restricted, gh-claude-private,
-        # gh-claude-dryvist, gh-claude-admin, gh-claude-org-admin. Depends on
-        # the gh-* functions sourced above.
+        # --- Custom-auth launcher for `claude` ---
+        # Defines av-claude <profile> (aws-vault exec <profile> -- claude). The
+        # gh-claude-* GitHub-token relaunch wrappers were removed as unused; to
+        # run claude under a non-default tier, switch the parent shell with the
+        # gh-* functions sourced above first.
         source ${./claude-launchers.zsh}
 
         # --- macOS setup ---

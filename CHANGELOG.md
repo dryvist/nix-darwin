@@ -1,5 +1,47 @@
 # Changelog
 
+## [1.47.0](https://github.com/dryvist/nix-darwin/compare/v1.46.1...v1.47.0) (2026-06-13)
+
+
+### Features
+
+* **cribl-stream:** add local Cribl Stream node in Apple container ([#1244](https://github.com/dryvist/nix-darwin/issues/1244)) ([358db35](https://github.com/dryvist/nix-darwin/commit/358db35f69f064441ae2a2ba471a23f1f3c44403))
+
+## [1.46.1](https://github.com/dryvist/nix-darwin/compare/v1.46.0...v1.46.1) (2026-06-12)
+
+
+### Bug Fixes
+
+* **ci:** repoint shared workflows to dryvist hub ([#1242](https://github.com/dryvist/nix-darwin/issues/1242)) ([572f0d0](https://github.com/dryvist/nix-darwin/commit/572f0d0081867bc5f310c4d258e27a58c9c99722))
+
+## [1.46.0](https://github.com/dryvist/nix-darwin/compare/v1.45.0...v1.46.0) (2026-06-12)
+
+
+### Features
+
+* **cribl-edge:** standalone GitOps mode + inline LLM-stack sources ([#1235](https://github.com/dryvist/nix-darwin/issues/1235)) ([0a21177](https://github.com/dryvist/nix-darwin/commit/0a211776824c859a20f610b5e46240a8035988d4))
+
+## [1.45.0](https://github.com/dryvist/nix-darwin/compare/v1.44.0...v1.45.0) (2026-06-12)
+
+
+### Features
+
+* **homebrew:** add Apple container runtime ([#1239](https://github.com/dryvist/nix-darwin/issues/1239)) ([6affebc](https://github.com/dryvist/nix-darwin/commit/6affebc356d62230639cd8d4342e529b786dd617))
+
+## [1.44.0](https://github.com/dryvist/nix-darwin/compare/v1.43.1...v1.44.0) (2026-06-11)
+
+
+### Features
+
+* **tunables:** lower iogpu wired limit to 104000 for 24GB pageable headroom ([#1233](https://github.com/dryvist/nix-darwin/issues/1233)) ([50d36b5](https://github.com/dryvist/nix-darwin/commit/50d36b5f089e3e162e21fa0b567d4d1f2500d0f4))
+
+## [1.43.1](https://github.com/dryvist/nix-darwin/compare/v1.43.0...v1.43.1) (2026-06-10)
+
+
+### Bug Fixes
+
+* **ai:** swap local LLM default to Qwen3-30B-A3B-Instruct-2507 + unbreak main build ([#1230](https://github.com/dryvist/nix-darwin/issues/1230)) ([5a8a28a](https://github.com/dryvist/nix-darwin/commit/5a8a28aeb6a39a50943a73b816b21565068e5905))
+
 ## [1.43.0](https://github.com/dryvist/nix-darwin/compare/v1.42.3...v1.43.0) (2026-06-08)
 
 
