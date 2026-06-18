@@ -59,6 +59,14 @@
       url = "github:BeehiveInnovations/pal-mcp-server";
       flake = false;
     };
+    # dryvist org-wide config hub. Source of the org-default .gitignore
+    # (configs/gitignore) that seeds the global git excludes file. Tracks
+    # main; `nix flake update dotgithub` pulls the latest. The git module
+    # tolerates the file being absent (pre-merge) and activates once present.
+    dotgithub = {
+      url = "github:dryvist/.github";
+      flake = false;
+    };
 
     # AI CLI ecosystem (Claude, Gemini, Copilot, MCP, marketplace).
     # Only AI flake nix-darwin imports — Claude/Gemini/Codex/MCP config
@@ -107,6 +115,7 @@
       nix-home,
       determinate,
       sops-nix,
+      dotgithub,
       ...
     }:
     let
@@ -117,7 +126,7 @@
       # nix-ai modules get their inputs via _module.args (self-contained)
       # nix-home modules accept userConfig with sensible defaults
       extraSpecialArgs = {
-        inherit userConfig;
+        inherit userConfig dotgithub;
       };
 
       # Guard: fail at eval time if stateVersion drifts from nixpkgs branch.

@@ -334,6 +334,22 @@
         "url": "https://install.determinate.systems/determinate-nixd/tag/v3.21.1/x86_64-linux"
       }
     },
+    "dotgithub": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1781568152,
+        "narHash": "sha256-MihaxK3kynDlIm3/+lQ6jlXb2SmjOTxSmqjwyX4a/AY=",
+        "owner": "dryvist",
+        "repo": ".github",
+        "rev": "b7cdc4b3bca92630ad3767494d6a64398732d882",
+        "type": "github"
+      },
+      "original": {
+        "owner": "dryvist",
+        "repo": ".github",
+        "type": "github"
+      }
+    },
     "dryvist-github": {
       "inputs": {
         "git-hooks": "git-hooks",
@@ -1058,6 +1074,7 @@
         "claude-code-plugins": "claude-code-plugins",
         "darwin": "darwin",
         "determinate": "determinate",
+        "dotgithub": "dotgithub",
         "home-manager": "home-manager",
         "jacobpevans-cc-plugins": "jacobpevans-cc-plugins",
         "mac-app-util": "mac-app-util",
