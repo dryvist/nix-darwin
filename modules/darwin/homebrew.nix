@@ -13,7 +13,7 @@
 # == How Packages Get Updated ==
 #
 # 1. MANUAL: Run `brew update && brew upgrade --greedy` for updates
-# 3. RENOVATE: Cannot track homebrew versions (no version info in this config)
+# 2. RENOVATE: Cannot track homebrew versions (no version info in this config)
 #
 # == Why Renovate Can't Help ==
 #
