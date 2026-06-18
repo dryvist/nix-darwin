@@ -337,11 +337,11 @@
     "dotgithub": {
       "flake": false,
       "locked": {
-        "lastModified": 1781568152,
-        "narHash": "sha256-MihaxK3kynDlIm3/+lQ6jlXb2SmjOTxSmqjwyX4a/AY=",
+        "lastModified": 1781793329,
+        "narHash": "sha256-ygO1jMurwtZREDLEGDm6luC3l4gk8xALNw7OU0fl5a4=",
         "owner": "dryvist",
         "repo": ".github",
-        "rev": "b7cdc4b3bca92630ad3767494d6a64398732d882",
+        "rev": "7950aaa29300a509789cc00dd2363c36de5bc4f0",
         "type": "github"
       },
       "original": {
