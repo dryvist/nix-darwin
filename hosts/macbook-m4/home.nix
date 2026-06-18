@@ -23,6 +23,8 @@
     # Disables nix-ai's auto-discovery of locally-cached HF models so the
     # registry stays at the single defaultLocalModelId entry.
     ./mlx-no-autodiscover.nix
+    # Global git excludes seeded from the dryvist org-default (see module).
+    ./git-global-excludes.nix
   ];
 
   # Share system-level Homebrew taps with nix-ai's trust.json.
