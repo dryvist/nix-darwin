@@ -171,8 +171,7 @@ Source: `modules/darwin/homebrew.nix`
 
 ### Casks
 
-All casks use `greedy = true` so that `brew upgrade --greedy` (run by `brew autoupdate` every 30 hours
-via LaunchAgent) always installs the latest version rather than deferring to built-in auto-updaters.
+All casks use `greedy = true` so that `brew upgrade --greedy` always installs the latest version rather than deferring to built-in auto-updaters.
 
 | Package | greedy | Description |
 | --- | --- | --- |
