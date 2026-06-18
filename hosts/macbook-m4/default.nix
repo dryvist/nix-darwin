@@ -5,7 +5,7 @@
 #
 # This file imports darwin modules and configures host-specific settings.
 
-{ pkgs, config, ... }:
+{ pkgs, ... }:
 
 let
   # User-specific configuration (hostname, identity, etc.)
@@ -74,14 +74,74 @@ in
     };
 
     # --- Cribl Edge ---
-    # Log collection agent managed by Cribl Cloud.
-    # Nix invokes Cribl Cloud's install-edge.sh on every rebuild and manages the LaunchDaemon.
-    # Cribl Cloud manages all runtime configuration after enrollment.
-    # Sensitive values (org ID, workspace ID, token) fetched from Doppler at activation time.
+    # Log collection agent, standalone + GitOps-managed (this file owns the
+    # node's config; Cribl Cloud fleets are reserved for Linux machines).
+    # Inline sources/pipelines below cover the local LLM stack; events ship
+    # over Cribl TCP to the HAProxy-fronted Stream workers (port value from
+    # terraform-proxmox constants service_ports.cribl_s2s) which forward to
+    # the Splunk `llm` index. See docs/CRIBL-GITOPS.md.
+    # NOTE: the local-Stream cutover (→127.0.0.1:10301) is reverted while the
+    # containerized Stream's CPU/DNS issue is fixed — see cribl-stream below.
     cribl-edge = {
       enable = true;
-      cloud = {
-        secretsFile = config.sops.templates."cribl-edge.env".path;
+      mode = "standalone";
+      standalone.configFiles = {
+        "inputs.yml" = ''
+          inputs:
+            in_llm_logs:
+              type: file
+              disabled: false
+              mode: manual
+              filenames:
+                - ${userConfig.user.homeDir}/Library/Logs/vllm-mlx/vllm-mlx.log
+                - ${userConfig.user.homeDir}/Library/Logs/vllm-mlx/vllm-mlx.error.log
+              sendToRoutes: false
+              connections:
+                - pipeline: llm_logs
+                  output: cribl_stream
+            in_system_metrics:
+              type: system_metrics
+              disabled: false
+              sendToRoutes: false
+              connections:
+                - pipeline: llm_metrics
+                  output: cribl_stream
+        '';
+        "outputs.yml" = ''
+          outputs:
+            cribl_stream:
+              type: cribl_tcp
+              # Homelab HAProxy (FQDN), load-balanced across the Cribl Stream workers.
+              host: haproxy.pve.jacobpevans.com
+              port: 10300
+              pqEnabled: true
+        '';
+        # Model-server logs: the manager (Go) and its workers (Python) share
+        # the same two files; sourcetype is derived per line.
+        "pipelines/llm_logs/conf.yml" = ''
+          output: default
+          functions:
+            - id: eval
+              filter: "true"
+              conf:
+                add:
+                  - name: index
+                    value: "'llm'"
+                  - name: sourcetype
+                    value: "_raw.match(/^(INFO|DEBUG|WARNING|ERROR|CRITICAL):/) ? 'vllm:mlx' : 'llamaswap'"
+        '';
+        "pipelines/llm_metrics/conf.yml" = ''
+          output: default
+          functions:
+            - id: eval
+              filter: "true"
+              conf:
+                add:
+                  - name: index
+                    value: "'llm'"
+                  - name: sourcetype
+                    value: "'mlx:metrics'"
+        '';
       };
       packs = {
         cc-edge-the-mac-pack-io = pkgs.fetchzip {
@@ -90,6 +150,56 @@ in
           hash = "sha256-rPPAkedltxT8RWgP2xXil1o6x13HQK+SRgihuheJAks=";
           stripRoot = false;
         };
+      };
+    };
+
+    # --- Cribl Stream (local egress aggregator, Apple container) ---
+    # Single-instance Cribl Stream in an Apple `container`: local sources ship to
+    # 127.0.0.1:10301 and it forwards to the Proxmox Stream tier (haproxy:10300).
+    # Resource-capped (cpus/memory/single worker) and given the LAN DNS resolver +
+    # search domain; the output queue is bounded. See docs/CRIBL-GITOPS.md.
+    cribl-stream = {
+      enable = true;
+      user = userConfig.user.name;
+      inputPort = 10301;
+      apiPort = 9000;
+      cpus = 1;
+      memory = "1g";
+      maxWorkers = 1;
+      dnsServers = userConfig.host.lanDnsServers;
+      dnsSearch = [ userConfig.host.lanSearchDomain ];
+      configFiles = {
+        "inputs.yml" = ''
+          inputs:
+            in_edge_s2s:
+              type: cribl_tcp
+              disabled: false
+              host: 0.0.0.0
+              port: 10301
+              sendToRoutes: false
+              connections:
+                - pipeline: passthrough
+                  output: proxmox_stream
+        '';
+        "outputs.yml" = ''
+          outputs:
+            proxmox_stream:
+              type: cribl_tcp
+              # Homelab HAProxy (FQDN), load-balanced across the Proxmox Cribl Stream workers.
+              host: haproxy.pve.jacobpevans.com
+              port: 10300
+              pqEnabled: true
+              # Bounded on-disk queue: cap size and drop when full.
+              pqMaxFileSize: 256 MB
+              pqMaxSize: 1 GB
+              pqOnBackpressure: drop
+        '';
+        # Passthrough for now; index/sourcetype enrichment moves here from Edge
+        # once Edge is repointed (Edge captures, Stream enriches + egresses).
+        "pipelines/passthrough/conf.yml" = ''
+          output: default
+          functions: []
+        '';
       };
     };
 
@@ -142,6 +252,13 @@ in
       energyMode = "high";
       # pmset perf flags (lowPowerMode / powerNap / proximityWake off) and the
       # Metal debug-env guard use the module's safe-win defaults.
+      # 104000 (not the module's 118000 default): guarantee 24 GB of unwirable
+      # headroom. At 118000 only ~10 GB was guaranteed pageable and the desktop
+      # working set alone exceeds 25 GB, so any large resident MLX model pushed
+      # the host into compressor + swap saturation (nix-mac-performance RC14;
+      # 2026-06-10 snapshot: swap 94 % with a single healthy 53 GB worker).
+      # Still fits the largest model in use (~75 GB resident).
+      wiredLimitMb = 0; # OS default (~96 GB on 128 GB); leave headroom for the rest of the system
     };
 
     # --- Resource Limits (file descriptors / processes) ---

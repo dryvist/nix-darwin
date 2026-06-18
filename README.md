@@ -33,15 +33,11 @@ imported as flake inputs.
 ### First-Time Setup
 
 ```bash
-# 1. Clone as a bare repo (worktree convention used throughout ${GIT_HOME})
-git clone --bare https://github.com/JacobPEvans/nix-darwin.git ${GIT_HOME_PUBLIC}/nix-darwin
+# 1. Clone the repo
+git clone https://github.com/JacobPEvans/nix-darwin.git ${GIT_HOME_PUBLIC}/nix-darwin
 cd ${GIT_HOME_PUBLIC}/nix-darwin
 
-# 2. Create the main worktree
-git worktree add main main
-
-# 3. Build and activate for the first time
-cd ${GIT_HOME_PUBLIC}/nix-darwin/main
+# 2. Build and activate for the first time
 sudo darwin-rebuild switch --flake .
 ```
 

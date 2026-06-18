@@ -75,11 +75,15 @@ in
     };
     taps = [
       "homebrew/autoupdate" # Background auto-update via launchd (brew autoupdate)
+      "aws/tap" # AWS SAM CLI and other AWS tools
     ]
     ++ agentHomebrewTaps; # AI-tool taps declared in nix-ai/lib/homebrew.nix
     brews = [
       # CLI tools (only if not available in nixpkgs)
       "ccusage" # Claude Code usage analyzer - not in nixpkgs
+      # Apple container CLI/runtime. Homebrew tracks current upstream while
+      # nixpkgs lags by a major release.
+      "container"
 
       # --- AI Agent Tools (homebrew-only; home-manager cannot manage brew formulas) ---
 

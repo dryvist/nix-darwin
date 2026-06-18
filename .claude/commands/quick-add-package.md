@@ -42,18 +42,7 @@ Per project rules: nixpkgs first, Homebrew only when package is unavailable in n
 
 ### 3. Create Worktree
 
-Create a dedicated worktree for the change (NEVER work on main).
-
-**From the bare repo root** (`${GIT_HOME_PUBLIC}/nix-darwin`):
-
-```bash
-cd ${GIT_HOME_PUBLIC}/nix-darwin
-git fetch origin
-git worktree add feat/add-<pkg-name> -b feat/add-<pkg-name> origin/main
-cd feat/add-<pkg-name>
-```
-
-The worktree is created at `${GIT_HOME_PUBLIC}/nix-darwin/feat/add-<pkg-name>/`.
+Create a worktree for the change (NEVER work on main), naming the branch `feat/add-<pkg-name>`.
 
 ### 4. Determine Installation Location
 
@@ -127,20 +116,7 @@ home-manager switch --flake .  # Linux
 
 ### 12. Cleanup (After Merge)
 
-Once the PR is merged, clean up your local environment:
-
-```bash
-# Navigate to the bare repo root
-cd ${GIT_HOME_PUBLIC}/nix-darwin
-
-# Remove the worktree
-git worktree remove feat/add-<pkg-name>
-
-# Delete the local feature branch
-git branch -d feat/add-<pkg-name>
-```
-
-**Note**: After the PR merges, run `/wrap-up` or `/clean_gone` to remove the worktree and the now-merged local branch.
+After the PR merges, run `/wrap-up` or `/clean_gone` to remove the worktree and the now-merged local branch.
 
 ---
 
