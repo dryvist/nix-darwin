@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(github-workflows:resolve-pr-threads)",
+      "Skill(github-workflows:resolve-pr-threads:*)",
+      "Bash(home-manager generations:*)",
+      "Bash(/nix/store/jcnfm7i1s6d1jlz45512z8l9icamn7gm-home-manager-generation/activate:*)",
+      "Bash(HOME_MANAGER_BACKUP_EXT=backup /nix/store/jcnfm7i1s6d1jlz45512z8l9icamn7gm-home-manager-generation/activate:*)",
+      "Read(//Users/jevans/git/ai-workflows/main/**)",
+      "Read(//Users/jevans/git/**)",
+      "Read(//Users/jevans/git/dryvist-private/**)",
+      "Bash(qwen --version)",
+      "Bash(command -v claude)",
+      "Bash(/opt/homebrew/bin/claude --version)",
+      "Bash(/etc/profiles/per-user/jevans/bin/claude --version)",
+      "Bash(claude mcp *)",
+      "Bash(/etc/profiles/per-user/jevans/bin/claude mcp *)",
+      "Bash(claude --version)",
+      "Bash(sudo -n /run/current-system/sw/bin/darwin-rebuild switch --flake /Users/jevans/git/public/nix-darwin/main#default)"
+    ]
+  }
+}

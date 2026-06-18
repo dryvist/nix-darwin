@@ -5,21 +5,14 @@
 #
 # == Update Philosophy ==
 #
-# Packages are kept current via `brew autoupdate` (homebrew/autoupdate tap), which
-# runs `brew update && brew upgrade --greedy --cleanup` every 30 hours in the
-# background via a launchd LaunchAgent. The autoupdate plist is (re)created on
-# every `darwin-rebuild switch` via a postActivation script.
-#
 # Our configuration:
 #   - onActivation.autoUpdate = false  → Keeps rebuilds fast (no 45MB index download)
-#   - onActivation.upgrade = false     → Rebuilds don't run brew upgrade (autoupdate handles it)
-#   - brew autoupdate: every 30h       → Background upgrade with --greedy --cleanup
+#   - onActivation.upgrade = false     → Rebuilds don't run brew upgrade
 #   - Passive auto-update: Enabled     → >5 minutes trigger on command invocation
 #
 # == How Packages Get Updated ==
 #
-# 1. AUTOMATIC: brew autoupdate runs every 30 hours (background launchd agent)
-# 2. MANUAL: Run `brew update && brew upgrade --greedy` for immediate updates
+# 1. MANUAL: Run `brew update && brew upgrade --greedy` for updates
 # 3. RENOVATE: Cannot track homebrew versions (no version info in this config)
 #
 # == Why Renovate Can't Help ==
@@ -38,10 +31,6 @@
   ...
 }:
 
-let
-  # 30 hours in seconds — brew autoupdate requires interval in seconds
-  autoupdateInterval = 108000;
-
   # Brew formulae required by per-agent nix-ai modules whose preferred
   # install source is Homebrew (e.g. programs.qwen-code with
   # installVia = "brew"). The list is owned by the agent's module in
@@ -55,11 +44,6 @@ let
   agentHomebrewTaps = nix-ai.lib.homebrewTaps or [ ];
   agentHomebrewCasks = nix-ai.lib.homebrewCasks or [ ];
 
-  configureBrewAutoupdateScript = pkgs.writeShellApplication {
-    name = "configure-brew-autoupdate";
-    runtimeInputs = [ ];
-    text = builtins.readFile ./scripts/configure-brew-autoupdate.sh;
-  };
 in
 {
   homebrew = {
@@ -69,12 +53,11 @@ in
       # Homebrew's passive auto-update still works (triggers on command invocation after >5 minutes).
       autoUpdate = false;
       cleanup = "none"; # Don't remove manually installed packages
-      # Upgrades handled by brew autoupdate (every 30h) — not during darwin-rebuild.
-      # This keeps rebuilds fast. Run `brew upgrade --greedy` manually for immediate updates.
+      # Upgrades are not run during darwin-rebuild to keep rebuilds fast.
+      # Run `brew upgrade --greedy` manually for updates.
       upgrade = false;
     };
     taps = [
-      "homebrew/autoupdate" # Background auto-update via launchd (brew autoupdate)
       "aws/tap" # AWS SAM CLI and other AWS tools
     ]
     ++ agentHomebrewTaps; # AI-tool taps declared in nix-ai/lib/homebrew.nix
@@ -115,7 +98,7 @@ in
       # Without this flag, `brew upgrade` silently skips the app because Homebrew
       # assumes the app will update itself. In practice, built-in updaters are
       # unreliable (require the app to be open, can be dismissed, etc.), so greedy
-      # ensures updates land deterministically via brew autoupdate.
+      # ensures updates land deterministically when running brew upgrade.
       # NOTE: ChatGPT and Cursor are in nixpkgs - see home.packages.
       # NOTE: AI-tool casks (claude-code@latest, antigravity suite) are appended
       # below from nix-ai.lib.homebrewCasks (source: nix-ai/lib/homebrew.nix).
@@ -253,12 +236,4 @@ in
       "OneDrive" = 823766827;
     };
   };
-
-  # (Re)create the brew autoupdate LaunchAgent plist on every darwin-rebuild switch.
-  # All logic lives in scripts/configure-brew-autoupdate.sh; this binding only
-  # passes the configured interval through as an env var and invokes the script.
-  system.activationScripts.postActivation.text = lib.mkAfter ''
-    AUTOUPDATE_INTERVAL=${lib.escapeShellArg (toString autoupdateInterval)} \
-      ${lib.getExe configureBrewAutoupdateScript} || true
-  '';
 }
