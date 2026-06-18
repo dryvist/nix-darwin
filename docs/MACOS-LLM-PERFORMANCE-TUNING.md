@@ -13,7 +13,7 @@ set from nix (or belong to the LLM-software layer) are marked accordingly.
 This repo (`nix-darwin`) owns the **OS / launchd layer**: `sysctl`, `pmset`, `launchd`
 daemons/agents (incl. environment), `defaults`, filesystem. The **LLM-software layer** — MLX
 process-level memory limits, KV-cache bounds, llama.cpp/Ollama runtime flags — is tuned separately
-and is listed under [Owned by the LLM-software layer](#owned-by-the-llm-software-layer-not-os-config)
+and is listed under [Owned by the LLM-software layer](MACOS-LLM-PERFORMANCE-TUNING-PT2.md#owned-by-the-llm-software-layer-not-os-config)
 for completeness only.
 
 ## Persistence legend
