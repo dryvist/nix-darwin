@@ -31,6 +31,7 @@
   ...
 }:
 
+let
   # Brew formulae required by per-agent nix-ai modules whose preferred
   # install source is Homebrew (e.g. programs.qwen-code with
   # installVia = "brew"). The list is owned by the agent's module in
