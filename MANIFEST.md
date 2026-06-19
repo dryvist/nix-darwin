@@ -122,7 +122,7 @@ On-demand via `nix run nixpkgs#d2` and `nix run nixpkgs#mermaid-cli` — not ins
 | pyright | Static type checker for Python (global: IDEs require it in PATH) |
 | python314 | Python 3.14 (primary runtime) |
 | uv | Fast Python package manager (also runs EOL versions) |
-| python3.withPackages | Unified env: cryptography, pygithub + document-skills deps |
+| python3.withPackages | Unified env: cryptography, pygithub, pyyaml + document-skills deps |
 
 ---
 
