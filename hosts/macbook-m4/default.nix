@@ -213,6 +213,9 @@ in
       removePlists = [
         "com.google.keystone.agent.plist" # Legacy Google Keystone (empty, replaced by GoogleUpdater)
         "com.google.keystone.xpcservice.plist" # Legacy Google Keystone (empty)
+        "com.jacobpevans.orbstack-runner.plist" # Hand-installed `make` runner, superseded by programs.orbstack
+        "com.github.domt4.homebrew-autoupdate.plist" # `brew autoupdate`, contradicts homebrew autoUpdate=false
+        "com.nix-darwin.orbstack-background.plist" # Stale: programs.orbstack.background.enable=false (nix-darwin leaves old plists behind)
       ];
 
       # User-domain services to disable (updaters, redundant apps, broken daemons)
