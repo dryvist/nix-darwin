@@ -11,16 +11,8 @@
 A flakes-only nix-darwin configuration for M4 Max MacBook Pro. Manages macOS
 system-level settings: system packages, Dock, Finder, keyboard, security,
 Homebrew, and LaunchDaemons -- all declaratively. User-level configuration
-(dotfiles, dev tools, LaunchAgents) is managed by nix-home and nix-ai,
-imported as flake inputs.
-
-**Part of a trio:**
-
-| Repo | Scope | Installs via |
-| ---- | ----- | ------------ |
-| **nix-darwin** (this repo) | macOS system config (Dock, Finder, Homebrew, security) | nix-darwin |
-| [nix-ai](https://github.com/JacobPEvans/nix-ai) | AI CLI ecosystem (Claude, Gemini, Copilot, MCP) | home-manager |
-| [nix-home](https://github.com/JacobPEvans/nix-home) | User environment (dotfiles, dev tools, LaunchAgents) | home-manager |
+(dotfiles, dev tools, LaunchAgents) is layered on top via external
+home-manager modules consumed as flake inputs.
 
 ## Prerequisites
 
@@ -28,9 +20,7 @@ imported as flake inputs.
 - **Determinate Nix** installer: <https://install.determinate.systems>
 - **git**
 
-## Quick Start
-
-### First-Time Setup
+## Installation
 
 ```bash
 # 1. Clone the repo
@@ -41,7 +31,7 @@ cd ${GIT_HOME_PUBLIC}/nix-darwin
 sudo darwin-rebuild switch --flake .
 ```
 
-### Subsequent Rebuilds
+## Usage
 
 ```bash
 # Rebuild after config changes
@@ -54,8 +44,8 @@ nix search nixpkgs <name>
 sudo darwin-rebuild --rollback
 ```
 
-The `d-r` alias (defined in nix-home) expands to `sudo darwin-rebuild switch --flake .`
-and handles full system + home-manager activation in one step.
+The `d-r` alias expands to `sudo darwin-rebuild switch --flake .` and handles
+full system + home-manager activation in one step.
 See [RUNBOOK.md](RUNBOOK.md) for detailed operational procedures.
 
 ## Supported Platforms
@@ -104,7 +94,13 @@ See **[MANIFEST.md](MANIFEST.md)** for the complete package inventory.
 
 Full details in [ARCHITECTURE.md](ARCHITECTURE.md).
 
-## Key Components
+## Inputs and Boundaries
+
+This flake is the **system orchestrator**. It consumes external
+`homeManagerModules.default` outputs as flake inputs and wires them into the
+shared home-manager configuration; it does not own user-level dotfiles, dev
+tools, or AI CLI settings -- those belong to whichever modules provide them.
+Other foundational pieces:
 
 | Component | What It Does |
 | --------- | ------------ |
@@ -112,9 +108,9 @@ Full details in [ARCHITECTURE.md](ARCHITECTURE.md).
 | **nix-darwin** | macOS packages, system settings, Homebrew integration |
 | **home-manager** | Activation recovery, config symlinks, and Raycast scripts |
 | **mac-app-util** | Stable app trampolines to preserve TCC permissions |
-| **[nix-ai](https://github.com/JacobPEvans/nix-ai)** | Shared home-manager modules for AI tools (Claude, Gemini, Copilot, MCP) |
-| **[nix-home](https://github.com/JacobPEvans/nix-home)** | Shared home-manager modules for dev environment (git, zsh, VS Code, tmux) |
 | **sops-nix** | Decrypts age-encrypted secrets to `/run/secrets/` for system services |
+
+**Key Rule**: Use nixpkgs for everything. Homebrew is fallback only.
 
 ## Secrets Management
 
@@ -126,12 +122,6 @@ once per machine and never committed.
 **Doppler** is used for developer credentials accessed in the user session (Terraform state,
 API tokens, etc.). Doppler CLI requires Keychain and cannot be called from activation scripts
 (which run as root). sops-nix handles that boundary.
-
-This repo is the **orchestrator**: it pulls in `nix-ai` and `nix-home` as flake inputs
-and wires their `homeManagerModules.default` into the shared home-manager configuration.
-Changes to AI tools or dev environment settings belong in those repos, not here.
-
-**Key Rule**: Use nixpkgs for everything. Homebrew is fallback only.
 
 ## Documentation
 
@@ -165,3 +155,5 @@ Contributions welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 [nix-build-link]: https://github.com/JacobPEvans/nix-darwin/actions/workflows/ci-nix.yml
 [md-lint-img]: https://github.com/JacobPEvans/nix-darwin/actions/workflows/ci-markdownlint.yml/badge.svg
 [md-lint-link]: https://github.com/JacobPEvans/nix-darwin/actions/workflows/ci-markdownlint.yml
+
+> Part of a [larger ecosystem of ~40 repos](https://docs.jacobpevans.com) — see how it all fits together.
