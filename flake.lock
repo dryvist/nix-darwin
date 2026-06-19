@@ -784,11 +784,11 @@
         "ponytail": "ponytail"
       },
       "locked": {
-        "lastModified": 1781784328,
-        "narHash": "sha256-Nmmj6Ny7tR1a1vqmqohmcXKJyztT+9BXqNR1yIyaz0c=",
+        "lastModified": 1781871822,
+        "narHash": "sha256-9IRlrZcb5limY59RIbujl9tZVhrY57Z8pCg7/Oe407Q=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "e0452b210aa45f9645c7e60ea920caacbd148c65",
+        "rev": "e06b8d2033d3fb7c4da7a492fd704cf3dcc46a4a",
         "type": "github"
       },
       "original": {
@@ -867,11 +867,11 @@
         "orbstack-kubernetes": "orbstack-kubernetes"
       },
       "locked": {
-        "lastModified": 1781836642,
-        "narHash": "sha256-MY2SFjB5YnB/pf45lazLogjxeQwLpg7V1OO/Adyyl3I=",
+        "lastModified": 1781871597,
+        "narHash": "sha256-gUN5fl5wH1L83sWWeWMb52E7b1Swf7FxWwt/6H5fOso=",
         "owner": "dryvist",
         "repo": "nix-home",
-        "rev": "a6bdcae8b36d389700d0b4f95786c562c877660a",
+        "rev": "0da8294d34f408076c3be4f277e753f8d85a3903",
         "type": "github"
       },
       "original": {
@@ -1055,11 +1055,11 @@
     "ponytail": {
       "flake": false,
       "locked": {
-        "lastModified": 1781663722,
-        "narHash": "sha256-BAwav7tf6RuHZ/A7TF/1k1TXWhYAdshlsYB3LbdgUD8=",
+        "lastModified": 1781815817,
+        "narHash": "sha256-F5ifCXfK+rEK4hxJPyfmrgsYpaxgY6EBiekwFOtSjCw=",
         "owner": "DietrichGebert",
         "repo": "ponytail",
-        "rev": "45f7d2f83fb430a65fd512a98ad7b14d79e06636",
+        "rev": "795ec0ee3678d2fd92f7d118396855e9dcd591dc",
         "type": "github"
       },
       "original": {
