@@ -5,7 +5,7 @@
 #
 # This file imports darwin modules and configures host-specific settings.
 
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 
 let
   # User-specific configuration (hostname, identity, etc.)
@@ -252,6 +252,13 @@ in
     # 2026-06-10 snapshot: swap 94 % with a single healthy 53 GB worker).
     # Still fits the largest model in use (~75 GB resident).
     wiredLimitMb = 0; # OS default (~96 GB on 128 GB); leave headroom for the rest of the system
+    # Set explicitly rather than relying on the module default: a list option
+    # drops its default once any config value is set, so the generic excludes
+    # must be a config def here for a private host layer to append to via merge.
+    timeMachineExcludes = [
+      "${userConfig.user.homeDir}/.cache/uv"
+      config.system.appleSiliconTunables.huggingfaceVolume
+    ];
   };
 
   # --- Energy & Sleep Configuration ---

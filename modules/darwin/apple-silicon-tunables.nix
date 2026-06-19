@@ -1,7 +1,7 @@
 # Apple Silicon System Tunables
 #
 # Boot-time and runtime knobs for Apple Silicon (M-series) hosts that run
-# heavy local AI inference workloads (vllm-mlx, screenpipe, etc.).
+# heavy local AI inference + capture workloads (vllm-mlx, etc.).
 # All knobs target native macOS surfaces (sysctl, pmset, mdutil, tmutil,
 # user defaults) — there is no first-class nix-darwin option for any of them.
 
@@ -46,15 +46,11 @@ in
       type = lib.types.listOf lib.types.str;
       default = [
         "${userConfig.user.homeDir}/.cache/uv"
-        "${userConfig.user.homeDir}/.cache/nix-screenpipe"
-        "${userConfig.user.homeDir}/.screenpipe/data"
         cfg.huggingfaceVolume
       ];
       defaultText = lib.literalExpression ''
         [
           "''${userConfig.user.homeDir}/.cache/uv"
-          "''${userConfig.user.homeDir}/.cache/nix-screenpipe"
-          "''${userConfig.user.homeDir}/.screenpipe/data"
           config.system.appleSiliconTunables.huggingfaceVolume
         ]
       '';
