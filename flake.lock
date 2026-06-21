@@ -147,11 +147,11 @@
     "claude-code-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1781832044,
-        "narHash": "sha256-60Fzzr25NiOa09uPD0YiDL4HgPlbjPo+lHU9ZDJg9gQ=",
+        "lastModified": 1781989152,
+        "narHash": "sha256-8mtiItHlBQcVcjT59+9wrwOmN1Ih6qKhsGJk/zQjP0A=",
         "owner": "anthropics",
         "repo": "claude-code",
-        "rev": "c487902a53fc25aea01ddfdf2bf002e82d0cad45",
+        "rev": "b4073894cdef365c6061f036098ce0875bbdbc86",
         "type": "github"
       },
       "original": {
@@ -795,17 +795,14 @@
           "nixpkgs"
         ],
         "nixpkgs-unstable": "nixpkgs-unstable",
-        "pal-mcp-server": [
-          "pal-mcp-server"
-        ],
         "ponytail": "ponytail"
       },
       "locked": {
-        "lastModified": 1781972483,
-        "narHash": "sha256-Ho6jgBpLJ99j6SAlIi5s1HeIba7vGkrDttgJ5/nhv9Y=",
+        "lastModified": 1781986400,
+        "narHash": "sha256-J5Zl63O/vn6kYPmDgxJJtX8SDNSZY5qMIRR6GFlgNcI=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "ce1263ba4bcd334837e3517dd0556bc5390f9f8b",
+        "rev": "034adfe9cf4e4c80849df5a08eaacc83d7796bef",
         "type": "github"
       },
       "original": {
