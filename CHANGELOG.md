@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.49.0](https://github.com/dryvist/nix-darwin/compare/v1.48.1...v1.49.0) (2026-06-21)
+
+
+### Features
+
+* **claude:** re-inject homelab auto-mode context after nix-ai de-personalization ([#1280](https://github.com/dryvist/nix-darwin/issues/1280)) ([6e6c884](https://github.com/dryvist/nix-darwin/commit/6e6c8840588f29b2854e575f95575cd6a678c768))
+
 ## [1.48.1](https://github.com/dryvist/nix-darwin/compare/v1.48.0...v1.48.1) (2026-06-19)
 
 
