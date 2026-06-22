@@ -147,11 +147,11 @@
     "claude-code-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1781989152,
-        "narHash": "sha256-8mtiItHlBQcVcjT59+9wrwOmN1Ih6qKhsGJk/zQjP0A=",
+        "lastModified": 1782160647,
+        "narHash": "sha256-hTySFWqan/1p3ruwTkUKfQibKMcBGNeOaz3xVFNYnIM=",
         "owner": "anthropics",
         "repo": "claude-code",
-        "rev": "b4073894cdef365c6061f036098ce0875bbdbc86",
+        "rev": "12281998d8c85813c4b5952ed9367784aae37d31",
         "type": "github"
       },
       "original": {
@@ -698,11 +698,11 @@
     "last30days-skill": {
       "flake": false,
       "locked": {
-        "lastModified": 1782060320,
-        "narHash": "sha256-Y6VrUOAezrs+h7xsdFQyo4/HoYsHQ6ec07f2Zt/aRHQ=",
+        "lastModified": 1782138396,
+        "narHash": "sha256-67vT2mMi3JXwDLbpLeB5FOfEk/BgVzwfXZMqL8evRfg=",
         "owner": "mvanhorn",
         "repo": "last30days-skill",
-        "rev": "b8122a28d88ebc1cf43d4f4c76df49c91c6c03b2",
+        "rev": "9f77d3ac314d95052c6718d2605f934c24a9ee0a",
         "type": "github"
       },
       "original": {
@@ -798,11 +798,11 @@
         "ponytail": "ponytail"
       },
       "locked": {
-        "lastModified": 1782158690,
-        "narHash": "sha256-KbjKgqh3/h/w2GilJ0s7x59pbSegBGpTSPVEMbRNj1o=",
+        "lastModified": 1782162913,
+        "narHash": "sha256-FkHEoyo8zhYC+gfmdI6yUls9IqSmaNkiXTZ3ll/a0UI=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "c3c80a42f4347f9acb6d67cfaa55f41d9f469a6c",
+        "rev": "6b147fd8c94464a05ea0ca660fe51e72cafb21b5",
         "type": "github"
       },
       "original": {
