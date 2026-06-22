@@ -634,11 +634,11 @@
     "jacobpevans-cc-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1781920214,
-        "narHash": "sha256-meTo9zEuosIOM3FgxJyVb+QDy7Wi63diZd33fnn4I3g=",
+        "lastModified": 1782136108,
+        "narHash": "sha256-FYh95ha/h0aFxT3PcC4wcIl0rJOaJuDjHHxTGdvjXzI=",
         "owner": "dryvist",
         "repo": "claude-code-plugins",
-        "rev": "add57f46e4c44911a700faa059b2bb04cd2aaae7",
+        "rev": "7aba6975374f10607513337b0ea340a35778c91d",
         "type": "github"
       },
       "original": {
