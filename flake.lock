@@ -698,11 +698,11 @@
     "last30days-skill": {
       "flake": false,
       "locked": {
-        "lastModified": 1781763931,
-        "narHash": "sha256-fi0If7pRbnzMfd+zmVAPmSzabhUo+F/QXzyZW7nfzZY=",
+        "lastModified": 1781982015,
+        "narHash": "sha256-4OhnlO3RIIASEqSTdZ9Rl5iHcte73eg6tpvQZNF3grQ=",
         "owner": "mvanhorn",
         "repo": "last30days-skill",
-        "rev": "3fa91fce9009731ed68e2e8a14ce9683253720e8",
+        "rev": "634b95b787bf862c05e43efb5accd7747d3eccb1",
         "type": "github"
       },
       "original": {
@@ -798,11 +798,11 @@
         "ponytail": "ponytail"
       },
       "locked": {
-        "lastModified": 1782065598,
-        "narHash": "sha256-IoUphIXh3E82uJkxzgU7sx6FTJgONW+YgmC5fRf+a4E=",
+        "lastModified": 1782077986,
+        "narHash": "sha256-UJpbZrZfUBA5G8XUr+ezfj/RIcyXYHlDQbUy5TRN1pM=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "f876c63e654597dbf5cfb43b68b6a3782e96e589",
+        "rev": "7c06e4ad353c343c7d8c4e074a1357b750fa0c3c",
         "type": "github"
       },
       "original": {
@@ -856,11 +856,11 @@
         "wakatime": "wakatime"
       },
       "locked": {
-        "lastModified": 1781921627,
-        "narHash": "sha256-Bhc1DRiDB5Wcw+Q0j5DjFqG2yhSVo9FU6Y79BcmN6vo=",
+        "lastModified": 1782068560,
+        "narHash": "sha256-4uDc+jXHYRKETTQ6aPLUXV1lZxkfJYMPBUohDgiPdH4=",
         "owner": "dryvist",
         "repo": "nix-claude-code",
-        "rev": "aceddc2d90fd65e9817ceca5f81c9800d6325a89",
+        "rev": "3a03b83e54841241387a1ee48c38f508ac5881e0",
         "type": "github"
       },
       "original": {
