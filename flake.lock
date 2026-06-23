@@ -698,11 +698,11 @@
     "last30days-skill": {
       "flake": false,
       "locked": {
-        "lastModified": 1782173891,
-        "narHash": "sha256-LvNzsPsy/Owi80ZC2kvaEcVlOBpsfsh6ds3zBJPp5S0=",
+        "lastModified": 1782181109,
+        "narHash": "sha256-NgPlErMW6jY4VweL0rWQTXydUfWy3G4I5IwNHTTnDgY=",
         "owner": "mvanhorn",
         "repo": "last30days-skill",
-        "rev": "1b832a26bce52a17d0136f502f9021fa4651ced3",
+        "rev": "977f0beed5ad4dbc604f6762a4b27ab8efbd3504",
         "type": "github"
       },
       "original": {
@@ -798,11 +798,11 @@
         "ponytail": "ponytail"
       },
       "locked": {
-        "lastModified": 1782193267,
-        "narHash": "sha256-7PFsClhY5D4ZxZRskm1t+xd+8JrMFqe2ASiRiFIqx0o=",
+        "lastModified": 1782208213,
+        "narHash": "sha256-nqqCWSaZ7gJ9lXyOppEY9AK4Ysq8UwndwjOaQLEt1M0=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "15c6feabe9c7cbdd894c0afd5996fecd2b08ba3b",
+        "rev": "27e5563c3b9ef6e3a8d23d3d5ba7ec69cf5232ea",
         "type": "github"
       },
       "original": {
