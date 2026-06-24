@@ -798,11 +798,11 @@
         "ponytail": "ponytail"
       },
       "locked": {
-        "lastModified": 1782250711,
-        "narHash": "sha256-+hF3iIRmNDottjM84uIOvW7iJMHVe08Z5NRm67FqIaw=",
+        "lastModified": 1782262039,
+        "narHash": "sha256-LTl9VABPbOPcEf1VZ2AYiBegE18eR6U2GAwh+ilPo+E=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "f24803e534ef7cc8827a398202c704d760f713f7",
+        "rev": "363373100c128cc140805b2ca49090956dd45d92",
         "type": "github"
       },
       "original": {
@@ -942,11 +942,11 @@
     },
     "nixpkgs-unstable": {
       "locked": {
-        "lastModified": 1781607440,
-        "narHash": "sha256-rxO+uc/KFbSJp+pgyXRuAX6QlG9hJdnt0BXpEQRXY+U=",
+        "lastModified": 1782118813,
+        "narHash": "sha256-BnbXO5s5EhV89lLXMAGCzPdEN5a6vNqvMk71obeTEUw=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "3e41b24abd260e8f71dbe2f5737d24122f972158",
+        "rev": "b3c092d3c36d91e2f61f3dfb39a159f180a56659",
         "type": "github"
       },
       "original": {
@@ -1069,11 +1069,11 @@
     "ponytail": {
       "flake": false,
       "locked": {
-        "lastModified": 1782232133,
-        "narHash": "sha256-kdghteRaexCDSfF8sn9EMJfrCkfoPvAzNJnpYNRW10w=",
+        "lastModified": 1782250686,
+        "narHash": "sha256-jhwbtahuCyTUV/OATF2DFK/XKdqLhbMJZg2+3e4/GMo=",
         "owner": "DietrichGebert",
         "repo": "ponytail",
-        "rev": "763e04deeeb59551aba28557dc46bde6092f2e21",
+        "rev": "ae24cd00bc933be6299bb17b45473c41a9021b25",
         "type": "github"
       },
       "original": {
