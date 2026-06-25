@@ -8,11 +8,11 @@
 stdenvNoCC.mkDerivation rec {
   pname = "ClaudeBar";
   # managed by: nix-update (deps-update-flake.yml)
-  version = "0.4.63";
+  version = "0.4.68";
 
   src = fetchurl {
     url = "https://github.com/tddworks/ClaudeBar/releases/download/v${version}/ClaudeBar-${version}.dmg";
-    hash = "sha256-6GW0V1v4OZwUaI+THySqgEjnOjQp6lzGGPkRRtF6Pqs=";
+    hash = "sha256-wNQDeyVmmBwIEq0nmOTHqSCCnNTupmWJKc/miEHlxAk=";
   };
 
   nativeBuildInputs = [ undmg ];

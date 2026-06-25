@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.49.1](https://github.com/dryvist/nix-darwin/compare/v1.49.0...v1.49.1) (2026-06-22)
+
+
+### Bug Fixes
+
+* **deps:** refresh gh-aw action SHA pins [aw:gh-aw-pin-refresh] ([#1285](https://github.com/dryvist/nix-darwin/issues/1285)) ([ac30ea9](https://github.com/dryvist/nix-darwin/commit/ac30ea9df6c6399d41bc4f8358aeb093ddf8edd0))
+
+## [1.49.0](https://github.com/dryvist/nix-darwin/compare/v1.48.1...v1.49.0) (2026-06-21)
+
+
+### Features
+
+* **claude:** re-inject homelab auto-mode context after nix-ai de-personalization ([#1280](https://github.com/dryvist/nix-darwin/issues/1280)) ([6e6c884](https://github.com/dryvist/nix-darwin/commit/6e6c8840588f29b2854e575f95575cd6a678c768))
+
+## [1.48.1](https://github.com/dryvist/nix-darwin/compare/v1.48.0...v1.48.1) (2026-06-19)
+
+
+### Bug Fixes
+
+* **python:** consume PyYAML-enabled home env ([#1265](https://github.com/dryvist/nix-darwin/issues/1265)) ([d94dca7](https://github.com/dryvist/nix-darwin/commit/d94dca752c0e293918998af3f9972dbf88106d2e))
+
+## [1.48.0](https://github.com/dryvist/nix-darwin/compare/v1.47.0...v1.48.0) (2026-06-18)
+
+
+### Features
+
+* seed global git excludes from dryvist/.github org-default gitignore ([#1256](https://github.com/dryvist/nix-darwin/issues/1256)) ([8b0d348](https://github.com/dryvist/nix-darwin/commit/8b0d3486b83e77bf3caa7c0b1a4faf207bc18bd3))
+
 ## [1.47.0](https://github.com/dryvist/nix-darwin/compare/v1.46.1...v1.47.0) (2026-06-13)
 
 
