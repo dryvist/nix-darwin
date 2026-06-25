@@ -55,10 +55,6 @@
       url = "github:anthropics/claude-code";
       flake = false;
     };
-    pal-mcp-server = {
-      url = "github:BeehiveInnovations/pal-mcp-server";
-      flake = false;
-    };
     # dryvist org-wide config hub. Source of the org-default .gitignore
     # (configs/gitignore) that seeds the global git excludes file. Tracks
     # main; `nix flake update dotgithub` pulls the latest. The git module
@@ -80,7 +76,6 @@
         home-manager.follows = "home-manager";
         ai-assistant-instructions.follows = "ai-assistant-instructions";
         claude-code-plugins.follows = "claude-code-plugins";
-        pal-mcp-server.follows = "pal-mcp-server";
       };
     };
 
