@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.49.2](https://github.com/dryvist/nix-darwin/compare/v1.49.1...v1.49.2) (2026-06-25)
+
+
+### Bug Fixes
+
+* **deps:** refresh gh-aw action SHA pins [aw:gh-aw-pin-refresh] ([#1314](https://github.com/dryvist/nix-darwin/issues/1314)) ([2833047](https://github.com/dryvist/nix-darwin/commit/28330477f1f5ea9535c7df5cb032e86aac18108e))
+
 ## [1.49.1](https://github.com/dryvist/nix-darwin/compare/v1.49.0...v1.49.1) (2026-06-22)
 
 
