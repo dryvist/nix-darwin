@@ -234,7 +234,10 @@ in
       "Microsoft PowerPoint" = 462062816;
       "Microsoft Outlook" = 985367838;
       "Microsoft OneNote" = 784801555;
-      "OneDrive" = 823766827;
+      # OneDrive (823766827) is intentionally NOT managed via masApps: its
+      # first-time `mas install` needs an admin-password TTY, which is
+      # unavailable during non-interactive `darwin-rebuild switch`
+      # ("sudo: a terminal is required"), failing brew bundle on every rebuild.
     };
   };
 }
