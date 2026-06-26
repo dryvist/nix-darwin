@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.49.3](https://github.com/dryvist/nix-darwin/compare/v1.49.2...v1.49.3) (2026-06-26)
+
+
+### Bug Fixes
+
+* **homebrew:** stop managing OneDrive via masApps ([#1324](https://github.com/dryvist/nix-darwin/issues/1324)) ([a75ffed](https://github.com/dryvist/nix-darwin/commit/a75ffed1f08a3274550722239bf92cb0a7c68431))
+
 ## [1.49.2](https://github.com/dryvist/nix-darwin/compare/v1.49.1...v1.49.2) (2026-06-25)
 
 
