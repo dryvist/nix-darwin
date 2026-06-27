@@ -89,6 +89,10 @@
     # and llama-swap.json drifts from whatever was last activated by hand.
     mlx = {
       enable = true;
+      # Bind the API to all interfaces so on-LAN clients can reach it (the module
+      # default is loopback-only). The endpoint is unauthenticated, so inbound to
+      # :11434 must be restricted to the trusted VLAN at the host/network firewall.
+      host = "0.0.0.0";
       # Multi-turn agent clients re-prefill 5-40K-token contexts; the 8192 MB
       # default left no room for paged-cache prefix reuse (constant ~700-token
       # hits) and cold prefill ran ~270 tok/s. Measured 2026-06-10 with these
