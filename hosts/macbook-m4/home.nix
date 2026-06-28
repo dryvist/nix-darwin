@@ -79,31 +79,27 @@
   };
 
   programs = {
-    # Claude Code config (plugin disables, MCP server overrides) moved to
-    # nix-ai/modules/claude-config.nix in dryvist/nix-ai#853 — Claude config
-    # doesn't belong in nix-darwin (host-specific opinion lives in nix-ai).
+    # Claude Code config moved to nix-ai/modules/claude-config.nix
+    # (dryvist/nix-ai#853) — host-specific opinion lives in nix-ai, not here.
 
-    # Local MLX inference server (vllm-mlx + llama-swap proxy on :11434).
-    # Brings the existing vllm-mlx LaunchAgent under Nix management — without
-    # this, the registry at services.aiStack.models is materialized to nothing
-    # and llama-swap.json drifts from whatever was last activated by hand.
+    # Local MLX inference server (vllm-mlx + llama-swap proxy on :11434), bringing
+    # the vllm-mlx LaunchAgent under Nix — without it, services.aiStack.models
+    # materializes to nothing and llama-swap.json drifts from the last hand-activation.
     mlx = {
       enable = true;
       # Bind the API to all interfaces so on-LAN clients can reach it (the module
       # default is loopback-only). The endpoint is unauthenticated, so inbound to
       # :11434 must be restricted to the trusted VLAN at the host/network firewall.
       host = "0.0.0.0";
-      # Multi-turn agent clients re-prefill 5-40K-token contexts; the 8192 MB
-      # default left no room for paged-cache prefix reuse (constant ~700-token
-      # hits) and cold prefill ran ~270 tok/s. Measured 2026-06-10 with these
-      # values: identical-prefix re-request dropped 21.8K -> 63 prefill tokens.
+      # The 8192 MB default left no room for paged-cache prefix reuse on multi-turn
+      # agent contexts (5-40K tokens). Measured 2026-06-10: these values dropped an
+      # identical-prefix re-request from 21.8K -> 63 prefill tokens.
       cacheMemoryMb = 16384;
       prefillBatchSize = 2048;
     };
 
-    # macOS-specific zsh overrides
-    # Base zsh config provided by nix-home (sharedModule).
-    # These additions are macOS-specific and merge via NixOS module system.
+    # macOS-specific zsh overrides (base config from nix-home's sharedModule;
+    # these additions merge via the module system).
     zsh = {
       oh-my-zsh.plugins = [
         "macos" # macOS utilities (ofd, cdf, etc.)
