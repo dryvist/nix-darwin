@@ -337,11 +337,11 @@
     "dotgithub": {
       "flake": false,
       "locked": {
-        "lastModified": 1782558096,
-        "narHash": "sha256-39uf12WHPVql/Hp3lFqZZCiyqfz9MLrMV8VycMy2dNk=",
+        "lastModified": 1782741098,
+        "narHash": "sha256-g/ZANUEAL3iGV9j2yAJoN8BaK6Ty5Qxru7IcbAONrbU=",
         "owner": "dryvist",
         "repo": ".github",
-        "rev": "feebd661b08465d6a79841fba9b0d98eb978bd6f",
+        "rev": "29e6615330e544dedc616401c7a3e65021d7d3db",
         "type": "github"
       },
       "original": {
@@ -798,11 +798,11 @@
         "ponytail": "ponytail"
       },
       "locked": {
-        "lastModified": 1782739802,
-        "narHash": "sha256-4mdSTBW1KGThHWDfrRZ47mWrEXn5Vv2Sc/Qz/Nq0L2w=",
+        "lastModified": 1782741077,
+        "narHash": "sha256-Sxjz5qDZ8pV1Gf3PjNzDNM1pitrmNASpQ37QT+iSdvE=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "b5405b66ccc1f292c6e562863c8c992e7cec2e53",
+        "rev": "0924e511aa715bd8afeee929fa18d8371952e606",
         "type": "github"
       },
       "original": {
