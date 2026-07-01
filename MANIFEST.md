@@ -227,11 +227,17 @@ Managed by nix-darwin modules but installed externally (not via nixpkgs or Homeb
 | Trackpad | `modules/darwin/trackpad.nix` | Gestures |
 | System UI | `modules/darwin/system-ui.nix` | Menu bar, control center, login window |
 | Security | `modules/darwin/security.nix` | System security policies |
-| Energy | `modules/darwin/energy.nix` | Power management |
+| Energy | `modules/darwin/energy.nix` | Power management (sleep/wake timers) |
+| Apple Silicon Tunables | `modules/darwin/apple-silicon-tunables.nix` | GPU wired limit, pmset perf, App Nap, Spotlight/TM excludes, Metal env |
+| Resource Limits | `modules/darwin/system-limits.nix` | `kern.maxfiles*` / `maxproc` + `launchctl limit maxfiles` (524288) |
+| Network Tuning | `modules/darwin/network-tuning.nix` | TCP/socket-buffer sysctls (exposed, off by default) |
 | Boot | `modules/darwin/boot-activation.nix` | Creates /run/current-system at boot |
 | Logging | `modules/darwin/logging.nix` | Syslog forwarding to remote server |
 | File Extensions | `modules/darwin/file-extensions.nix` | File type associations |
 | Auto Recovery | `modules/darwin/auto-recovery.nix` | Activation error recovery |
+
+> Performance tuning: every macOS / M4 Max inference knob (wired memory, pmset, thermal, file
+> limits, network) is catalogued in [docs/MACOS-LLM-PERFORMANCE-TUNING.md](docs/MACOS-LLM-PERFORMANCE-TUNING.md).
 
 ---
 
