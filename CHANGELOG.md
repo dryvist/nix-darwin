@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.50.0](https://github.com/dryvist/nix-darwin/compare/v1.49.4...v1.50.0) (2026-07-01)
+
+
+### Features
+
+* **darwin:** exhaustive macOS LLM-inference tuning parameters (M4 Max / Tahoe) ([#1220](https://github.com/dryvist/nix-darwin/issues/1220)) ([6e9ed97](https://github.com/dryvist/nix-darwin/commit/6e9ed97842b53d085714c9ea8d29f0903500e908))
+
 ## [1.49.4](https://github.com/dryvist/nix-darwin/compare/v1.49.3...v1.49.4) (2026-06-29)
 
 
