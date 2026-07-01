@@ -115,14 +115,9 @@
     }:
     let
       userConfig = import ./lib/user-config.nix;
+      hosts = import ./lib/hosts.nix;
       hmDefaults = import ./lib/home-manager-defaults.nix;
-
-      # Pass external sources to home-manager modules
-      # nix-ai modules get their inputs via _module.args (self-contained)
-      # nix-home modules accept userConfig with sensible defaults
-      extraSpecialArgs = {
-        inherit userConfig dotgithub;
-      };
+      inherit (nixpkgs) lib;
 
       # Guard: fail at eval time if stateVersion drifts from nixpkgs branch.
       # When Renovate bumps nixpkgs-25.11 → nixpkgs-26.05, this assertion fires
@@ -140,19 +135,25 @@
           '';
         true;
 
-      # Define configuration once, assign to multiple names
-      darwinConfig =
+      # Build one darwinSystem per registry entry. `label` is the hosts/<label>/
+      # folder; the resulting config is exposed under `host.hostName` (below).
+      mkHost =
+        label: host:
         assert _stateVersionCheck;
         darwin.lib.darwinSystem {
-          system = "aarch64-darwin";
+          inherit (host) system;
           # Pass nix-ai through so the homebrew module can pull
           # `lib.brewFormulae` (formulae required by per-agent home-manager
           # modules whose preferred install path is brew, e.g. qwen-code).
           # Keeps the agent module self-contained for future flake graduation —
           # see nix-ai/docs/architecture/per-agent-flakes.md.
-          specialArgs = { inherit nix-ai; };
+          # `hostConfig` threads the per-host attrset to every darwin module.
+          specialArgs = {
+            inherit nix-ai;
+            hostConfig = host;
+          };
           modules = [
-            ./hosts/macbook-m4/default.nix
+            ./hosts/${label}/default.nix
 
             # Determinate Nix: official module for nix.conf, GC, and determinate-nixd config
             determinate.darwinModules.default
@@ -169,8 +170,14 @@
             home-manager.darwinModules.home-manager
             {
               home-manager = hmDefaults // {
-                inherit extraSpecialArgs;
-                users.${userConfig.user.name} = import ./hosts/macbook-m4/home.nix;
+                # nix-ai modules get their inputs via _module.args (self-contained);
+                # nix-home modules accept userConfig with sensible defaults.
+                # `hostConfig` threads the per-host attrset to home-manager modules.
+                extraSpecialArgs = {
+                  inherit userConfig dotgithub;
+                  hostConfig = host;
+                };
+                users.${userConfig.user.name} = import ./hosts/${label}/home.nix;
 
                 # Shared modules from external flakes:
                 # - nix-ai: Claude, Gemini, Copilot, MCP servers, marketplace plugins
@@ -188,14 +195,19 @@
             }
           ];
         };
+
+      # Map every registry entry to darwinConfigurations.<hostName>.
+      configs = lib.mapAttrs' (label: host: lib.nameValuePair host.hostName (mkHost label host)) hosts;
+
+      # Resolve the primary host dynamically (the one with `primary = true`) so
+      # flake.nix stays decoupled from specific host labels.
+      primaryHost = lib.head (lib.filter (h: h.primary or false) (lib.attrValues hosts));
     in
     {
-      # Both names point to same config:
-      # - "default" for explicit #default usage
-      # - hostname for auto-detection when # is omitted
-      darwinConfigurations = {
-        default = darwinConfig;
-        ${userConfig.host.name} = darwinConfig;
+      # One entry per host, keyed by hostName so `darwin-rebuild switch --flake .`
+      # host auto-detection resolves it, plus a `default` alias to the primary machine.
+      darwinConfigurations = configs // {
+        default = configs.${primaryHost.hostName};
       };
 
       # CI-friendly outputs for GitHub Actions validation
@@ -205,7 +217,7 @@
         ci = {
           inherit (nix-ai.lib.ci) claudeSettingsJson;
           hmActivationPackage =
-            darwinConfig.config.home-manager.users.${userConfig.user.name}.home.activationPackage;
+            configs.${primaryHost.hostName}.config.home-manager.users.${userConfig.user.name}.home.activationPackage;
         };
       };
 

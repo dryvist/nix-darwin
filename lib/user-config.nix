@@ -48,19 +48,6 @@ in
   };
 
   # ==========================================================================
-  # Host Configuration
-  # ==========================================================================
-  host = {
-    # Network hostname (used for networking.hostName, ComputerName, etc.)
-    name = "jevans-mbp";
-
-    # LAN DNS resolver(s) and search domain (match the host resolver). Used to
-    # give containers the same name resolution as the host. Non-secret.
-    lanDnsServers = [ "10.0.1.1" ];
-    lanSearchDomain = "jacobpevans.com";
-  };
-
-  # ==========================================================================
   # GPG Configuration
   # ==========================================================================
   # NOTE: These are PUBLIC key identifiers, NOT private keys.
@@ -149,25 +136,6 @@ in
         keychain = "elevate-access.keychain-db";
       };
     };
-  };
-
-  # ==========================================================================
-  # AI Stack Configuration
-  # ==========================================================================
-  ai = {
-    # Local MLX physical model id consumed at Nix eval time by
-    # services.aiStack.defaultLocalModelId (hosts/macbook-m4/services-ai-stack.nix).
-    # Non-secret — a public Hugging Face model name. Committed here like every
-    # other eval-time identifier so evaluation stays pure (no --impure, no
-    # keychain/env/file sourcing). Change the model via a reviewed commit.
-    # 2026-06-09: switched from mlx-community/Qwen3.6-35B-A3B-mxfp4 — its hybrid
-    # linear-attention architecture (qwen3_5_moe) crashes vllm-mlx whenever two
-    # requests batch (mlx-lm conv_state shape bug; 402 crash-recovery events in
-    # one log window, 0.1-4 tok/s effective). Qwen3-30B-A3B-Instruct-2507 is a
-    # standard-attention MoE (qwen3_moe): benched 80-98 tok/s single-stream,
-    # ~85 tok/s aggregate at 4-way concurrency, zero crashes, hermes tool
-    # calling. See dryvist/nix-ai#915.
-    defaultLocalModelId = "mlx-community/Qwen3-30B-A3B-Instruct-2507-4bit";
   };
 
   # ==========================================================================
