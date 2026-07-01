@@ -34,9 +34,5 @@
     # ~85 tok/s aggregate at 4-way concurrency, zero crashes, hermes tool
     # calling. See dryvist/nix-ai#915.
     defaultLocalModelId = "mlx-community/Qwen3-30B-A3B-Instruct-2507-4bit";
-
-    # LAN DNS resolver(s) + search domain (match the host resolver). Non-secret.
-    lanDnsServers = [ "10.0.1.1" ];
-    lanSearchDomain = "jacobpevans.com";
   };
 }

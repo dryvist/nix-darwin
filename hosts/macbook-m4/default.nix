@@ -13,8 +13,8 @@
 }:
 
 let
-  # User identity (username, homeDir, etc.). Host-specific values (hostName, LAN
-  # DNS) come from the registry via `hostConfig` (specialArgs).
+  # User identity (username, homeDir, etc.). Host-specific values (hostName)
+  # come from the registry via `hostConfig` (specialArgs).
   userConfig = import ../../lib/user-config.nix;
 in
 {
@@ -162,8 +162,10 @@ in
     # --- Cribl Stream (local egress aggregator, Apple container) ---
     # Single-instance Cribl Stream in an Apple `container`: local sources ship to
     # 127.0.0.1:10301 and it forwards to the Proxmox Stream tier (haproxy:10300).
-    # Resource-capped (cpus/memory/single worker) and given the LAN DNS resolver +
-    # search domain; the output queue is bounded. See docs/CRIBL-GITOPS.md.
+    # Resource-capped (cpus/memory/single worker); the output queue is bounded.
+    # No explicit container DNS: Apple `container` forwards through the vmnet
+    # gateway to the host resolver, which already resolves the internal FQDN
+    # used in outputs.yml (verified). See docs/CRIBL-GITOPS.md.
     cribl-stream = {
       enable = true;
       user = userConfig.user.name;
@@ -172,8 +174,6 @@ in
       cpus = 1;
       memory = "1g";
       maxWorkers = 1;
-      dnsServers = hostConfig.lanDnsServers;
-      dnsSearch = [ hostConfig.lanSearchDomain ];
       configFiles = {
         "inputs.yml" = ''
           inputs:
