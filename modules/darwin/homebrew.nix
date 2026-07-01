@@ -58,13 +58,15 @@ in
       # Run `brew upgrade --greedy` manually for updates.
       upgrade = false;
     };
-    taps = [
-      "aws/tap" # AWS SAM CLI and other AWS tools
-    ]
-    ++ agentHomebrewTaps; # AI-tool taps declared in nix-ai/lib/homebrew.nix
+    # AI-tool taps declared in nix-ai/lib/homebrew.nix. The former "aws/tap"
+    # tap was removed — nothing was installed from it (audit 2026-06-30).
+    taps = agentHomebrewTaps;
     brews = [
       # CLI tools (only if not available in nixpkgs)
       "ccusage" # Claude Code usage analyzer - not in nixpkgs
+
+      # Mac App Store CLI — required by homebrew.masApps below.
+      "mas"
       # Apple container CLI/runtime. Homebrew tracks current upstream while
       # nixpkgs lags by a major release.
       "container"
