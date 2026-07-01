@@ -5,10 +5,16 @@
 #
 # This file imports darwin modules and configures host-specific settings.
 
-{ config, pkgs, ... }:
+{
+  config,
+  pkgs,
+  hostConfig,
+  ...
+}:
 
 let
-  # User-specific configuration (hostname, identity, etc.)
+  # User identity (username, homeDir, etc.). Host-specific values (hostName, LAN
+  # DNS) come from the registry via `hostConfig` (specialArgs).
   userConfig = import ../../lib/user-config.nix;
 in
 {
@@ -23,7 +29,7 @@ in
   # Settings that are unique to this specific machine
   # Hostname from lib/user-config.nix
 
-  networking.hostName = userConfig.host.name;
+  networking.hostName = hostConfig.hostName;
 
   # ==========================================================================
   # System Services
@@ -166,8 +172,8 @@ in
       cpus = 1;
       memory = "1g";
       maxWorkers = 1;
-      dnsServers = userConfig.host.lanDnsServers;
-      dnsSearch = [ userConfig.host.lanSearchDomain ];
+      dnsServers = hostConfig.lanDnsServers;
+      dnsSearch = [ hostConfig.lanSearchDomain ];
       configFiles = {
         "inputs.yml" = ''
           inputs:
