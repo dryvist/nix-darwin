@@ -798,11 +798,11 @@
         "ponytail": "ponytail"
       },
       "locked": {
-        "lastModified": 1782869337,
-        "narHash": "sha256-5ypEICupraRWxkyQbPEMEtIanWGR+45Ol2zuLeuKSEE=",
+        "lastModified": 1782929096,
+        "narHash": "sha256-p9haALNq4lQvSOyMyKpt9GSCs4e2ezYCyyOkEB7S3fY=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "b5fb709273960a9b33900dc5cadb2dc6de8a3916",
+        "rev": "348c7daec85160c11d0329c17c850c426615f55f",
         "type": "github"
       },
       "original": {
@@ -988,11 +988,11 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1782767157,
-        "narHash": "sha256-db/8NgfehQlPNt8rMY0J1gvwzTaURU/foM7y/AQimIM=",
+        "lastModified": 1782888528,
+        "narHash": "sha256-3ylpU+AyCLpaAtEdApyXPJ+DLVIDf4Epql6pyvLccLs=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "1d4e0f865d68258aada31e68e6d79c8c463f3b34",
+        "rev": "966064cdb41f76dbc8f66045e81b353dcfeb4fa6",
         "type": "github"
       },
       "original": {
