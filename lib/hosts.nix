@@ -18,6 +18,10 @@
     hostName = "jevans-mbp";
     system = "aarch64-darwin";
 
+    # The `primary` host backs the `default` darwinConfigurations alias and the
+    # CI hmActivationPackage output. Exactly one host should set this.
+    primary = true;
+
     # Local MLX physical model id, consumed at Nix eval time by
     # services.aiStack.defaultLocalModelId (hosts/*/services-ai-stack.nix, shared).
     # Non-secret public Hugging Face name; committed so evaluation stays pure (no

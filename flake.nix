@@ -198,12 +198,16 @@
 
       # Map every registry entry to darwinConfigurations.<hostName>.
       configs = lib.mapAttrs' (label: host: lib.nameValuePair host.hostName (mkHost label host)) hosts;
+
+      # Resolve the primary host dynamically (the one with `primary = true`) so
+      # flake.nix stays decoupled from specific host labels.
+      primaryHost = lib.head (lib.filter (h: h.primary or false) (lib.attrValues hosts));
     in
     {
       # One entry per host, keyed by hostName so `darwin-rebuild switch --flake .`
       # host auto-detection resolves it, plus a `default` alias to the primary machine.
       darwinConfigurations = configs // {
-        default = configs.${hosts.macbook-m4.hostName};
+        default = configs.${primaryHost.hostName};
       };
 
       # CI-friendly outputs for GitHub Actions validation
@@ -213,7 +217,7 @@
         ci = {
           inherit (nix-ai.lib.ci) claudeSettingsJson;
           hmActivationPackage =
-            configs.${hosts.macbook-m4.hostName}.config.home-manager.users.${userConfig.user.name}.home.activationPackage;
+            configs.${primaryHost.hostName}.config.home-manager.users.${userConfig.user.name}.home.activationPackage;
         };
       };
 
