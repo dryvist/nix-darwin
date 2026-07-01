@@ -9,9 +9,9 @@
 # darwin configuration is exposed under `hostName` (see flake.nix) so
 # `darwin-rebuild switch --flake .` host auto-detection resolves it.
 #
-# Fields are added here as consumers are wired up (PR-by-PR): `class`,
-# `otelHostName`, `mlx`, `wiredLimitMb`, and `orbstack` land with the PRs that
-# consume them, to avoid data that duplicates a host file without being read.
+# Fields are added here as consumers are wired up (PR-by-PR): `class` and
+# `wiredLimitMb` land with the class-driven-defaults PR that consumes them, to
+# avoid data that duplicates a host file without being read.
 {
   macbook-m4 = {
     # Network identity
@@ -34,5 +34,27 @@
     # ~85 tok/s aggregate at 4-way concurrency, zero crashes, hermes tool
     # calling. See dryvist/nix-ai#915.
     defaultLocalModelId = "mlx-community/Qwen3-30B-A3B-Instruct-2507-4bit";
+
+    # OpenTelemetry resource identifier (monitoring.otel.resourceAttributes).
+    # Kept as an explicit label (not hostName) to preserve existing Splunk/OTEL
+    # correlation for this machine.
+    otelHostName = "macbook-m4";
+
+    # Local MLX inference server sizing (programs.mlx). Multi-turn agent clients
+    # re-prefill 5-40K-token contexts; the 8192 MB default left no paged-cache
+    # prefix reuse. Measured 2026-06-10: an identical-prefix re-request dropped
+    # 21.8K -> 63 prefill tokens with these values.
+    mlx = {
+      cacheMemoryMb = 16384;
+      prefillBatchSize = 2048;
+    };
+
+    # OrbStack container runtime + dedicated external APFS data volume.
+    # When enable = false the runtime + volume symlink/env are omitted entirely.
+    orbstack = {
+      enable = true;
+      apfsContainer = "disk3"; # Find with: diskutil apfs list
+      containerVolume = "ContainerData";
+    };
   };
 }

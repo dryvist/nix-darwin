@@ -20,9 +20,14 @@ let
   f = "${dotgithub}/configs/gitignore";
 in
 {
-  programs.git.ignores = lib.optionals (builtins.pathExists f) (
-    lib.filter (l: l != "" && !(lib.hasPrefix "#" l)) (
-      map (lib.removeSuffix "\r") (lib.splitString "\n" (builtins.readFile f))
+  # mkAfter pins these entries after nix-home's base `programs.git.ignores`,
+  # preserving the pre-split concatenation order now that this module loads via
+  # hosts/common/home.nix (a deeper import) rather than the host file directly.
+  programs.git.ignores = lib.mkAfter (
+    lib.optionals (builtins.pathExists f) (
+      lib.filter (l: l != "" && !(lib.hasPrefix "#" l)) (
+        map (lib.removeSuffix "\r") (lib.splitString "\n" (builtins.readFile f))
+      )
     )
   );
 }
