@@ -71,7 +71,8 @@
       logPrompts = true;
       logToolDetails = true;
       resourceAttributes = {
-        "host.name" = hostConfig.otelHostName;
+        # Fall back to the network hostName if a host omits an explicit OTEL label.
+        "host.name" = hostConfig.otelHostName or hostConfig.hostName;
       };
     };
     cribl.enable = true;
@@ -87,10 +88,9 @@
     # this, the registry at services.aiStack.models is materialized to nothing
     # and llama-swap.json drifts from whatever was last activated by hand.
     # Sizing (cacheMemoryMb / prefillBatchSize) is per-host from the registry.
-    mlx = {
-      enable = true;
-    }
-    // hostConfig.mlx;
+    # Gated on the host defining `mlx` so a non-inference host is left untouched
+    # (no MLX server) rather than crashing on a missing attr.
+    mlx = lib.mkIf (hostConfig ? mlx) ({ enable = true; } // hostConfig.mlx);
 
     # macOS-specific zsh overrides
     # Base zsh config provided by nix-home (sharedModule).
@@ -172,7 +172,7 @@
   # ==========================================================================
   # Nix does NOT manage the volume contents — it only creates the symlink. The
   # volume itself is created by a launchd daemon (modules/darwin/apps/orbstack.nix).
-  home.file = lib.mkIf hostConfig.orbstack.enable {
+  home.file = lib.mkIf (hostConfig.orbstack.enable or false) {
     # Symlink the entire Group Container so ALL OrbStack data (Docker images,
     # containers, volumes, Linux VMs, logs) lives on the dedicated APFS volume.
     # MIGRATION: Stop OrbStack and move existing data before enabling.
@@ -222,7 +222,7 @@
     };
   };
 
-  home.sessionVariables = lib.mkIf hostConfig.orbstack.enable {
+  home.sessionVariables = lib.mkIf (hostConfig.orbstack.enable or false) {
     # Container data on the dedicated external volume.
     CONTAINER_DATA = "/Volumes/${hostConfig.orbstack.containerVolume}";
   };

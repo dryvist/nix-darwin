@@ -34,14 +34,15 @@
     # background.enable = false: `orb start` exits 0 in <1s; KeepAlive=true was
     # throttle-respawning it into a runningboardd assertion flood. OrbStack.app
     # manages its own startup.
-    orbstack = lib.mkIf hostConfig.orbstack.enable {
+    # `enable or false` tolerates a host that omits `orbstack` entirely.
+    orbstack = lib.mkIf (hostConfig.orbstack.enable or false) {
       enable = true;
       package.enable = false;
       background.enable = false;
       dataVolume = {
         enable = true;
         name = hostConfig.orbstack.containerVolume;
-        apfsContainer = hostConfig.orbstack.apfsContainer;
+        inherit (hostConfig.orbstack) apfsContainer;
       };
     };
   };

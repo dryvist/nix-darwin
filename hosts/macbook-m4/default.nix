@@ -10,13 +10,12 @@
 {
   config,
   pkgs,
-  hostConfig,
   ...
 }:
 
 let
-  # User identity (username, homeDir). Host identity (hostName) comes from the
-  # registry via `hostConfig`.
+  # User identity (username, homeDir) for the host-unique config below. Host
+  # identity (hostName, registry params) is consumed in ../common.
   userConfig = import ../../lib/user-config.nix;
 in
 {
