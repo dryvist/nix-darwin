@@ -125,12 +125,12 @@ in
         }
         trap cleanup INT TERM
 
-        # Verify /run is writable (required to update /run/current-system symlink)
-        if [ ! -w /run ]; then
-          echo "❌ ERROR: Cannot write to /run directory" >&2
-          echo "Check permissions and ensure running as root" >&2
-          exit 1
-        fi
+        # NOTE: do NOT pre-check /run here. On a fresh Mac /run does not exist
+        # until upstream nix-darwin's own createRun activation step provisions
+        # it (synthetic.conf + apfs.util, modules/system/base.nix) — a check
+        # this early aborts first bootstrap on brand-new machines (hit on
+        # jevans-ms 2026-07-02). Upstream already fails loudly if /run cannot
+        # be created, so a duplicate guard adds risk and no protection.
       '';
 
       # Runs after all activation scripts, just before symlink update
