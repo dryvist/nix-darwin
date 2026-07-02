@@ -27,6 +27,7 @@ in
     ./trackpad.nix
     ./system-ui.nix
     ./activation-error-tracking.nix
+    ./llm-gate.nix
     ./nix-storage.nix
     ./ws-monitor.nix
     ./apple-silicon-tunables.nix

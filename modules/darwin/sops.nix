@@ -9,8 +9,17 @@
 # Public key in .sops.yaml                (committed to git)
 # Encrypted secrets in secrets/           (committed to git, safe to be public)
 # Decrypted secrets in /run/secrets/      (ephemeral, root:wheel 0400)
+#
+# Server-class extras: the llm-gate and github-runner secrets exist only on
+# `class = "server"` hosts (the Studio) — the laptop never declares or
+# decrypts them, so its closure and activation are untouched.
 
-{ config, ... }:
+{
+  config,
+  lib,
+  hostConfig,
+  ...
+}:
 
 let
   userConfig = import ../../lib/user-config.nix;
@@ -19,6 +28,14 @@ let
     group = "wheel";
     mode = "0400";
   };
+  # The GitHub runner service registers/runs as the login user, so its PAT
+  # must be readable by that user (services.github-runners tokenFile).
+  userOnly = {
+    owner = userConfig.user.name;
+    group = "staff";
+    mode = "0400";
+  };
+  isServer = (hostConfig.class or "workstation") == "server";
 in
 {
   sops = {
@@ -32,7 +49,7 @@ in
     # Age-only. Disable GPG/SSH fallback to fail fast on misconfiguration.
     gnupg.sshKeyPaths = [ ];
 
-    # Individual secret files — each decrypts to /run/secrets/<name>, root:wheel 0400
+    # Individual secret files — each decrypts to /run/secrets/<name>
     secrets = {
       # Cribl Edge enrollment credentials
       # Source: secrets/cribl-edge.yaml (age-encrypted, committed to git)
@@ -45,16 +62,55 @@ in
       CRIBL_TOKEN = rootOnly // {
         sopsFile = ../../secrets/cribl-edge.yaml;
       };
+    }
+    // lib.optionalAttrs isServer {
+      # llm-gate (Caddy TLS + bearer front) — secrets/llm-large.yaml.
+      # The bind IP lives encrypted here so no address octets sit in the repo.
+      LLM_LARGE_BEARER_TOKEN = rootOnly // {
+        sopsFile = ../../secrets/llm-large.yaml;
+      };
+      LLM_GATE_BIND_IP = rootOnly // {
+        sopsFile = ../../secrets/llm-large.yaml;
+      };
+      LLM_GATE_AWS_ACCESS_KEY_ID = rootOnly // {
+        sopsFile = ../../secrets/llm-large.yaml;
+      };
+      LLM_GATE_AWS_SECRET_ACCESS_KEY = rootOnly // {
+        sopsFile = ../../secrets/llm-large.yaml;
+      };
+      LLM_GATE_AWS_REGION = rootOnly // {
+        sopsFile = ../../secrets/llm-large.yaml;
+      };
+
+      # GitHub Actions runner org PAT (fine-grained: org self-hosted-runners
+      # RW only) — secrets/github-runner.yaml.
+      GH_RUNNER_PAT = userOnly // {
+        sopsFile = ../../secrets/github-runner.yaml;
+      };
     };
 
-    # Rendered template: assembles individual secrets into a single KEY=value file
-    # consumed by the cribl-edge activation script via awk (no shell eval).
-    templates."cribl-edge.env" = rootOnly // {
-      content = ''
-        CRIBL_ORG_ID=${config.sops.placeholder."CRIBL_ORG_ID"}
-        CRIBL_WORKSPACE_ID=${config.sops.placeholder."CRIBL_WORKSPACE_ID"}
-        CRIBL_TOKEN=${config.sops.placeholder."CRIBL_TOKEN"}
-      '';
+    # Rendered templates: assemble individual secrets into complete config
+    # files consumed directly by their services (no wrapper scripts). The
+    # llm-gate Caddyfile template lives in modules/darwin/llm-gate.nix with
+    # the rest of that module's config.
+    templates = {
+      "cribl-edge.env" = rootOnly // {
+        content = ''
+          CRIBL_ORG_ID=${config.sops.placeholder."CRIBL_ORG_ID"}
+          CRIBL_WORKSPACE_ID=${config.sops.placeholder."CRIBL_WORKSPACE_ID"}
+          CRIBL_TOKEN=${config.sops.placeholder."CRIBL_TOKEN"}
+        '';
+      };
+    }
+    // lib.optionalAttrs isServer {
+      # Consumed via `container run --env-file` by the gh-runner agent — the
+      # vendor image's ACCESS_TOKEN input (PAT → registration token exchange
+      # happens inside the image; UNSET_CONFIG_VARS scrubs it before jobs).
+      "github-runner.env" = userOnly // {
+        content = ''
+          ACCESS_TOKEN=${config.sops.placeholder."GH_RUNNER_PAT"}
+        '';
+      };
     };
   };
 }
