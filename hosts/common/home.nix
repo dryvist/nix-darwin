@@ -59,7 +59,9 @@
 
   # nix-home role preset: `workstation` enables all daily-driver GUI/desktop
   # features; `server` drops them. Driven by the host's registry `class`.
-  home-profile.preset = hostConfig.class;
+  # `or "workstation"` matches nix-home's own default and tolerates a host that
+  # omits `class` rather than throwing on the missing attr.
+  home-profile.preset = hostConfig.class or "workstation";
 
   # ==========================================================================
   # Monitoring / Observability
