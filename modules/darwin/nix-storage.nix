@@ -96,6 +96,20 @@ in
   };
 
   # ============================================================================
+  # Adopt the Determinate installer's stock /etc/nix/nix.custom.conf
+  # ============================================================================
+  # On a brand-new machine the Determinate Nix installer writes a stock
+  # nix.custom.conf (two comment lines) that nix-darwin's /etc collision check
+  # does not recognize, aborting the FIRST activation with "Unexpected files
+  # in /etc" (hit on jevans-ms 2026-07-02). Listing the stock file's hash lets
+  # activation adopt and overwrite it automatically — no manual rename step on
+  # fresh installs. If a future installer version changes the stock content,
+  # append its sha256 here (shasum -a 256 /etc/nix/nix.custom.conf).
+  environment.etc."nix/nix.custom.conf".knownSha256Hashes = [
+    "3bd68ef979a42070a44f8d82c205cfd8e8cca425d91253ec2c10a88179bb34aa"
+  ];
+
+  # ============================================================================
   # Home-manager compatibility workaround
   # ============================================================================
   # home-manager's darwin module accesses nix.package even when nix is disabled
