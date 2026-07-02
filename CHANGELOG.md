@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.52.0](https://github.com/dryvist/nix-darwin/compare/v1.51.2...v1.52.0) (2026-07-02)
+
+
+### Features
+
+* mac-studio llm-large serving gate, ephemeral GitHub runner, web UI wiring ([#1395](https://github.com/dryvist/nix-darwin/issues/1395)) ([7fae032](https://github.com/dryvist/nix-darwin/commit/7fae03228ab05495d15d8005c58236e795600877))
+
 ## [1.51.2](https://github.com/dryvist/nix-darwin/compare/v1.51.1...v1.51.2) (2026-07-02)
 
 
