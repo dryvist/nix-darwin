@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.54.1](https://github.com/dryvist/nix-darwin/compare/v1.54.0...v1.54.1) (2026-07-02)
+
+
+### Bug Fixes
+
+* drop the custom /run pre-check that aborts first bootstrap ([#1403](https://github.com/dryvist/nix-darwin/issues/1403)) ([8a31b70](https://github.com/dryvist/nix-darwin/commit/8a31b7092f73b2866992f3136fa662596ac7c5a8))
+
 ## [1.54.0](https://github.com/dryvist/nix-darwin/compare/v1.53.1...v1.54.0) (2026-07-02)
 
 
