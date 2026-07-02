@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.54.2](https://github.com/dryvist/nix-darwin/compare/v1.54.1...v1.54.2) (2026-07-02)
+
+
+### Bug Fixes
+
+* first-bootstrap fixes — adopt installer nix.custom.conf; lean server-class (Homebrew/GUI gating) ([#1406](https://github.com/dryvist/nix-darwin/issues/1406)) ([c024872](https://github.com/dryvist/nix-darwin/commit/c0248726cb7ebafbebcd673a2ba51d0414c1a51b))
+
 ## [1.54.1](https://github.com/dryvist/nix-darwin/compare/v1.54.0...v1.54.1) (2026-07-02)
 
 
