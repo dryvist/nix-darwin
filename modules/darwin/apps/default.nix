@@ -13,6 +13,7 @@ _:
     ./auto-update-prevention.nix
     ./cribl-edge.nix
     ./cribl-stream.nix
+    ./github-runner-container.nix
     ./orbstack.nix
     ./raycast.nix
     ./streamline-login.nix

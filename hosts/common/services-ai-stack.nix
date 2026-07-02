@@ -8,9 +8,16 @@
 # lives committed in lib/hosts.nix (per-host) alongside every other eval-time
 # identifier. Keeping it in-tree means evaluation stays pure — no `--impure`,
 # no keychain/env/file sourcing. Change the model via a reviewed commit.
+#
+# roleModelOverrides (optional per-host registry field) pins selected roles to
+# a different physical model — e.g. the Studio's `coding` role on a dedicated
+# coder model — while every other role keeps following defaultLocalModelId.
 
 { hostConfig, ... }:
 
 {
-  services.aiStack.defaultLocalModelId = hostConfig.defaultLocalModelId;
+  services.aiStack = {
+    inherit (hostConfig) defaultLocalModelId;
+    roleOverrides = hostConfig.roleModelOverrides or { };
+  };
 }
