@@ -132,7 +132,16 @@
         export CONTEXT7_API_KEY=''${CONTEXT7_API_KEY:-"$(_get_keychain_secret 'CONTEXT7_API_KEY' "$_KC_USER")"}
 
         # HuggingFace - for huggingface MCP server and hf CLI (model downloads)
-        export HF_TOKEN=''${HF_TOKEN:-"$(_get_keychain_secret 'HF_TOKEN' "$_KC_AI_ACCOUNT" "$_KC_AI_DB")"}
+        ${
+          # Server-class hosts are keychain-free for real secrets: HF_TOKEN
+          # comes from the sops-rendered per-machine secret instead (portable
+          # across machines via the committed encrypted file + on-device age
+          # key). Workstations keep the keychain read, byte-identical.
+          if (hostConfig.class or "workstation") == "server" then
+            ''export HF_TOKEN=''${HF_TOKEN:-"$(cat /run/secrets/HF_TOKEN 2>/dev/null || echo "")"}''
+          else
+            ''export HF_TOKEN=''${HF_TOKEN:-"$(_get_keychain_secret 'HF_TOKEN' "$_KC_AI_ACCOUNT" "$_KC_AI_DB")"}''
+        }
 
         unset -f _get_keychain_secret  # No longer needed after init
         unset _KC_USER _KC_AI_DB  # _KC_AI_ACCOUNT persists for runtime gh-token switching
