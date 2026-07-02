@@ -108,9 +108,13 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    # The whole Caddyfile is the rendered secret: bearer token, bind IP, and
+    # The whole Caddyfile is the rendered secret: the bearer token and
     # (route53 mode) ACME credentials are substituted by sops-nix at
-    # activation. {$VAR} env substitution and wrapper scripts are unnecessary.
+    # activation. No bind directive: Caddy binds all interfaces (identical
+    # exposure to the LAN address on a single-NIC host), which keeps address
+    # octets out of config entirely and survives VLAN/IP moves with zero
+    # secret rotations. {$VAR} env substitution and wrapper scripts are
+    # unnecessary.
     sops.templates."llm-gate.Caddyfile" = {
       owner = "root";
       group = "wheel";
@@ -122,7 +126,6 @@ in
         }
 
         https://${cfg.domain}:${toString cfg.apiPort} {
-          bind ${config.sops.placeholder."LLM_GATE_BIND_IP"}
           ${tlsDirective}
           @unauthorized not header Authorization "Bearer ${
             config.sops.placeholder."LLM_LARGE_BEARER_TOKEN"
@@ -132,7 +135,6 @@ in
         }
 
         https://${cfg.domain}:${toString cfg.webUiPort} {
-          bind ${config.sops.placeholder."LLM_GATE_BIND_IP"}
           ${tlsDirective}
           reverse_proxy 127.0.0.1:${toString cfg.webUiUpstreamPort}
         }

@@ -65,11 +65,9 @@ in
     }
     // lib.optionalAttrs isServer {
       # llm-gate (Caddy TLS + bearer front) — secrets/llm-large.yaml.
-      # The bind IP lives encrypted here so no address octets sit in the repo.
+      # (The file's legacy LLM_GATE_BIND_IP key is unused: the gate binds all
+      # interfaces, so no address ever needs declaring or rotating.)
       LLM_LARGE_BEARER_TOKEN = rootOnly // {
-        sopsFile = ../../secrets/llm-large.yaml;
-      };
-      LLM_GATE_BIND_IP = rootOnly // {
         sopsFile = ../../secrets/llm-large.yaml;
       };
       LLM_GATE_AWS_ACCESS_KEY_ID = rootOnly // {
