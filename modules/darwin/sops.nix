@@ -87,6 +87,15 @@ in
       GH_RUNNER_PAT = userOnly // {
         sopsFile = ../../secrets/github-runner.yaml;
       };
+
+      # Hugging Face token — secrets/hf.yaml. Server-class hosts are
+      # keychain-free for real secrets (portability directive 2026-07-02):
+      # the zsh init reads this rendered path instead of the macOS keychain.
+      # Tier-2 end state is OpenBao (JAC-153); sops is the declarative,
+      # zero-prompt bridge that already rides the per-machine age keys.
+      HF_TOKEN = userOnly // {
+        sopsFile = ../../secrets/hf.yaml;
+      };
     };
 
     # Rendered templates: assemble individual secrets into complete config
