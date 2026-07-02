@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.51.1](https://github.com/dryvist/nix-darwin/compare/v1.51.0...v1.51.1) (2026-07-02)
+
+
+### Bug Fixes
+
+* point callers at renamed cc- reusable workflows ([e53c631](https://github.com/dryvist/nix-darwin/commit/e53c631402eee33bc70006b4d3009b28b3206961))
+
 ## [1.51.0](https://github.com/dryvist/nix-darwin/compare/v1.50.0...v1.51.0) (2026-07-02)
 
 
