@@ -1,84 +1,27 @@
 # macbook-m4 Host Configuration
 #
-# Apple Silicon MacBook Pro (M4 Max, 128GB RAM)
-# Primary development machine using nix-darwin
+# Apple Silicon MacBook Pro (M4 Max, 128GB RAM). Primary development machine.
 #
-# This file imports darwin modules and configures host-specific settings.
+# Shared system config (module imports, networking.hostName, OrbStack,
+# file-extensions, openssh) lives in ../common/default.nix. This file adds only
+# the host-unique bits: the local LLM observability pipeline (Cribl), curated
+# login-item streamlining, and this machine's inference/power tuning values.
 
 {
   config,
   pkgs,
-  hostConfig,
   ...
 }:
 
 let
-  # User identity (username, homeDir, etc.). Host-specific values (hostName)
-  # come from the registry via `hostConfig` (specialArgs).
+  # User identity (username, homeDir) for the host-unique config below. Host
+  # identity (hostName, registry params) is consumed in ../common.
   userConfig = import ../../lib/user-config.nix;
 in
 {
-  imports = [
-    # Darwin system modules
-    ../../modules/darwin/common.nix
-  ];
-
-  # ==========================================================================
-  # Host-Specific Settings
-  # ==========================================================================
-  # Settings that are unique to this specific machine
-  # Hostname from lib/user-config.nix
-
-  networking.hostName = hostConfig.hostName;
-
-  # ==========================================================================
-  # System Services
-  # ==========================================================================
-
-  # SSH/Remote Login
-  # Enables macOS Remote Login via launchd (System Settings > General > Sharing)
-  # Allows SSH access to this development machine
-  services.openssh.enable = true;
-
-  # ==========================================================================
-  # Programs
-  # ==========================================================================
+  imports = [ ../common/default.nix ];
 
   programs = {
-    # --- OrbStack ---
-    # Container runtime as system-level application
-    # - System-wide installation via nix-darwin
-    # - Dedicated APFS volume for data storage
-    # - Data symlink configured in home.nix using mkOutOfStoreSymlink
-    #
-    # NOTE: package.enable = true installs OrbStack system-wide
-    # TCC permissions (Docker/Linux VM access) may need re-granting after rebuilds
-    # For TCC stability, set package.enable = false and add to home.packages instead
-    orbstack = {
-      enable = true;
-      # package.enable = false: OrbStack is installed via Homebrew cask (greedy = true)
-      # in modules/darwin/homebrew.nix. Homebrew installs to /Applications/ as a real
-      # copy, so TCC permissions (Docker socket, Linux VM) persist across darwin-rebuild.
-      # Previously, nixpkgs installed a symlink to a /nix/store path that changes on
-      # every rebuild, forcing TCC re-granting each time.
-      package.enable = false;
-      # orb start exits 0 in <1s; KeepAlive=true was throttle-respawning it into
-      # a runningboardd assertion flood. OrbStack.app manages its own startup.
-      background.enable = false;
-      dataVolume = {
-        enable = true;
-        name = "ContainerData";
-        apfsContainer = "disk3"; # Find with: diskutil apfs list
-      };
-    };
-
-    # --- File Extension Mappings ---
-    # Custom file extensions recognized as tar.gz archives
-    # Enables Finder auto-extract and shell autocomplete
-    file-extensions = {
-      enable = true;
-    };
-
     # --- Cribl Edge ---
     # Log collection agent, standalone + GitOps-managed (this file owns the
     # node's config; Cribl Cloud fleets are reserved for Linux machines).
