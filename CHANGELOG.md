@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.51.0](https://github.com/dryvist/nix-darwin/compare/v1.50.0...v1.51.0) (2026-07-02)
+
+
+### Features
+
+* **hosts:** add mac-studio (jevans-ms) headless inference host ([9e53db8](https://github.com/dryvist/nix-darwin/commit/9e53db888db2e656a56738fb2cedf68d35512ffd))
+
 ## [1.50.0](https://github.com/dryvist/nix-darwin/compare/v1.49.4...v1.50.0) (2026-07-01)
 
 
