@@ -3,187 +3,55 @@
 # Apple Silicon MacBook Pro (M4 Max, 128GB RAM). Primary development machine.
 #
 # Shared system config (module imports, networking.hostName, OrbStack,
-# file-extensions, openssh) lives in ../common/default.nix. This file adds only
-# the host-unique bits: the local LLM observability pipeline (Cribl), curated
-# login-item streamlining, and this machine's inference/power tuning values.
+# file-extensions, openssh, and the vllm-mlx Cribl log-shipping pipeline shared
+# by all inference hosts) lives in ../common/default.nix. This file adds only the
+# host-unique bits: curated login-item streamlining and this machine's
+# inference/power tuning values.
 
 {
   config,
-  pkgs,
   ...
 }:
 
 let
-  # User identity (username, homeDir) for the host-unique config below. Host
-  # identity (hostName, registry params) is consumed in ../common.
+  # User identity (homeDir) for the host-unique config below. Host identity
+  # (hostName, registry params) is consumed in ../common.
   userConfig = import ../../lib/user-config.nix;
 in
 {
   imports = [ ../common/default.nix ];
 
-  programs = {
-    # --- Cribl Edge ---
-    # Log collection agent, standalone + GitOps-managed (this file owns the
-    # node's config; Cribl Cloud fleets are reserved for Linux machines).
-    # Inline sources/pipelines below cover the local LLM stack; events ship
-    # over Cribl TCP to the HAProxy-fronted Stream workers (port value from
-    # terraform-proxmox constants service_ports.cribl_s2s) which forward to
-    # the Splunk `llm` index. See docs/CRIBL-GITOPS.md.
-    # NOTE: the local-Stream cutover (→127.0.0.1:10301) is reverted while the
-    # containerized Stream's CPU/DNS issue is fixed — see cribl-stream below.
-    cribl-edge = {
-      enable = true;
-      mode = "standalone";
-      standalone.configFiles = {
-        "inputs.yml" = ''
-          inputs:
-            in_llm_logs:
-              type: file
-              disabled: false
-              mode: manual
-              filenames:
-                - ${userConfig.user.homeDir}/Library/Logs/vllm-mlx/vllm-mlx.log
-                - ${userConfig.user.homeDir}/Library/Logs/vllm-mlx/vllm-mlx.error.log
-              sendToRoutes: false
-              connections:
-                - pipeline: llm_logs
-                  output: cribl_stream
-            in_system_metrics:
-              type: system_metrics
-              disabled: false
-              sendToRoutes: false
-              connections:
-                - pipeline: llm_metrics
-                  output: cribl_stream
-        '';
-        "outputs.yml" = ''
-          outputs:
-            cribl_stream:
-              type: cribl_tcp
-              # Homelab HAProxy (FQDN), load-balanced across the Cribl Stream workers.
-              host: haproxy.pve.jacobpevans.com
-              port: 10300
-              pqEnabled: true
-        '';
-        # Model-server logs: the manager (Go) and its workers (Python) share
-        # the same two files; sourcetype is derived per line.
-        "pipelines/llm_logs/conf.yml" = ''
-          output: default
-          functions:
-            - id: eval
-              filter: "true"
-              conf:
-                add:
-                  - name: index
-                    value: "'llm'"
-                  - name: sourcetype
-                    value: "_raw.match(/^(INFO|DEBUG|WARNING|ERROR|CRITICAL):/) ? 'vllm:mlx' : 'llamaswap'"
-        '';
-        "pipelines/llm_metrics/conf.yml" = ''
-          output: default
-          functions:
-            - id: eval
-              filter: "true"
-              conf:
-                add:
-                  - name: index
-                    value: "'llm'"
-                  - name: sourcetype
-                    value: "'mlx:metrics'"
-        '';
-      };
-      packs = {
-        cc-edge-the-mac-pack-io = pkgs.fetchzip {
-          url = "https://github.com/JacobPEvans/cc-edge-the-mac-pack-io/releases/download/v0.3.0/cc-edge-the-mac-pack-io-v0.3.0.crbl";
-          extension = "tar.gz";
-          hash = "sha256-rPPAkedltxT8RWgP2xXil1o6x13HQK+SRgihuheJAks=";
-          stripRoot = false;
-        };
-      };
-    };
+  # --- Streamline Login Items ---
+  # Persistently disable unwanted updaters and remove junk plists.
+  # Edit these lists to add/remove services — enforced on every rebuild.
+  programs.streamline-login = {
+    enable = true;
 
-    # --- Cribl Stream (local egress aggregator, Apple container) ---
-    # Single-instance Cribl Stream in an Apple `container`: local sources ship to
-    # 127.0.0.1:10301 and it forwards to the Proxmox Stream tier (haproxy:10300).
-    # Resource-capped (cpus/memory/single worker); the output queue is bounded.
-    # No explicit container DNS: Apple `container` forwards through the vmnet
-    # gateway to the host resolver, which already resolves the internal FQDN
-    # used in outputs.yml (verified). See docs/CRIBL-GITOPS.md.
-    cribl-stream = {
-      enable = true;
-      user = userConfig.user.name;
-      inputPort = 10301;
-      apiPort = 9000;
-      cpus = 1;
-      memory = "1g";
-      maxWorkers = 1;
-      configFiles = {
-        "inputs.yml" = ''
-          inputs:
-            in_edge_s2s:
-              type: cribl_tcp
-              disabled: false
-              host: 0.0.0.0
-              port: 10301
-              sendToRoutes: false
-              connections:
-                - pipeline: passthrough
-                  output: proxmox_stream
-        '';
-        "outputs.yml" = ''
-          outputs:
-            proxmox_stream:
-              type: cribl_tcp
-              # Homelab HAProxy (FQDN), load-balanced across the Proxmox Cribl Stream workers.
-              host: haproxy.pve.jacobpevans.com
-              port: 10300
-              pqEnabled: true
-              # Bounded on-disk queue: cap size and drop when full.
-              pqMaxFileSize: 256 MB
-              pqMaxSize: 1 GB
-              pqOnBackpressure: drop
-        '';
-        # Passthrough for now; index/sourcetype enrichment moves here from Edge
-        # once Edge is repointed (Edge captures, Stream enriches + egresses).
-        "pipelines/passthrough/conf.yml" = ''
-          output: default
-          functions: []
-        '';
-      };
-    };
+    # Junk/dead plists to delete from ~/Library/LaunchAgents/
+    removePlists = [
+      "com.google.keystone.agent.plist" # Legacy Google Keystone (empty, replaced by GoogleUpdater)
+      "com.google.keystone.xpcservice.plist" # Legacy Google Keystone (empty)
+    ];
 
-    # --- Streamline Login Items ---
-    # Persistently disable unwanted updaters and remove junk plists.
-    # Edit these lists to add/remove services — enforced on every rebuild.
-    streamline-login = {
-      enable = true;
+    # User-domain services to disable (updaters, redundant apps, broken daemons)
+    disableUserServices = [
+      "com.google.GoogleUpdater.wake" # Google hourly updater
+      "us.zoom.updater" # Zoom hourly updater
+      "us.zoom.updater.login.check" # Zoom login check at login
+      "com.ollama.ollama" # Redundant — vllm-mlx is primary inference server
+      # Boot-time race condition daemons — crash-loop before dependencies ready,
+      # corrupt WindowServer client dispatch table, cause sustained UI lag/freezes
+      "com.apple.universalaccessd" # No accessibility features enabled
+      "com.apple.macos.studentd" # Classroom daemon, no MDM enrollment
+      "com.apple.passd" # Apple Wallet not used
+    ];
 
-      # Junk/dead plists to delete from ~/Library/LaunchAgents/
-      removePlists = [
-        "com.google.keystone.agent.plist" # Legacy Google Keystone (empty, replaced by GoogleUpdater)
-        "com.google.keystone.xpcservice.plist" # Legacy Google Keystone (empty)
-      ];
-
-      # User-domain services to disable (updaters, redundant apps, broken daemons)
-      disableUserServices = [
-        "com.google.GoogleUpdater.wake" # Google hourly updater
-        "us.zoom.updater" # Zoom hourly updater
-        "us.zoom.updater.login.check" # Zoom login check at login
-        "com.ollama.ollama" # Redundant — vllm-mlx is primary inference server
-        # Boot-time race condition daemons — crash-loop before dependencies ready,
-        # corrupt WindowServer client dispatch table, cause sustained UI lag/freezes
-        "com.apple.universalaccessd" # No accessibility features enabled
-        "com.apple.macos.studentd" # Classroom daemon, no MDM enrollment
-        "com.apple.passd" # Apple Wallet not used
-      ];
-
-      # System-domain services to disable
-      disableSystemServices = [
-        "com.google.GoogleUpdater.wake.system" # Google system updater (hourly)
-        "com.duosecurity.duoappupdater" # Duo updater (every 10 minutes)
-        "us.zoom.ZoomDaemon" # Zoom privileged helper daemon
-      ];
-    };
+    # System-domain services to disable
+    disableSystemServices = [
+      "com.google.GoogleUpdater.wake.system" # Google system updater (hourly)
+      "com.duosecurity.duoappupdater" # Duo updater (every 10 minutes)
+      "us.zoom.ZoomDaemon" # Zoom privileged helper daemon
+    ];
   };
 
   # ==========================================================================
