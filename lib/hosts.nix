@@ -9,9 +9,9 @@
 # darwin configuration is exposed under `hostName` (see flake.nix) so
 # `darwin-rebuild switch --flake .` host auto-detection resolves it.
 #
-# Fields are added here as consumers are wired up (PR-by-PR): `class` and
-# `wiredLimitMb` land with the class-driven-defaults PR that consumes them, to
-# avoid data that duplicates a host file without being read.
+# Fields are added here as consumers are wired up (PR-by-PR): a field lives in
+# the registry only once a module or host file actually reads it, to avoid data
+# that duplicates a host file without being consumed.
 {
   macbook-m4 = {
     # Network identity. `system` is omitted — flake.nix mkHost defaults it to
@@ -55,5 +55,30 @@
       apfsContainer = "disk3"; # Find with: diskutil apfs list
       containerVolume = "ContainerData";
     };
+  };
+
+  mac-studio = {
+    # Network identity. `system` omitted (mkHost defaults to aarch64-darwin).
+    hostName = "jevans-ms";
+
+    # Headless, always-on LAN inference/batch server. Drives server-class macOS
+    # defaults (hosts/common/default.nix) and nix-home's server preset.
+    class = "server";
+
+    # Same model as the laptop for now. This 128 GB headless box has ample room
+    # for a larger model (more accuracy) — revisit and benchmark on-machine.
+    defaultLocalModelId = "mlx-community/Qwen3-30B-A3B-Instruct-2507-4bit";
+
+    # MLX sizing — MAX from day one; inference is this box's sole purpose (not
+    # "start small"). The 30B-A3B model is ~17 GB resident on 128 GB, so there is
+    # large headroom. Benchmark these UPWARD on the machine.
+    mlx = {
+      cacheMemoryMb = 65536;
+      prefillBatchSize = 4096;
+    };
+
+    # OrbStack stays OFF until the real APFS container id is confirmed on the
+    # machine (`diskutil apfs list`) during onboarding; flip to true then.
+    orbstack.enable = false;
   };
 }
