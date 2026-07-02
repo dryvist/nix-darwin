@@ -112,6 +112,18 @@
           "qwen3_coder"
         ];
       };
+      # vllm-mlx 0.4.0's paged KV cache is incompatible with gpt-oss's
+      # alternating sliding-window attention: generation fails with
+      # "[broadcast_shapes] Shapes (1,8,64,64) and (1,8,115,64) cannot be
+      # broadcast" (paged-cache block size vs. prompt length). Prefix caching
+      # requires the paged cache, so both go off for this model only; the
+      # Qwen coder keeps prefix caching, which its agentic workloads reuse.
+      modelFlagOverrides = {
+        "mlx-community/gpt-oss-120b-MXFP4-Q8" = {
+          pagedKvCache = false;
+          enablePrefixCaching = false;
+        };
+      };
     };
 
     # OrbStack stays OFF until the real APFS container id is confirmed on the
