@@ -57,11 +57,15 @@
   # TODO: Re-enable when upstream fixes options.json context in manual.nix
   manual.manpages.enable = false;
 
+  # nix-home role preset: `workstation` enables all daily-driver GUI/desktop
+  # features; `server` drops them. Driven by the host's registry `class`.
+  home-profile.preset = hostConfig.class;
+
   # ==========================================================================
   # Monitoring / Observability
   # ==========================================================================
   # Enable monitoring infrastructure (K8s manifests, helper scripts). The OTEL
-  # resource host.name is a per-host label from the registry.
+  # resource host.name is the host's network name (single identity source).
   monitoring = {
     enable = true;
     kubernetes.enable = true;
@@ -71,8 +75,7 @@
       logPrompts = true;
       logToolDetails = true;
       resourceAttributes = {
-        # Fall back to the network hostName if a host omits an explicit OTEL label.
-        "host.name" = hostConfig.otelHostName or hostConfig.hostName;
+        "host.name" = hostConfig.hostName;
       };
     };
     cribl.enable = true;

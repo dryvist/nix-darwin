@@ -14,9 +14,13 @@
 # avoid data that duplicates a host file without being read.
 {
   macbook-m4 = {
-    # Network identity
+    # Network identity. `system` is omitted — flake.nix mkHost defaults it to
+    # aarch64-darwin (nix-darwin is Darwin-only; every host is Apple Silicon).
     hostName = "jevans-mbp";
-    system = "aarch64-darwin";
+
+    # Host class drives macOS system defaults (hosts/common/default.nix) and
+    # nix-home's home-profile.preset (hosts/common/home.nix).
+    class = "workstation";
 
     # The `primary` host backs the `default` darwinConfigurations alias and the
     # CI hmActivationPackage output. Exactly one host should set this.
@@ -34,11 +38,6 @@
     # ~85 tok/s aggregate at 4-way concurrency, zero crashes, hermes tool
     # calling. See dryvist/nix-ai#915.
     defaultLocalModelId = "mlx-community/Qwen3-30B-A3B-Instruct-2507-4bit";
-
-    # OpenTelemetry resource identifier (monitoring.otel.resourceAttributes).
-    # Kept as an explicit label (not hostName) to preserve existing Splunk/OTEL
-    # correlation for this machine.
-    otelHostName = "macbook-m4";
 
     # Local MLX inference server sizing (programs.mlx). Multi-turn agent clients
     # re-prefill 5-40K-token contexts; the 8192 MB default left no paged-cache

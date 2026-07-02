@@ -141,7 +141,9 @@
         label: host:
         assert _stateVersionCheck;
         darwin.lib.darwinSystem {
-          inherit (host) system;
+          # nix-darwin is Darwin-only and every host is Apple Silicon, so the
+          # registry omits `system`; default it here (overridable for an Intel host).
+          system = host.system or "aarch64-darwin";
           # Pass nix-ai through so the homebrew module can pull
           # `lib.brewFormulae` (formulae required by per-agent home-manager
           # modules whose preferred install path is brew, e.g. qwen-code).
