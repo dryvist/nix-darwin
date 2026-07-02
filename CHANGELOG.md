@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.54.0](https://github.com/dryvist/nix-darwin/compare/v1.53.1...v1.54.0) (2026-07-02)
+
+
+### Features
+
+* HF_TOKEN via sops on server-class hosts (keychain-free real secrets) ([#1401](https://github.com/dryvist/nix-darwin/issues/1401)) ([35095fb](https://github.com/dryvist/nix-darwin/commit/35095fbc446d64e8d22487c11b3439c72e5a2bb2))
+
 ## [1.53.1](https://github.com/dryvist/nix-darwin/compare/v1.53.0...v1.53.1) (2026-07-02)
 
 
