@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.53.1](https://github.com/dryvist/nix-darwin/compare/v1.53.0...v1.53.1) (2026-07-02)
+
+
+### Bug Fixes
+
+* shorten MANIFEST service rows to the MD013 line limit ([#1399](https://github.com/dryvist/nix-darwin/issues/1399)) ([4825060](https://github.com/dryvist/nix-darwin/commit/4825060161f032391e085e7af5e7479adabbc1da))
+
 ## [1.53.0](https://github.com/dryvist/nix-darwin/compare/v1.52.0...v1.53.0) (2026-07-02)
 
 
