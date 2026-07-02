@@ -214,8 +214,8 @@ Managed by nix-darwin modules but installed externally (not via nixpkgs or Homeb
 | Service | Source | Description |
 | --- | --- | --- |
 | Cribl Edge | `modules/darwin/apps/cribl-edge.nix` | Log collection agent (installed via .pkg, Nix manages LaunchDaemon + ACLs) |
-| llm-gate (Caddy) | `modules/darwin/llm-gate.nix` | TLS + bearer-token gate fronting the local LLM API and Open WebUI on server hosts (Nix-built Caddy with the route53 DNS-01 plugin; Caddyfile rendered by sops-nix, launchd daemon) |
-| GitHub Actions Runner | `modules/darwin/apps/github-runner-container.nix` | Ephemeral dryvist org runner in an Apple `container` Linux VM (env-driven vendor image `myoung34/github-runner`; PAT via sops `--env-file`) |
+| llm-gate (Caddy) | `modules/darwin/llm-gate.nix` | TLS + bearer gate for the LLM API and Open WebUI on server hosts; sops-rendered Caddyfile |
+| GitHub Actions Runner | `modules/darwin/apps/github-runner-container.nix` | Ephemeral org runner in an Apple `container` VM; env-driven image, PAT via sops |
 
 ---
 
