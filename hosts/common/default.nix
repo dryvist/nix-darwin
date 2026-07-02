@@ -136,24 +136,24 @@ in
       };
     };
 
-    # --- Cribl Stream (local egress aggregator, Apple container) ---
-    # Single-instance Cribl Stream in an Apple `container`: local sources ship to
-    # 127.0.0.1:10301 and it forwards to the Proxmox Stream tier (haproxy:10300).
-    # Resource-capped deliberately LOW (1 cpu / 1g / 1 worker) — it is a
-    # passthrough forwarder, and on an inference box every GB left here is a GB
-    # denied to MLX. Identical on all inference hosts; parameterize per-host only
-    # if a host's log volume ever needs it.
-    # No explicit container DNS: Apple `container` forwards through the vmnet
-    # gateway to the host resolver, which already resolves the internal FQDN
-    # used in outputs.yml (verified). See docs/CRIBL-GITOPS.md.
-    cribl-stream = lib.mkIf (hostConfig ? mlx) {
-      enable = true;
+    # --- Cribl Stream (local egress aggregator) — DISABLED (idle) ---
+    # The local-Stream cutover is reverted: cribl-edge ships directly to the
+    # Proxmox HAProxy (:10300), so a local Stream listening on :10301 receives
+    # nothing and sits idle. Apple `container` runs it as a lightweight VM whose
+    # `--memory` is the VM's RAM allocation (not a soft cap), so running it idle
+    # would tie up ~1 GB + a CPU for zero benefit — unacceptable on inference
+    # hosts where RAM is reserved for MLX. Kept configured (not deleted) so
+    # re-enabling is a one-line flip once the containerized Stream's CPU/DNS issue
+    # is fixed and the cutover is ready — right-size cpus/memory against real load
+    # THEN (the module defaults 1 cpu / 1g / 1 worker are conservative starting
+    # points, not a measured requirement). To re-enable: enable = lib.mkIf
+    # (hostConfig ? mlx) true. No explicit container DNS: Apple `container`
+    # forwards through the vmnet gateway to the host resolver. See docs/CRIBL-GITOPS.md.
+    cribl-stream = {
+      enable = false;
       user = userConfig.user.name;
       inputPort = 10301;
       apiPort = 9000;
-      cpus = 1;
-      memory = "1g";
-      maxWorkers = 1;
       configFiles = {
         "inputs.yml" = ''
           inputs:
