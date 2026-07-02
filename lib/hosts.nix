@@ -65,16 +65,53 @@
     # defaults (hosts/common/default.nix) and nix-home's server preset.
     class = "server";
 
-    # Same model as the laptop for now. This 128 GB headless box has ample room
-    # for a larger model (more accuracy) — revisit and benchmark on-machine.
-    defaultLocalModelId = "mlx-community/Qwen3-30B-A3B-Instruct-2507-4bit";
+    # Two-resident serving pair (selected 2026-07-02; research JAC-155 —
+    # weights measured from HF safetensors, archs verified against config.json,
+    # cross-checked via codex + agy):
+    #   default — gpt-oss-120b MXFP4-Q8: 63.3 GB, model_type gpt_oss (standard
+    #     sliding+full softmax attention — NOT the qwen3_next/qwen3_5_moe
+    #     linear-attention crash class from nix-ai#915), 117B total / 5.1B
+    #     active (best TPS in its capability class), Apache-2.0. Tool calls
+    #     need the harmony parser (vllm-mlx >= 0.4.0, nix-ai#1083).
+    #   coding — Qwen3-Coder-30B-A3B 4-bit: 17.1 GB, qwen3_moe — the exact
+    #     architecture of the previously-resident known-good 30B-A3B-2507.
+    # Combined 80.4 GB weights against the 118 GB wired ceiling leaves ~37 GB
+    # for paged-KV + framework. 8-bit coder (32.4 GB) is the tracked upgrade
+    # if coding fidelity wins over KV headroom after benchmarks.
+    defaultLocalModelId = "mlx-community/gpt-oss-120b-MXFP4-Q8";
+    roleModelOverrides = {
+      coding = "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit";
+    };
 
-    # MLX sizing — MAX from day one; inference is this box's sole purpose (not
-    # "start small"). The 30B-A3B model is ~17 GB resident on 128 GB, so there is
-    # large headroom. Benchmark these UPWARD on the machine.
+    # MLX sizing for TWO resident workers — cacheMemoryMb applies PER worker,
+    # so 2 x 12288 MB caches + 80.4 GB weights ≈ 105 GB, inside the 118 GB
+    # wired ceiling with slack for the proxy/framework. Benchmark these on the
+    # machine (JAC-115) before raising.
     mlx = {
-      cacheMemoryMb = 65536;
+      cacheMemoryMb = 12288;
       prefillBatchSize = 4096;
+      # Keep both backends resident: no swap eviction, both preloaded at boot.
+      proxy.groupSwap = false;
+      preload = [
+        "default"
+        "coding"
+      ];
+      # Parsers differ per backend, so the global parser is off and each
+      # physical model pins its own (harmony needs vllm-mlx >= 0.4.0).
+      # --reasoning-parser is deliberately NOT set for gpt-oss yet: it has
+      # historically conflicted with tool-call parsing in streaming mode —
+      # re-evaluate during the benchmark pass.
+      toolCallParser = null;
+      modelExtraArgs = {
+        "mlx-community/gpt-oss-120b-MXFP4-Q8" = [
+          "--tool-call-parser"
+          "harmony"
+        ];
+        "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit" = [
+          "--tool-call-parser"
+          "qwen3_coder"
+        ];
+      };
     };
 
     # OrbStack stays OFF until the real APFS container id is confirmed on the
