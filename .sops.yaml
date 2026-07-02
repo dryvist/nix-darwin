@@ -2,11 +2,17 @@
 # Age key: ~/.config/sops/age/keys.txt
 # Encrypt: sops --encrypt --in-place <file>
 # Edit: sops <file>
+#
+# Recipients (comma-joined; every machine that must decrypt at activation):
+#   age1y0j... — jevans-mbp (laptop, original keyholder)
+#   age1vpz... — jevans-ms (Mac Studio, generated on-device 2026-07-02)
+# Adding a recipient requires `sops updatekeys secrets/*.yaml` run by an
+# existing keyholder, merged BEFORE the new machine's first darwin-rebuild.
 
 creation_rules:
   - path_regex: ^secrets/.*\.yaml$
-    age: "age1y0jvtlp2ac8fwwvh2nzm88ehye74jlseywjrjcjqll7u8vycsedq788tp9"
+    age: "age1y0jvtlp2ac8fwwvh2nzm88ehye74jlseywjrjcjqll7u8vycsedq788tp9,age1vpznq8w06ldc8d4z6g348st45het7yt5d5c6rtgnvzgtvrt0gcxss73qna"
   - path_regex: \.sops\.json$
-    age: "age1y0jvtlp2ac8fwwvh2nzm88ehye74jlseywjrjcjqll7u8vycsedq788tp9"
+    age: "age1y0jvtlp2ac8fwwvh2nzm88ehye74jlseywjrjcjqll7u8vycsedq788tp9,age1vpznq8w06ldc8d4z6g348st45het7yt5d5c6rtgnvzgtvrt0gcxss73qna"
   - path_regex: \.sops\.yaml$
-    age: "age1y0jvtlp2ac8fwwvh2nzm88ehye74jlseywjrjcjqll7u8vycsedq788tp9"
+    age: "age1y0jvtlp2ac8fwwvh2nzm88ehye74jlseywjrjcjqll7u8vycsedq788tp9,age1vpznq8w06ldc8d4z6g348st45het7yt5d5c6rtgnvzgtvrt0gcxss73qna"
