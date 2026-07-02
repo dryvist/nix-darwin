@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.53.0](https://github.com/dryvist/nix-darwin/compare/v1.52.0...v1.53.0) (2026-07-02)
+
+
+### Features
+
+* mac-studio two-resident models (gpt-oss-120b + Qwen3-Coder-30B), Studio age recipient ([#1397](https://github.com/dryvist/nix-darwin/issues/1397)) ([c5fac39](https://github.com/dryvist/nix-darwin/commit/c5fac39e2c840c928d033d9b3b0d08515e1347c1))
+
 ## [1.52.0](https://github.com/dryvist/nix-darwin/compare/v1.51.2...v1.52.0) (2026-07-02)
 
 
