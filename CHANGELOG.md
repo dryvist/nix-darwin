@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.54.3](https://github.com/dryvist/nix-darwin/compare/v1.54.2...v1.54.3) (2026-07-02)
+
+
+### Bug Fixes
+
+* **llm-gate:** bind all interfaces — drop the bind-IP secret entirely ([#1409](https://github.com/dryvist/nix-darwin/issues/1409)) ([664ed35](https://github.com/dryvist/nix-darwin/commit/664ed35fc13ee9644819d3b75ef80596ff570ddc))
+
 ## [1.54.2](https://github.com/dryvist/nix-darwin/compare/v1.54.1...v1.54.2) (2026-07-02)
 
 
