@@ -34,37 +34,36 @@ let
 
   containerBin = "/opt/homebrew/bin/container";
 
-  runArgs =
-    [
-      containerBin
-      "run"
-      "--rm"
-      "--cpus"
-      (toString cfg.cpus)
-      "--memory"
-      cfg.memory
-      "--env"
-      "RUNNER_SCOPE=org"
-      "--env"
-      "ORG_NAME=${cfg.orgName}"
-      "--env"
-      "RUNNER_NAME=${cfg.runnerName}"
-      "--env"
-      "LABELS=${lib.concatStringsSep "," cfg.extraLabels}"
-      "--env"
-      "RUNNER_GROUP=${cfg.runnerGroup}"
-      "--env"
-      "EPHEMERAL=true"
-      "--env"
-      "DISABLE_AUTO_UPDATE=true"
-      # Scrub ACCESS_TOKEN and the config vars above from the runner's
-      # environment after registration, before any workflow code runs.
-      "--env"
-      "UNSET_CONFIG_VARS=true"
-      "--env-file"
-      cfg.secretsFile
-    ]
-    ++ [ cfg.image ]; # image must be the final positional arg
+  runArgs = [
+    containerBin
+    "run"
+    "--rm"
+    "--cpus"
+    (toString cfg.cpus)
+    "--memory"
+    cfg.memory
+    "--env"
+    "RUNNER_SCOPE=org"
+    "--env"
+    "ORG_NAME=${cfg.orgName}"
+    "--env"
+    "RUNNER_NAME=${cfg.runnerName}"
+    "--env"
+    "LABELS=${lib.concatStringsSep "," cfg.extraLabels}"
+    "--env"
+    "RUNNER_GROUP=${cfg.runnerGroup}"
+    "--env"
+    "EPHEMERAL=true"
+    "--env"
+    "DISABLE_AUTO_UPDATE=true"
+    # Scrub ACCESS_TOKEN and the config vars above from the runner's
+    # environment after registration, before any workflow code runs.
+    "--env"
+    "UNSET_CONFIG_VARS=true"
+    "--env-file"
+    cfg.secretsFile
+  ]
+  ++ [ cfg.image ]; # image must be the final positional arg
 in
 {
   options.programs.github-runner-container = {
@@ -145,8 +144,10 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    # List the base dir explicitly so it gets user ownership too (install -d
+    # would create missing parents root-owned).
     system.activationScripts.postActivation.text = ''
-      /usr/bin/install -d -o ${cfg.user} -g ${cfg.group} "${cfg.dataDir}/logs"
+      /usr/bin/install -d -o ${cfg.user} -g ${cfg.group} "${cfg.dataDir}" "${cfg.dataDir}/logs"
     '';
 
     # One-shot: bring up the container runtime/apiserver (idempotent; same
