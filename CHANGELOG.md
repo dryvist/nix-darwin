@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.54.4](https://github.com/dryvist/nix-darwin/compare/v1.54.3...v1.54.4) (2026-07-02)
+
+
+### Bug Fixes
+
+* **mac-studio:** disable paged KV cache for gpt-oss-120b ([#1413](https://github.com/dryvist/nix-darwin/issues/1413)) ([8bf5f1e](https://github.com/dryvist/nix-darwin/commit/8bf5f1e69336fb289d176cfaf343df68ce4cafc8))
+
 ## [1.54.3](https://github.com/dryvist/nix-darwin/compare/v1.54.2...v1.54.3) (2026-07-02)
 
 
