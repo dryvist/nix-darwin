@@ -15,7 +15,6 @@
   # carried onto the Studio — ADR: llm-large-studio-serving.
   programs.mlx.huggingFaceHome = "${config.home.homeDirectory}/.cache/huggingface";
 
-  # Manual-query chat UI on loopback; the llm-gate Caddy fronts it with TLS on
-  # the LAN (:8443). Open WebUI keeps its own login, so no bearer on that site.
-  programs.open-webui.enable = true;
+  # The chat UI is no longer served here: the single cluster-hosted Open WebUI
+  # is the only chat UI. The llm-gate below is API-only (bearer-gated MLX).
 }

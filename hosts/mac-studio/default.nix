@@ -51,8 +51,8 @@ in
     energy.enable = true;
 
     # --- Auto-login ---
-    # The MLX stack, Open WebUI, and the gh-runner lifecycle are launchd USER
-    # agents — a headless reboot serves nothing until a session exists. Auto-
+    # The MLX stack and the gh-runner lifecycle are launchd USER agents — a
+    # headless reboot serves nothing until a session exists. Auto-
     # login gives that session with zero prompts (enable once via GUI so macOS
     # writes the kcpassword artifact; FileVault stays off on this host).
     defaults.loginwindow.autoLoginUser = userConfig.user.name;
@@ -66,13 +66,18 @@ in
     # ========================================================================
     # Caddy terminates TLS on the LAN address and enforces the bearer token; the
     # model server stays on 127.0.0.1. The whole Caddyfile is a sops template
-    # (secrets inline — no wrapper scripts). tlsMode "internal" is the bring-up
-    # stopgap — flip to "route53" once the ACME AWS credentials land in
-    # secrets/llm-large.yaml (phase 3 of the Studio bring-up).
+    # (secrets inline — no wrapper scripts). route53 mode issues a real
+    # Let's Encrypt cert via DNS-01 (the ACME AWS credentials in
+    # secrets/llm-large.yaml), so the cert covers both the host FQDN and the
+    # `llm-large` service alias below and SNI succeeds for either name.
     llm-gate = {
       enable = true;
       domain = "${hostConfig.hostName}.${userConfig.baseDomain}";
-      tlsMode = "internal";
+      tlsMode = "route53";
+      # Stable service-alias CNAME → this host, so consumers reach the gate by
+      # capability name rather than the host name. Composed from baseDomain
+      # (never a flat literal — matches the repo's FQDN convention).
+      extraHostnames = [ "llm-large.pve.${userConfig.baseDomain}" ];
     };
 
     # ========================================================================

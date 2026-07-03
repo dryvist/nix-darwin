@@ -4,8 +4,10 @@
 # server stays bound to 127.0.0.1; this Caddy front terminates TLS on the
 # host's LAN address and enforces a bearer token (the OpenAI `api_key` field,
 # native in every consumer). It is the only network path to the model port.
-# A second TLS-only site fronts the local Open WebUI (which keeps its own
-# login, so no bearer there).
+# API-only: the chat UI moved to the single cluster-hosted Open WebUI, so this
+# gate no longer fronts a local web UI. `extraHostnames` lets the one API site
+# also answer for service aliases (e.g. an `llm-large.<subdomain>` CNAME) so
+# the cert/SNI covers them alongside the host FQDN.
 #
 # Fully declarative — no wrapper scripts: the ENTIRE Caddyfile is a sops-nix
 # template rendered at activation with the secrets inline (bearer token and,
@@ -57,6 +59,15 @@ let
             }''
     else
       "tls internal";
+
+  # The API site answers for the host FQDN plus any service-alias hostnames.
+  # Caddy takes a space-separated address list for a single site and obtains
+  # one certificate covering every listed hostname. lib.unique guards against a
+  # duplicate site address (and duplicate cert request) if a consumer lists
+  # `domain` again in `extraHostnames`.
+  apiSiteAddresses = lib.concatMapStringsSep " " (host: "https://${host}:${toString cfg.apiPort}") (
+    lib.unique ([ cfg.domain ] ++ cfg.extraHostnames)
+  );
 in
 {
   options.programs.llm-gate = {
@@ -66,6 +77,20 @@ in
       type = lib.types.str;
       example = "host.example.com";
       description = "Public FQDN the gate serves (certificate subject).";
+    };
+
+    extraHostnames = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      example = [ "llm-large.example.com" ];
+      description = ''
+        Additional hostnames the API site also answers for (e.g. a service-alias
+        CNAME pointing at this host). Each is added to the Caddy site address
+        list so the obtained certificate covers it and SNI succeeds — without
+        this, an alias hitting the gate fails TLS because the cert only covers
+        `domain`. In route53 mode the DNS-01 challenge is solved for every site
+        hostname automatically, so no per-name tls entry is needed.
+      '';
     };
 
     tlsMode = lib.mkOption {
@@ -87,18 +112,6 @@ in
       type = lib.types.port;
       default = 11434;
       description = "Loopback llama-swap port the API site proxies to.";
-    };
-
-    webUiPort = lib.mkOption {
-      type = lib.types.port;
-      default = 8443;
-      description = "TLS port for the Open WebUI site (no bearer — the UI has its own login).";
-    };
-
-    webUiUpstreamPort = lib.mkOption {
-      type = lib.types.port;
-      default = 8080;
-      description = "Loopback Open WebUI port the UI site proxies to.";
     };
 
     dataDir = lib.mkOption {
@@ -126,18 +139,13 @@ in
           auto_https disable_redirects
         }
 
-        https://${cfg.domain}:${toString cfg.apiPort} {
+        ${apiSiteAddresses} {
           ${tlsDirective}
           @unauthorized not header Authorization "Bearer ${
             config.sops.placeholder."LLM_LARGE_BEARER_TOKEN"
           }"
           respond @unauthorized 401
           reverse_proxy 127.0.0.1:${toString cfg.apiUpstreamPort}
-        }
-
-        https://${cfg.domain}:${toString cfg.webUiPort} {
-          ${tlsDirective}
-          reverse_proxy 127.0.0.1:${toString cfg.webUiUpstreamPort}
         }
       '';
     };
