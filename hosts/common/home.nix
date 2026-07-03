@@ -58,10 +58,9 @@
   manual.manpages.enable = false;
 
   # nix-home role preset: `workstation` enables all daily-driver GUI/desktop
-  # features; `server` drops them. Driven by the host's registry `class`.
-  # `or "workstation"` matches nix-home's own default and tolerates a host that
-  # omits `class` rather than throwing on the missing attr.
-  home-profile.preset = hostConfig.class or "workstation";
+  # features; `server` drops them. Driven by the host's registry `class`
+  # (normalized in flake.nix mkHost, so the attr always exists).
+  home-profile.preset = hostConfig.class;
 
   # ==========================================================================
   # Monitoring / Observability
@@ -137,7 +136,7 @@
           # comes from the sops-rendered per-machine secret instead (portable
           # across machines via the committed encrypted file + on-device age
           # key). Workstations keep the keychain read, byte-identical.
-          if (hostConfig.class or "workstation") == "server" then
+          if hostConfig.isServer then
             ''export HF_TOKEN=''${HF_TOKEN:-"$(cat /run/secrets/HF_TOKEN 2>/dev/null || echo "")"}''
           else
             ''export HF_TOKEN=''${HF_TOKEN:-"$(_get_keychain_secret 'HF_TOKEN' "$_KC_AI_ACCOUNT" "$_KC_AI_DB")"}''

@@ -1,9 +1,10 @@
 # Per-host registry
 #
 # Pure static data only — NO `config`/`osConfig`/module references (that would
-# create an eval-order dependency). Consumed by flake.nix `mkHost`, which threads
-# each host's attrset to darwin modules via `specialArgs.hostConfig` and to
-# home-manager modules via `extraSpecialArgs.hostConfig`.
+# create an eval-order dependency). Consumed by flake.nix `mkHost`, which
+# normalizes `class` (default "workstation") and derives `isServer`, then
+# threads each host's attrset to darwin modules via `specialArgs.hostConfig`
+# and to home-manager modules via `extraSpecialArgs.hostConfig`.
 #
 # Keyed by descriptive machine label (also the folder name under hosts/). The
 # darwin configuration is exposed under `hostName` (see flake.nix) so

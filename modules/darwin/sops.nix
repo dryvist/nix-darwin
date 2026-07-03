@@ -35,7 +35,8 @@ let
     group = "staff";
     mode = "0400";
   };
-  isServer = (hostConfig.class or "workstation") == "server";
+  # (isServer is normalized once in flake.nix mkHost.)
+  inherit (hostConfig) isServer;
 in
 {
   sops = {
