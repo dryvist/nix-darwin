@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.60.0](https://github.com/dryvist/nix-darwin/compare/v1.59.0...v1.60.0) (2026-07-03)
+
+
+### Features
+
+* add issue-backlog-sweep caller ([#1470](https://github.com/dryvist/nix-darwin/issues/1470)) ([a5b6791](https://github.com/dryvist/nix-darwin/commit/a5b67916876cec482d09a1697966dfde53b91417))
+
 ## [1.59.0](https://github.com/dryvist/nix-darwin/compare/v1.58.0...v1.59.0) (2026-07-03)
 
 
