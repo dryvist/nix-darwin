@@ -1,9 +1,9 @@
 # GitHub Actions Self-Hosted Runner (Apple container)
 #
 # Runs an EPHEMERAL GitHub Actions org runner inside an Apple `container`
-# (v1.0) Linux VM, following the cribl-stream lifecycle pattern: a one-shot
-# runtime agent brings up the per-user container apiserver, and a foreground
-# `container run` under launchd KeepAlive supervises the runner.
+# (v1.0) Linux VM: the shared apple-container-runtime module brings up the
+# per-user container apiserver, and a foreground `container run` under
+# launchd KeepAlive supervises the runner.
 #
 # Script-free by design: the vendor image (myoung34/github-runner) is
 # entirely env-driven — it exchanges the PAT for a registration token,
@@ -32,7 +32,7 @@
 let
   cfg = config.programs.github-runner-container;
 
-  containerBin = "/opt/homebrew/bin/container";
+  inherit (config.programs.apple-container-runtime) containerBin;
 
   runArgs = [
     containerBin
@@ -150,19 +150,12 @@ in
       /usr/bin/install -d -o ${cfg.user} -g ${cfg.group} "${cfg.dataDir}" "${cfg.dataDir}/logs"
     '';
 
-    # One-shot: bring up the container runtime/apiserver (idempotent; same
-    # no-op-after-first-run shape as cribl-stream's runtime agent — duplicate
-    # RunAtLoad one-shots are harmless if both modules are enabled).
-    launchd.user.agents.gh-runner-container-runtime.serviceConfig = {
-      Label = "com.nix-darwin.gh-runner-container-runtime";
-      ProgramArguments = [
-        containerBin
-        "system"
-        "start"
-        "--enable-kernel-install"
-      ];
-      RunAtLoad = true;
-      StandardErrorPath = "${cfg.dataDir}/logs/gh-runner-container-runtime.err.log";
+    # Shared one-shot brings up the container runtime/apiserver (idempotent);
+    # mkDefault so a host can still point the shared module elsewhere.
+    programs.apple-container-runtime = {
+      enable = lib.mkDefault true;
+      user = lib.mkDefault cfg.user;
+      group = lib.mkDefault cfg.group;
     };
 
     # Foreground `container run` supervised by launchd KeepAlive: the VM

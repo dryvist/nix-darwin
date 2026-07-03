@@ -40,7 +40,8 @@ let
   # actively UNINSTALL anything not declared, so drift cannot accumulate.
   # (Hit on jevans-ms 2026-07-02: the ungated list installed the laptop's
   # desktop apps on the headless LLM server.)
-  isServer = (hostConfig.class or "workstation") == "server";
+  # (isServer is normalized once in flake.nix mkHost.)
+  inherit (hostConfig) isServer;
 
   # The only Homebrew packages a server host needs. Add here ONLY with a
   # written justification; everything else belongs in nixpkgs or nowhere.
@@ -135,6 +136,13 @@ let
       name = "voiceink";
       greedy = true;
     } # Voice-to-text app (local whisper)
+    # Neat: GitHub + Linear notifications in the menu bar. Not in nixpkgs
+    # (proprietary macOS-only app from neat.run); greedy so its built-in
+    # auto-updater does not cause brew upgrade to skip it.
+    {
+      name = "neat";
+      greedy = true;
+    } # GitHub/Linear menu-bar notifications
 
     # --- Anthropic ---
     {

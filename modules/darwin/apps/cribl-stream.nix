@@ -5,11 +5,11 @@
 # Stream, which enriches, persistent-queues, and forwards once to the Proxmox
 # Stream tier (instead of many local sources each dialing Proxmox).
 #
-# Script-free: two native launchd user agents drive the lifecycle.
-#   * cribl-container-runtime — one-shot `container system start
-#     --enable-kernel-install` (installs the kata kernel non-interactively on
-#     first run; no-op thereafter). The apiserver it starts self-registers with
-#     launchd and persists independently.
+# Script-free: native launchd user agents drive the lifecycle.
+#   * apple-container-runtime (shared module) — one-shot `container system
+#     start --enable-kernel-install` (installs the kata kernel
+#     non-interactively on first run; no-op thereafter). The apiserver it
+#     starts self-registers with launchd and persists independently.
 #   * cribl-stream — `container run` in the FOREGROUND (no -d), so launchd's
 #     KeepAlive directly supervises the container: when it exits, launchd
 #     restarts it. `--rm` keeps the fixed name free across restarts.
@@ -31,7 +31,7 @@
 let
   cfg = config.programs.cribl-stream;
 
-  containerBin = "/opt/homebrew/bin/container";
+  inherit (config.programs.apple-container-runtime) containerBin;
   mount = "/opt/cribl/config-volume"; # CRIBL_VOLUME_DIR inside the container
   volumeDir = "${cfg.dataDir}/volume"; # host side of the bind mount
 
@@ -179,17 +179,12 @@ in
       ${configInstall}
     '';
 
-    # One-shot: bring up the container runtime/apiserver (idempotent).
-    launchd.user.agents.cribl-container-runtime.serviceConfig = {
-      Label = "com.nix-darwin.cribl-container-runtime";
-      ProgramArguments = [
-        containerBin
-        "system"
-        "start"
-        "--enable-kernel-install"
-      ];
-      RunAtLoad = true;
-      StandardErrorPath = "${cfg.dataDir}/logs/cribl-container-runtime.err.log";
+    # Shared one-shot brings up the container runtime/apiserver (idempotent);
+    # mkDefault so a host can still point the shared module elsewhere.
+    programs.apple-container-runtime = {
+      enable = lib.mkDefault true;
+      user = lib.mkDefault cfg.user;
+      group = lib.mkDefault cfg.group;
     };
 
     # Foreground `container run` supervised by launchd KeepAlive — no wrapper

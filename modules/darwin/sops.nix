@@ -28,14 +28,16 @@ let
     group = "wheel";
     mode = "0400";
   };
-  # The GitHub runner service registers/runs as the login user, so its PAT
-  # must be readable by that user (services.github-runners tokenFile).
+  # The GitHub runner agent runs as the login user (Apple `container` is
+  # per-user), so its PAT env-file must be readable by that user — consumed
+  # via `container run --env-file` (modules/darwin/apps/github-runner-container.nix).
   userOnly = {
     owner = userConfig.user.name;
     group = "staff";
     mode = "0400";
   };
-  isServer = (hostConfig.class or "workstation") == "server";
+  # (isServer is normalized once in flake.nix mkHost.)
+  inherit (hostConfig) isServer;
 in
 {
   sops = {
@@ -65,8 +67,6 @@ in
     }
     // lib.optionalAttrs isServer {
       # llm-gate (Caddy TLS + bearer front) — secrets/llm-large.yaml.
-      # (The file's legacy LLM_GATE_BIND_IP key is unused: the gate binds all
-      # interfaces, so no address ever needs declaring or rotating.)
       LLM_LARGE_BEARER_TOKEN = rootOnly // {
         sopsFile = ../../secrets/llm-large.yaml;
       };

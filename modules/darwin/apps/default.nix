@@ -10,6 +10,7 @@ _:
 {
   imports = [
     ./ai-volumes.nix
+    ./apple-container-runtime.nix
     ./auto-update-prevention.nix
     ./cribl-edge.nix
     ./cribl-stream.nix
