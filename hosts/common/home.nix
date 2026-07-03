@@ -8,6 +8,7 @@
 {
   config,
   lib,
+  pkgs,
   userConfig,
   osConfig,
   hostConfig,
@@ -185,58 +186,67 @@
   # ==========================================================================
   # Nix does NOT manage the volume contents — it only creates the symlink. The
   # volume itself is created by a launchd daemon (modules/darwin/apps/orbstack.nix).
-  home.file = lib.mkIf (hostConfig.orbstack.enable or false) {
-    # Symlink the entire Group Container so ALL OrbStack data (Docker images,
-    # containers, volumes, Linux VMs, logs) lives on the dedicated APFS volume.
-    # MIGRATION: Stop OrbStack and move existing data before enabling.
-    # NOTE: `ln` reports a permission error when OrbStack is running because the
-    # Group Container directory is locked. This is expected — the symlink persists
-    # correctly and does not need to be recreated on every rebuild.
-    "Library/Group Containers/HUAQ24HBR6.dev.orbstack".source =
-      config.lib.file.mkOutOfStoreSymlink "/Volumes/${hostConfig.orbstack.containerVolume}";
+  home = {
+    # Ghostty terminfo (just the DB, not the GUI app) on every host so SSHing
+    # in from a Ghostty terminal — which sets TERM=xterm-ghostty — resolves
+    # cleanly even on a headless server that drops the workstation GUI package
+    # list. Must be the `-bin` variant: ghostty.terminfo (source build) fails
+    # its darwin assert. macbook-m4 already pulls this store path via ghostty-bin.
+    packages = [ pkgs.ghostty-bin.terminfo ];
 
-    # Docker daemon configuration for OrbStack: log rotation + build cache GC to
-    # prevent unbounded disk growth. force = true: OrbStack pre-creates this file;
-    # home-manager must overwrite it.
-    ".orbstack/config/docker.json" = {
-      force = true;
-      text = builtins.toJSON (
-        let
-          logMaxFileSize = "25m";
-          logMaxFiles = "25";
-          keepDuration = "2160h"; # 90 days
-          defaultKeepStorage = "10GB";
-          sourceLocalMaxUsedSpace = "10GB";
-          generalMaxUsedSpace = "20GB";
-        in
-        {
-          log-driver = "json-file";
-          log-opts = {
-            max-size = logMaxFileSize;
-            max-file = logMaxFiles;
-          };
-          builder.gc = {
-            enabled = true;
-            inherit defaultKeepStorage;
-            policy = [
-              {
-                inherit keepDuration;
-                filter = [ "type==source.local" ];
-                maxUsedSpace = sourceLocalMaxUsedSpace;
-              }
-              {
-                inherit keepDuration;
-                maxUsedSpace = generalMaxUsedSpace;
-              }
-            ];
-          };
-        }
-      );
+    file = lib.mkIf (hostConfig.orbstack.enable or false) {
+      # Symlink the entire Group Container so ALL OrbStack data (Docker images,
+      # containers, volumes, Linux VMs, logs) lives on the dedicated APFS volume.
+      # MIGRATION: Stop OrbStack and move existing data before enabling.
+      # NOTE: `ln` reports a permission error when OrbStack is running because the
+      # Group Container directory is locked. This is expected — the symlink persists
+      # correctly and does not need to be recreated on every rebuild.
+      "Library/Group Containers/HUAQ24HBR6.dev.orbstack".source =
+        config.lib.file.mkOutOfStoreSymlink "/Volumes/${hostConfig.orbstack.containerVolume}";
+
+      # Docker daemon configuration for OrbStack: log rotation + build cache GC to
+      # prevent unbounded disk growth. force = true: OrbStack pre-creates this file;
+      # home-manager must overwrite it.
+      ".orbstack/config/docker.json" = {
+        force = true;
+        text = builtins.toJSON (
+          let
+            logMaxFileSize = "25m";
+            logMaxFiles = "25";
+            keepDuration = "2160h"; # 90 days
+            defaultKeepStorage = "10GB";
+            sourceLocalMaxUsedSpace = "10GB";
+            generalMaxUsedSpace = "20GB";
+          in
+          {
+            log-driver = "json-file";
+            log-opts = {
+              max-size = logMaxFileSize;
+              max-file = logMaxFiles;
+            };
+            builder.gc = {
+              enabled = true;
+              inherit defaultKeepStorage;
+              policy = [
+                {
+                  inherit keepDuration;
+                  filter = [ "type==source.local" ];
+                  maxUsedSpace = sourceLocalMaxUsedSpace;
+                }
+                {
+                  inherit keepDuration;
+                  maxUsedSpace = generalMaxUsedSpace;
+                }
+              ];
+            };
+          }
+        );
+      };
     };
-  };
 
-  home.sessionVariables = lib.mkIf (hostConfig.orbstack.enable or false) {
-    # Container data on the dedicated external volume.
-    CONTAINER_DATA = "/Volumes/${hostConfig.orbstack.containerVolume}";
+    sessionVariables = lib.mkIf (hostConfig.orbstack.enable or false) {
+      # Container data on the dedicated external volume.
+      CONTAINER_DATA = "/Volumes/${hostConfig.orbstack.containerVolume}";
+    };
   };
 }
