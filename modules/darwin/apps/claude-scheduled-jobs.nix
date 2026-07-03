@@ -11,14 +11,16 @@
 #   no darwin-rebuild can reconstruct. The cloud routines repo is the home for
 #   cloud-executed schedules; these run locally on the Studio's own clones.
 #
-# - Token file, not the macOS keychain: the server is deliberately keychain-free
-#   for real secrets (sops.nix "keychain-free directive 2026-07-02"). A keychain
-#   ACL is bound to the requesting binary's path, and every nix-store rebuild
-#   churns that path, silently breaking the ACL under an unattended agent. A
-#   sops-rendered file at a stable /run/secrets path has none of that fragility.
-#   The token is read at exec time with `cat` and exported only into the child
-#   process env — it never lands in the plist or in `ps` output (which would
-#   show it if passed as an argument).
+# - Token file, not the macOS keychain and not sops: the server is
+#   deliberately keychain-free for real secrets (a keychain ACL is bound to the
+#   requesting binary's path, and every nix-store rebuild churns that path,
+#   silently breaking the ACL under an unattended agent). The OAuth token is
+#   also too sensitive for this repo in ANY form, sops-encrypted included — its
+#   source of truth is Doppler / GitHub Actions secrets, and the host points
+#   tokenFile at a locally provisioned 0600 file outside the repo. The token is
+#   read at exec time with `cat` and exported only into the child process env —
+#   it never lands in the plist or in `ps` output (which would show it if
+#   passed as an argument).
 #
 # - The inline `zsh -c` string is nix-declared here, NOT a committed .sh file.
 #   The whole command is a ProgramArguments string built from options, so it
@@ -138,13 +140,15 @@ in
     };
 
     tokenFile = lib.mkOption {
-      type = lib.types.path;
+      type = lib.types.str;
       description = ''
-        Path to a file whose sole contents are the Claude Code OAuth token.
-        Point this at config.sops.secrets.CLAUDE_CODE_OAUTH_TOKEN.path; the token
-        is read at exec time and exported into the job's environment only.
+        Path to a file whose sole contents are the Claude Code OAuth token,
+        provisioned on the host out-of-band (e.g. from Doppler), mode 0600.
+        Never commit the token to this repo in any form. The token is read at
+        exec time and exported into the job's environment only; jobs fail safe
+        with an auth error in their log until the file exists.
       '';
-      example = "/run/secrets/CLAUDE_CODE_OAUTH_TOKEN";
+      example = "/Users/example/.config/claude/oauth-token";
     };
 
     claudeBin = lib.mkOption {

@@ -18,11 +18,20 @@ let
   # is not available
   homeDir = "/Users/${username}";
 
-  # GitHub handle / public docs host, reused by the nix-ai agent profile below.
+  # GitHub handle, reused by the nix-ai agent profile below.
   fullName = "JacobPEvans";
-  docsHost = "docs.jacobpevans.com";
+
+  # Public DNS apex every homelab FQDN lives under. Defined ONCE — all other
+  # names compose from it (docs host, syslog/LB target, per-host serving
+  # domains via "${hostConfig.hostName}.${userConfig.baseDomain}"). Never
+  # hard-code the domain at a use site.
+  baseDomain = "jacobpevans.com";
+  docsHost = "docs.${baseDomain}";
 in
 {
+  # Public DNS apex (see let-binding above). Compose FQDNs from this.
+  inherit baseDomain;
+
   # ==========================================================================
   # User Identity
   # ==========================================================================
@@ -73,9 +82,10 @@ in
   # ==========================================================================
   logging = {
     syslog = {
-      # Remote syslog server for centralized log collection
+      # Remote syslog server for centralized log collection — the homelab
+      # HAProxy LB (also the Cribl tcpjson target in hosts/common).
       # Logs are forwarded via macOS built-in syslogd to HAProxy -> Cribl Edge -> Splunk
-      server = "haproxy.pve.jacobpevans.com";
+      server = "haproxy.pve.${baseDomain}";
       port = 1514;
       # Protocol: udp or tcp
       protocol = "udp";

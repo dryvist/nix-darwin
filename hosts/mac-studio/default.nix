@@ -9,7 +9,7 @@
 # This file adds the host-unique bits: ComputerName, headless inference/power
 # tuning, the llm-large serving gate, and the ephemeral GitHub Actions runner.
 
-{ config, ... }:
+{ config, hostConfig, ... }:
 
 let
   userConfig = import ../../lib/user-config.nix;
@@ -19,7 +19,7 @@ in
 
   # nix-darwin sets HostName + LocalHostName from networking.hostName, but NOT
   # ComputerName — set it explicitly so the Finder/AirDrop name matches.
-  networking.computerName = "jevans-ms";
+  networking.computerName = hostConfig.hostName;
 
   # ==========================================================================
   # System-Level Tuning (headless inference server)
@@ -71,7 +71,7 @@ in
     # secrets/llm-large.yaml (phase 3 of the Studio bring-up).
     llm-gate = {
       enable = true;
-      domain = "jevans-ms.jacobpevans.com";
+      domain = "${hostConfig.hostName}.${userConfig.baseDomain}";
       tlsMode = "internal";
     };
 
@@ -86,9 +86,9 @@ in
     # nix.enable, which Determinate Nix keeps false.)
     github-runner-container = {
       enable = true;
-      runnerName = "jevans-ms";
+      runnerName = hostConfig.hostName;
       extraLabels = [
-        "jevans-ms"
+        hostConfig.hostName
         "apple-container"
         "mlx"
       ];
@@ -107,25 +107,30 @@ in
     # ========================================================================
     # Nix-Managed Scheduled Claude Jobs (headless, launchd user agents)
     # ========================================================================
-    # Unattended local `claude -p` runs on the Studio's own clones. The token is
-    # the sops-rendered CLAUDE_CODE_OAUTH_TOKEN (placeholder until the user runs
-    # `claude setup-token` and re-encrypts secrets/claude-code.yaml).
+    # Unattended local `claude -p` runs on the Studio's own clones. The OAuth
+    # token is deliberately NOT in this repo (not even sops-encrypted — policy:
+    # too sensitive for git in any form). Its source of truth is Doppler
+    # (gh-workflow-tokens/dryvist CLAUDE_CODE_OAUTH_TOKEN); provision the file
+    # below on the host once, 0600:
+    #   doppler secrets get CLAUDE_CODE_OAUTH_TOKEN \
+    #     -p gh-workflow-tokens -c dryvist --plain > ~/.config/claude/oauth-token
+    # Jobs fail safe (auth error in the job log) until the file exists.
     claude-scheduled-jobs = {
       enable = true;
       user = userConfig.user.name;
-      tokenFile = config.sops.secrets.CLAUDE_CODE_OAUTH_TOKEN.path;
+      tokenFile = "${userConfig.user.homeDir}/.config/claude/oauth-token";
       jobs.studio-hygiene = {
         schedule = {
           hour = 3;
           minute = 30;
         };
         prompt = ''
-          You are running unattended on jevans-ms. For each git repository under
-          ~/git (each <repo>/main checkout): run git fetch --all --prune; delete
-          local branches whose upstream is gone and remove their worktrees; NEVER
-          touch a branch or worktree with uncommitted changes or unpushed commits;
-          skip anything ambiguous; print a one-line summary per repo; make no other
-          changes; open no PRs.
+          You are running unattended on ${hostConfig.hostName}. For each git
+          repository under ~/git (each <repo>/main checkout): run git fetch
+          --all --prune; delete local branches whose upstream is gone and remove
+          their worktrees; NEVER touch a branch or worktree with uncommitted
+          changes or unpushed commits; skip anything ambiguous; print a one-line
+          summary per repo; make no other changes; open no PRs.
         '';
       };
     };
@@ -140,7 +145,7 @@ in
     ProgramArguments = [
       "/run/current-system/sw/bin/nix"
       "build"
-      "github:JacobPEvans/nix-darwin#darwinConfigurations.jevans-ms.system"
+      "github:dryvist/nix-darwin#darwinConfigurations.${hostConfig.hostName}.system"
       "--no-link"
       "--print-build-logs"
     ];

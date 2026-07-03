@@ -110,7 +110,7 @@ in
               # Homelab HAProxy (FQDN), load-balanced across the Cribl Stream workers.
               # Port pending in homelab-contracts service-ports (cribl_tcpjson) +
               # HAProxy frontend + Stream tcpjson source: ansible-proxmox-apps#525.
-              host: haproxy.pve.jacobpevans.com
+              host: ${userConfig.logging.syslog.server}
               port: 10302
               pqEnabled: true
         '';
@@ -187,7 +187,7 @@ in
             proxmox_stream:
               type: cribl_tcp
               # Homelab HAProxy (FQDN), load-balanced across the Proxmox Cribl Stream workers.
-              host: haproxy.pve.jacobpevans.com
+              host: ${userConfig.logging.syslog.server}
               port: 10300
               pqEnabled: true
               # Bounded on-disk queue: cap size and drop when full.
