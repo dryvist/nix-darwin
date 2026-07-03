@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.54.10](https://github.com/dryvist/nix-darwin/compare/v1.54.9...v1.54.10) (2026-07-03)
+
+
+### Bug Fixes
+
+* **llm-gate,gh-runner:** KeepAlive PathState on sops-rendered inputs ([#1425](https://github.com/dryvist/nix-darwin/issues/1425)) ([d62e85b](https://github.com/dryvist/nix-darwin/commit/d62e85bc65cee79cc7221e847905af5dbbbf0036))
+
 ## [1.54.9](https://github.com/dryvist/nix-darwin/compare/v1.54.8...v1.54.9) (2026-07-03)
 
 
