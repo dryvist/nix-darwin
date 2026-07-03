@@ -58,46 +58,110 @@ in
     defaults.loginwindow.autoLoginUser = userConfig.user.name;
   };
 
-  # ==========================================================================
-  # llm-large Serving Gate (ADR: llm-large-studio-serving)
-  # ==========================================================================
-  # Caddy terminates TLS on the LAN address and enforces the bearer token; the
-  # model server stays on 127.0.0.1. The whole Caddyfile is a sops template
-  # (secrets inline — no wrapper scripts). tlsMode "internal" is the bring-up
-  # stopgap — flip to "route53" once the ACME AWS credentials land in
-  # secrets/llm-large.yaml (phase 3 of the Studio bring-up).
-  programs.llm-gate = {
-    enable = true;
-    domain = "jevans-ms.jacobpevans.com";
-    tlsMode = "internal";
+  # Studio-only program modules, grouped under one `programs` attrset (statix
+  # W20: avoid repeated top-level keys).
+  programs = {
+    # ========================================================================
+    # llm-large Serving Gate (ADR: llm-large-studio-serving)
+    # ========================================================================
+    # Caddy terminates TLS on the LAN address and enforces the bearer token; the
+    # model server stays on 127.0.0.1. The whole Caddyfile is a sops template
+    # (secrets inline — no wrapper scripts). tlsMode "internal" is the bring-up
+    # stopgap — flip to "route53" once the ACME AWS credentials land in
+    # secrets/llm-large.yaml (phase 3 of the Studio bring-up).
+    llm-gate = {
+      enable = true;
+      domain = "jevans-ms.jacobpevans.com";
+      tlsMode = "internal";
+    };
+
+    # ========================================================================
+    # GitHub Actions Runner (ephemeral, Apple container)
+    # ========================================================================
+    # Org-level runner for dryvist in a restricted runner group; jobs arrive by
+    # runner long-poll (no inbound exposure, no webhook endpoint) and every job
+    # executes in a fresh Linux VM. Entirely env-driven vendor image — no
+    # custom scripts; the PAT rides in the sops-rendered env file. (The native
+    # services.github-runners module is unusable here: it hard-asserts
+    # nix.enable, which Determinate Nix keeps false.)
+    github-runner-container = {
+      enable = true;
+      runnerName = "jevans-ms";
+      extraLabels = [
+        "jevans-ms"
+        "apple-container"
+        "mlx"
+      ];
+      # Restricted org runner group scoped to selected repos (created in the
+      # dryvist org settings during bring-up; registration fails safe until then).
+      runnerGroup = "llm-runners";
+      user = userConfig.user.name;
+      # Generous caps: jobs are AI coding/review tasks that mostly wait on the
+      # local LLM endpoint; the VM reservation must still leave the wired-memory
+      # budget to MLX.
+      cpus = 6;
+      memory = "16g";
+      secretsFile = config.sops.templates."github-runner.env".path;
+    };
+
+    # ========================================================================
+    # Nix-Managed Scheduled Claude Jobs (headless, launchd user agents)
+    # ========================================================================
+    # Unattended local `claude -p` runs on the Studio's own clones. The token is
+    # the sops-rendered CLAUDE_CODE_OAUTH_TOKEN (placeholder until the user runs
+    # `claude setup-token` and re-encrypts secrets/claude-code.yaml).
+    claude-scheduled-jobs = {
+      enable = true;
+      user = userConfig.user.name;
+      tokenFile = config.sops.secrets.CLAUDE_CODE_OAUTH_TOKEN.path;
+      jobs.studio-hygiene = {
+        schedule = {
+          hour = 3;
+          minute = 30;
+        };
+        prompt = ''
+          You are running unattended on jevans-ms. For each git repository under
+          ~/git (each <repo>/main checkout): run git fetch --all --prune; delete
+          local branches whose upstream is gone and remove their worktrees; NEVER
+          touch a branch or worktree with uncommitted changes or unpushed commits;
+          skip anything ambiguous; print a one-line summary per repo; make no other
+          changes; open no PRs.
+        '';
+      };
+    };
   };
 
-  # ==========================================================================
-  # GitHub Actions Runner (ephemeral, Apple container)
-  # ==========================================================================
-  # Org-level runner for dryvist in a restricted runner group; jobs arrive by
-  # runner long-poll (no inbound exposure, no webhook endpoint) and every job
-  # executes in a fresh Linux VM. Entirely env-driven vendor image — no
-  # custom scripts; the PAT rides in the sops-rendered env file. (The native
-  # services.github-runners module is unusable here: it hard-asserts
-  # nix.enable, which Determinate Nix keeps false.)
-  programs.github-runner-container = {
-    enable = true;
-    runnerName = "jevans-ms";
-    extraLabels = [
-      "jevans-ms"
-      "apple-container"
-      "mlx"
+  # nix-prebuild: warm the darwin closure nightly so the morning
+  # `darwin-rebuild switch` is a near-instant cache hit instead of a cold build.
+  # Plain launchd agent (no claude, no token) — inline ProgramArguments, logs to
+  # ~/Library/Logs/nix-prebuild/, Background priority.
+  launchd.user.agents.nix-prebuild.serviceConfig = {
+    Label = "com.nix-darwin.nix-prebuild";
+    ProgramArguments = [
+      "/run/current-system/sw/bin/nix"
+      "build"
+      "github:JacobPEvans/nix-darwin#darwinConfigurations.jevans-ms.system"
+      "--no-link"
+      "--print-build-logs"
     ];
-    # Restricted org runner group scoped to selected repos (created in the
-    # dryvist org settings during bring-up; registration fails safe until then).
-    runnerGroup = "llm-runners";
-    user = userConfig.user.name;
-    # Generous caps: jobs are AI coding/review tasks that mostly wait on the
-    # local LLM endpoint; the VM reservation must still leave the wired-memory
-    # budget to MLX.
-    cpus = 6;
-    memory = "16g";
-    secretsFile = config.sops.templates."github-runner.env".path;
+    StartCalendarInterval = [
+      {
+        Hour = 4;
+        Minute = 30;
+      }
+    ];
+    ProcessType = "Background";
+    StandardOutPath = "${userConfig.user.homeDir}/Library/Logs/nix-prebuild/nix-prebuild.log";
+    StandardErrorPath = "${userConfig.user.homeDir}/Library/Logs/nix-prebuild/nix-prebuild.error.log";
+    EnvironmentVariables = {
+      HOME = userConfig.user.homeDir;
+      PATH = "/run/current-system/sw/bin:/usr/bin:/bin";
+    };
   };
+
+  # nix-prebuild writes to its own log dir; create it with user ownership so the
+  # user agent can write (claude-scheduled-jobs creates its own dir separately).
+  system.activationScripts.postActivation.text = ''
+    /usr/bin/install -d -o ${userConfig.user.name} -g staff "${userConfig.user.homeDir}/Library/Logs/nix-prebuild"
+  '';
 }

@@ -94,6 +94,15 @@ in
       HF_TOKEN = userOnly // {
         sopsFile = ../../secrets/hf.yaml;
       };
+
+      # Claude Code OAuth token for the nix-managed scheduled `claude -p` jobs
+      # — secrets/claude-code.yaml. userOnly so the login user's launchd agent
+      # can `cat` it; keychain-free for the same portability directive as above.
+      # Ships with a placeholder value until the user runs `claude setup-token`
+      # and re-encrypts the file (see the module header + PR notes).
+      CLAUDE_CODE_OAUTH_TOKEN = userOnly // {
+        sopsFile = ../../secrets/claude-code.yaml;
+      };
     };
 
     # Rendered templates: assemble individual secrets into complete config

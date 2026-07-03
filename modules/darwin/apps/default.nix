@@ -11,6 +11,7 @@ _:
   imports = [
     ./ai-volumes.nix
     ./auto-update-prevention.nix
+    ./claude-scheduled-jobs.nix
     ./cribl-edge.nix
     ./cribl-stream.nix
     ./github-runner-container.nix
