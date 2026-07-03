@@ -10,6 +10,10 @@
 # here. Untrusted / individual-maintainer actions are still SHA-pinned by hand.
 name: nix-darwin CodeQL config
 
+# security-extended is a superset of the default suite, so disable the default
+# queries and run the extended suite alone — explicit intent, no coverage loss.
+disable-default-queries: true
+
 queries:
   - uses: security-extended
 
