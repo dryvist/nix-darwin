@@ -46,6 +46,10 @@ jobs:
         with:
           client-id: ${{ vars.GH_APP_CLIENT_ID }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          # Scope the app token to what this job does (push branch + open
+          # PR) instead of inheriting the installation's full permissions.
+          permission-contents: write
+          permission-pull-requests: write
 
       - name: Checkout repository
         uses: actions/checkout@v6
