@@ -98,6 +98,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # nix-homebrew: declaratively installs and owns the /opt/homebrew prefix.
+    # nix-darwin's `homebrew` module manages the Brewfile (taps/brews/casks) but
+    # does NOT install the brew binary — so a fresh host (e.g. jevans-ms) fails
+    # `brew bundle` at activation with "command not found: brew". This module
+    # bootstraps Homebrew itself, making activation self-sufficient on any host.
+    nix-homebrew.url = "github:zhaofengli/nix-homebrew";
+
   };
 
   outputs =
@@ -110,6 +117,7 @@
       nix-home,
       determinate,
       sops-nix,
+      nix-homebrew,
       dotgithub,
       ...
     }:
@@ -172,6 +180,25 @@
 
             # sops-nix: decrypts age-encrypted secrets to /run/secrets at activation
             sops-nix.darwinModules.sops
+
+            # nix-homebrew: owns the /opt/homebrew install so the homebrew module's
+            # `brew bundle` works on a fresh host without a manual bootstrap.
+            nix-homebrew.darwinModules.nix-homebrew
+            {
+              nix-homebrew = {
+                enable = true;
+                # Apple Silicon only — no Intel (Rosetta) prefix needed.
+                enableRosetta = false;
+                # User that owns /opt/homebrew (same across every host).
+                user = userConfig.user.name;
+                # Adopt an existing manual install (macbook-m4) instead of failing.
+                autoMigrate = true;
+                # Keep taps mutable: nix-darwin's `homebrew.taps` and per-agent
+                # nix-ai taps are applied via `brew tap` at activation. Setting
+                # this false would make the taps dir immutable and break them.
+                mutableTaps = true;
+              };
+            }
 
             # mac-app-util: Creates trampolines for system-level apps (/Applications/Nix Apps/)
             mac-app-util.darwinModules.default
