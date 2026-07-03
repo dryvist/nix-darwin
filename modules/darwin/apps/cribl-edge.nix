@@ -15,10 +15,12 @@
 #
 #   standalone — GitOps: this module owns the node's configuration. Declarative
 #                config files (standalone.configFiles) are rendered from the
-#                Nix store into <dataDir>/local/cribl/ on every activation —
-#                the config-as-code layout documented by Cribl (inputs.yml,
-#                outputs.yml, pipelines/<name>/conf.yml). Any stale fleet
-#                enrollment state is retired at startup. See docs/CRIBL-GITOPS.md.
+#                Nix store into <dataDir>/local/edge/ on every activation —
+#                the Edge-mode config tree (inputs.yml, outputs.yml,
+#                pipelines/<name>/conf.yml); Edge merges it over default/edge/
+#                and ignores Stream's local/cribl/ tree for I/O config. Any
+#                stale fleet enrollment state is retired at startup. See
+#                docs/CRIBL-GITOPS.md.
 #
 # Secrets are provided via sops-nix (modules/darwin/sops.nix), which decrypts
 # age-encrypted credentials to a root-only (0400) KEY=value file at activation
@@ -57,14 +59,24 @@ let
   };
 
   # Render each declarative standalone config file into the Nix store; the
-  # activation script installs them under <dataDir>/local/cribl/.
+  # activation script installs them under <dataDir>/local/edge/.
+  #
+  # The `edge` tree is load-bearing: Cribl Edge merges default/edge/ with
+  # local/edge/ for its I/O configuration (inputs, outputs, pipelines). This
+  # module originally installed into local/cribl/ — Stream's tree — and Edge
+  # silently ignored it: the node ran only the default/edge/inputs.yml
+  # sources and never shipped a single declared event. On an Edge node,
+  # local/cribl/ holds only runtime system files (auth, cribl.inited). The
+  # install below also removes any copy of each declared file from that
+  # legacy location so stale I/O config can't masquerade as live.
   standaloneConfigInstall = lib.concatStringsSep "\n" (
     lib.mapAttrsToList (relPath: text: ''
       /usr/bin/install -d -o ${cfg.serviceUser} -g ${cfg.serviceGroup} \
-        "$(/usr/bin/dirname "${cfg.dataDir}/local/cribl/${relPath}")"
+        "$(/usr/bin/dirname "${cfg.dataDir}/local/edge/${relPath}")"
       /usr/bin/install -m 0644 -o ${cfg.serviceUser} -g ${cfg.serviceGroup} \
         ${pkgs.writeText (builtins.replaceStrings [ "/" ] [ "-" ] relPath) text} \
-        "${cfg.dataDir}/local/cribl/${relPath}"
+        "${cfg.dataDir}/local/edge/${relPath}"
+      /bin/rm -f "${cfg.dataDir}/local/cribl/${relPath}"
     '') cfg.standalone.configFiles
   );
 in
@@ -115,9 +127,10 @@ in
         default = { };
         description = ''
           Declarative Cribl config files for standalone mode, keyed by path
-          relative to <dataDir>/local/cribl/ (the config-as-code location
-          documented by Cribl). Installed on every activation. Cribl reloads
-          local config changes without a daemon restart.
+          relative to <dataDir>/local/edge/ (the Edge-mode config tree that
+          Cribl Edge merges over default/edge/ — NOT Stream's local/cribl/,
+          which Edge ignores for I/O config). Installed on every activation.
+          Cribl reloads local config changes without a daemon restart.
         '';
         example = lib.literalExpression ''
           {

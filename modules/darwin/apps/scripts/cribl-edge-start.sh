@@ -25,7 +25,7 @@
 # Responsibilities (standalone mode):
 #   1. Retire any leftover fleet-enrollment state (moved aside, never
 #      deleted) so the node runs purely from its local config — which the
-#      nix-darwin activation renders into local/cribl/ (GitOps).
+#      nix-darwin activation renders into local/edge/ (GitOps).
 #   2. exec `cribl server`.
 
 set -euo pipefail
@@ -54,7 +54,7 @@ if [ "$CRIBL_MODE" = "standalone" ]; then
       echo "$(ts) [INFO] Standalone mode: retired managed-state file $_f"
     fi
   done
-  echo "$(ts) [INFO] Starting Cribl Edge standalone (config: local/cribl, GitOps-managed)."
+  echo "$(ts) [INFO] Starting Cribl Edge standalone (config: local/edge, GitOps-managed)."
   exec "$CRIBL_HOME/bin/cribl" server
 fi
 
