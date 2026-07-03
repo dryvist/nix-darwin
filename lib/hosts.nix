@@ -90,8 +90,17 @@
     mlx = {
       cacheMemoryMb = 12288;
       prefillBatchSize = 4096;
-      # Keep both backends resident: no swap eviction, both preloaded at boot.
-      proxy.groupSwap = false;
+      # Keep both backends resident: no swap eviction, both preloaded at boot,
+      # and no idle eviction anywhere — this host's entire job is holding
+      # these weights, so the workstation rationale for aggressive TTLs
+      # (idle-weight dwell starving the desktop working set) does not apply.
+      # A TTL here would mean the first request after any quiet period pays
+      # the ~60-120 s 120B cold start.
+      proxy = {
+        groupSwap = false;
+        idleTtl = 0;
+      };
+      autoUnloadIdleSeconds = 0;
       preload = [
         "default"
         "coding"
