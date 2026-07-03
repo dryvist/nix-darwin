@@ -12,6 +12,7 @@ _:
     ./ai-volumes.nix
     ./apple-container-runtime.nix
     ./auto-update-prevention.nix
+    ./claude-scheduled-jobs.nix
     ./cribl-edge.nix
     ./cribl-stream.nix
     ./github-runner-container.nix
