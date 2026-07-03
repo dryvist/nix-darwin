@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.54.9](https://github.com/dryvist/nix-darwin/compare/v1.54.8...v1.54.9) (2026-07-03)
+
+
+### Bug Fixes
+
+* **mac-studio:** rotate real runner PAT into github-runner secret ([#1423](https://github.com/dryvist/nix-darwin/issues/1423)) ([154eaf9](https://github.com/dryvist/nix-darwin/commit/154eaf95c184ef73a126ef3ba7e0280401ba0910))
+
 ## [1.54.8](https://github.com/dryvist/nix-darwin/compare/v1.54.7...v1.54.8) (2026-07-03)
 
 
