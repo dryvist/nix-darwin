@@ -211,9 +211,7 @@ in
   # value still wins. Inlined here rather than a dedicated module: it only
   # consumes `hostConfig` (already in scope) and is a handful of settings.
   # A `workstation` needs nothing — the module defaults already match the laptop.
-  # `class or "workstation"` tolerates a host that omits it (defaults to the safe
-  # laptop profile) rather than throwing on the missing attr.
-  system = lib.mkIf ((hostConfig.class or "workstation") == "server") {
+  system = lib.mkIf hostConfig.isServer {
     energy.wakeOnMagicPacket = lib.mkDefault true; # Wake-on-LAN for a headless box
     networkTuning.enable = lib.mkDefault true; # socket buffers for LAN serving
     appleSiliconTunables.energyMode = lib.mkDefault "unmanaged"; # no High Power Mode on a desktop
