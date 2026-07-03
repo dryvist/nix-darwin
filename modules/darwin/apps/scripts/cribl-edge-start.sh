@@ -25,7 +25,9 @@
 # Responsibilities (standalone mode):
 #   1. Retire any leftover fleet-enrollment state (moved aside, never
 #      deleted) so the node runs purely from its local config — which the
-#      nix-darwin activation renders into local/edge/ (GitOps).
+#      nix-darwin activation renders into local/edge/ (GitOps) BEFORE the
+#      launchd phase (extraActivation), because Cribl reads these files only
+#      at startup and does not hot-reload changes written outside its API.
 #   2. exec `cribl server`.
 
 set -euo pipefail

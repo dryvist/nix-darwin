@@ -184,7 +184,15 @@ in
     # Always ensure dataDir + logs subdir exist with correct ownership so the
     # launchd job can write, whether or not any packs are declared. In
     # standalone mode, also install the declarative config files.
-    system.activationScripts.postActivation.text = ''
+    #
+    # extraActivation, NOT postActivation: nix-darwin's activation order is
+    # preActivation → extraActivation → etc → defaults → launchd →
+    # postActivation. Cribl does not hot-reload config files written from
+    # outside its own API, so config must be on disk BEFORE the launchd phase
+    # (re)starts the daemon. With postActivation, every plist-triggered
+    # restart came up on the previous generation's config, and a config-only
+    # change never reached the running daemon at all until the next reboot.
+    system.activationScripts.extraActivation.text = ''
       ${./scripts/cribl-edge-activate.sh} "${cfg.dataDir}" "${cfg.serviceUser}:${cfg.serviceGroup}"
       ${lib.optionalString (cfg.mode == "standalone") standaloneConfigInstall}
       ${lib.optionalString (cfg.packs != { }) (
