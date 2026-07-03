@@ -83,6 +83,37 @@ jobs:
   ...
 ```
 
+## Unpinned Action Tags (`actions/unpinned-tag`)
+
+CodeQL's default setup flags every third-party `uses:` that references a version tag
+instead of a commit SHA. **Do not blanket-SHA-pin in response.** This repo's pinning
+policy is the canonical one in [`.github/zizmor.yml`](../../.github/zizmor.yml)
+(`unpinned-uses: disable`): *trusted actions use version tags; hash pinning is reserved
+for untrusted or lesser-known actions only.* Classify the flagged action first.
+
+### Trusted — keep on the major version tag (`@vN`)
+
+These `actions/unpinned-tag` alerts are **approved** and are excluded globally via the
+CodeQL advanced-setup config (`.github/codeql/codeql-config.yml`). Never SHA-pin them:
+
+- GitHub first-party: `actions/*`, `github/*`
+- `DeterminateSystems/*` (e.g. `determinate-nix-action`)
+- `anthropics/*` (e.g. `claude-code-action`)
+- `nix-community/*` (e.g. `cache-nix-action`)
+- `dorny/*` (e.g. `paths-filter`)
+
+### Untrusted / individual maintainer — SHA-pin
+
+Pin to a full commit SHA with the tag retained as a Renovate-managed `# vN` comment
+(Renovate keeps the SHA current from the comment):
+
+- `re-actors/alls-green`
+- `peter-evans/create-pull-request`
+- any other individual account or lesser-known action
+
+This mirrors the cross-repo dependency trust-tier rule in
+`dryvist/ai-assistant-instructions` — align with it rather than re-deriving a convention.
+
 ## Other Alerts
 
 Refer to SECURITY.md for policy on alerts not covered here.
