@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.57.0](https://github.com/dryvist/nix-darwin/compare/v1.56.0...v1.57.0) (2026-07-03)
+
+
+### Features
+
+* add review-thread-resolver caller for instant bot-thread resolution ([#1448](https://github.com/dryvist/nix-darwin/issues/1448)) ([c326c3f](https://github.com/dryvist/nix-darwin/commit/c326c3f1f95df9660dddbefaab690080a8dc81dc))
+
+## [1.56.0](https://github.com/dryvist/nix-darwin/compare/v1.55.0...v1.56.0) (2026-07-03)
+
+
+### Features
+
+* **packages:** add neat menu-bar app via homebrew cask ([#1444](https://github.com/dryvist/nix-darwin/issues/1444)) ([1f1fb9c](https://github.com/dryvist/nix-darwin/commit/1f1fb9c600e07677c7606f0a5fe051372a6707a5))
+
+## [1.55.0](https://github.com/dryvist/nix-darwin/compare/v1.54.10...v1.55.0) (2026-07-03)
+
+
+### Features
+
+* add AI PR care caller (dep review + release highlights) ([#1433](https://github.com/dryvist/nix-darwin/issues/1433)) ([2454bb2](https://github.com/dryvist/nix-darwin/commit/2454bb2f669449492bbb1a7e7f7b095c51c7e61e))
+
 ## [1.54.10](https://github.com/dryvist/nix-darwin/compare/v1.54.9...v1.54.10) (2026-07-03)
 
 

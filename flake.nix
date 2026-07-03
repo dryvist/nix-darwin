@@ -140,6 +140,17 @@
       mkHost =
         label: host:
         assert _stateVersionCheck;
+        let
+          # Normalize the host class ONCE: consumers read hostConfig.class /
+          # hostConfig.isServer instead of each re-deriving the
+          # `class or "workstation"` default (previously copy-pasted across
+          # every class-gated module). The fallback keeps a host that omits
+          # `class` on the safe laptop profile rather than throwing.
+          hostConfig = host // rec {
+            class = host.class or "workstation";
+            isServer = class == "server";
+          };
+        in
         darwin.lib.darwinSystem {
           # nix-darwin is Darwin-only and every host is Apple Silicon, so the
           # registry omits `system`; default it here (overridable for an Intel host).
@@ -151,8 +162,7 @@
           # see nix-ai/docs/architecture/per-agent-flakes.md.
           # `hostConfig` threads the per-host attrset to every darwin module.
           specialArgs = {
-            inherit nix-ai;
-            hostConfig = host;
+            inherit nix-ai hostConfig;
           };
           modules = [
             ./hosts/${label}/default.nix
@@ -176,8 +186,7 @@
                 # nix-home modules accept userConfig with sensible defaults.
                 # `hostConfig` threads the per-host attrset to home-manager modules.
                 extraSpecialArgs = {
-                  inherit userConfig dotgithub;
-                  hostConfig = host;
+                  inherit userConfig dotgithub hostConfig;
                 };
                 users.${userConfig.user.name} = import ./hosts/${label}/home.nix;
 

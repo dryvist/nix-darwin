@@ -8,11 +8,13 @@
 
 ## What Is This?
 
-A flakes-only nix-darwin configuration for M4 Max MacBook Pro. Manages macOS
-system-level settings: system packages, Dock, Finder, keyboard, security,
-Homebrew, and LaunchDaemons -- all declaratively. User-level configuration
-(dotfiles, dev tools, LaunchAgents) is layered on top via external
-home-manager modules consumed as flake inputs.
+A flakes-only, multi-host nix-darwin configuration: an M4 Max MacBook Pro
+workstation and an always-on Mac Studio LLM server, both defined in a single
+host registry (`lib/hosts.nix`). Manages macOS system-level settings: system
+packages, Dock, Finder, keyboard, security, Homebrew, and LaunchDaemons --
+all declaratively. User-level configuration (dotfiles, dev tools,
+LaunchAgents) is layered on top via external home-manager modules consumed
+as flake inputs.
 
 ## Prerequisites
 
@@ -83,7 +85,9 @@ See **[MANIFEST.md](MANIFEST.md)** for the complete package inventory.
 .
 ├── flake.nix                  # Main entry point
 ├── hosts/                     # Host-specific configurations
-│   └── macbook-m4/            # Active M4 Max MacBook Pro
+│   ├── common/                # Config shared by every host
+│   ├── macbook-m4/            # M4 Max MacBook Pro (workstation)
+│   └── mac-studio/            # M4 Max Mac Studio (LLM server)
 ├── modules/                   # Reusable configuration modules
 │   └── darwin/                # macOS system settings
 ├── overlays/                  # Nixpkgs overlays
