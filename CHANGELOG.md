@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.54.5](https://github.com/dryvist/nix-darwin/compare/v1.54.4...v1.54.5) (2026-07-03)
+
+
+### Bug Fixes
+
+* **cribl-edge:** install standalone config into the edge tree, not cribl ([#1415](https://github.com/dryvist/nix-darwin/issues/1415)) ([dab4879](https://github.com/dryvist/nix-darwin/commit/dab48790a68fea68e49f5af20d74c3b0c1b636bc))
+
 ## [1.54.4](https://github.com/dryvist/nix-darwin/compare/v1.54.3...v1.54.4) (2026-07-02)
 
 
