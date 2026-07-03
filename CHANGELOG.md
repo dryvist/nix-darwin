@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.61.0](https://github.com/dryvist/nix-darwin/compare/v1.60.0...v1.61.0) (2026-07-03)
+
+
+### Features
+
+* **homebrew:** install Homebrew declaratively via nix-homebrew ([#1474](https://github.com/dryvist/nix-darwin/issues/1474)) ([104635d](https://github.com/dryvist/nix-darwin/commit/104635d67c8917071c0e99644357116f3696dd51))
+
 ## [1.60.0](https://github.com/dryvist/nix-darwin/compare/v1.59.0...v1.60.0) (2026-07-03)
 
 
