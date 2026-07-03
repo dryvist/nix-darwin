@@ -135,6 +135,13 @@ let
       name = "voiceink";
       greedy = true;
     } # Voice-to-text app (local whisper)
+    # Neat: GitHub + Linear notifications in the menu bar. Not in nixpkgs
+    # (proprietary macOS-only app from neat.run); greedy so its built-in
+    # auto-updater does not cause brew upgrade to skip it.
+    {
+      name = "neat";
+      greedy = true;
+    } # GitHub/Linear menu-bar notifications
 
     # --- Anthropic ---
     {
