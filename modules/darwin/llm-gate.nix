@@ -157,7 +157,20 @@ in
           "caddyfile"
         ];
         RunAtLoad = true;
-        KeepAlive = true;
+        # PathState, not `true`: the Caddyfile is a sops-rendered file under
+        # /run/secrets (= /private/var/run), which macOS clears at boot and
+        # which only exists after the activation/boot render. A plain
+        # KeepAlive races that render — caddy spawns first, exits, and
+        # launchd backs off indefinitely (observed: exit 78, "spawn
+        # scheduled" forever; one boot won the race, the next lost it).
+        # PathState makes launchd hold the daemon until the config exists
+        # and respawn it whenever the file reappears — which also
+        # self-heals after any mid-uptime /var/run wipe.
+        KeepAlive = {
+          PathState = {
+            "${config.sops.templates."llm-gate.Caddyfile".path}" = true;
+          };
+        };
         ThrottleInterval = 15;
         UserName = "root";
         GroupName = "wheel";

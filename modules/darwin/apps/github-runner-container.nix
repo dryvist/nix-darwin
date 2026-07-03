@@ -167,11 +167,20 @@ in
 
     # Foreground `container run` supervised by launchd KeepAlive: the VM
     # exits after one job (EPHEMERAL) and launchd starts the next one.
+    # PathState, not `true`: the --env-file lives under /run/secrets
+    # (= /private/var/run), cleared at boot and only present after the
+    # activation/boot render — a plain KeepAlive races it and launchd backs
+    # off indefinitely on loss (same failure class as llm-gate). PathState
+    # holds the agent until the file exists and self-heals if it reappears.
     launchd.user.agents.gh-runner.serviceConfig = {
       Label = "com.nix-darwin.gh-runner";
       ProgramArguments = runArgs;
       RunAtLoad = true;
-      KeepAlive = true;
+      KeepAlive = {
+        PathState = {
+          "${cfg.secretsFile}" = true;
+        };
+      };
       ThrottleInterval = 30;
       StandardOutPath = "${cfg.dataDir}/logs/gh-runner.log";
       StandardErrorPath = "${cfg.dataDir}/logs/gh-runner.err.log";
