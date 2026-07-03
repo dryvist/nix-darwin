@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.59.0](https://github.com/dryvist/nix-darwin/compare/v1.58.0...v1.59.0) (2026-07-03)
+
+
+### Features
+
+* **llm-gate:** API-only gate, extraHostnames cert SAN, route53 on studio ([#1467](https://github.com/dryvist/nix-darwin/issues/1467)) ([1c2a80d](https://github.com/dryvist/nix-darwin/commit/1c2a80d09d8c131b2484cb80c8753fd636c39d16))
+
 ## [1.58.0](https://github.com/dryvist/nix-darwin/compare/v1.57.0...v1.58.0) (2026-07-03)
 
 
