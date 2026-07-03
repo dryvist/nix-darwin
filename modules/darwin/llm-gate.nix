@@ -8,12 +8,13 @@
 # login, so no bearer there).
 #
 # Fully declarative — no wrapper scripts: the ENTIRE Caddyfile is a sops-nix
-# template rendered at activation with the secrets inline (bearer token, LAN
-# bind IP, ACME credentials), root-only 0400 under /run/secrets/rendered/.
-# The launchd daemon execs Caddy directly against that rendered path, so it
-# comes up on boot and survives reboots with zero interactive prompts (hard
-# requirement for the headless server). The bind IP rides inside the
-# encrypted secrets file so no address octets land in this public repo.
+# template rendered at activation with the secrets inline (bearer token and,
+# in route53 mode, ACME credentials), root-only 0400 under
+# /run/secrets/rendered/. The launchd daemon execs Caddy directly against
+# that rendered path, so it comes up on boot and survives reboots with zero
+# interactive prompts (hard requirement for the headless server). Caddy binds
+# all interfaces — no bind address exists anywhere, so no address octets land
+# in this public repo (see the config comment below).
 #
 # TLS modes:
 #   route53  — real Let's Encrypt cert via DNS-01 against the public zone,

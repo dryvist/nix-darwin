@@ -1,9 +1,10 @@
 # Manifest
 
-> **Note**: This repo is part of a trio. See also
-> [nix-ai](https://github.com/JacobPEvans/nix-ai) and
-> [nix-home](https://github.com/JacobPEvans/nix-home)
-> for AI tools and dev environment documentation.
+> **Note**: This repo has companion repos. See
+> [nix-ai](https://github.com/JacobPEvans/nix-ai),
+> [nix-home](https://github.com/JacobPEvans/nix-home), and
+> [nix-devenv](https://github.com/JacobPEvans/nix-devenv)
+> for AI tools, dev environment, and dev shell documentation.
 
 Complete inventory of everything installed and managed by this nix-darwin configuration.
 Each entry lists the source file where it is declared.
