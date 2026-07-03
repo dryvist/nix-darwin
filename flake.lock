@@ -650,11 +650,11 @@
     "jacobpevans-cc-plugins_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1779660353,
-        "narHash": "sha256-Wst459BiRSLXaE2PtSpQk1wYMev0uhDlOTmW5ks7ZEo=",
+        "lastModified": 1783096239,
+        "narHash": "sha256-9fK/q7nQRyRxu3GOf+JzhrdwNZ00lcs7YnBUIIZafFE=",
         "owner": "JacobPEvans",
         "repo": "claude-code-plugins",
-        "rev": "36a6a281d5d4d1120c857e212eca6d061ca1c6bc",
+        "rev": "281ab4d7f780e39f53ca2a77b7858f593e6a941e",
         "type": "github"
       },
       "original": {
@@ -798,11 +798,11 @@
         "ponytail": "ponytail"
       },
       "locked": {
-        "lastModified": 1783102129,
-        "narHash": "sha256-mLsLpM/iPn1VsEYVmLc0dX7w8ioUs06A+m2sRaVNbVw=",
+        "lastModified": 1783102776,
+        "narHash": "sha256-YxQgrPNRFwaheAE369x1Bnts9h8lBWYXUAwCn4RzHIA=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "7812a57df5b85a66a16a637e16c2a633bd915103",
+        "rev": "0e0ea3f355fe4fad43fa97e5ce417ebffccfb100",
         "type": "github"
       },
       "original": {
@@ -856,11 +856,11 @@
         "wakatime": "wakatime"
       },
       "locked": {
-        "lastModified": 1783047488,
-        "narHash": "sha256-Sj3ad3iiT3M7CrIU1pK5iW4SxFfK0qAUPhUc4MhBLu0=",
+        "lastModified": 1783102056,
+        "narHash": "sha256-1/uX1H4IJPCuZC6ZzgneQVNIoGXbMxNiSRt8pT8n4e0=",
         "owner": "dryvist",
         "repo": "nix-claude-code",
-        "rev": "103a191a8937a9476786cd9ec69dcec0f2d6b746",
+        "rev": "27761373c70d735a8c7397cbf1045ef212c1df51",
         "type": "github"
       },
       "original": {
