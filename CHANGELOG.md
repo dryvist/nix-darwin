@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.54.6](https://github.com/dryvist/nix-darwin/compare/v1.54.5...v1.54.6) (2026-07-03)
+
+
+### Bug Fixes
+
+* **mac-studio:** disable idle eviction for resident models ([#1417](https://github.com/dryvist/nix-darwin/issues/1417)) ([8114598](https://github.com/dryvist/nix-darwin/commit/8114598c26b00812c092d016797ce4c123f29869))
+
 ## [1.54.5](https://github.com/dryvist/nix-darwin/compare/v1.54.4...v1.54.5) (2026-07-03)
 
 
