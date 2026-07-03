@@ -97,7 +97,8 @@ default setup on the **`default` query suite** across all public repos, so this 
 does not run and these alerts should not appear. That standard is org governance in
 [`dryvist/tofu-github`](https://github.com/dryvist/tofu-github). If an
 `actions/unpinned-tag` alert *does* surface, the repo's default setup has drifted onto
-the `extended` suite — fix the suite, do not SHA-pin trusted actions. Classify first.
+the `extended` suite — fix the suite, do not SHA-pin trusted actions. Classify the
+flagged action first.
 
 ### Trusted — keep on the major version tag (`@vN`)
 
