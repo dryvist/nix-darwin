@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.58.0](https://github.com/dryvist/nix-darwin/compare/v1.57.0...v1.58.0) (2026-07-03)
+
+
+### Features
+
+* **studio:** add nix-managed scheduled claude jobs ([8ba4177](https://github.com/dryvist/nix-darwin/commit/8ba4177138ab4a1436b8bc6f32f694b9eb3f8aa8))
+
 ## [1.57.0](https://github.com/dryvist/nix-darwin/compare/v1.56.0...v1.57.0) (2026-07-03)
 
 
