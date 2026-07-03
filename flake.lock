@@ -337,11 +337,11 @@
     "dotgithub": {
       "flake": false,
       "locked": {
-        "lastModified": 1783096194,
-        "narHash": "sha256-AISjg6wkmu4OztsNClT/M6IIaLYdFMsSE7MpZhkQS9U=",
+        "lastModified": 1783101905,
+        "narHash": "sha256-3BBejFVFoyPxxaYEqC8N3kgsx583cjIhJKBaEj9awXQ=",
         "owner": "dryvist",
         "repo": ".github",
-        "rev": "a2b43d5dc224679ab3a77c455e4cb8162149a062",
+        "rev": "eb10c4a96ab17d01e5491512f731d93ee8f6db7a",
         "type": "github"
       },
       "original": {
@@ -634,11 +634,11 @@
     "jacobpevans-cc-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1783096239,
-        "narHash": "sha256-9fK/q7nQRyRxu3GOf+JzhrdwNZ00lcs7YnBUIIZafFE=",
+        "lastModified": 1783101985,
+        "narHash": "sha256-uxV9Nq/qOF4i93AnXf2ZuyzMaNs1a6fSQtEvuUdyS3Y=",
         "owner": "dryvist",
         "repo": "claude-code-plugins",
-        "rev": "281ab4d7f780e39f53ca2a77b7858f593e6a941e",
+        "rev": "8e871a1ea57b3525196849dc5d9a2a473bb2a79b",
         "type": "github"
       },
       "original": {
@@ -798,11 +798,11 @@
         "ponytail": "ponytail"
       },
       "locked": {
-        "lastModified": 1783102776,
+        "lastModified": 1783102831,
         "narHash": "sha256-YxQgrPNRFwaheAE369x1Bnts9h8lBWYXUAwCn4RzHIA=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "0e0ea3f355fe4fad43fa97e5ce417ebffccfb100",
+        "rev": "20d162f8b0751b87a992028b741dae585fa99096",
         "type": "github"
       },
       "original": {
