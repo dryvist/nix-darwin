@@ -11,20 +11,19 @@
 #   no darwin-rebuild can reconstruct. The cloud routines repo is the home for
 #   cloud-executed schedules; these run locally on the Studio's own clones.
 #
-# - Token file, not the macOS keychain and not sops: the server is
-#   deliberately keychain-free for real secrets (a keychain ACL is bound to the
-#   requesting binary's path, and every nix-store rebuild churns that path,
-#   silently breaking the ACL under an unattended agent). The OAuth token is
-#   also too sensitive for this repo in ANY form, sops-encrypted included — its
-#   source of truth is Doppler / GitHub Actions secrets, and the host points
-#   tokenFile at a locally provisioned 0600 file outside the repo. The token is
-#   read at exec time with `cat` and exported only into the child process env —
-#   it never lands in the plist or in `ps` output (which would show it if
-#   passed as an argument).
+# - Auth is the claude CLI's OWN login session — no token file, no sops, no
+#   env injection. The Claude Code OAuth token must never live on disk (a file
+#   readable by the launchd agent is readable by every AI process running as
+#   that user); its only stores are Doppler / GitHub Actions secrets. Instead,
+#   run `claude /login` once interactively on the host: the CLI keeps its
+#   session in its own macOS Keychain entry (encrypted at rest, never a plain
+#   file) and refreshes it itself. Known caveat: a nix rebuild can churn the
+#   binary path behind the Keychain ACL, breaking headless auth until the next
+#   interactive login — jobs fail safe with an auth error in their log.
 #
-# - The inline `zsh -c` string is nix-declared here, NOT a committed .sh file.
-#   The whole command is a ProgramArguments string built from options, so it
-#   stays declarative and reviewable in this module.
+# - No shell wrapper: launchd passes argv directly to the claude binary, so
+#   nothing needs shell-escaping and no secret ever transits an env var,
+#   the plist, or `ps` output.
 #
 # Logs land under ~/Library/Logs/claude-jobs/<name>.{log,error.log} and are
 # rotated by the system newsyslog run via /etc/newsyslog.d/claude-jobs.conf.
@@ -62,15 +61,16 @@ let
       Weekday = schedule.weekday;
     };
 
-  # Read the token at exec time and hand it to claude only via the child env —
-  # never as an argument (would leak in `ps`) and never in the plist. The prompt
-  # and any extra args are shell-escaped so repo content can't break out of the
-  # command string.
-  jobProgram = job: [
-    "/bin/zsh"
-    "-c"
-    ''CLAUDE_CODE_OAUTH_TOKEN="$(/bin/cat ${cfg.tokenFile})" exec ${cfg.claudeBin} -p ${lib.escapeShellArg job.prompt} ${lib.escapeShellArgs job.extraArgs}''
-  ];
+  # Direct argv — no shell, no escaping, no credential material anywhere in
+  # the command. claude authenticates from its own login-session credentials.
+  jobProgram =
+    job:
+    [
+      cfg.claudeBin
+      "-p"
+      job.prompt
+    ]
+    ++ job.extraArgs;
 
   mkAgent = name: job: {
     name = "claude-job-${name}";
@@ -125,7 +125,7 @@ let
       extraArgs = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         default = [ ];
-        description = "Extra arguments appended after `-p <prompt>` (shell-escaped).";
+        description = "Extra arguments appended after `-p <prompt>` (each a separate argv entry).";
       };
     };
   };
@@ -137,18 +137,6 @@ in
     user = lib.mkOption {
       type = lib.types.str;
       description = "macOS login user that owns the agents and log directory.";
-    };
-
-    tokenFile = lib.mkOption {
-      type = lib.types.str;
-      description = ''
-        Path to a file whose sole contents are the Claude Code OAuth token,
-        provisioned on the host out-of-band (e.g. from Doppler), mode 0600.
-        Never commit the token to this repo in any form. The token is read at
-        exec time and exported into the job's environment only; jobs fail safe
-        with an auth error in their log until the file exists.
-      '';
-      example = "/Users/example/.config/claude/oauth-token";
     };
 
     claudeBin = lib.mkOption {

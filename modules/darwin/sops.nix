@@ -95,10 +95,11 @@ in
         sopsFile = ../../secrets/hf.yaml;
       };
 
-      # NOTE: the Claude Code OAuth token is deliberately NOT managed here.
-      # It is too sensitive for this repo in any form (even age-encrypted);
-      # its source of truth is Doppler / GitHub Actions secrets, and consumers
-      # (programs.claude-scheduled-jobs) read a host-provisioned file instead.
+      # NOTE: the Claude Code OAuth token is deliberately NOT managed here —
+      # or anywhere on disk. It is too sensitive for this repo in any form
+      # (even age-encrypted); its only stores are Doppler / GitHub Actions
+      # secrets, and local consumers (programs.claude-scheduled-jobs) rely on
+      # the claude CLI's own login-session credentials instead.
     };
 
     # Rendered templates: assemble individual secrets into complete config

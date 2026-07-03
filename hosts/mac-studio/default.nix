@@ -107,18 +107,16 @@ in
     # ========================================================================
     # Nix-Managed Scheduled Claude Jobs (headless, launchd user agents)
     # ========================================================================
-    # Unattended local `claude -p` runs on the Studio's own clones. The OAuth
-    # token is deliberately NOT in this repo (not even sops-encrypted — policy:
-    # too sensitive for git in any form). Its source of truth is Doppler
-    # (gh-workflow-tokens/dryvist CLAUDE_CODE_OAUTH_TOKEN); provision the file
-    # below on the host once, 0600:
-    #   doppler secrets get CLAUDE_CODE_OAUTH_TOKEN \
-    #     -p gh-workflow-tokens -c dryvist --plain > ~/.config/claude/oauth-token
-    # Jobs fail safe (auth error in the job log) until the file exists.
+    # Unattended local `claude -p` runs on the Studio's own clones. No token
+    # anywhere: the OAuth token must never live on disk (a file the agent can
+    # read is a file every AI process can read). Auth is the claude CLI's own
+    # login session — run `claude /login` once interactively on this host; the
+    # CLI keeps its session in its own macOS Keychain entry. Jobs fail safe
+    # (auth error in the job log) until that login exists, or if a rebuild
+    # ever breaks the Keychain ACL (see the module header).
     claude-scheduled-jobs = {
       enable = true;
       user = userConfig.user.name;
-      tokenFile = "${userConfig.user.homeDir}/.config/claude/oauth-token";
       jobs.studio-hygiene = {
         schedule = {
           hour = 3;
