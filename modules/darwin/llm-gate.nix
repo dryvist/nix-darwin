@@ -62,9 +62,11 @@ let
 
   # The API site answers for the host FQDN plus any service-alias hostnames.
   # Caddy takes a space-separated address list for a single site and obtains
-  # one certificate covering every listed hostname.
+  # one certificate covering every listed hostname. lib.unique guards against a
+  # duplicate site address (and duplicate cert request) if a consumer lists
+  # `domain` again in `extraHostnames`.
   apiSiteAddresses = lib.concatMapStringsSep " " (host: "https://${host}:${toString cfg.apiPort}") (
-    [ cfg.domain ] ++ cfg.extraHostnames
+    lib.unique ([ cfg.domain ] ++ cfg.extraHostnames)
   );
 in
 {
