@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.54.8](https://github.com/dryvist/nix-darwin/compare/v1.54.7...v1.54.8) (2026-07-03)
+
+
+### Bug Fixes
+
+* **mac-studio:** raise llama-swap concurrency limit for the serving host ([#1421](https://github.com/dryvist/nix-darwin/issues/1421)) ([6eb1ae6](https://github.com/dryvist/nix-darwin/commit/6eb1ae6988e6ad458cd1ba915831ae272af2cf71))
+
 ## [1.54.7](https://github.com/dryvist/nix-darwin/compare/v1.54.6...v1.54.7) (2026-07-03)
 
 
