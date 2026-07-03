@@ -99,6 +99,13 @@
       proxy = {
         groupSwap = false;
         idleTtl = 0;
+        # llama-swap hard-429s anything beyond concurrencyLimit (default 2),
+        # while vllm-mlx itself batches 4 sequences (max-num-seqs) and queues
+        # the rest gracefully. Measured on-host: a 4-way benchmark burst got
+        # 98/100 requests rejected at the proxy before the workers saw them.
+        # 8 = one full batch running + one queued at the worker; agents and
+        # the web UI burst-tolerate instead of hard-failing.
+        concurrencyLimit = 8;
       };
       autoUnloadIdleSeconds = 0;
       preload = [
