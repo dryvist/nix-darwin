@@ -85,16 +85,23 @@ jobs:
 
 ## Unpinned Action Tags (`actions/unpinned-tag`)
 
-CodeQL's default setup flags every third-party `uses:` that references a version tag
-instead of a commit SHA. **Do not blanket-SHA-pin in response.** This repo's pinning
-policy is the canonical one in [`.github/zizmor.yml`](../../.github/zizmor.yml)
+The CodeQL `actions/unpinned-tag` query flags any third-party `uses:` on a version
+tag instead of a commit SHA. **Do not blanket-SHA-pin in response** — that contradicts
+this repo's pinning policy, canonical in [`.github/zizmor.yml`](../../.github/zizmor.yml)
 (`unpinned-uses: disable`): *trusted actions use version tags; hash pinning is reserved
-for untrusted or lesser-known actions only.* Classify the flagged action first.
+for untrusted or lesser-known actions only.*
+
+`actions/unpinned-tag` is an **extended-only** query (it lives in
+`actions-security-extended.qls`, not the base suite). The org standard is CodeQL
+default setup on the **`default` query suite** across all public repos, so this query
+does not run and these alerts should not appear. That standard is org governance in
+[`dryvist/tofu-github`](https://github.com/dryvist/tofu-github). If an
+`actions/unpinned-tag` alert *does* surface, the repo's default setup has drifted onto
+the `extended` suite — fix the suite, do not SHA-pin trusted actions. Classify first.
 
 ### Trusted — keep on the major version tag (`@vN`)
 
-These `actions/unpinned-tag` alerts are **approved** and are excluded globally via the
-CodeQL advanced-setup config (`.github/codeql/codeql-config.yml`). Never SHA-pin them:
+Never SHA-pin these; they belong on major tags:
 
 - GitHub first-party: `actions/*`, `github/*`
 - `DeterminateSystems/*` (e.g. `determinate-nix-action`)
