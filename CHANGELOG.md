@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.56.0](https://github.com/dryvist/nix-darwin/compare/v1.55.0...v1.56.0) (2026-07-03)
+
+
+### Features
+
+* **packages:** add neat menu-bar app via homebrew cask ([#1444](https://github.com/dryvist/nix-darwin/issues/1444)) ([1f1fb9c](https://github.com/dryvist/nix-darwin/commit/1f1fb9c600e07677c7606f0a5fe051372a6707a5))
+
 ## [1.55.0](https://github.com/dryvist/nix-darwin/compare/v1.54.10...v1.55.0) (2026-07-03)
 
 
