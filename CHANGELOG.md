@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.54.7](https://github.com/dryvist/nix-darwin/compare/v1.54.6...v1.54.7) (2026-07-03)
+
+
+### Bug Fixes
+
+* **cribl-edge:** valid file-input schema, tcpjson transport, config-before-launchd ordering ([#1419](https://github.com/dryvist/nix-darwin/issues/1419)) ([7bf0743](https://github.com/dryvist/nix-darwin/commit/7bf0743c12d68535369e34e2ae147b8aca5ea59a))
+
 ## [1.54.6](https://github.com/dryvist/nix-darwin/compare/v1.54.5...v1.54.6) (2026-07-03)
 
 
