@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.57.0](https://github.com/dryvist/nix-darwin/compare/v1.56.0...v1.57.0) (2026-07-03)
+
+
+### Features
+
+* add review-thread-resolver caller for instant bot-thread resolution ([#1448](https://github.com/dryvist/nix-darwin/issues/1448)) ([c326c3f](https://github.com/dryvist/nix-darwin/commit/c326c3f1f95df9660dddbefaab690080a8dc81dc))
+
 ## [1.56.0](https://github.com/dryvist/nix-darwin/compare/v1.55.0...v1.56.0) (2026-07-03)
 
 
