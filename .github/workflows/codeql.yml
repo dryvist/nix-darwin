@@ -1,0 +1,61 @@
+# CodeQL advanced setup (replaces GitHub's default setup).
+#
+# Mirrors the previous default-setup coverage: actions + python, the
+# security-extended query suite, remote threat model (CodeQL default), a weekly
+# schedule and per-PR runs. The one deviation is the config file, which excludes
+# the actions/unpinned-tag query — trusted actions intentionally use major
+# version tags (see agentsmd/rules/security-alert-triage.md and
+# .github/zizmor.yml).
+#
+# REQUIRED before this can run green: disable the repo's default CodeQL setup,
+# otherwise init fails with a default-setup conflict. Advanced and default setup
+# cannot coexist. Disable via:
+#   gh api -X PATCH repos/dryvist/nix-darwin/code-scanning/default-setup \
+#     -f state=not-configured
+name: CodeQL
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+  schedule:
+    - cron: '23 4 * * 1'  # Weekly Monday 04:23 UTC (off-peak minute)
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    # Fork-PR security guard: same-repo PRs, pushes, and scheduled runs use
+    # RunsOn; only fork PRs fall back to ubuntu-latest (github-hosted) so
+    # fork-author code never touches our self-hosted runners. See ci-gate.yml
+    # header for the full rationale.
+    runs-on: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/runner=2cpu-linux-x64', github.run_id) || 'ubuntu-latest' }}
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [actions, python]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          config-file: ./.github/codeql/codeql-config.yml
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:${{ matrix.language }}

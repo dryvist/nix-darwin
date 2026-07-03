@@ -1,0 +1,18 @@
+# CodeQL advanced-setup configuration.
+#
+# Replaces GitHub's default CodeQL setup (disabled at the repo level when the
+# codeql.yml workflow goes live) so that a single query can be excluded.
+#
+# POLICY: well-known trusted actions stay on major version tags, not commit
+# SHAs — see .github/zizmor.yml (`unpinned-uses: disable`) and
+# agentsmd/rules/security-alert-triage.md. The `actions/unpinned-tag` query
+# flags that intended state and offers no per-org allowlist, so it is excluded
+# here. Untrusted / individual-maintainer actions are still SHA-pinned by hand.
+name: nix-darwin CodeQL config
+
+queries:
+  - uses: security-extended
+
+query-filters:
+  - exclude:
+      id: actions/unpinned-tag
