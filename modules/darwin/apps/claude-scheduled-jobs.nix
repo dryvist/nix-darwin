@@ -143,7 +143,7 @@ in
 
     claudeBin = lib.mkOption {
       type = lib.types.str;
-      default = "/Users/${cfg.user}/.local/bin/claude";
+      default = "${homeDir}/.local/bin/claude";
       description = "Path to the claude CLI binary. Default is the vendor self-updating install, bootstrapped once per host with `claude-latest-install` (shipped in the per-user profile); the nix profile carries no `claude` binary of its own.";
     };
 
