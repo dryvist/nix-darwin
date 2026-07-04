@@ -158,7 +158,6 @@ Source: `modules/darwin/homebrew.nix`
 
 | Package | Description |
 | --- | --- |
-| ccusage | Claude Code usage analyzer |
 | container | Apple container CLI/runtime for Linux containers on Apple Silicon |
 | block-goose-cli | Block's Goose AI agent |
 | whisperkit-cli | Swift native on-device speech recognition (Apple Silicon) |
