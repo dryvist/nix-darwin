@@ -1,4 +1,4 @@
-# llm-large L7 Gate (launchd Caddy)
+# llm-large L7 Gate (launchd Caddy, secrets pulled live from Doppler)
 #
 # ADR (docs-starlight d/decisions/llm-large-studio-serving.mdx): the model
 # server stays bound to 127.0.0.1; this Caddy front terminates TLS on the
@@ -9,22 +9,31 @@
 # also answer for service aliases (e.g. an `llm-large.<subdomain>` CNAME) so
 # the cert/SNI covers them alongside the host FQDN.
 #
-# Fully declarative — no wrapper scripts: the ENTIRE Caddyfile is a sops-nix
-# template rendered at activation with the secrets inline (bearer token and,
-# in route53 mode, ACME credentials), root-only 0400 under
-# /run/secrets/rendered/. The launchd daemon execs Caddy directly against
-# that rendered path, so it comes up on boot and survives reboots with zero
-# interactive prompts (hard requirement for the headless server). Caddy binds
-# all interfaces — no bind address exists anywhere, so no address octets land
-# in this public repo (see the config comment below).
+# Secrets are NOT stored on this host. Nothing sensitive is baked into the
+# Caddyfile, the plist, or sops — not the bearer token, not the Route53 ACME
+# credentials, not even the AWS region (infra topology is treated as sensitive
+# in a public repo). Doppler is the single source of truth. The launchd agent
+# wraps Caddy in `doppler run`, which injects the secrets as environment
+# variables live at each (re)start; the Caddyfile references them purely as
+# `{env.VAR}` placeholders that Caddy resolves at parse time. Rotate a value in
+# Doppler and restart the agent — nothing local ever holds a copy, so there is
+# no sops<->Doppler drift. (OpenBao with fine-grained policies is the eventual
+# target, JAC-153; Doppler is the current stopgap that already backs the fleet.)
+#
+# User agent, not root daemon: the gated port is non-privileged and Doppler
+# auth lives in the login user's ~/.doppler (a headless root daemon has no
+# Doppler session — the same reason activation scripts must never call Doppler).
+# The server host auto-logs-in, so the agent comes up unattended on boot. The
+# one local bootstrap credential is a read-only, config-scoped Doppler service
+# token provisioned once into ~/.doppler, scoped to this agent's WorkingDirectory
+# — a pointer to Doppler, never a copy of the secrets it fetches.
 #
 # TLS modes:
 #   route53  — real Let's Encrypt cert via DNS-01 against the public zone,
 #              using the same least-privilege `acme` AWS user Traefik already
-#              uses for *.pve ingress (credentials inline in the tls block).
+#              uses for *.pve ingress (credentials injected from Doppler).
 #   internal — Caddy's local CA (autonomous, no external dependency); clients
-#              must trust the CA or skip verification. Bring-up stopgap until
-#              the ACME credentials are provisioned.
+#              must trust the CA or skip verification. Bring-up stopgap only.
 
 {
   lib,
@@ -35,6 +44,7 @@
 
 let
   cfg = config.programs.llm-gate;
+  userConfig = import ../../lib/user-config.nix;
 
   # caddy-dns/route53 pinned with the FOD hash for this caddy 2.11.4 +
   # plugin v1.6.2 pair; bump both together when either moves.
@@ -47,14 +57,16 @@ let
     else
       pkgs.caddy;
 
+  # Route53 credentials + region come from Doppler-injected env at runtime; the
+  # Caddyfile only names them. `internal` mode needs no credentials at all.
   tlsDirective =
     if cfg.tlsMode == "route53" then
       ''
         tls {
               dns route53 {
-                access_key_id "${config.sops.placeholder."LLM_GATE_AWS_ACCESS_KEY_ID"}"
-                secret_access_key "${config.sops.placeholder."LLM_GATE_AWS_SECRET_ACCESS_KEY"}"
-                region "${config.sops.placeholder."LLM_GATE_AWS_REGION"}"
+                access_key_id {env.AWS_ACME_ACCESS_KEY_ID}
+                secret_access_key {env.AWS_ACME_SECRET_ACCESS_KEY}
+                region {env.LLM_GATE_AWS_REGION}
               }
             }''
     else
@@ -68,6 +80,24 @@ let
   apiSiteAddresses = lib.concatMapStringsSep " " (host: "https://${host}:${toString cfg.apiPort}") (
     lib.unique ([ cfg.domain ] ++ cfg.extraHostnames)
   );
+
+  # The whole Caddyfile is a plain, secret-free nix store file: every sensitive
+  # value is an {env.VAR} placeholder resolved by Caddy at parse time from the
+  # Doppler-injected environment. Safe to be world-readable — it contains no
+  # secrets, only the (already public) hostnames.
+  caddyfile = pkgs.writeText "llm-gate.Caddyfile" ''
+    {
+      admin off
+      auto_https disable_redirects
+    }
+
+    ${apiSiteAddresses} {
+      ${tlsDirective}
+      @unauthorized not header Authorization "Bearer {env.LLM_LARGE_BEARER_TOKEN}"
+      respond @unauthorized 401
+      reverse_proxy 127.0.0.1:${toString cfg.apiUpstreamPort}
+    }
+  '';
 in
 {
   options.programs.llm-gate = {
@@ -99,7 +129,7 @@ in
         "internal"
       ];
       default = "route53";
-      description = "Certificate source: Let's Encrypt DNS-01 via Route53 (needs the ACME AWS credentials in secrets/llm-large.yaml) or Caddy's internal CA (autonomous stopgap).";
+      description = "Certificate source: Let's Encrypt DNS-01 via Route53 (ACME AWS credentials injected from Doppler) or Caddy's internal CA (autonomous stopgap).";
     };
 
     apiPort = lib.mkOption {
@@ -114,85 +144,75 @@ in
       description = "Loopback llama-swap port the API site proxies to.";
     };
 
+    user = lib.mkOption {
+      type = lib.types.str;
+      default = userConfig.user.name;
+      description = "Login user that owns the agent, the data dir, and the ~/.doppler service token (Doppler auth is per-user; the gate runs as a user LaunchAgent).";
+    };
+
+    dopplerProject = lib.mkOption {
+      type = lib.types.str;
+      default = "iac-conf-mgmt";
+      description = "Doppler project supplying the gate's secrets (bearer token + Route53 ACME creds + region). The scoped service token in ~/.doppler already binds this project/config; kept here for documentation and a drift-free reference.";
+    };
+
+    dopplerConfig = lib.mkOption {
+      type = lib.types.str;
+      default = "prd";
+      description = "Doppler config within the project (see dopplerProject).";
+    };
+
     dataDir = lib.mkOption {
       type = lib.types.str;
-      default = "/var/lib/llm-gate";
-      description = "Writable state directory (certificates, Caddy storage, logs).";
+      default = "${userConfig.user.homeDir}/.local/share/llm-gate";
+      description = "User-owned state dir (Caddy cert/config storage). Also the agent's WorkingDirectory, which the ~/.doppler service token is scoped to so `doppler run` resolves the right config non-interactively.";
     };
   };
 
   config = lib.mkIf cfg.enable {
-    # The whole Caddyfile is the rendered secret: the bearer token and
-    # (route53 mode) ACME credentials are substituted by sops-nix at
-    # activation. No bind directive: Caddy binds all interfaces (identical
-    # exposure to the LAN address on a single-NIC host), which keeps address
-    # octets out of config entirely and survives VLAN/IP moves with zero
-    # secret rotations. {$VAR} env substitution and wrapper scripts are
-    # unnecessary.
-    sops.templates."llm-gate.Caddyfile" = {
-      owner = "root";
-      group = "wheel";
-      mode = "0400";
-      content = ''
-        {
-          admin off
-          auto_https disable_redirects
-        }
-
-        ${apiSiteAddresses} {
-          ${tlsDirective}
-          @unauthorized not header Authorization "Bearer ${
-            config.sops.placeholder."LLM_LARGE_BEARER_TOKEN"
-          }"
-          respond @unauthorized 401
-          reverse_proxy 127.0.0.1:${toString cfg.apiUpstreamPort}
-        }
-      '';
-    };
-
+    # User-owned state dir (install -d as root during activation, owned by the
+    # login user so the agent — and `doppler run` — can read/write it).
     system.activationScripts.postActivation.text = ''
-      /usr/bin/install -d -o root -g wheel -m 0700 "${cfg.dataDir}" "${cfg.dataDir}/data" "${cfg.dataDir}/config" "${cfg.dataDir}/logs"
+      /usr/bin/install -d -o ${cfg.user} -g staff -m 0700 "${cfg.dataDir}" "${cfg.dataDir}/data" "${cfg.dataDir}/config" "${cfg.dataDir}/logs"
     '';
 
-    launchd.daemons.llm-gate = {
-      serviceConfig = {
-        Label = "com.nix-darwin.llm-gate";
-        ProgramArguments = [
-          (lib.getExe caddyPkg)
-          "run"
-          "--config"
-          config.sops.templates."llm-gate.Caddyfile".path
-          "--adapter"
-          "caddyfile"
-        ];
-        # NO RunAtLoad: it defeats KeepAlive.PathState. RunAtLoad spawns the
-        # job at boot BEFORE the sops render exists — caddy exits 78
-        # (EX_CONFIG), and because the config file's creation event fires
-        # while the job is between runs, launchd never re-evaluates and the
-        # daemon sits in "spawn scheduled" forever (observed on the
-        # 2026-07-04 reboot, runs=1). With PathState alone, launchd starts
-        # the daemon exactly when the rendered Caddyfile exists, keeps it
-        # running while it exists, and respawns it whenever the file
-        # reappears — which also self-heals after any mid-uptime /var/run
-        # wipe. The Caddyfile is sops-rendered under /run/secrets
-        # (= /private/var/run), which macOS clears at boot.
-        KeepAlive = {
-          PathState = {
-            "${config.sops.templates."llm-gate.Caddyfile".path}" = true;
-          };
-        };
-        ThrottleInterval = 15;
-        UserName = "root";
-        GroupName = "wheel";
-        WorkingDirectory = cfg.dataDir;
-        EnvironmentVariables = {
-          HOME = cfg.dataDir;
-          XDG_DATA_HOME = "${cfg.dataDir}/data";
-          XDG_CONFIG_HOME = "${cfg.dataDir}/config";
-        };
-        StandardOutPath = "${cfg.dataDir}/logs/llm-gate.log";
-        StandardErrorPath = "${cfg.dataDir}/logs/llm-gate.error.log";
+    # launchd USER agent: `doppler run` fetches the gate's secrets from Doppler
+    # and injects them as env vars, then execs Caddy against the secret-free
+    # Caddyfile. KeepAlive keeps it running and restarts it (picking up rotated
+    # secrets on restart); no RunAtLoad/PathState dance is needed because there
+    # is no sops-rendered file to wait for anymore. If the network or Doppler is
+    # briefly unavailable at boot, Caddy exits and launchd retries on the
+    # ThrottleInterval (Doppler's local fallback cache covers transient API
+    # outages).
+    launchd.user.agents.llm-gate.serviceConfig = {
+      Label = "com.nix-darwin.llm-gate";
+      ProgramArguments = [
+        (lib.getExe pkgs.doppler)
+        "run"
+        "--project"
+        cfg.dopplerProject
+        "--config"
+        cfg.dopplerConfig
+        "--"
+        (lib.getExe caddyPkg)
+        "run"
+        "--config"
+        "${caddyfile}"
+        "--adapter"
+        "caddyfile"
+      ];
+      KeepAlive = true;
+      ThrottleInterval = 15;
+      WorkingDirectory = cfg.dataDir;
+      EnvironmentVariables = {
+        # HOME so `doppler` finds ~/.doppler (its scoped service token); Caddy's
+        # own storage is pinned under the gate dir via XDG below.
+        HOME = userConfig.user.homeDir;
+        XDG_DATA_HOME = "${cfg.dataDir}/data";
+        XDG_CONFIG_HOME = "${cfg.dataDir}/config";
       };
+      StandardOutPath = "${cfg.dataDir}/logs/llm-gate.log";
+      StandardErrorPath = "${cfg.dataDir}/logs/llm-gate.error.log";
     };
   };
 }

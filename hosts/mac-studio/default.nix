@@ -65,11 +65,12 @@ in
     # llm-large Serving Gate (ADR: llm-large-studio-serving)
     # ========================================================================
     # Caddy terminates TLS on the LAN address and enforces the bearer token; the
-    # model server stays on 127.0.0.1. The whole Caddyfile is a sops template
-    # (secrets inline — no wrapper scripts). route53 mode issues a real
-    # Let's Encrypt cert via DNS-01 (the ACME AWS credentials in
-    # secrets/llm-large.yaml), so the cert covers both the host FQDN and the
-    # `llm-large` service alias below and SNI succeeds for either name.
+    # model server stays on 127.0.0.1. Runs as a user LaunchAgent wrapped in
+    # `doppler run` — the bearer token, Route53 ACME creds, and region are pulled
+    # live from Doppler (never stored on this host or in sops; see llm-gate.nix).
+    # route53 mode issues a real Let's Encrypt cert via DNS-01, so the cert covers
+    # both the host FQDN and the `llm-large` service alias below and SNI succeeds
+    # for either name.
     llm-gate = {
       enable = true;
       domain = "${hostConfig.hostName}.${userConfig.baseDomain}";
