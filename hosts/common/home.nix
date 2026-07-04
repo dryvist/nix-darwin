@@ -8,7 +8,6 @@
 {
   config,
   lib,
-  pkgs,
   userConfig,
   osConfig,
   hostConfig,
@@ -26,6 +25,8 @@
     ./mlx-no-autodiscover.nix
     # Global git excludes seeded from the dryvist org-default (see module).
     ./git-global-excludes.nix
+    # Ghostty terminfo (package + ~/.terminfo) — split out for the byte cap.
+    ./ghostty-terminfo.nix
   ];
 
   # Share system-level Homebrew taps with nix-ai's trust.json.
@@ -200,13 +201,6 @@
   # Nix does NOT manage the volume contents — it only creates the symlink. The
   # volume itself is created by a launchd daemon (modules/darwin/apps/orbstack.nix).
   home = {
-    # Ghostty terminfo (just the DB, not the GUI app) on every host so SSHing
-    # in from a Ghostty terminal — which sets TERM=xterm-ghostty — resolves
-    # cleanly even on a headless server that drops the workstation GUI package
-    # list. Must be the `-bin` variant: ghostty.terminfo (source build) fails
-    # its darwin assert. macbook-m4 already pulls this store path via ghostty-bin.
-    packages = [ pkgs.ghostty-bin.terminfo ];
-
     file = lib.mkIf (hostConfig.orbstack.enable or false) {
       # Symlink the entire Group Container so ALL OrbStack data (Docker images,
       # containers, volumes, Linux VMs, logs) lives on the dedicated APFS volume.
