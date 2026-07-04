@@ -1,5 +1,4 @@
 {
-  lib,
   pkgs,
   hostConfig,
   ...
@@ -58,44 +57,33 @@ in
   # System packages from nixpkgs
   # All packages should come from nixpkgs - homebrew is fallback only
   # NOTE: User dev tools (bat, ripgrep, jq, etc.) provided by nix-home via home.packages
-  environment.systemPackages =
-    with pkgs;
-    [
-      # ========================================================================
-      # Core CLI tools (bootstrapping - needed before home-manager)
-      # ========================================================================
-      git
-      gnupg
-      vim
+  environment.systemPackages = with pkgs; [
+    # ========================================================================
+    # Core CLI tools (bootstrapping - needed before home-manager)
+    # ========================================================================
+    git
+    gnupg
+    vim
 
-      # ========================================================================
-      # macOS-specific system tools
-      # ========================================================================
-      mas # Mac App Store CLI
-      mactop # Real-time Apple Silicon CPU/GPU/ANE/thermal monitoring
+    # ========================================================================
+    # macOS-specific system tools
+    # ========================================================================
+    mas # Mac App Store CLI
 
-      # ========================================================================
-      # Network & process tools
-      # ========================================================================
-      ngrep # Network packet grep (useful for debugging)
+    # ========================================================================
+    # Network & process tools
+    # ========================================================================
+    ngrep # Network packet grep (useful for debugging)
 
-      # ========================================================================
-      # Audio libraries (system-level dependencies)
-      # ========================================================================
-      sox # Audio recording, conversion, and effects (Sound eXchange)
-      portaudio # Cross-platform audio I/O library
-
-    ]
-    # ==========================================================================
-    # GUI applications (system-level, in /Applications/Nix Apps/) — workstation
-    # only; a headless server gets none.
-    # ==========================================================================
-    # bitwarden-desktop moved to a Homebrew cask (`bitwarden`) — the nixpkgs
-    # build pins EOL/insecure electron_39. See modules/darwin/homebrew.nix.
-    ++ lib.optionals (!isServer) [
-      raycast # Productivity launcher (replaces Spotlight)
-      swiftbar # Menu bar customization
-    ];
+    # ========================================================================
+    # Audio libraries (system-level dependencies)
+    # ========================================================================
+    sox # Audio recording, conversion, and effects (Sound eXchange)
+    portaudio # Cross-platform audio I/O library
+  ];
+  # GUI apps (Raycast, SwiftBar, etc.) are user-level via home-manager
+  # copyApps (hosts/macbook-m4/home.nix) for TCC-stable paths — not
+  # system packages. bitwarden-desktop is a Homebrew cask (see homebrew.nix).
 
   # --- Homebrew Configuration ---
   # See ./homebrew.nix for casks, brews, and masApps

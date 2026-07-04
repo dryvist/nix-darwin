@@ -88,6 +88,12 @@
     # nix-ai/modules/claude-config.nix in dryvist/nix-ai#853 — Claude config
     # doesn't belong in nix-darwin (host-specific opinion lives in nix-ai).
 
+    # cecli (nix-ai's Aider fork) is disabled — unused, and its
+    # tree-sitter-language-pack<=0.13.0 pin fails to build on nixpkgs 26.05
+    # (which ships 1.4.1). mkForce overrides nix-ai's unconditional enable
+    # (modules/default.nix). Re-enable in nix-ai once the dep bound is relaxed.
+    cecli.enable = lib.mkForce false;
+
     # Local MLX inference server (vllm-mlx + llama-swap proxy on :11434).
     # Brings the existing vllm-mlx LaunchAgent under Nix management — without
     # this, the registry at services.aiStack.models is materialized to nothing

@@ -34,6 +34,11 @@
     discord # Voice/video chat - copyApps gives TCC-stable path for camera/mic permissions
     # zoom-us # DISABLED - no longer using Zoom
 
+    # Productivity / menu bar (moved from system-level; copyApps gives the same
+    # TCC-stable paths the darwin mac-app-util trampolines used to provide)
+    raycast # Productivity launcher (replaces Spotlight)
+    swiftbar # Menu bar customization
+
     # CLI / Media tools (non-GUI, no .app bundle)
     ffmpeg # Complete solution to record, convert and stream audio and video
   ];

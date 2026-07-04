@@ -38,7 +38,6 @@ Source: `modules/darwin/common.nix`
 | gnutar | GNU tar as gtar (Mac-safe tar without .\_ files) |
 | btop | Modern process monitor with graphs (daily use) |
 | htop | Interactive process viewer |
-| mactop | Real-time Apple Silicon CPU/GPU/ANE/thermal monitoring |
 | jq | JSON parsing |
 | ncdu | NCurses disk usage analyzer |
 | ngrep | Network packet grep |
@@ -127,23 +126,12 @@ On-demand via `nix run nixpkgs#d2` and `nix run nixpkgs#mermaid-cli` — not ins
 
 ---
 
-## GUI Applications - System Level
-
-Source: `modules/darwin/common.nix`
-
-| Package | Description |
-| --- | --- |
-| raycast | Productivity launcher (replaces Spotlight) |
-| swiftbar | Menu bar customization |
-
-Note: OrbStack installed via Homebrew cask (`greedy = true`) in `modules/darwin/homebrew.nix` for TCC permission stability.
-The `programs.orbstack` module (`modules/darwin/apps/orbstack.nix`) still manages the APFS data volume via launchd.
-
----
-
 ## GUI Applications - User Level
 
 Source: `hosts/macbook-m4/home.nix`
+
+All workstation GUI apps are user-level via home-manager `copyApps`, which
+copies them to `~/Applications/Home Manager Apps/` at TCC-stable paths.
 
 | Package | Description |
 | --- | --- |
@@ -154,6 +142,11 @@ Source: `hosts/macbook-m4/home.nix`
 | ffmpeg | Audio/video recording, conversion, streaming |
 | ghostty-bin | Terminal emulator |
 | rapidapi | Full-featured HTTP client |
+| raycast | Productivity launcher (replaces Spotlight) |
+| swiftbar | Menu bar customization |
+
+Note: OrbStack installed via Homebrew cask (`greedy = true`) in `modules/darwin/homebrew.nix` for TCC permission stability.
+The `programs.orbstack` module (`modules/darwin/apps/orbstack.nix`) still manages the APFS data volume via launchd.
 
 ---
 

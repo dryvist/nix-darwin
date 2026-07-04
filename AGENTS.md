@@ -70,7 +70,7 @@ cd <branch>
 - macOS system defaults (Dock, Finder, keyboard, trackpad, energy)
 - Homebrew configuration (casks and brews not in nixpkgs)
 - System-level packages (`environment.systemPackages`): core bootstrapping (git, gnupg, vim),
-  macOS-only tools (mas, mactop), audio libs, GUI apps
+  macOS-only tools (e.g. mas), audio libs, GUI apps
 - Security settings (firewall, Gatekeeper)
 - LaunchDaemons (system-level services)
 - Activation scripts and boot recovery
