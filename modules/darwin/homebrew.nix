@@ -66,9 +66,6 @@ let
   agentHomebrewCasks = nix-ai.lib.homebrewCasks or [ ];
 
   workstationBrews = [
-    # CLI tools (only if not available in nixpkgs)
-    "ccusage" # Claude Code usage analyzer - not in nixpkgs
-
     # Mac App Store CLI — required by homebrew.masApps below.
     "mas"
     # Apple container CLI/runtime. Homebrew tracks current upstream while
