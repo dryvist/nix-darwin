@@ -226,4 +226,10 @@ in
     networkTuning.enable = lib.mkIf hostConfig.isServer (lib.mkDefault true); # socket buffers for LAN serving
     appleSiliconTunables.energyMode = lib.mkIf hostConfig.isServer (lib.mkDefault "unmanaged"); # no High Power Mode on a desktop
   };
+
+  # SSH sessions arrive from the workstation's Ghostty terminal; without its
+  # terminfo the remote zsh init spews "can't find terminal definition for
+  # xterm-ghostty" on every login. Workstations get the entry from the app
+  # itself; headless hosts ship just the terminfo output.
+  environment.systemPackages = lib.optionals hostConfig.isServer [ pkgs.ghostty-bin.terminfo ];
 }
