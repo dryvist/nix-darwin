@@ -165,16 +165,17 @@ in
           "--adapter"
           "caddyfile"
         ];
-        RunAtLoad = true;
-        # PathState, not `true`: the Caddyfile is a sops-rendered file under
-        # /run/secrets (= /private/var/run), which macOS clears at boot and
-        # which only exists after the activation/boot render. A plain
-        # KeepAlive races that render — caddy spawns first, exits, and
-        # launchd backs off indefinitely (observed: exit 78, "spawn
-        # scheduled" forever; one boot won the race, the next lost it).
-        # PathState makes launchd hold the daemon until the config exists
-        # and respawn it whenever the file reappears — which also
-        # self-heals after any mid-uptime /var/run wipe.
+        # NO RunAtLoad: it defeats KeepAlive.PathState. RunAtLoad spawns the
+        # job at boot BEFORE the sops render exists — caddy exits 78
+        # (EX_CONFIG), and because the config file's creation event fires
+        # while the job is between runs, launchd never re-evaluates and the
+        # daemon sits in "spawn scheduled" forever (observed on the
+        # 2026-07-04 reboot, runs=1). With PathState alone, launchd starts
+        # the daemon exactly when the rendered Caddyfile exists, keeps it
+        # running while it exists, and respawns it whenever the file
+        # reappears — which also self-heals after any mid-uptime /var/run
+        # wipe. The Caddyfile is sops-rendered under /run/secrets
+        # (= /private/var/run), which macOS clears at boot.
         KeepAlive = {
           PathState = {
             "${config.sops.templates."llm-gate.Caddyfile".path}" = true;
