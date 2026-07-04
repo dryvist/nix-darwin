@@ -160,15 +160,15 @@ in
 
     # Foreground `container run` supervised by launchd KeepAlive: the VM
     # exits after one job (EPHEMERAL) and launchd starts the next one.
-    # PathState, not `true`: the --env-file lives under /run/secrets
-    # (= /private/var/run), cleared at boot and only present after the
-    # activation/boot render — a plain KeepAlive races it and launchd backs
-    # off indefinitely on loss (same failure class as llm-gate). PathState
-    # holds the agent until the file exists and self-heals if it reappears.
+    # PathState, not `true` — and NO RunAtLoad, which would spawn before the
+    # boot sops render exists and strand the job in "spawn scheduled" when
+    # the file-creation event lands between runs (the llm-gate 2026-07-04
+    # reboot failure). PathState alone starts the agent exactly when the
+    # rendered env-file exists, keeps it running while it exists, and
+    # self-heals if the file reappears after a /var/run wipe.
     launchd.user.agents.gh-runner.serviceConfig = {
       Label = "com.nix-darwin.gh-runner";
       ProgramArguments = runArgs;
-      RunAtLoad = true;
       KeepAlive = {
         PathState = {
           "${cfg.secretsFile}" = true;
