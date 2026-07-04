@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.62.0](https://github.com/dryvist/nix-darwin/compare/v1.61.1...v1.62.0) (2026-07-04)
+
+
+### Features
+
+* bump nixpkgs to 26.05; resolve all 26.05 breakage ([#1481](https://github.com/dryvist/nix-darwin/issues/1481)) ([bd0a62b](https://github.com/dryvist/nix-darwin/commit/bd0a62ba83cfb8c166e0ee0e8929c8885f1766e5))
+
 ## [1.61.1](https://github.com/dryvist/nix-darwin/compare/v1.61.0...v1.61.1) (2026-07-04)
 
 
