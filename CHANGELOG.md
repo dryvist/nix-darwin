@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.64.0](https://github.com/dryvist/nix-darwin/compare/v1.63.2...v1.64.0) (2026-07-04)
+
+
+### Features
+
+* enable issues:labeled trigger to close the auto-resolve loop ([#1502](https://github.com/dryvist/nix-darwin/issues/1502)) ([74419a2](https://github.com/dryvist/nix-darwin/commit/74419a29d510a6bf432d37f7c4009a43c20edaa1))
+
 ## [1.63.2](https://github.com/dryvist/nix-darwin/compare/v1.63.1...v1.63.2) (2026-07-04)
 
 
