@@ -83,12 +83,16 @@ repos:
         pass_filenames: false
 
       # Nix dead code detection - deadnix
+      # No -L: unused function args (e.g. an orphaned `pkgs`) must fail too —
+      # mirrors lib/checks.nix (the CI gate). Fast (sub-second), so it runs on
+      # both commit and push stages.
       - id: nix-deadnix
         name: Nix dead code (deadnix)
-        entry: deadnix -L --fail
+        entry: deadnix --fail
         language: system
         files: \.nix$
         types: [file]
+        stages: [pre-commit, pre-push]
         exclude: ^worktrees/
         pass_filenames: false
 
