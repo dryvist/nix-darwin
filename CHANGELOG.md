@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.63.2](https://github.com/dryvist/nix-darwin/compare/v1.63.1...v1.63.2) (2026-07-04)
+
+
+### Bug Fixes
+
+* log the app removal + silence local nixfmt/menu-bar noise ([#1495](https://github.com/dryvist/nix-darwin/issues/1495)) ([241f7e7](https://github.com/dryvist/nix-darwin/commit/241f7e793167a4d9587a17d78997c3d2f0834779))
+
 ## [1.63.1](https://github.com/dryvist/nix-darwin/compare/v1.63.0...v1.63.1) (2026-07-04)
 
 
