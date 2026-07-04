@@ -153,10 +153,11 @@ in
   # ==========================================================================
   nix = {
     # Home-manager stateVersion - single source of truth
-    # NixOS 25.11 "Vicuna" (released November 2025)
-    # Update this when upgrading to a new NixOS stable release
+    # NixOS 26.05 (released May 2026)
+    # Kept in lockstep with the nixpkgs branch in flake.nix — the
+    # _stateVersionCheck assertion there fails eval if the two drift.
     # Reference: https://nixos.org/blog/announcements/
-    homeManagerStateVersion = "25.11";
+    homeManagerStateVersion = "26.05";
   };
 
   # ==========================================================================

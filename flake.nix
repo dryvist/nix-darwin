@@ -3,42 +3,23 @@
   description = "nix-darwin configuration for M4 Max MacBook Pro";
 
   inputs = {
-    # Using stable nixpkgs-25.11 for reliability
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-25.11-darwin";
+    # Using stable nixpkgs-26.05 for reliability
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
 
     # Consolidated systems input for darwin-only configuration
     # All transitive dependencies should follow this to avoid duplicate systems entries
     systems.url = "github:nix-systems/default-darwin";
 
-    # Using stable nix-darwin-25.11 to match nixpkgs
+    # Using stable nix-darwin-26.05 to match nixpkgs
     darwin = {
-      url = "github:nix-darwin/nix-darwin/nix-darwin-25.11";
+      url = "github:nix-darwin/nix-darwin/nix-darwin-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Using stable home-manager release-25.11 to match nixpkgs
+    # Using stable home-manager release-26.05 to match nixpkgs
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.11";
+      url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    # mac-app-util: Create app trampolines for /Applications/Nix Apps/ (system-level)
-    # Used ONLY at darwin level for environment.systemPackages apps.
-    # Home-manager apps use copyApps instead (see hosts/macbook-m4/home.nix).
-    mac-app-util = {
-      url = "github:hraban/mac-app-util";
-      # Consolidate all input overrides in a single attrset
-      # - nixpkgs: use our root nixpkgs
-      # - systems: use our consolidated darwin-only systems
-      # - treefmt-nix: transitive dependency, prevent duplicate nixpkgs in flake.lock
-      # - cl-nix-lite: WORKAROUND for gitlab.common-lisp.net Anubis anti-bot protection
-      #   See: https://github.com/hraban/mac-app-util/issues/39
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        systems.follows = "systems";
-        treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
-        cl-nix-lite.url = "github:r4v3n6101/cl-nix-lite/url-fix";
-      };
     };
 
     # Direct inputs for independent updating (follows into nix-ai)
@@ -109,7 +90,6 @@
       nixpkgs,
       darwin,
       home-manager,
-      mac-app-util,
       nix-ai,
       nix-home,
       determinate,
@@ -125,11 +105,11 @@
       inherit (nixpkgs) lib;
 
       # Guard: fail at eval time if stateVersion drifts from nixpkgs branch.
-      # When Renovate bumps nixpkgs-25.11 → nixpkgs-26.05, this assertion fires
+      # When Renovate bumps nixpkgs-26.05 → nixpkgs-26.11, this assertion fires
       # with a clear message — the fix is to update lib/user-config.nix.
       _stateVersionCheck =
         let
-          expected = "25.11"; # must match nixpkgs URL: nixpkgs-25.11-darwin
+          expected = "26.05"; # must match nixpkgs URL: nixpkgs-26.05-darwin
           actual = userConfig.nix.homeManagerStateVersion;
         in
         assert
@@ -176,9 +156,6 @@
             # sops-nix: decrypts age-encrypted secrets to /run/secrets at activation
             sops-nix.darwinModules.sops
 
-            # mac-app-util: Creates trampolines for system-level apps (/Applications/Nix Apps/)
-            mac-app-util.darwinModules.default
-
             # Python package overlay from nix-home (replaces local overlays/python-packages.nix)
             { nixpkgs.overlays = [ nix-home.overlays.default ]; }
 
@@ -197,10 +174,8 @@
                 # - nix-ai: Claude, Gemini, Copilot, MCP servers, marketplace plugins
                 # - nix-home: git, zsh, vscode, direnv, monitoring, tmux, common packages
                 #
-                # NOTE: mac-app-util home-manager module REMOVED - using copyApps instead.
-                # copyApps copies apps to ~/Applications/Home Manager Apps/ with stable paths,
-                # making mac-app-util trampolines redundant for TCC permission persistence.
-                # The darwin-level mac-app-util module is still used for /Applications/Nix Apps/.
+                # GUI apps use home-manager copyApps (~/Applications/Home Manager Apps/,
+                # stable paths for TCC persistence), so no app-trampoline module is needed.
                 sharedModules = [
                   nix-ai.homeManagerModules.default
                   nix-home.homeManagerModules.default

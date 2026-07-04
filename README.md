@@ -111,7 +111,6 @@ Other foundational pieces:
 | **Determinate Nix** | Manages Nix itself -- daemon, updates, core config |
 | **nix-darwin** | macOS packages, system settings, Homebrew integration |
 | **home-manager** | Activation recovery, config symlinks, and Raycast scripts |
-| **mac-app-util** | Stable app trampolines to preserve TCC permissions |
 | **sops-nix** | Decrypts age-encrypted secrets to `/run/secrets/` for system services |
 
 **Key Rule**: Use nixpkgs for everything. Homebrew is fallback only.

@@ -339,28 +339,6 @@ ls -la ~/.claude/plugins/marketplaces/
 
 ## Application Issues
 
-### mac-app-util Build Failure (gitlab.common-lisp.net)
-
-**Problem**: Build fails with errors like:
-
-```text
-tar: This does not look like a tar archive
-do not know how to unpack source archive
-```
-
-**Cause**: `gitlab.common-lisp.net` has deployed Anubis anti-bot protection, which blocks Nix's automated source fetches for the `iterate` Common Lisp library.
-
-**Solution**: The flake.nix already includes a workaround using a fork with GitHub mirrors:
-
-```nix
-mac-app-util = {
-  url = "github:hraban/mac-app-util";
-  inputs.cl-nix-lite.url = "github:r4v3n6101/cl-nix-lite/url-fix";
-};
-```
-
-**Reference**: [mac-app-util issue #39](https://github.com/hraban/mac-app-util/issues/39)
-
 ### macOS TCC Permissions Reset After Rebuild
 
 **Problem**: Camera, microphone, screen recording, or App Management permissions revoked after `darwin-rebuild switch`.
@@ -373,9 +351,9 @@ and revoke permissions.
 
 This configuration uses multiple layers to ensure TCC permissions persist:
 
-1. **mac-app-util trampolines**: Apps in `home.packages` get stable wrapper
-   apps at `~/Applications/Home Manager Trampolines/` that don't change paths
-   across rebuilds
+1. **home-manager copyApps**: Apps in `home.packages` are copied to stable
+   paths at `~/Applications/Home Manager Apps/` that don't change across
+   rebuilds (no wrapper scripts, unlike trampolines)
 
 2. **TCC-sensitive apps in home.packages**: Ghostty, Zoom, and OrbStack are in
    `home.packages` (see `hosts/macbook-m4/home.nix`) (not system packages) to get
