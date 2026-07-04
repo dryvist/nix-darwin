@@ -64,6 +64,15 @@ in
       CRIBL_TOKEN = rootOnly // {
         sopsFile = ../../secrets/cribl-edge.yaml;
       };
+
+      # openbao.keychain-db unlock password — created once by the
+      # openbao-keychain module's activation script (modules/darwin/apps/
+      # openbao-keychain.nix). Root-only: the activation script runs as root
+      # and uses `sudo -u` to create the keychain in the login user's domain.
+      # Source: secrets/openbao-keychain.yaml (age-encrypted, committed to git).
+      OPENBAO_KEYCHAIN_PASSWORD = rootOnly // {
+        sopsFile = ../../secrets/openbao-keychain.yaml;
+      };
     }
     // lib.optionalAttrs isServer {
       # llm-gate (Caddy TLS + bearer front) — secrets/llm-large.yaml.

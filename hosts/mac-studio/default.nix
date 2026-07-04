@@ -137,6 +137,12 @@ in
         '';
       };
     };
+
+    # --- OpenBao keychain-backed secret-zero ---
+    # Same dedicated 72h-auto-lock keychain + resolver agent as the laptop —
+    # this always-on host is a first-class autonomous OpenBao consumer too.
+    # See modules/darwin/apps/openbao-keychain.nix.
+    openbao-keychain.enable = true;
   };
 
   # nix-prebuild: warm the darwin closure nightly so the morning
