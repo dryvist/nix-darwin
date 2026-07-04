@@ -30,8 +30,8 @@
 #
 # TLS modes:
 #   route53  — real Let's Encrypt cert via DNS-01 against the public zone,
-#              using the same least-privilege `acme` AWS user Traefik already
-#              uses for *.pve ingress (credentials injected from Doppler).
+#              using the same least-privilege `acme` AWS user the cluster
+#              ingress already uses (credentials injected from Doppler).
 #   internal — Caddy's local CA (autonomous, no external dependency); clients
 #              must trust the CA or skip verification. Bring-up stopgap only.
 
