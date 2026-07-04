@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.61.1](https://github.com/dryvist/nix-darwin/compare/v1.61.0...v1.61.1) (2026-07-04)
+
+
+### Bug Fixes
+
+* **home:** guard brew block and ship ghostty terminfo to all hosts ([#1462](https://github.com/dryvist/nix-darwin/issues/1462)) ([a8ddce9](https://github.com/dryvist/nix-darwin/commit/a8ddce99a18b11acc515dcc7b0df3c194c5f006e))
+
 ## [1.61.0](https://github.com/dryvist/nix-darwin/compare/v1.60.0...v1.61.0) (2026-07-03)
 
 
