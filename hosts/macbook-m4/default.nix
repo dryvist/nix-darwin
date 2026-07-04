@@ -52,6 +52,13 @@ in
       "com.duosecurity.duoappupdater" # Duo updater (every 10 minutes)
       "us.zoom.ZoomDaemon" # Zoom privileged helper daemon
     ];
+
+    # Dangling zsh completion symlinks to prune on every rebuild. nix-homebrew
+    # leaves a dead `_brew` here (its /opt/homebrew/completions target is never
+    # materialized), which makes compinit warn on every new login shell.
+    pruneCompletionDirs = [
+      "/opt/homebrew/share/zsh/site-functions"
+    ];
   };
 
   # ==========================================================================

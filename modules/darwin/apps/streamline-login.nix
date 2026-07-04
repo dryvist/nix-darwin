@@ -12,6 +12,8 @@
 #   - disableUserServices: `launchctl disable gui/<uid>/<label>` — idempotent,
 #     persists across reboots. Service plist stays but won't load.
 #   - disableSystemServices: same for system domain (runs as root).
+#   - pruneCompletionDirs: removes dangling zsh completion symlinks (e.g.
+#     nix-homebrew's dead `_brew`) that make compinit warn on every login.
 
 { lib, config, ... }:
 
@@ -63,6 +65,20 @@ in
         "com.duosecurity.duoappupdater"
       ];
     };
+
+    pruneCompletionDirs = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      description = ''
+        Absolute directories on `fpath` to prune of dangling (broken) zsh
+        completion symlinks on every darwin-rebuild. Fixes the recurring
+        `compinit: no such file or directory` login warning caused by
+        nix-homebrew leaving a dead `_brew` symlink (its target under
+        /opt/homebrew/completions is never materialized). Only symlinks whose
+        target is missing are removed — real completions are untouched.
+      '';
+      example = [ "/opt/homebrew/share/zsh/site-functions" ];
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -95,7 +111,24 @@ in
         fi
       '') cfg.disableSystemServices}
 
-      echo "${ts} [INFO] Streamline login complete ($_cleanup_count plists removed, ${toString (builtins.length cfg.disableUserServices)} user + ${toString (builtins.length cfg.disableSystemServices)} system services disabled)"
+      # --- Prune dangling zsh completion symlinks ---
+      # nix-homebrew leaves a dead `_brew` symlink (its /opt/homebrew/completions
+      # target is never materialized); compinit then warns on every login. Remove
+      # only symlinks whose target is missing — real completions stay. POSIX glob:
+      # an empty/no-match dir yields a literal that `[ -L ]` skips.
+      ${lib.concatMapStringsSep "\n" (dir: ''
+        if [ -d "${dir}" ]; then
+          for _link in "${dir}"/*; do
+            if [ -L "$_link" ] && [ ! -e "$_link" ]; then
+              rm -f "$_link"
+              echo "${ts} [INFO] Pruned dangling completion symlink $_link"
+              _cleanup_count=$((_cleanup_count + 1))
+            fi
+          done
+        fi
+      '') cfg.pruneCompletionDirs}
+
+      echo "${ts} [INFO] Streamline login complete ($_cleanup_count files removed, ${toString (builtins.length cfg.disableUserServices)} user + ${toString (builtins.length cfg.disableSystemServices)} system services disabled)"
     '';
   };
 }

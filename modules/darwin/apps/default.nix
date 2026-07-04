@@ -18,6 +18,7 @@ _:
     ./github-runner-container.nix
     ./orbstack.nix
     ./raycast.nix
+    ./remove-builtin-apps.nix
     ./streamline-login.nix
   ];
 
