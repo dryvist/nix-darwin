@@ -1,26 +1,27 @@
 #!/usr/bin/env bash
 #
 # Idempotently creates + configures the dedicated `openbao.keychain-db`
-# keychain. Invoked from the nix-darwin activation script (which runs as
-# root) via:
-#   sudo -u <user> env OPENBAO_KEYCHAIN_PASSWORD="$password" \
-#     openbao-keychain-setup.sh <keychain-path>
-# Keychains are per-user, so this must actually run AS the login user, not
-# root — `sudo -u` handles that. Root reads the sops-decrypted
-# /run/secrets/OPENBAO_KEYCHAIN_PASSWORD (root:wheel 0400) itself and passes
-# the value straight through as a one-shot env var on the `sudo` command
-# line; it's never written to a user-readable file. Best-effort per step
-# with clear logging, matching apple-silicon-tunables.sh's style.
+# keychain. Runs as a NATIVE user-domain LaunchAgent (RunAtLoad) — not from a
+# root-run activation script. Confirmed on real hardware: crossing from root
+# into the login user's securityd session via `sudo -u`/`launchctl asuser`
+# creates the keychain FILE fine (that's a plain filesystem op) but silently
+# fails to persist the keychain SEARCH-LIST update (a session-scoped securityd
+# operation) — the command reports success but the change never sticks. A
+# genuine user LaunchAgent needs no privilege crossing at all, which is why
+# this script takes the password FILE PATH as an argument (not the raw value
+# — the value never appears in `ps` output, only a path does) and reads it
+# with the same permissions the LaunchAgent process already has.
 #
-# Usage: openbao-keychain-setup.sh <keychain-path>
+# Usage: openbao-keychain-setup.sh <keychain-path> <password-file>
 
 set -euo pipefail
 
 prefix="[openbao-keychain-setup]"
 log() { echo "$prefix INFO $*"; }
 
-keychain_path="${1:?usage: openbao-keychain-setup.sh <keychain-path>}"
-password="${OPENBAO_KEYCHAIN_PASSWORD:?OPENBAO_KEYCHAIN_PASSWORD must be set in the environment}"
+keychain_path="${1:?usage: openbao-keychain-setup.sh <keychain-path> <password-file>}"
+password_file="${2:?usage: openbao-keychain-setup.sh <keychain-path> <password-file>}"
+password="$(cat "${password_file}")"
 
 if [ -f "${keychain_path}" ]; then
   log "keychain already exists at ${keychain_path} — skipping create"

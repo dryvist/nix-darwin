@@ -24,6 +24,15 @@
 # AppRole credentials it will hold, the keychain's own password isn't
 # something a human needs to type routinely, so there's no reason to keep it
 # purely tribal knowledge.
+#
+# Both keychain setup and the resolver run as NATIVE user-domain LaunchAgents
+# — confirmed on real hardware that a root-run activation script trying to
+# reach across into the login user's securityd session (via `sudo -u` or
+# `launchctl asuser`) creates the keychain FILE fine but silently fails to
+# persist the keychain SEARCH-LIST update, a session-scoped operation. A
+# genuine user LaunchAgent needs no privilege crossing at all. This is why
+# the keychain's own unlock password is `userOnly` in sops.nix rather than
+# `rootOnly` — the setup agent reads it directly with its own permissions.
 
 {
   lib,
@@ -34,7 +43,7 @@
 
 let
   cfg = config.programs.openbao-keychain;
-  userConfig = import ../../lib/user-config.nix;
+  userConfig = import ../../../lib/user-config.nix;
   homeDir = userConfig.user.homeDir;
   logDir = "${homeDir}/Library/Logs/openbao-keychain-resolver";
   keychainPath = "${homeDir}/Library/Keychains/openbao.keychain-db";
@@ -69,22 +78,36 @@ in
   config = lib.mkIf cfg.enable {
     # Create the log dir with user ownership up front (matches
     # claude-scheduled-jobs.nix's rationale: install -d would otherwise leave
-    # missing parents root-owned, blocking the user agent's log writes).
+    # missing parents root-owned, blocking the user agents' log writes). This
+    # is the ONLY thing that still needs to run as root — keychain setup
+    # itself is a native user LaunchAgent below, crossing no privilege
+    # boundary at all.
     system.activationScripts.postActivation.text = ''
       /usr/bin/install -d -o ${userConfig.user.name} -g staff "${logDir}"
-
-      # Root reads the sops-decrypted password itself and passes it through
-      # as a one-shot env var on the sudo command line — it never touches a
-      # user-readable file. Keychains are per-user, so the setup script must
-      # actually run AS the login user, not root. A prefix assignment
-      # (`VAR=val cmd ...`) is NOT visible when expanding later words on the
-      # same command line — verified empirically — so this must be a real
-      # assignment on its own line before the sudo invocation references it.
-      OPENBAO_KEYCHAIN_PASSWORD="$(cat ${config.sops.secrets."OPENBAO_KEYCHAIN_PASSWORD".path})"
-      /usr/bin/sudo -u ${userConfig.user.name} \
-        env OPENBAO_KEYCHAIN_PASSWORD="$OPENBAO_KEYCHAIN_PASSWORD" \
-        ${lib.getExe setupScript} ${keychainPath}
     '';
+
+    launchd.user.agents.openbao-keychain-setup.serviceConfig = {
+      Label = "com.nix-darwin.openbao-keychain-setup";
+      # Confirmed on real hardware: running this from a root-run activation
+      # script via sudo/launchctl-asuser crosses into the login user's
+      # securityd session incorrectly — the keychain FILE gets created (a
+      # plain filesystem op) but the search-list UPDATE (session-scoped)
+      # silently never persists, despite the command reporting success. A
+      # genuine user LaunchAgent needs no privilege crossing, so it Just
+      # Works. Idempotent — safe to (and expected to) run at every login.
+      ProgramArguments = [
+        (lib.getExe setupScript)
+        keychainPath
+        config.sops.secrets."OPENBAO_KEYCHAIN_PASSWORD".path
+      ];
+      RunAtLoad = true;
+      ProcessType = "Background";
+      StandardOutPath = "${logDir}/setup.log";
+      StandardErrorPath = "${logDir}/setup.error.log";
+      EnvironmentVariables = {
+        HOME = homeDir;
+      };
+    };
 
     launchd.user.agents.openbao-keychain-resolver.serviceConfig = {
       Label = "com.nix-darwin.openbao-keychain-resolver";

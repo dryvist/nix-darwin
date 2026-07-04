@@ -65,12 +65,18 @@ in
         sopsFile = ../../secrets/cribl-edge.yaml;
       };
 
-      # openbao.keychain-db unlock password — created once by the
-      # openbao-keychain module's activation script (modules/darwin/apps/
-      # openbao-keychain.nix). Root-only: the activation script runs as root
-      # and uses `sudo -u` to create the keychain in the login user's domain.
+      # openbao.keychain-db unlock password — read by a user-domain LaunchAgent
+      # (modules/darwin/apps/openbao-keychain.nix) that creates + configures
+      # the keychain natively as the login user. userOnly, not rootOnly: a
+      # root-run activation script crossing into the user's securityd session
+      # via sudo/asuser was confirmed on real hardware to silently fail for
+      # session-scoped operations (the keychain search-list update never
+      # persisted); a native user LaunchAgent needs no privilege crossing at
+      # all, so its own secret should be readable by that same user directly.
+      # This password only unlocks a keychain only this user can use anyway,
+      # so userOnly costs nothing over rootOnly here.
       # Source: secrets/openbao-keychain.yaml (age-encrypted, committed to git).
-      OPENBAO_KEYCHAIN_PASSWORD = rootOnly // {
+      OPENBAO_KEYCHAIN_PASSWORD = userOnly // {
         sopsFile = ../../secrets/openbao-keychain.yaml;
       };
     }

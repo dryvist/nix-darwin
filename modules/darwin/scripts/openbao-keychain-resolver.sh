@@ -31,7 +31,14 @@ readonly DOMAINS=(observability local-cloud monitoring media local-llm)
 
 read_item() {
   local service="$1" account="$2"
-  /usr/bin/security find-generic-password -s "${service}" -a "${account}" -w "${KEYCHAIN}" 2>/dev/null
+  # `pkgs.writeShellApplication` (used to build this script) wraps it in
+  # `set -euo pipefail` regardless of this file's own content. A missing
+  # keychain item is an EXPECTED, tolerable outcome here (locked keychain or
+  # not-yet-seeded domain) — `security` exits non-zero for "not found",
+  # which would otherwise abort the whole script at this exact assignment.
+  # Verified empirically: `x="$(cmd_that_fails)"` under set -e aborts
+  # immediately; `x="$(cmd_that_fails || true)"` does not.
+  /usr/bin/security find-generic-password -s "${service}" -a "${account}" -w "${KEYCHAIN}" 2>/dev/null || true
 }
 
 set_env() {
