@@ -3,19 +3,16 @@
 # Set tabs to 2 spaces
 tabs -2
 
-# Homebrew: update + doctor once per day; outdated versions on every start.
-# Gated on brew existing: nix-darwin manages the Brewfile but does not install
-# the brew binary, so a fresh or headless host (no manual Homebrew bootstrap)
-# would otherwise spew "command not found: brew" on every shell startup.
+# Homebrew: nix-homebrew now installs and manages brew, its taps, and the
+# Brewfile declaratively (updates apply at darwin-rebuild time). So we do NOT
+# run `brew update`/`brew doctor` on login: under nix-homebrew the brew core has
+# no git origin remote, so those only emit noise ("Missing origin remote") and
+# duplicate work Nix already owns. A quiet, no-auto-update `brew outdated` stays
+# as an informational nudge. Gated on brew existing so a host without Homebrew
+# (or before its first darwin-rebuild) stays silent instead of spewing
+# "command not found: brew" on every shell startup.
 if command -v brew >/dev/null 2>&1; then
-  _brew_dir="${TMPDIR:-/tmp}/brew" && mkdir -p "$_brew_dir"
-  _brew_stamp="$_brew_dir/daily_$(date +%Y%m%d)"
-  if [[ ! -f "$_brew_stamp" ]]; then
-    brew update && touch "$_brew_stamp"
-    brew doctor
-  fi
   HOMEBREW_NO_AUTO_UPDATE=1 brew outdated --verbose
-  unset _brew_dir _brew_stamp
 fi
 
 # Clean up .DS_Store files in common directories.
