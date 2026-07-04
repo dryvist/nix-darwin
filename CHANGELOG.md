@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.63.1](https://github.com/dryvist/nix-darwin/compare/v1.63.0...v1.63.1) (2026-07-04)
+
+
+### Bug Fixes
+
+* **studio:** claude jobs use the vendor install path; ship ghostty terminfo on servers ([87f0c6e](https://github.com/dryvist/nix-darwin/commit/87f0c6e641322db0b7f3b0d1cbd78040127aee05))
+
 ## [1.63.0](https://github.com/dryvist/nix-darwin/compare/v1.62.2...v1.63.0) (2026-07-04)
 
 
