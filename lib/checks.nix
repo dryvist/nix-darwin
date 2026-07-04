@@ -30,12 +30,15 @@
     touch $out
   '';
 
-  # Check for unused Nix code (dead bindings)
-  # -L: ignore lambda pattern names (config, lib, pkgs are common in modules)
-  # --fail: exit with error if unused bindings found
+  # Check for unused Nix code — dead bindings AND unused function args.
+  # --fail: exit with error if any unused binding is found.
+  # NOTE: deliberately NOT passing -L. `-L` suppresses unused lambda pattern
+  # names (function args), which is exactly how an orphaned `pkgs` arg sat on
+  # main undetected (introduced in #1251, caught only in #1490). A module must
+  # declare only the args it uses.
   deadnix = pkgs.runCommand "check-deadnix" { } ''
     cd ${src}
-    ${pkgs.lib.getExe pkgs.deadnix} -L --fail .
+    ${pkgs.lib.getExe pkgs.deadnix} --fail .
     touch $out
   '';
 
