@@ -8,6 +8,7 @@
 {
   config,
   lib,
+  pkgs,
   userConfig,
   osConfig,
   hostConfig,
@@ -145,27 +146,34 @@
         unset -f _get_keychain_secret  # No longer needed after init
         unset _KC_USER _KC_AI_DB  # _KC_AI_ACCOUNT persists for runtime gh-token switching
 
-        # --- GitHub Token Context Switching ---
-        _GH_SVC_RESTRICTED='${userConfig.github.tokens.restricted.service}'
-        _GH_DB_RESTRICTED='${userConfig.github.tokens.restricted.keychain}'
-        _GH_SVC_PRIVATE='${userConfig.github.tokens.private.service}'
-        _GH_DB_PRIVATE='${userConfig.github.tokens.private.keychain}'
-        _GH_SVC_DRYVIST='${userConfig.github.tokens.dryvist.service}'
-        _GH_DB_DRYVIST='${userConfig.github.tokens.dryvist.keychain}'
-        _GH_SVC_ADMIN='${userConfig.github.tokens.admin.service}'
-        _GH_DB_ADMIN='${userConfig.github.tokens.admin.keychain}'
-        _GH_SVC_ORG_ADMIN='${userConfig.github.tokens.orgAdmin.service}'
-        _GH_DB_ORG_ADMIN='${userConfig.github.tokens.orgAdmin.keychain}'
+        # --- GitHub Token Context Switching (workstation only) ---
+        # Server-class hosts are keychain-free (matching HF_TOKEN above): their
+        # only GitHub need is the Actions runner, which authenticates via the
+        # sops-rendered GH_RUNNER_PAT, not this interactive tiered-PAT flow. On a
+        # server the whole block is omitted, so `gh-dryvist` never runs against a
+        # non-existent automation.keychain-db (which otherwise errors on login).
+        ${lib.optionalString (!hostConfig.isServer) ''
+          _GH_SVC_RESTRICTED='${userConfig.github.tokens.restricted.service}'
+          _GH_DB_RESTRICTED='${userConfig.github.tokens.restricted.keychain}'
+          _GH_SVC_PRIVATE='${userConfig.github.tokens.private.service}'
+          _GH_DB_PRIVATE='${userConfig.github.tokens.private.keychain}'
+          _GH_SVC_DRYVIST='${userConfig.github.tokens.dryvist.service}'
+          _GH_DB_DRYVIST='${userConfig.github.tokens.dryvist.keychain}'
+          _GH_SVC_ADMIN='${userConfig.github.tokens.admin.service}'
+          _GH_DB_ADMIN='${userConfig.github.tokens.admin.keychain}'
+          _GH_SVC_ORG_ADMIN='${userConfig.github.tokens.orgAdmin.service}'
+          _GH_DB_ORG_ADMIN='${userConfig.github.tokens.orgAdmin.keychain}'
 
-        source ${./gh-token-switching.zsh}
+          source ${./gh-token-switching.zsh}
 
-        # Default to the dryvist tier on every new shell. dryvist's token lives
-        # in the auto-readable automation keychain, so this loads with no password
-        # prompt. This is NOT least-privilege — every shell + AI session defaults
-        # to dryvist write access — a deliberate popups-vs-privilege tradeoff
-        # (2026-05-28). Use gh-private / gh-admin / gh-org-admin to elevate further.
-        unset GITHUB_TOKEN
-        gh-dryvist
+          # Default to the dryvist tier on every new shell. dryvist's token lives
+          # in the auto-readable automation keychain, so this loads with no password
+          # prompt. This is NOT least-privilege — every shell + AI session defaults
+          # to dryvist write access — a deliberate popups-vs-privilege tradeoff
+          # (2026-05-28). Use gh-private / gh-admin / gh-org-admin to elevate further.
+          unset GITHUB_TOKEN
+          gh-dryvist
+        ''}
 
         # --- Custom-auth launcher for `claude` ---
         # Defines av-claude <profile> (aws-vault exec <profile> -- claude). The
@@ -185,58 +193,67 @@
   # ==========================================================================
   # Nix does NOT manage the volume contents — it only creates the symlink. The
   # volume itself is created by a launchd daemon (modules/darwin/apps/orbstack.nix).
-  home.file = lib.mkIf (hostConfig.orbstack.enable or false) {
-    # Symlink the entire Group Container so ALL OrbStack data (Docker images,
-    # containers, volumes, Linux VMs, logs) lives on the dedicated APFS volume.
-    # MIGRATION: Stop OrbStack and move existing data before enabling.
-    # NOTE: `ln` reports a permission error when OrbStack is running because the
-    # Group Container directory is locked. This is expected — the symlink persists
-    # correctly and does not need to be recreated on every rebuild.
-    "Library/Group Containers/HUAQ24HBR6.dev.orbstack".source =
-      config.lib.file.mkOutOfStoreSymlink "/Volumes/${hostConfig.orbstack.containerVolume}";
+  home = {
+    # Ghostty terminfo (just the DB, not the GUI app) on every host so SSHing
+    # in from a Ghostty terminal — which sets TERM=xterm-ghostty — resolves
+    # cleanly even on a headless server that drops the workstation GUI package
+    # list. Must be the `-bin` variant: ghostty.terminfo (source build) fails
+    # its darwin assert. macbook-m4 already pulls this store path via ghostty-bin.
+    packages = [ pkgs.ghostty-bin.terminfo ];
 
-    # Docker daemon configuration for OrbStack: log rotation + build cache GC to
-    # prevent unbounded disk growth. force = true: OrbStack pre-creates this file;
-    # home-manager must overwrite it.
-    ".orbstack/config/docker.json" = {
-      force = true;
-      text = builtins.toJSON (
-        let
-          logMaxFileSize = "25m";
-          logMaxFiles = "25";
-          keepDuration = "2160h"; # 90 days
-          defaultKeepStorage = "10GB";
-          sourceLocalMaxUsedSpace = "10GB";
-          generalMaxUsedSpace = "20GB";
-        in
-        {
-          log-driver = "json-file";
-          log-opts = {
-            max-size = logMaxFileSize;
-            max-file = logMaxFiles;
-          };
-          builder.gc = {
-            enabled = true;
-            inherit defaultKeepStorage;
-            policy = [
-              {
-                inherit keepDuration;
-                filter = [ "type==source.local" ];
-                maxUsedSpace = sourceLocalMaxUsedSpace;
-              }
-              {
-                inherit keepDuration;
-                maxUsedSpace = generalMaxUsedSpace;
-              }
-            ];
-          };
-        }
-      );
+    file = lib.mkIf (hostConfig.orbstack.enable or false) {
+      # Symlink the entire Group Container so ALL OrbStack data (Docker images,
+      # containers, volumes, Linux VMs, logs) lives on the dedicated APFS volume.
+      # MIGRATION: Stop OrbStack and move existing data before enabling.
+      # NOTE: `ln` reports a permission error when OrbStack is running because the
+      # Group Container directory is locked. This is expected — the symlink persists
+      # correctly and does not need to be recreated on every rebuild.
+      "Library/Group Containers/HUAQ24HBR6.dev.orbstack".source =
+        config.lib.file.mkOutOfStoreSymlink "/Volumes/${hostConfig.orbstack.containerVolume}";
+
+      # Docker daemon configuration for OrbStack: log rotation + build cache GC to
+      # prevent unbounded disk growth. force = true: OrbStack pre-creates this file;
+      # home-manager must overwrite it.
+      ".orbstack/config/docker.json" = {
+        force = true;
+        text = builtins.toJSON (
+          let
+            logMaxFileSize = "25m";
+            logMaxFiles = "25";
+            keepDuration = "2160h"; # 90 days
+            defaultKeepStorage = "10GB";
+            sourceLocalMaxUsedSpace = "10GB";
+            generalMaxUsedSpace = "20GB";
+          in
+          {
+            log-driver = "json-file";
+            log-opts = {
+              max-size = logMaxFileSize;
+              max-file = logMaxFiles;
+            };
+            builder.gc = {
+              enabled = true;
+              inherit defaultKeepStorage;
+              policy = [
+                {
+                  inherit keepDuration;
+                  filter = [ "type==source.local" ];
+                  maxUsedSpace = sourceLocalMaxUsedSpace;
+                }
+                {
+                  inherit keepDuration;
+                  maxUsedSpace = generalMaxUsedSpace;
+                }
+              ];
+            };
+          }
+        );
+      };
     };
-  };
 
-  home.sessionVariables = lib.mkIf (hostConfig.orbstack.enable or false) {
-    # Container data on the dedicated external volume.
-    CONTAINER_DATA = "/Volumes/${hostConfig.orbstack.containerVolume}";
+    sessionVariables = lib.mkIf (hostConfig.orbstack.enable or false) {
+      # Container data on the dedicated external volume.
+      CONTAINER_DATA = "/Volumes/${hostConfig.orbstack.containerVolume}";
+    };
   };
 }
