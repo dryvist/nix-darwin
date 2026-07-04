@@ -49,11 +49,16 @@ in
       enable = true;
       package.enable = false;
       background.enable = false;
-      dataVolume = {
-        enable = true;
-        name = hostConfig.orbstack.containerVolume;
-        inherit (hostConfig.orbstack) apfsContainer;
-      };
+    };
+
+    # Dedicated APFS volumes for logical data separation (AI model caches,
+    # container data). Created identically on every host that declares them in
+    # lib/hosts.nix — no quota, logical partitions sharing the container's free
+    # space. See modules/darwin/apps/apfs-volumes.nix.
+    apfsVolumes = lib.mkIf (hostConfig ? apfsVolumes) {
+      enable = true;
+      inherit (hostConfig) apfsContainer;
+      volumes = hostConfig.apfsVolumes;
     };
 
     # --- Cribl Edge (inference hosts) ---

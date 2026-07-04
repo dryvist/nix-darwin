@@ -49,13 +49,22 @@
       prefillBatchSize = 2048;
     };
 
-    # OrbStack container runtime + dedicated external APFS data volume.
-    # When enable = false the runtime + volume symlink/env are omitted entirely.
+    # OrbStack container runtime. The ContainerData volume is created by
+    # apfs-volumes (see apfsVolumes below); OrbStack only consumes it via the
+    # home-manager Group Container symlink. enable = false omits the runtime +
+    # symlink/env entirely.
     orbstack = {
       enable = true;
-      apfsContainer = "disk3"; # Find with: diskutil apfs list
       containerVolume = "ContainerData";
     };
+
+    # Dedicated APFS volumes on the internal container (disk3). Logical
+    # separation only — no quota. diskutil apfs list to find the container.
+    apfsContainer = "disk3";
+    apfsVolumes = [
+      "HuggingFace"
+      "ContainerData"
+    ];
   };
 
   mac-studio = {
@@ -143,8 +152,16 @@
       };
     };
 
-    # OrbStack stays OFF until the real APFS container id is confirmed on the
-    # machine (`diskutil apfs list`) during onboarding; flip to true then.
+    # OrbStack stays OFF — this host uses the Apple `container` runtime, not
+    # OrbStack. The ContainerData volume is still created (apfsVolumes below).
     orbstack.enable = false;
+
+    # Same dedicated APFS volumes as the workstation, created identically.
+    # Container id confirmed via `diskutil apfs list` (single 4TB internal).
+    apfsContainer = "disk3";
+    apfsVolumes = [
+      "HuggingFace"
+      "ContainerData"
+    ];
   };
 }
