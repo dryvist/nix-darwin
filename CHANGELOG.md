@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.62.2](https://github.com/dryvist/nix-darwin/compare/v1.62.1...v1.62.2) (2026-07-04)
+
+
+### Bug Fixes
+
+* **renovate:** repair cribl-edge datasource transform + migrate deprecated options ([#1488](https://github.com/dryvist/nix-darwin/issues/1488)) ([c006e8d](https://github.com/dryvist/nix-darwin/commit/c006e8dd19763c78036a6cbd0281c739777e86e1))
+
 ## [1.62.1](https://github.com/dryvist/nix-darwin/compare/v1.62.0...v1.62.1) (2026-07-04)
 
 
