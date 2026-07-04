@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.64.3](https://github.com/dryvist/nix-darwin/compare/v1.64.2...v1.64.3) (2026-07-04)
+
+
+### Bug Fixes
+
+* **home:** resolve xterm-ghostty terminfo at early login-shell init ([3a80b59](https://github.com/dryvist/nix-darwin/commit/3a80b598729c08d207518d95378a91472adf0db9))
+
 ## [1.64.2](https://github.com/dryvist/nix-darwin/compare/v1.64.1...v1.64.2) (2026-07-04)
 
 
