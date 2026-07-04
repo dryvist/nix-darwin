@@ -214,6 +214,7 @@ in
     # 26 display-name variants (e.g. "Keynote Creator Studio.app"); the removal
     # runs as root at activation and `rm -rf` is idempotent.
     activationScripts.postActivation.text = lib.mkAfter ''
+      echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Removing unused Apple iWork/iLife apps from /Applications..."
       rm -rf /Applications/Keynote*.app /Applications/Numbers*.app /Applications/Pages*.app /Applications/GarageBand*.app /Applications/iMovie*.app
     '';
 

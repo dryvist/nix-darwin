@@ -255,7 +255,7 @@
       # Development shell for CI and local nix tooling
       devShells.aarch64-darwin.default = nixpkgs.legacyPackages.aarch64-darwin.mkShell {
         packages = with nixpkgs.legacyPackages.aarch64-darwin; [
-          nixfmt-rfc-style
+          nixfmt
           statix
           deadnix
           treefmt
