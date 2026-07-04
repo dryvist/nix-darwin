@@ -205,15 +205,25 @@ in
     };
   };
 
-  # --- Class-driven system defaults ---
-  # `class = "server"` (headless machines) flips a few macOS system knobs away
-  # from the laptop-oriented module defaults. `mkDefault` so an explicit host
-  # value still wins. Inlined here rather than a dedicated module: it only
-  # consumes `hostConfig` (already in scope) and is a handful of settings.
-  # A `workstation` needs nothing — the module defaults already match the laptop.
-  system = lib.mkIf hostConfig.isServer {
-    energy.wakeOnMagicPacket = lib.mkDefault true; # Wake-on-LAN for a headless box
-    networkTuning.enable = lib.mkDefault true; # socket buffers for LAN serving
-    appleSiliconTunables.energyMode = lib.mkDefault "unmanaged"; # no High Power Mode on a desktop
+  system = {
+    # --- Remove unused Apple iWork/iLife apps (all hosts) ---
+    # There is no declarative nix primitive to remove a macOS-preinstalled app:
+    # nix is additive, and `homebrew.onActivation.cleanup = "zap"` provably leaves
+    # them (verified on jevans-ms). nix-darwin's native activation interface is the
+    # declarative way to express "these must not exist". Globs cover Apple's macOS
+    # 26 display-name variants (e.g. "Keynote Creator Studio.app"); the removal
+    # runs as root at activation and `rm -rf` is idempotent.
+    activationScripts.postActivation.text = lib.mkAfter ''
+      rm -rf /Applications/Keynote*.app /Applications/Numbers*.app /Applications/Pages*.app /Applications/GarageBand*.app /Applications/iMovie*.app
+    '';
+
+    # --- Class-driven system defaults (server class only) ---
+    # `class = "server"` (headless machines) flips a few macOS system knobs away
+    # from the laptop-oriented module defaults. `mkDefault` so an explicit host
+    # value still wins. `mkIf isServer` gates each: a workstation needs nothing —
+    # the module defaults already match the laptop.
+    energy.wakeOnMagicPacket = lib.mkIf hostConfig.isServer (lib.mkDefault true); # Wake-on-LAN for a headless box
+    networkTuning.enable = lib.mkIf hostConfig.isServer (lib.mkDefault true); # socket buffers for LAN serving
+    appleSiliconTunables.energyMode = lib.mkIf hostConfig.isServer (lib.mkDefault "unmanaged"); # no High Power Mode on a desktop
   };
 }
