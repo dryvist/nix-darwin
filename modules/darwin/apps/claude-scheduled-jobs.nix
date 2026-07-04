@@ -39,11 +39,13 @@ let
   homeDir = "/Users/${cfg.user}";
   logDir = "${homeDir}/Library/Logs/claude-jobs";
 
-  # Per-user nix profile first (where `claude`, `git`, `gh` live), then the
-  # system profile and Homebrew, then the base system — mirrors the maestro /
-  # github-runner agent PATH shape so an unattended agent resolves the same
-  # tools an interactive login shell would.
+  # Vendor-installed claude first (~/.local/bin — the self-updating build that
+  # `claude-latest-install` bootstraps), then the per-user nix profile (git,
+  # gh), the system profile and Homebrew, then the base system — mirrors an
+  # interactive login shell's resolution order so an unattended agent finds
+  # the same tools.
   agentPath = lib.concatStringsSep ":" [
+    "${homeDir}/.local/bin"
     "/etc/profiles/per-user/${cfg.user}/bin"
     "/run/current-system/sw/bin"
     "/opt/homebrew/bin"
@@ -141,8 +143,8 @@ in
 
     claudeBin = lib.mkOption {
       type = lib.types.str;
-      default = "/etc/profiles/per-user/${cfg.user}/bin/claude";
-      description = "Path to the claude CLI binary (defaults to the per-user nix profile).";
+      default = "${homeDir}/.local/bin/claude";
+      description = "Path to the claude CLI binary. Default is the vendor self-updating install, bootstrapped once per host with `claude-latest-install` (shipped in the per-user profile); the nix profile carries no `claude` binary of its own.";
     };
 
     jobs = lib.mkOption {

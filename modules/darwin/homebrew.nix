@@ -26,7 +26,6 @@
 
 {
   lib,
-  pkgs,
   nix-ai,
   hostConfig,
   ...

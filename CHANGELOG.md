@@ -1,5 +1,54 @@
 # Changelog
 
+## [1.64.3](https://github.com/dryvist/nix-darwin/compare/v1.64.2...v1.64.3) (2026-07-04)
+
+
+### Bug Fixes
+
+* **home:** resolve xterm-ghostty terminfo at early login-shell init ([3a80b59](https://github.com/dryvist/nix-darwin/commit/3a80b598729c08d207518d95378a91472adf0db9))
+
+## [1.64.2](https://github.com/dryvist/nix-darwin/compare/v1.64.1...v1.64.2) (2026-07-04)
+
+
+### Bug Fixes
+
+* **llm-gate,gh-runner:** drop RunAtLoad so KeepAlive.PathState governs startup ([e0b82c7](https://github.com/dryvist/nix-darwin/commit/e0b82c77a5e14123929b40d50776059758ac9e11))
+
+## [1.64.1](https://github.com/dryvist/nix-darwin/compare/v1.64.0...v1.64.1) (2026-07-04)
+
+
+### Bug Fixes
+
+* **deps:** bump nix-ai for the transformers 5.12.0 pin (serving outage) ([4d56877](https://github.com/dryvist/nix-darwin/commit/4d5687749fca16f6a870914be4cec7661d128745))
+
+## [1.64.0](https://github.com/dryvist/nix-darwin/compare/v1.63.2...v1.64.0) (2026-07-04)
+
+
+### Features
+
+* enable issues:labeled trigger to close the auto-resolve loop ([#1502](https://github.com/dryvist/nix-darwin/issues/1502)) ([74419a2](https://github.com/dryvist/nix-darwin/commit/74419a29d510a6bf432d37f7c4009a43c20edaa1))
+
+## [1.63.2](https://github.com/dryvist/nix-darwin/compare/v1.63.1...v1.63.2) (2026-07-04)
+
+
+### Bug Fixes
+
+* log the app removal + silence local nixfmt/menu-bar noise ([#1495](https://github.com/dryvist/nix-darwin/issues/1495)) ([241f7e7](https://github.com/dryvist/nix-darwin/commit/241f7e793167a4d9587a17d78997c3d2f0834779))
+
+## [1.63.1](https://github.com/dryvist/nix-darwin/compare/v1.63.0...v1.63.1) (2026-07-04)
+
+
+### Bug Fixes
+
+* **studio:** claude jobs use the vendor install path; ship ghostty terminfo on servers ([87f0c6e](https://github.com/dryvist/nix-darwin/commit/87f0c6e641322db0b7f3b0d1cbd78040127aee05))
+
+## [1.63.0](https://github.com/dryvist/nix-darwin/compare/v1.62.2...v1.63.0) (2026-07-04)
+
+
+### Features
+
+* lean-host cleanup — declarative app removal + _brew prune + strict deadnix ([#1490](https://github.com/dryvist/nix-darwin/issues/1490)) ([090a6ef](https://github.com/dryvist/nix-darwin/commit/090a6efadadf32b1625628832ac758a3da49343a))
+
 ## [1.62.2](https://github.com/dryvist/nix-darwin/compare/v1.62.1...v1.62.2) (2026-07-04)
 
 
