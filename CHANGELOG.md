@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.64.1](https://github.com/dryvist/nix-darwin/compare/v1.64.0...v1.64.1) (2026-07-04)
+
+
+### Bug Fixes
+
+* **deps:** bump nix-ai for the transformers 5.12.0 pin (serving outage) ([4d56877](https://github.com/dryvist/nix-darwin/commit/4d5687749fca16f6a870914be4cec7661d128745))
+
 ## [1.64.0](https://github.com/dryvist/nix-darwin/compare/v1.63.2...v1.64.0) (2026-07-04)
 
 
