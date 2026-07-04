@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.63.0](https://github.com/dryvist/nix-darwin/compare/v1.62.2...v1.63.0) (2026-07-04)
+
+
+### Features
+
+* lean-host cleanup — declarative app removal + _brew prune + strict deadnix ([#1490](https://github.com/dryvist/nix-darwin/issues/1490)) ([090a6ef](https://github.com/dryvist/nix-darwin/commit/090a6efadadf32b1625628832ac758a3da49343a))
+
 ## [1.62.2](https://github.com/dryvist/nix-darwin/compare/v1.62.1...v1.62.2) (2026-07-04)
 
 
