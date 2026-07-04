@@ -23,6 +23,7 @@ in
     ./file-extensions.nix
     ./finder.nix
     ./homebrew.nix
+    ./nix-homebrew.nix
     ./keyboard.nix
     ./launchd-bootstrap.nix
     ./logging.nix # Syslog forwarding to remote server

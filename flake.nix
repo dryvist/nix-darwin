@@ -98,11 +98,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # nix-homebrew: declaratively installs and owns the /opt/homebrew prefix.
-    # nix-darwin's `homebrew` module manages the Brewfile (taps/brews/casks) but
-    # does NOT install the brew binary — so a fresh host (e.g. jevans-ms) fails
-    # `brew bundle` at activation with "command not found: brew". This module
-    # bootstraps Homebrew itself, making activation self-sufficient on any host.
+    # nix-homebrew: installs/owns the /opt/homebrew prefix so `brew bundle` works
+    # on a fresh host. Wired up in modules/darwin/homebrew.nix.
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
 
   };
@@ -163,14 +160,12 @@
           # nix-darwin is Darwin-only and every host is Apple Silicon, so the
           # registry omits `system`; default it here (overridable for an Intel host).
           system = host.system or "aarch64-darwin";
-          # Pass nix-ai through so the homebrew module can pull
-          # `lib.brewFormulae` (formulae required by per-agent home-manager
-          # modules whose preferred install path is brew, e.g. qwen-code).
-          # Keeps the agent module self-contained for future flake graduation —
-          # see nix-ai/docs/architecture/per-agent-flakes.md.
-          # `hostConfig` threads the per-host attrset to every darwin module.
+          # nix-ai: homebrew module pulls `lib.brewFormulae` (per-agent brew
+          # formulae, e.g. qwen-code — see nix-ai per-agent-flakes.md).
+          # hostConfig threads the per-host attrset to every darwin module.
+          # nix-homebrew: consumed by modules/darwin/homebrew.nix.
           specialArgs = {
-            inherit nix-ai hostConfig;
+            inherit nix-ai hostConfig nix-homebrew;
           };
           modules = [
             ./hosts/${label}/default.nix
@@ -180,25 +175,6 @@
 
             # sops-nix: decrypts age-encrypted secrets to /run/secrets at activation
             sops-nix.darwinModules.sops
-
-            # nix-homebrew: owns the /opt/homebrew install so the homebrew module's
-            # `brew bundle` works on a fresh host without a manual bootstrap.
-            nix-homebrew.darwinModules.nix-homebrew
-            {
-              nix-homebrew = {
-                enable = true;
-                # Apple Silicon only — no Intel (Rosetta) prefix needed.
-                enableRosetta = false;
-                # User that owns /opt/homebrew (same across every host).
-                user = userConfig.user.name;
-                # Adopt an existing manual install (macbook-m4) instead of failing.
-                autoMigrate = true;
-                # Keep taps mutable: nix-darwin's `homebrew.taps` and per-agent
-                # nix-ai taps are applied via `brew tap` at activation. Setting
-                # this false would make the taps dir immutable and break them.
-                mutableTaps = true;
-              };
-            }
 
             # mac-app-util: Creates trampolines for system-level apps (/Applications/Nix Apps/)
             mac-app-util.darwinModules.default
