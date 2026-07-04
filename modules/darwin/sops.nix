@@ -10,9 +10,10 @@
 # Encrypted secrets in secrets/           (committed to git, safe to be public)
 # Decrypted secrets in /run/secrets/      (ephemeral, root:wheel 0400)
 #
-# Server-class extras: the llm-gate and github-runner secrets exist only on
+# Server-class extras: the github-runner PAT and HF token exist only on
 # `class = "server"` hosts (the Studio) — the laptop never declares or
-# decrypts them, so its closure and activation are untouched.
+# decrypts them, so its closure and activation are untouched. (The llm-gate's
+# secrets are not here at all — they come from Doppler at runtime.)
 
 {
   config,
@@ -66,19 +67,13 @@ in
       };
     }
     // lib.optionalAttrs isServer {
-      # llm-gate (Caddy TLS + bearer front) — secrets/llm-large.yaml.
-      LLM_LARGE_BEARER_TOKEN = rootOnly // {
-        sopsFile = ../../secrets/llm-large.yaml;
-      };
-      LLM_GATE_AWS_ACCESS_KEY_ID = rootOnly // {
-        sopsFile = ../../secrets/llm-large.yaml;
-      };
-      LLM_GATE_AWS_SECRET_ACCESS_KEY = rootOnly // {
-        sopsFile = ../../secrets/llm-large.yaml;
-      };
-      LLM_GATE_AWS_REGION = rootOnly // {
-        sopsFile = ../../secrets/llm-large.yaml;
-      };
+      # NOTE: the llm-gate (Caddy) secrets — bearer token, Route53 ACME creds,
+      # AWS region — are deliberately NOT managed here. They live only in
+      # Doppler and are injected into the gate at runtime via `doppler run`
+      # (see modules/darwin/llm-gate.nix). Copying them into sops would
+      # duplicate the source of truth and guarantee drift on rotation, and
+      # Route53 management creds are too sensitive for a public repo even
+      # age-encrypted.
 
       # GitHub Actions runner org PAT (fine-grained: org self-hosted-runners
       # RW only) — secrets/github-runner.yaml.
