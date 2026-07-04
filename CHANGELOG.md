@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.64.2](https://github.com/dryvist/nix-darwin/compare/v1.64.1...v1.64.2) (2026-07-04)
+
+
+### Bug Fixes
+
+* **llm-gate,gh-runner:** drop RunAtLoad so KeepAlive.PathState governs startup ([e0b82c7](https://github.com/dryvist/nix-darwin/commit/e0b82c77a5e14123929b40d50776059758ac9e11))
+
 ## [1.64.1](https://github.com/dryvist/nix-darwin/compare/v1.64.0...v1.64.1) (2026-07-04)
 
 
