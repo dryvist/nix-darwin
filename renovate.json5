@@ -16,7 +16,7 @@
   ],
 
   // Repository settings
-  "baseBranches": ["main"],
+  "baseBranchPatterns": ["main"],
   "labels": ["dependencies", "renovate"],
   "assignees": ["@JacobPEvans-personal"],
   "reviewers": ["@JacobPEvans-personal"],
@@ -32,7 +32,7 @@
     "cribl-edge": {
       "defaultRegistryUrlTemplate": "https://cdn.cribl.io/versions.json",
       "format": "json",
-      "transformTemplates": ["{\"releases\":[{\"version\":value.version}]}"]
+      "transformTemplates": ["{\"releases\":[{\"version\":version}]}"]
     }
   },
 
@@ -78,7 +78,7 @@
         "obra/superpowers-marketplace"
       ],
       "groupName": "ai-tools-external",
-      "schedule": ["after 7am every day"]
+      "schedule": ["after 7am"]
     },
 
     // GROUP 3: GitHub Actions - Weekly Monday 7am
@@ -131,5 +131,5 @@
   },
 
   // Platform-specific settings
-  "platformCommit": true // Use GitHub API for commits (enables signing)
+  "platformCommit": "enabled" // Use GitHub API for commits (enables signing)
 }
