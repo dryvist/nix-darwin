@@ -34,21 +34,6 @@ in
     # + shell autocomplete).
     file-extensions.enable = true;
 
-    # --- Lean server: remove bundled Apple consumer apps ---
-    # Server-class hosts enforce-remove Apple's iWork + iLife apps (in
-    # /Applications) that serve no purpose on a headless inference box — GarageBand
-    # and iMovie alone are multi-GB. Matched by bundle id (robust to Apple's
-    # display-name quirks, e.g. Keynote shipping as "Keynote Creator Studio.app").
-    # /System/Applications apps are SIP-protected and out of scope. A workstation
-    # keeps them all (empty list → module no-ops).
-    remove-builtin-apps.removeBundleIds = lib.mkIf hostConfig.isServer [
-      "com.apple.Keynote" # Keynote
-      "com.apple.Numbers" # Numbers
-      "com.apple.Pages" # Pages
-      "com.apple.garageband10" # GarageBand (multi-GB)
-      "com.apple.iMovieApp" # iMovie (multi-GB)
-    ];
-
     # --- OrbStack ---
     # Container runtime as a system-level application on a dedicated APFS volume.
     # Only configured when the host enables it (headless hosts may not).
