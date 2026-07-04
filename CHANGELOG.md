@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.62.1](https://github.com/dryvist/nix-darwin/compare/v1.62.0...v1.62.1) (2026-07-04)
+
+
+### Bug Fixes
+
+* stop running brew update/doctor on login under nix-homebrew ([#1485](https://github.com/dryvist/nix-darwin/issues/1485)) ([0c297e1](https://github.com/dryvist/nix-darwin/commit/0c297e1d4640724238ca3d0bc24e042adb82821d))
+
 ## [1.62.0](https://github.com/dryvist/nix-darwin/compare/v1.61.1...v1.62.0) (2026-07-04)
 
 
