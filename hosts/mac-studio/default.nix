@@ -33,12 +33,8 @@ in
       # 92 % of 128 GB (the module default). Benchmark on-machine.
       wiredLimitMb = 118000;
       # energyMode comes from the server class default ("unmanaged") in ../common.
-
-      # Model cache lives on the internal 4 TB SSD, not the laptop's external
-      # /Volumes/HuggingFace — this keeps the Time Machine exclusion tracking
-      # the real path (the per-folder mdutil call degrades to a logged warn;
-      # Spotlight indexing of ~/.cache is already benign).
-      huggingfaceVolume = "${userConfig.user.homeDir}/.cache/huggingface";
+      # huggingfaceVolume uses the module default (/Volumes/HuggingFace) — the
+      # dedicated APFS volume created by apfs-volumes, identical on every host.
     };
 
     # --- Resource Limits (file descriptors / processes) ---

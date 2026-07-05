@@ -9,7 +9,7 @@ _:
 
 {
   imports = [
-    ./ai-volumes.nix
+    ./apfs-volumes.nix
     ./apple-container-runtime.nix
     ./auto-update-prevention.nix
     ./claude-scheduled-jobs.nix
@@ -21,10 +21,8 @@ _:
     ./streamline-login.nix
   ];
 
-  # OrbStack module is imported but host-specific config (apfsContainer)
-  # must be set in hosts/<host>/default.nix
-  # Data symlink (in hosts/<host>/home.nix) is only needed if dataVolume.enable is true
-  #
-  # ai-volumes module is imported but host-specific config (apfsContainer)
-  # must be set in hosts/<host>/default.nix
+  # APFS volumes (HuggingFace, ContainerData) are created by apfs-volumes.nix;
+  # host-specific apfsContainer + volume list come from lib/hosts.nix.
+  # The OrbStack data symlink (hosts/<host>/home.nix) consumes the ContainerData
+  # volume on hosts that run OrbStack.
 }
