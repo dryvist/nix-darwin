@@ -12,11 +12,17 @@
 #     volumes = [ "HuggingFace" "ContainerData" ];
 #   };
 #
-# Native, no wrapper script: macOS exposes no declarative APFS-volume
-# primitive, so `diskutil apfs addVolume` is invoked directly from a launchd
-# daemon. It is not idempotent — a re-run on an already-present volume exits
-# non-zero harmlessly (existing APFS volumes auto-mount at boot), so
-# RunAtLoad + LaunchOnlyOnce creates the volume once and no-ops thereafter.
+# Native, no wrapper script and no inline shell: macOS exposes no declarative
+# APFS-volume primitive, so `diskutil apfs addVolume` is invoked directly from a
+# launchd daemon. `addVolume` is NOT idempotent (APFS allows duplicate volume
+# names), so idempotency is enforced declaratively by launchd itself:
+# KeepAlive.PathState gates the job on the volume's mount path being ABSENT.
+# launchd starts the job only while /Volumes/<name> does not exist, and stops it
+# the instant addVolume creates + mounts the volume — so an existing volume
+# never triggers a second create. No RunAtLoad (that would run unconditionally).
+# Edge case: a manually-unmounted existing volume looks absent and could be
+# re-created; APFS data volumes auto-mount at boot, so this is not hit in normal
+# operation.
 
 {
   lib,
@@ -39,8 +45,8 @@ let
           "APFS"
           name
         ];
-        RunAtLoad = true;
-        LaunchOnlyOnce = true;
+        # Run only while the volume's mount path is absent; stops once created.
+        KeepAlive.PathState."/Volumes/${name}" = false;
         UserName = "root";
         GroupName = "wheel";
       };
