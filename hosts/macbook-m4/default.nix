@@ -60,6 +60,11 @@ in
     ];
   };
 
+  # --- OpenBao keychain-backed secret-zero ---
+  # Dedicated 72h-auto-lock keychain + resolver agent for OpenBao AppRole
+  # credentials. See modules/darwin/apps/openbao-keychain.nix.
+  programs.openbao-keychain.enable = true;
+
   # ==========================================================================
   # System-Level Tuning (inference performance, power, limits, network)
   # ==========================================================================

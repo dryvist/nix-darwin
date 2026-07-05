@@ -16,6 +16,7 @@ _:
     ./cribl-edge.nix
     ./cribl-stream.nix
     ./github-runner-container.nix
+    ./openbao-keychain.nix
     ./orbstack.nix
     ./raycast.nix
     ./streamline-login.nix

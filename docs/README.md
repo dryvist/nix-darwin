@@ -2,6 +2,19 @@
 
 Comprehensive documentation for the Nix configuration repository.
 
+## Installation
+
+Nothing to install here — this directory is a set of plain markdown
+reference documents, not runnable code. To apply the nix-darwin
+configuration these documents describe, see the [root README](../README.md)
+and [SETUP.md](../SETUP.md).
+
+## Usage
+
+Browse the files below by topic, or search this directory for the term
+you need. Each file is self-contained; no build step is required to read
+them.
+
 ## Files
 
 - **[ANTHROPIC-ECOSYSTEM.md](ANTHROPIC-ECOSYSTEM.md)** - Complete reference for the integrated Anthropic Claude Code ecosystem
@@ -17,6 +30,11 @@ Comprehensive documentation for the Nix configuration repository.
   - Enable Finder auto-extract and shell autocomplete
   - UTI (Uniform Type Identifier) reference
   - Examples and troubleshooting
+
+- **[OPENBAO-KEYCHAIN-TEST-MATRIX.md](OPENBAO-KEYCHAIN-TEST-MATRIX.md)** - Manual verification checklist for the OpenBao keychain resolver
+  - Required after every `programs.openbao-keychain` change before trusting it for autonomous secret delivery
+  - Covers reboot, pre-login, sleep/wake, SSH, and the 72h auto-lock boundary
+  - `nix flake check` only proves the module evaluates, not that it behaves correctly on hardware
 
 ## Related Documentation
 
