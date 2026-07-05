@@ -65,7 +65,8 @@ for domain in "${DOMAINS[@]}"; do
   fi
   # Env var prefix: domain name uppercased, hyphens -> underscores
   # (local-cloud -> LOCAL_CLOUD), matching the Ansible role's naming.
-  var_prefix="$(echo "${domain}" | tr '[:lower:]-' '[:upper:]_')"
+  var_prefix="${domain//-/_}"
+  var_prefix="${var_prefix^^}"
   set_env "${var_prefix}_VAULT_ROLE_ID" "${role_id}"
   set_env "${var_prefix}_VAULT_SECRET_ID" "${secret_id}"
   log "${domain} published as ${var_prefix}_VAULT_ROLE_ID/_SECRET_ID"
