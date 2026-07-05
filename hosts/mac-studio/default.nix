@@ -33,11 +33,8 @@ in
       # 92 % of 128 GB (the module default). Benchmark on-machine.
       wiredLimitMb = 118000;
       # energyMode comes from the server class default ("unmanaged") in ../common.
-
-      # Model cache lives on the dedicated /Volumes/HuggingFace APFS volume
-      # (created by apfs-volumes, identical to the workstation) — Spotlight off
-      # + Time Machine excluded on the volume root.
-      huggingfaceVolume = "/Volumes/HuggingFace";
+      # huggingfaceVolume uses the module default (/Volumes/HuggingFace) — the
+      # dedicated APFS volume created by apfs-volumes, identical on every host.
     };
 
     # --- Resource Limits (file descriptors / processes) ---
