@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.64.4](https://github.com/dryvist/nix-darwin/compare/v1.64.3...v1.64.4) (2026-07-04)
+
+
+### Bug Fixes
+
+* **llm-gate:** move service alias to the public zone so DNS-01 issues ([#1518](https://github.com/dryvist/nix-darwin/issues/1518)) ([cd0e74f](https://github.com/dryvist/nix-darwin/commit/cd0e74fc0d8e2dbeda4046aab93ae2b5f4367fc0))
+
 ## [1.64.3](https://github.com/dryvist/nix-darwin/compare/v1.64.2...v1.64.3) (2026-07-04)
 
 

@@ -27,7 +27,7 @@ Boot Time (System Context)
     │    ⏳ Waits for /nix/store via /bin/wait4path
     │    ✅ Creates /run/current-system symlink ONLY
     │    No permission checks, just the critical symlink
-    │    Enables boot-time services (Ollama, OrbStack, etc.)
+    │    Enables boot-time services (OrbStack, etc.)
     │
     └──→ org.nixos.activate-system (original - LaunchDaemon)
          ❌ May fail: App Management requires GUI
@@ -204,7 +204,7 @@ After implementing, verify:
 2. **At boot (after mount)**: `org.nixos.symlink-boot` waits for `/nix/store`, then creates symlink
 3. **At boot (parallel)**: `org.nixos.activate-system` runs but may fail (no GUI) - doesn't matter,
    symlink-boot already created the symlink
-4. **Boot services start**: Ollama, OrbStack, etc. can now find their binaries
+4. **Boot services start**: OrbStack, etc. can now find their binaries
 5. **At login (fallback)**: `org.nixos.activation-recovery` checks if full activation is needed
 6. **If needed**: Runs `sudo /nix/var/nix/profiles/system/activate` with GUI context
 7. **User notified**: macOS notification confirms recovery (if it ran)

@@ -25,7 +25,7 @@ Detailed structure of the nix-darwin configuration.
 ├── hosts/                         # Host-specific configurations
 │   └── macbook-m4/                # Active: M4 Max MacBook Pro
 │       ├── default.nix            # Darwin system settings
-│       └── home.nix               # User environment (Ollama, volumes)
+│       └── home.nix               # User environment (packages, volumes)
 │
 ├── modules/                       # Reusable configuration modules
 │   └── darwin/

@@ -33,12 +33,8 @@ in
       # 92 % of 128 GB (the module default). Benchmark on-machine.
       wiredLimitMb = 118000;
       # energyMode comes from the server class default ("unmanaged") in ../common.
-
-      # Model cache lives on the internal 4 TB SSD, not the laptop's external
-      # /Volumes/HuggingFace — this keeps the Time Machine exclusion tracking
-      # the real path (the per-folder mdutil call degrades to a logged warn;
-      # Spotlight indexing of ~/.cache is already benign).
-      huggingfaceVolume = "${userConfig.user.homeDir}/.cache/huggingface";
+      # huggingfaceVolume uses the module default (/Volumes/HuggingFace) — the
+      # dedicated APFS volume created by apfs-volumes, identical on every host.
     };
 
     # --- Resource Limits (file descriptors / processes) ---
@@ -75,10 +71,15 @@ in
       enable = true;
       domain = "${hostConfig.hostName}.${userConfig.baseDomain}";
       tlsMode = "route53";
-      # Stable service-alias CNAME → this host, so consumers reach the gate by
-      # capability name rather than the host name. Composed from baseDomain
-      # (never a flat literal — matches the repo's FQDN convention).
-      extraHostnames = [ "llm-large.pve.${userConfig.baseDomain}" ];
+      # Stable service-alias → this host, so consumers reach the gate by
+      # capability name rather than the host name. Placed one label directly
+      # under the base domain, NOT under an internal-only subdomain: the Caddy
+      # route53 resolver strips a single label to find the hosted zone, so a
+      # deeper name under a subdomain the public DNS provider does not host
+      # resolves to a zone it cannot write to and DNS-01 fails. One label under
+      # the public zone issues cleanly, same as the host FQDN. (A future
+      # public-facing capability name is tracked separately.)
+      extraHostnames = [ "llm-large.${userConfig.baseDomain}" ];
     };
 
     # ========================================================================
