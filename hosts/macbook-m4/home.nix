@@ -4,10 +4,32 @@
 # keychain/token init, copyApps, MLX, OrbStack wiring) lives in ../common/home.nix.
 # This file adds only the host-unique bits — the TCC-sensitive GUI app list.
 
-{ pkgs, ... }:
+{
+  lib,
+  pkgs,
+  userConfig,
+  ...
+}:
 
+let
+  llmEndpoint = "https://llm.${userConfig.baseDomain}/v1";
+in
 {
   imports = [ ../common/home.nix ];
+
+  # Open local-LLM fallback harness. Workstation-only: flake.nix imports the
+  # module only for macbook-m4, and this host gets the runtime token from the
+  # automation keychain instead of a server-side sops file.
+  programs.openHarness = {
+    enable = true;
+    endpoint = llmEndpoint;
+    tokenEnvVar = "OPENAI_API_KEY";
+  };
+
+  programs.zsh.initContent = lib.mkAfter ''
+    # Local LLM router bearer token for OpenAI-compatible fallback harnesses.
+    export OPENAI_API_KEY=''${OPENAI_API_KEY:-"$(security find-generic-password -s 'OPENAI_API_KEY' -a '${userConfig.keychain.aiAccount}' -w '${userConfig.keychain.aiDb}' 2>/dev/null || echo "")"}
+  '';
 
   # ==========================================================================
   # TCC-Sensitive GUI Applications (using copyApps for stable paths)
