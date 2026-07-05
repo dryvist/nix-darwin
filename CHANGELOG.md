@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.66.0](https://github.com/dryvist/nix-darwin/compare/v1.65.0...v1.66.0) (2026-07-05)
+
+
+### Features
+
+* add MacBook open harness tools ([#1530](https://github.com/dryvist/nix-darwin/issues/1530)) ([6db6171](https://github.com/dryvist/nix-darwin/commit/6db61713ef8cb993d989df78458565089d26463f))
+
 ## [1.65.0](https://github.com/dryvist/nix-darwin/compare/v1.64.4...v1.65.0) (2026-07-05)
 
 
