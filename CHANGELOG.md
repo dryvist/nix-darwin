@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.65.0](https://github.com/dryvist/nix-darwin/compare/v1.64.4...v1.65.0) (2026-07-05)
+
+
+### Features
+
+* **openbao:** dedicated keychain + resolver LaunchAgent for secret-zero ([#1493](https://github.com/dryvist/nix-darwin/issues/1493)) ([9aab7a1](https://github.com/dryvist/nix-darwin/commit/9aab7a178da0e5d10f40477d3aec6cebad4b5d34))
+
 ## [1.64.4](https://github.com/dryvist/nix-darwin/compare/v1.64.3...v1.64.4) (2026-07-04)
 
 
