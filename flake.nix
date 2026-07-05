@@ -60,6 +60,16 @@
       };
     };
 
+    # Focused fallback harness for open/local-LLM agent CLIs (Crush + MiMoCode).
+    # Enabled only on workstation hosts that explicitly import the module below.
+    nix-ai-open-harness = {
+      url = "github:dryvist/nix-ai-open-harness";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        home-manager.follows = "home-manager";
+      };
+    };
+
     # Cross-platform home-manager modules (git, zsh, vscode, monitoring, shells)
     nix-home = {
       url = "github:dryvist/nix-home";
@@ -91,6 +101,7 @@
       darwin,
       home-manager,
       nix-ai,
+      nix-ai-open-harness,
       nix-home,
       determinate,
       sops-nix,
@@ -179,6 +190,9 @@
                 sharedModules = [
                   nix-ai.homeManagerModules.default
                   nix-home.homeManagerModules.default
+                ]
+                ++ lib.optionals (label == "macbook-m4") [
+                  nix-ai-open-harness.homeManagerModules.default
                 ];
               };
             }
