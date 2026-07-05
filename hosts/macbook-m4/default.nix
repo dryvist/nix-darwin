@@ -38,7 +38,6 @@ in
       "com.google.GoogleUpdater.wake" # Google hourly updater
       "us.zoom.updater" # Zoom hourly updater
       "us.zoom.updater.login.check" # Zoom login check at login
-      "com.ollama.ollama" # Redundant — vllm-mlx is primary inference server
       # Boot-time race condition daemons — crash-loop before dependencies ready,
       # corrupt WindowServer client dispatch table, cause sustained UI lag/freezes
       "com.apple.universalaccessd" # No accessibility features enabled

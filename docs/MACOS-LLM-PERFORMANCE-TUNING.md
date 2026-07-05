@@ -2,7 +2,7 @@
 
 Exhaustive reference for every macOS / hardware-layer knob that can affect local LLM inference on
 this machine — **Apple Silicon M4 Max MacBook Pro, 128 GB unified memory, macOS Tahoe 26.x**
-(frameworks: MLX / vllm-mlx, llama.cpp, Ollama, LM Studio).
+(frameworks: MLX / vllm-mlx, llama.cpp, LM Studio).
 
 Every parameter is recorded here even when left at its macOS default, so the OS surface is fully
 documented. Knobs that this repo wires declaratively link to their nix option; knobs that cannot be
@@ -12,7 +12,7 @@ set from nix (or belong to the LLM-software layer) are marked accordingly.
 
 This repo (`nix-darwin`) owns the **OS / launchd layer**: `sysctl`, `pmset`, `launchd`
 daemons/agents (incl. environment), `defaults`, filesystem. The **LLM-software layer** — MLX
-process-level memory limits, KV-cache bounds, llama.cpp/Ollama runtime flags — is tuned separately
+process-level memory limits, KV-cache bounds, llama.cpp runtime flags — is tuned separately
 and is listed under [Owned by the LLM-software layer](MACOS-LLM-PERFORMANCE-TUNING-PT2.md#owned-by-the-llm-software-layer-not-os-config)
 for completeness only.
 

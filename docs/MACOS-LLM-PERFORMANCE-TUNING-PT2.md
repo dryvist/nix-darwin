@@ -49,9 +49,6 @@ Tuned in the LLM-software session, recorded here so the boundary is explicit:
   class — the OS `iogpu.wired_limit_mb` cap alone does not prevent it.
 - **llama.cpp flags:** `-ngl 999` (offload all layers), `-fa` (flash attention), `--mlock`,
   `-t 12` (P-core count), `-c <ctx>`. `--mlock` interacts with the OS wired-memory cap.
-- **Ollama env (`OLLAMA_FLASH_ATTENTION`, `OLLAMA_KV_CACHE_TYPE=q8_0`, etc.):** N/A on this host —
-  Ollama is disabled (vllm-mlx is primary). If re-enabled it would be a LaunchAgent
-  `EnvironmentVariables` block in nix-ai, not here.
 
 ## Verification
 

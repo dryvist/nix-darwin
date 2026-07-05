@@ -766,7 +766,7 @@ sudo darwin-rebuild switch --flake ~/.config/nix
    { ... }:
    {
      # User-level config is provided by nix-ai and nix-home flake inputs.
-     # Host-specific user settings (e.g., Ollama, APFS volumes) go here.
+     # Host-specific user settings (e.g., APFS volumes) go here.
    }
    ```
 
