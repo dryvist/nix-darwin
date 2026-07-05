@@ -956,15 +956,15 @@
       "locked": {
         "lastModified": 1783284729,
         "narHash": "sha256-WEbu2RTWQ76koGE42eyioW+Gd2lGbpQ187gNYphg0iE=",
-        "ref": "refs/heads/main",
+        "owner": "dryvist",
+        "repo": "nix-ai-open-harness",
         "rev": "af7366fcbbcf5c527a4a154d06ad2a67ca7ce5e1",
-        "revCount": 2,
-        "type": "git",
-        "url": "ssh://git@github.com/dryvist/nix-ai-open-harness.git"
+        "type": "github"
       },
       "original": {
-        "type": "git",
-        "url": "ssh://git@github.com/dryvist/nix-ai-open-harness.git"
+        "owner": "dryvist",
+        "repo": "nix-ai-open-harness",
+        "type": "github"
       }
     },
     "nix-ai-tools": {
