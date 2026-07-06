@@ -26,6 +26,10 @@ in
   # Network hostname from the per-host registry.
   networking.hostName = hostConfig.hostName;
 
+  # Workstations keep macOS' automatic timezone behavior. Server hosts pin UTC
+  # so the Friday 00:00 launchd schedule lands at Friday 00:00 UTC there.
+  time.timeZone = if hostConfig.isServer then "UTC" else null;
+
   # SSH/Remote Login — macOS Remote Login via launchd (Settings > General > Sharing).
   services.openssh.enable = true;
 
@@ -228,6 +232,7 @@ in
     # from the laptop-oriented module defaults. `mkDefault` so an explicit host
     # value still wins. `mkIf isServer` gates each: a workstation needs nothing —
     # the module defaults already match the laptop.
+    nixDarwinAutoUpgrade.enable = true; # Friday 00:00 local-time launchd target; server hosts are pinned to UTC above.
     energy.wakeOnMagicPacket = lib.mkIf hostConfig.isServer (lib.mkDefault true); # Wake-on-LAN for a headless box
     networkTuning.enable = lib.mkIf hostConfig.isServer (lib.mkDefault true); # socket buffers for LAN serving
     appleSiliconTunables.energyMode = lib.mkIf hostConfig.isServer (lib.mkDefault "unmanaged"); # no High Power Mode on a desktop
