@@ -124,14 +124,25 @@
       ];
       # Parsers differ per backend, so the global parser is off and each
       # physical model pins its own (harmony needs vllm-mlx >= 0.4.0).
-      # --reasoning-parser is deliberately NOT set for gpt-oss yet: it has
-      # historically conflicted with tool-call parsing in streaming mode —
-      # re-evaluate during the benchmark pass.
+      # --reasoning-parser WAS deliberately left unset for gpt-oss (comment
+      # here previously cited a --reasoning-parser/--tool-call-parser
+      # streaming conflict in vllm-mlx 0.2.6). Confirmed live 2026-07-06 that
+      # leaving it unset is the actual root cause of harmony channel markers
+      # ("analysis" ... "assistantfinal") leaking verbatim into
+      # message.content in streaming mode (OpenWebUI's request path) — the
+      # gpt-oss reasoning parser (added vllm-mlx 0.2.7 for exactly this
+      # channel-token format) was never engaged, so nothing strips the
+      # channel markers or routes analysis text to reasoning_content. Current
+      # pin is vllm-mlx 0.4.0 (lib/versions.nix), well past the 0.2.6
+      # conflict; --tool-call-parser harmony and --reasoning-parser gpt_oss
+      # coexist fine there.
       toolCallParser = null;
       modelExtraArgs = {
         "mlx-community/gpt-oss-120b-MXFP4-Q8" = [
           "--tool-call-parser"
           "harmony"
+          "--reasoning-parser"
+          "gpt_oss"
         ];
         "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit" = [
           "--tool-call-parser"
