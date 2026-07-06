@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.67.0](https://github.com/dryvist/nix-darwin/compare/v1.66.1...v1.67.0) (2026-07-06)
+
+
+### Features
+
+* schedule auto-upgrade directly ([#1535](https://github.com/dryvist/nix-darwin/issues/1535)) ([45caee9](https://github.com/dryvist/nix-darwin/commit/45caee9abc3d61d4963561b21a811ecdee522070))
+
 ## [1.66.1](https://github.com/dryvist/nix-darwin/compare/v1.66.0...v1.66.1) (2026-07-06)
 
 
