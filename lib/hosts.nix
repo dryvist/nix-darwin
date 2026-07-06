@@ -160,6 +160,23 @@
           pagedKvCache = false;
           enablePrefixCaching = false;
         };
+        # Global programs.mlx.maxRequestTokens (8192, see modules/mlx in nix-ai)
+        # hard-caps every client-requested max_tokens on this host — good
+        # general defense against a runaway generation, but too low for this
+        # model's actual job: it is Hermes's agent brain (NousResearch
+        # hermes-agent on LXC 517000), whose multi-turn tool-calling and
+        # truncation-recovery paths legitimately need more than 8192 output
+        # tokens per turn (a ~600-word explanation alone is close to that
+        # ceiling). Raise only this model's ceiling back to vllm-mlx's own
+        # 32768 server default; gpt-oss and any future model keep the tighter
+        # 8192 safety net. 32768 (not higher) also matches hermes-agent's own
+        # hardcoded retry-boost ceiling (NousResearch/hermes-agent
+        # conversation_loop.py `max(32768, requested_cap)`), so a truncated
+        # response's retry-boost lands exactly at the server's cap instead of
+        # exceeding it.
+        "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit" = {
+          maxRequestTokens = 32768;
+        };
       };
     };
 
