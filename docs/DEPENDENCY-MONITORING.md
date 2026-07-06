@@ -10,8 +10,9 @@ This repository uses a **complementary dependency update strategy** combining:
 2. **Custom Workflow** (fallback) - Manual flake updates ONLY when Renovate hasn't acted
 
 Host-side application is separate: `modules/darwin/auto-upgrade.nix` runs `darwin-rebuild switch`
-against the latest merged `dryvist/nix-darwin` flake on each configured Mac. It does not mutate
-`flake.lock` or create dependency PRs.
+directly on a weekly root `launchd` schedule against the latest merged `dryvist/nix-darwin` flake on
+each configured Mac. Server hosts pin UTC so the same Friday 00:00 schedule lands at Friday 00:00 UTC
+there. It does not mutate `flake.lock` or create dependency PRs.
 
 ## Update Automation Layers
 
@@ -21,7 +22,7 @@ against the latest merged `dryvist/nix-darwin` flake on each configured Mac. It 
 | **Custom Workflow** (Fallback) | Safety net | All inputs IF no Renovate PR exists | Tue/Fri (all), daily (AI-focused) | No |
 | **repository_dispatch** | Rapid response | ai-assistant-instructions only | Instant (on push to source) | No |
 | **workflow_dispatch** | Manual | Any inputs | On demand | No |
-| **Host auto-upgrade** | Apply merged config | Current host system profile | Friday 00:00 UTC target | N/A |
+| **Host auto-upgrade** | Apply merged config | Current host system profile | Friday 00:00 local time (UTC on server hosts) | N/A |
 
 **Key relationship:** Custom Workflow checks if a Renovate PR exists and skips if one does, preventing duplicate update attempts.
 
