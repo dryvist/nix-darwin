@@ -174,7 +174,9 @@ Both configured Macs apply the latest merged `dryvist/nix-darwin` flake automati
 `modules/darwin/auto-upgrade.nix`.
 
 - Target: Friday 00:00 local time; server hosts pin `time.timeZone = "UTC"`, so the Studio lands at Friday 00:00 UTC.
-- Mechanism: a root `launchd` daemon runs `/run/current-system/sw/bin/darwin-rebuild switch --flake github:dryvist/nix-darwin#<host> --refresh --no-write-lock-file --print-build-logs` directly at the scheduled time.
+- Mechanism: a root `launchd` daemon runs
+  `/run/current-system/sw/bin/darwin-rebuild switch --flake github:dryvist/nix-darwin#<host> --refresh --no-write-lock-file --print-build-logs`
+  directly at the scheduled time.
 - Logs: `/var/log/nix-darwin-auto-upgrade/` (`stdout` and `stderr`, rotated by `newsyslog`).
 
 The daemon runs as root, so it does not need `sudo`. The limited NOPASSWD sudoers entry in
