@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.67.1](https://github.com/dryvist/nix-darwin/compare/v1.67.0...v1.67.1) (2026-07-06)
+
+
+### Bug Fixes
+
+* **mlx:** enable gpt-oss reasoning parser to stop harmony channel leak ([#1537](https://github.com/dryvist/nix-darwin/issues/1537)) ([c4e3ce3](https://github.com/dryvist/nix-darwin/commit/c4e3ce3dd8a14841808fd6172e5d4b7f66695941))
+
 ## [1.67.0](https://github.com/dryvist/nix-darwin/compare/v1.66.1...v1.67.0) (2026-07-06)
 
 
