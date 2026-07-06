@@ -168,6 +168,27 @@ Only use Homebrew when:
 
 ## Updating Packages
 
+### Automatic Host Upgrades
+
+Both configured Macs apply the latest merged `dryvist/nix-darwin` flake automatically via
+`modules/darwin/auto-upgrade.nix`.
+
+- Target: Friday 00:00 UTC.
+- Mechanism: a root `launchd` daemon wakes hourly and runs only once for the current UTC target window.
+- Command: `/run/current-system/sw/bin/darwin-rebuild switch --flake github:dryvist/nix-darwin#<host> --refresh --no-write-lock-file --print-build-logs`.
+- Logs: `/var/log/nix-darwin-auto-upgrade/`.
+- Remote reporting: status lines are sent with `logger -t nix-darwin-auto-upgrade` and flow through syslog forwarding.
+
+The daemon runs as root, so it does not need `sudo`. The limited NOPASSWD sudoers entry in
+`modules/darwin/security.nix` is still useful for manual or user-context fallback checks:
+
+```bash
+sudo -n /run/current-system/sw/bin/darwin-rebuild build --flake github:dryvist/nix-darwin#$(hostname -s) --refresh --no-write-lock-file
+```
+
+Dependency PRs and `flake.lock` updates are still produced by Renovate and GitHub Actions. The host-side
+auto-upgrade only consumes changes that have already merged.
+
 ### Update All Nix Packages
 
 Nix flakes pin exact versions. To get newer versions:

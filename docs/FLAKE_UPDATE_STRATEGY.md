@@ -3,6 +3,8 @@
 ## Overview
 
 This repository uses automated daily flake updates via GitHub Actions workflow (`.github/workflows/deps-update-flake.yml`).
+Configured Macs separately apply the latest merged flake through `modules/darwin/auto-upgrade.nix`;
+that host-side job does not update `flake.lock`.
 
 ## Update Schedule
 
@@ -10,6 +12,7 @@ This repository uses automated daily flake updates via GitHub Actions workflow (
 - **Tuesday & Friday**: All flake inputs (including darwin, home-manager, system packages)
 - **Manual trigger**: `workflow_dispatch` with optional `update_all` flag
 - **Triggered sync**: `repository_dispatch` for `ai-assistant-instructions` only (fast path)
+- **Host application**: `darwin-rebuild switch` targets Friday 00:00 UTC on each configured Mac
 
 ## AI-Focused Inputs (Daily Updates)
 

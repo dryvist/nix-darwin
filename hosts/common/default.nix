@@ -228,6 +228,7 @@ in
     # from the laptop-oriented module defaults. `mkDefault` so an explicit host
     # value still wins. `mkIf isServer` gates each: a workstation needs nothing —
     # the module defaults already match the laptop.
+    nixDarwinAutoUpgrade.enable = true; # Friday 00:00 UTC target, enforced by root launchd checker
     energy.wakeOnMagicPacket = lib.mkIf hostConfig.isServer (lib.mkDefault true); # Wake-on-LAN for a headless box
     networkTuning.enable = lib.mkIf hostConfig.isServer (lib.mkDefault true); # socket buffers for LAN serving
     appleSiliconTunables.energyMode = lib.mkIf hostConfig.isServer (lib.mkDefault "unmanaged"); # no High Power Mode on a desktop
