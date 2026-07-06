@@ -92,7 +92,7 @@ in
       };
     };
 
-    system.activationScripts.postActivation.text = ''
+    system.activationScripts.nixDarwinAutoUpgradeDirs.text = ''
       /usr/bin/install -d -o root -g wheel -m 0755 "${cfg.logDir}" "${cfg.stateDir}"
     '';
 

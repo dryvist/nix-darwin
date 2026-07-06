@@ -43,17 +43,16 @@ utc_seconds_of_day=$((epoch % 86400))
 utc_weekday=$((((utc_day + 3) % 7) + 1))
 target_seconds_of_day=$(((target_hour * 3600) + (target_minute * 60)))
 
-if [ "${utc_weekday}" -lt "${target_weekday}" ]; then
-  log "skip: next target is weekday ${target_weekday} ${target_hour}:${target_minute} UTC"
-  exit 0
+diff=$((utc_weekday - target_weekday))
+if [ "${diff}" -lt 0 ]; then
+  days_ago=$((diff + 7))
+elif [ "${diff}" -eq 0 ] && [ "${utc_seconds_of_day}" -lt "${target_seconds_of_day}" ]; then
+  days_ago=7
+else
+  days_ago="${diff}"
 fi
 
-if [ "${utc_weekday}" -eq "${target_weekday}" ] && [ "${utc_seconds_of_day}" -lt "${target_seconds_of_day}" ]; then
-  log "skip: waiting for ${target_hour}:${target_minute} UTC target"
-  exit 0
-fi
-
-target_day=$((utc_day - (utc_weekday - target_weekday)))
+target_day=$((utc_day - days_ago))
 last_attempted=""
 if [ -r "${state_file}" ]; then
   last_attempted="$(/bin/cat "${state_file}")"
