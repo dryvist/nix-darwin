@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.69.0](https://github.com/dryvist/nix-darwin/compare/v1.68.5...v1.69.0) (2026-07-07)
+
+
+### Features
+
+* **logging:** per-AI-CLI log capture + dedicated Cribl Edge shipping ([#1561](https://github.com/dryvist/nix-darwin/issues/1561)) ([33578c1](https://github.com/dryvist/nix-darwin/commit/33578c1be06fdcc6e9eda46db8efd4cca73a6f32))
+
 ## [1.68.5](https://github.com/dryvist/nix-darwin/compare/v1.68.4...v1.68.5) (2026-07-07)
 
 
