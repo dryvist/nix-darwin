@@ -41,83 +41,101 @@ in
         # the whole config load down with it. Shape mirrors the stock
         # in_file_varlog entry in default/edge/inputs.yml.
         "inputs.yml" = ''
-          inputs:
-            in_llm_logs:
-              type: file
-              disabled: false
-              mode: manual
-              interval: 10
-              path: ${userConfig.user.homeDir}/Library/Logs/vllm-mlx/
-              filenames:
-                - vllm-mlx.log
-                - vllm-mlx.error.log
-              tailOnly: false
-              sendToRoutes: false
-              connections:
-                - pipeline: llm_logs
-                  output: cribl_llm
-            in_system_metrics:
-              type: system_metrics
-              disabled: false
-              sendToRoutes: false
-              connections:
-                - pipeline: llm_metrics
-                  output: cribl_stream
-            # Per-AI-CLI session logs. Directories + rotation + the opt-in
-            # capture wrappers come from programs.ai-cli-log-shipping
-            # (enabled in ./default.nix). One input -> one dedicated tcpjson
-            # output per CLI so Stream routes/enriches per service port; no
-            # local pipeline — index/sourcetype stamping is Stream-side.
-            # `*.log` matches the wrapper typescript plus anything a CLI's
-            # own config drops into its directory.
-            in_codex_logs:
-              type: file
-              disabled: false
-              mode: manual
-              interval: 10
-              path: ${userConfig.user.homeDir}/Library/Logs/codex/
-              filenames:
-                - "*.log"
-              tailOnly: false
-              sendToRoutes: false
-              connections:
-                - output: cribl_codex
-            in_agy_logs:
-              type: file
-              disabled: false
-              mode: manual
-              interval: 10
-              path: ${userConfig.user.homeDir}/Library/Logs/agy/
-              filenames:
-                - "*.log"
-              tailOnly: false
-              sendToRoutes: false
-              connections:
-                - output: cribl_agy
-            in_copilot_logs:
-              type: file
-              disabled: false
-              mode: manual
-              interval: 10
-              path: ${userConfig.user.homeDir}/Library/Logs/copilot/
-              filenames:
-                - "*.log"
-              tailOnly: false
-              sendToRoutes: false
-              connections:
-                - output: cribl_copilot
-            in_vscode_logs:
-              type: file
-              disabled: false
-              mode: manual
-              interval: 10
-              path: ${userConfig.user.homeDir}/Library/Logs/vscode/
-              filenames:
-                - "*.log"
-              tailOnly: false
-              sendToRoutes: false
-              connections:
-                - output: cribl_vscode
+                    inputs:
+                      in_llm_logs:
+                        type: file
+                        disabled: false
+                        mode: manual
+                        interval: 10
+                        path: ${userConfig.user.homeDir}/Library/Logs/vllm-mlx/
+                        filenames:
+                          - vllm-mlx.log
+                          - vllm-mlx.error.log
+                        tailOnly: false
+                        sendToRoutes: false
+                        connections:
+                          - pipeline: llm_logs
+                            output: cribl_llm
+                      in_system_metrics:
+                        type: system_metrics
+                        disabled: false
+                        sendToRoutes: false
+                        connections:
+                          - pipeline: llm_metrics
+                            output: cribl_stream
+                      # vllm-mlx Prometheus metrics. The per-worker /metrics endpoints
+                      # (programs.mlx enableMetrics, on by default) live on ephemeral
+                      # llama-swap-managed ports (startPort 11436+), so the only
+                      # statically scrapeable surface is the llama-swap proxy itself on
+                      # the loopback :11434 convention (nix-ai programs.mlx.port
+                      # default, mirrored by llm-gate's apiUpstreamPort).
+                      in_llm_prom:
+                        type: prometheus
+                        disabled: false
+                        discoveryType: static
+                        targetList:
+                          - http://127.0.0.1:11434/metrics
+                        interval: 15
+                        sendToRoutes: false
+                        connections:
+                          - pipeline: llm_prom
+                            output: cribl_llm
+                      # Per-AI-CLI session logs. Directories + rotation + the opt-in
+                      # capture wrappers come from programs.ai-cli-log-shipping
+                      # (enabled in ./default.nix). One input -> one dedicated tcpjson
+                      # output per CLI so Stream routes/enriches per service port; no
+                      # local pipeline — index/sourcetype stamping is Stream-side.
+                      # `*.log` matches the wrapper typescript plus anything a CLI's
+                      # own config drops into its directory.
+                      in_codex_logs:
+                        type: file
+                        disabled: false
+                        mode: manual
+                        interval: 10
+                        path: ${userConfig.user.homeDir}/Library/Logs/codex/
+                        filenames:
+                          - "*.log"
+                        tailOnly: false
+                        sendToRoutes: false
+                        connections:
+                          - output: cribl_codex
+                      in_agy_logs:
+                        type: file
+                        disabled: false
+                        mode: manual
+                        interval: 10
+                        path: ${userConfig.user.homeDir}/Library/Logs/agy/
+                        filenames:
+                          - "*.log"
+                        tailOnly: false
+                        sendToRoutes: false
+                        connections:
+                          - output: cribl_agy
+                      in_copilot_logs:
+                        type: file
+                        disabled: false
+                        mode: manual
+                        interval: 10
+                        path: ${userConfig.user.homeDir}/Library/Logs/copilot/
+                        filenames:
+                          - "*.log"
+                        tailOnly: false
+                        sendToRoutes: false
+                        connections:
+                          - output: cribl_copilot
+                      in_vscode_logs:
+                        type: file
+                        disabled: false
+                        mode: manual
+                        interval: 10
+                        path: ${userConfig.user.homeDir}/Library/Logs/vscode/
+                        filenames:
+                          - "*.log"
+                        tailOnly: false
+                        sendToRoutes: false
+                        connections:
+                          - output: cribl_vscode
+          ||||||| parent of 410ecbf (feat(llm): scrape llama-swap Prometheus metrics into the llm_metrics index)
         ''
         # Appended only where programs.llm-gate is enabled (Studio-only
         # module): other mlx hosts get no input for a path that never exists.
@@ -207,6 +225,18 @@ in
                   - name: sourcetype
                     value: "'mlx:metrics'"
         '';
+        # Scraped inference metrics land in the llm_metrics METRIC index
+        # (unlike the llm event index the log pipelines stamp).
+        "pipelines/llm_prom/conf.yml" = ''
+          output: default
+          functions:
+            - id: eval
+              filter: "true"
+              conf:
+                add:
+                  - name: index
+                    value: "'llm_metrics'"
+        '';
       };
       # Claude Code logs stay on the pack -> cribl_stream (:10300) path; a
       # repoint to a dedicated per-CLI port (:10311) is an optional future
@@ -221,57 +251,5 @@ in
       };
     };
 
-    # --- Cribl Stream (local egress aggregator) — DISABLED (idle) ---
-    # The local-Stream cutover is reverted: cribl-edge ships directly to the
-    # Proxmox HAProxy (:10300), so a local Stream listening on :10301 receives
-    # nothing and sits idle. Apple `container` runs it as a lightweight VM whose
-    # `--memory` is the VM's RAM allocation (not a soft cap), so running it idle
-    # would tie up ~1 GB + a CPU for zero benefit — unacceptable on inference
-    # hosts where RAM is reserved for MLX. Kept configured (not deleted) so
-    # re-enabling is a one-line flip once the containerized Stream's CPU/DNS issue
-    # is fixed and the cutover is ready — right-size cpus/memory against real load
-    # THEN (the module defaults 1 cpu / 1g / 1 worker are conservative starting
-    # points, not a measured requirement). To re-enable: enable = lib.mkIf
-    # (hostConfig ? mlx) true. No explicit container DNS: Apple `container`
-    # forwards through the vmnet gateway to the host resolver. See docs/CRIBL-GITOPS.md.
-    cribl-stream = {
-      enable = false;
-      user = userConfig.user.name;
-      inputPort = 10301;
-      apiPort = 9000;
-      configFiles = {
-        "inputs.yml" = ''
-          inputs:
-            in_edge_s2s:
-              type: cribl_tcp
-              disabled: false
-              host: 0.0.0.0
-              port: 10301
-              sendToRoutes: false
-              connections:
-                - pipeline: passthrough
-                  output: proxmox_stream
-        '';
-        "outputs.yml" = ''
-          outputs:
-            proxmox_stream:
-              type: cribl_tcp
-              # Homelab HAProxy (FQDN), load-balanced across the Proxmox Cribl Stream workers.
-              host: ${userConfig.logging.syslog.server}
-              port: 10300
-              pqEnabled: true
-              # Bounded on-disk queue: cap size and drop when full.
-              pqMaxFileSize: 256 MB
-              pqMaxSize: 1 GB
-              pqOnBackpressure: drop
-        '';
-        # Passthrough for now; index/sourcetype enrichment moves here from Edge
-        # once Edge is repointed (Edge captures, Stream enriches + egresses).
-        "pipelines/passthrough/conf.yml" = ''
-          output: default
-          functions: []
-        '';
-      };
-    };
   };
 }
