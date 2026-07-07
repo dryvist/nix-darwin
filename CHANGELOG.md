@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.68.3](https://github.com/dryvist/nix-darwin/compare/v1.68.2...v1.68.3) (2026-07-07)
+
+
+### Bug Fixes
+
+* **mlx:** set safer vllm-mlx thinking defaults ([#1555](https://github.com/dryvist/nix-darwin/issues/1555)) ([e5bb5b5](https://github.com/dryvist/nix-darwin/commit/e5bb5b511895934a44f5ef0a1fcffb0398e5d2ad))
+
 ## [1.68.2](https://github.com/dryvist/nix-darwin/compare/v1.68.1...v1.68.2) (2026-07-07)
 
 
