@@ -14,6 +14,9 @@
   ...
 }:
 
+let
+  userConfig = import ../../lib/user-config.nix;
+in
 {
   imports = [
     # Darwin system modules
@@ -62,6 +65,15 @@
       enable = true;
       inherit (hostConfig) apfsContainer;
       volumes = hostConfig.apfsVolumes;
+    };
+
+    # Per-AI-CLI log directories (~/Library/Logs/<cli>/), newsyslog rotation,
+    # and opt-in `<cli>-logged` session-capture wrappers. All hosts: the dirs
+    # and rotation are harmless where a CLI is absent; the Cribl Edge file
+    # inputs that tail them (./cribl.nix) stay gated on `hostConfig ? mlx`.
+    ai-cli-log-shipping = {
+      enable = true;
+      user = userConfig.user.name;
     };
   };
 

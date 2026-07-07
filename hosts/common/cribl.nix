@@ -62,6 +62,61 @@ in
               connections:
                 - pipeline: llm_metrics
                   output: cribl_stream
+            # Per-AI-CLI session logs. Directories + rotation + the opt-in
+            # capture wrappers come from programs.ai-cli-log-shipping
+            # (enabled in ./default.nix). One input -> one dedicated tcpjson
+            # output per CLI so Stream routes/enriches per service port; no
+            # local pipeline — index/sourcetype stamping is Stream-side.
+            # `*.log` matches the wrapper typescript plus anything a CLI's
+            # own config drops into its directory.
+            in_codex_logs:
+              type: file
+              disabled: false
+              mode: manual
+              interval: 10
+              path: ${userConfig.user.homeDir}/Library/Logs/codex/
+              filenames:
+                - "*.log"
+              tailOnly: false
+              sendToRoutes: false
+              connections:
+                - output: cribl_codex
+            in_agy_logs:
+              type: file
+              disabled: false
+              mode: manual
+              interval: 10
+              path: ${userConfig.user.homeDir}/Library/Logs/agy/
+              filenames:
+                - "*.log"
+              tailOnly: false
+              sendToRoutes: false
+              connections:
+                - output: cribl_agy
+            in_copilot_logs:
+              type: file
+              disabled: false
+              mode: manual
+              interval: 10
+              path: ${userConfig.user.homeDir}/Library/Logs/copilot/
+              filenames:
+                - "*.log"
+              tailOnly: false
+              sendToRoutes: false
+              connections:
+                - output: cribl_copilot
+            in_vscode_logs:
+              type: file
+              disabled: false
+              mode: manual
+              interval: 10
+              path: ${userConfig.user.homeDir}/Library/Logs/vscode/
+              filenames:
+                - "*.log"
+              tailOnly: false
+              sendToRoutes: false
+              connections:
+                - output: cribl_vscode
         '';
         "outputs.yml" = ''
           outputs:
@@ -71,6 +126,29 @@ in
               # workers' in_cribl_s2s ingest — the live path, service port 10300.
               host: ${userConfig.logging.syslog.server}
               port: 10300
+              pqEnabled: true
+            # Per-AI-CLI service ports (one port per CLI so Stream keys
+            # routing/enrichment off the frontend). Same HAProxy target as
+            # cribl_stream; PQ buffers locally until each frontend is live.
+            cribl_codex:
+              type: tcpjson
+              host: ${userConfig.logging.syslog.server}
+              port: 10312
+              pqEnabled: true
+            cribl_agy:
+              type: tcpjson
+              host: ${userConfig.logging.syslog.server}
+              port: 10313
+              pqEnabled: true
+            cribl_copilot:
+              type: tcpjson
+              host: ${userConfig.logging.syslog.server}
+              port: 10314
+              pqEnabled: true
+            cribl_vscode:
+              type: tcpjson
+              host: ${userConfig.logging.syslog.server}
+              port: 10315
               pqEnabled: true
         '';
         # Model-server logs: the manager (Go) and its workers (Python) share
@@ -100,6 +178,9 @@ in
                     value: "'mlx:metrics'"
         '';
       };
+      # Claude Code logs stay on the pack -> cribl_stream (:10300) path; a
+      # repoint to a dedicated per-CLI port (:10311) is an optional future
+      # step once the Stream side carves out a claude frontend.
       packs = {
         cc-edge-the-mac-pack-io = pkgs.fetchzip {
           url = "https://github.com/JacobPEvans/cc-edge-the-mac-pack-io/releases/download/v0.3.0/cc-edge-the-mac-pack-io-v0.3.0.crbl";
