@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.68.5](https://github.com/dryvist/nix-darwin/compare/v1.68.4...v1.68.5) (2026-07-07)
+
+
+### Bug Fixes
+
+* **cribl:** point Edge tcpjson output at the live Stream port 10300 ([#1560](https://github.com/dryvist/nix-darwin/issues/1560)) ([730a54c](https://github.com/dryvist/nix-darwin/commit/730a54c1f7ec361a2eaf5ef4bf1ab9ae720df213))
+
 ## [1.68.4](https://github.com/dryvist/nix-darwin/compare/v1.68.3...v1.68.4) (2026-07-07)
 
 
