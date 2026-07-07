@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.67.2](https://github.com/dryvist/nix-darwin/compare/v1.67.1...v1.67.2) (2026-07-07)
+
+
+### Bug Fixes
+
+* **mac-studio:** raise Qwen3-Coder output cap to 32768 for the Hermes brain ([#1539](https://github.com/dryvist/nix-darwin/issues/1539)) ([822d85a](https://github.com/dryvist/nix-darwin/commit/822d85a8ee1e7ddb19e7419652b8e00d4ca27baa))
+
 ## [1.67.1](https://github.com/dryvist/nix-darwin/compare/v1.67.0...v1.67.1) (2026-07-06)
 
 
