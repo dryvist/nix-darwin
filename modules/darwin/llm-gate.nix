@@ -93,6 +93,17 @@ let
 
     ${apiSiteAddresses} {
       ${tlsDirective}
+      # JSON access log — the only place API-consumer traffic is visible (the
+      # model server on loopback only ever sees the proxy). Written into the
+      # gate's log dir (0755, outside the 0700 dataDir so a non-root Cribl
+      # Edge can traverse it; ~/Library/Logs per macOS convention) and tailed
+      # by the Cribl Edge in_gate_access file input (hosts/common). Caddy's
+      # default rolling applies (100 MiB rolls, keep 10, 90 days), so no
+      # newsyslog entry is needed.
+      log {
+        output file ${cfg.logDir}/access.json
+        format json
+      }
       @unauthorized not header Authorization "Bearer {env.LLM_LARGE_BEARER_TOKEN}"
       respond @unauthorized 401
       reverse_proxy 127.0.0.1:${toString cfg.apiUpstreamPort}
@@ -167,13 +178,20 @@ in
       default = "${userConfig.user.homeDir}/.local/share/llm-gate";
       description = "User-owned state dir (Caddy cert/config storage). Also the agent's WorkingDirectory, which the ~/.doppler service token is scoped to so `doppler run` resolves the right config non-interactively.";
     };
+
+    logDir = lib.mkOption {
+      type = lib.types.str;
+      default = "${userConfig.user.homeDir}/Library/Logs/llm-gate";
+      description = "Log directory (access log + launchd stdout/stderr), kept OUTSIDE the 0700 dataDir so a non-root Cribl Edge can read it; macOS user-log convention.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
     # User-owned state dir (install -d as root during activation, owned by the
     # login user so the agent — and `doppler run` — can read/write it).
     system.activationScripts.postActivation.text = ''
-      /usr/bin/install -d -o ${cfg.user} -g staff -m 0700 "${cfg.dataDir}" "${cfg.dataDir}/data" "${cfg.dataDir}/config" "${cfg.dataDir}/logs"
+      /usr/bin/install -d -o ${cfg.user} -g staff -m 0700 "${cfg.dataDir}" "${cfg.dataDir}/data" "${cfg.dataDir}/config"
+      /usr/bin/install -d -o ${cfg.user} -g staff -m 0755 "${cfg.logDir}"
     '';
 
     # launchd USER agent: `doppler run` fetches the gate's secrets from Doppler
@@ -211,8 +229,8 @@ in
         XDG_DATA_HOME = "${cfg.dataDir}/data";
         XDG_CONFIG_HOME = "${cfg.dataDir}/config";
       };
-      StandardOutPath = "${cfg.dataDir}/logs/llm-gate.log";
-      StandardErrorPath = "${cfg.dataDir}/logs/llm-gate.error.log";
+      StandardOutPath = "${cfg.logDir}/llm-gate.log";
+      StandardErrorPath = "${cfg.logDir}/llm-gate.error.log";
     };
   };
 }

@@ -7,6 +7,7 @@
 # nothing. See docs/CRIBL-GITOPS.md.
 
 {
+  config,
   lib,
   pkgs,
   hostConfig,
@@ -54,7 +55,7 @@ in
               sendToRoutes: false
               connections:
                 - pipeline: llm_logs
-                  output: cribl_stream
+                  output: cribl_llm
             in_system_metrics:
               type: system_metrics
               disabled: false
@@ -117,6 +118,23 @@ in
               sendToRoutes: false
               connections:
                 - output: cribl_vscode
+        ''
+        # Appended only where programs.llm-gate is enabled (Studio-only
+        # module): other mlx hosts get no input for a path that never exists.
+        + lib.optionalString config.programs.llm-gate.enable ''
+          # llm-gate JSON access log (Caddy `log` directive, llm-gate.nix).
+            in_gate_access:
+              type: file
+              disabled: false
+              mode: manual
+              interval: 10
+              path: ${config.programs.llm-gate.logDir}/
+              filenames:
+                - access.json
+              tailOnly: false
+              sendToRoutes: false
+              connections:
+                - output: cribl_gate
         '';
         "outputs.yml" = ''
           outputs:
@@ -126,6 +144,18 @@ in
               # workers' in_cribl_s2s ingest — the live path, service port 10300.
               host: ${userConfig.logging.syslog.server}
               port: 10300
+              pqEnabled: true
+            # Dedicated LLM service ports (Stream routes/enriches off the
+            # port). Same HAProxy target; cribl_gate idles without its input.
+            cribl_llm:
+              type: tcpjson
+              host: ${userConfig.logging.syslog.server}
+              port: 10321
+              pqEnabled: true
+            cribl_gate:
+              type: tcpjson
+              host: ${userConfig.logging.syslog.server}
+              port: 10322
               pqEnabled: true
             # Per-AI-CLI service ports (one port per CLI so Stream keys
             # routing/enrichment off the frontend). Same HAProxy target as
