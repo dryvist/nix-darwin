@@ -82,13 +82,21 @@ in
   # ==========================================================================
   logging = {
     syslog = {
-      # Remote syslog server for centralized log collection — the homelab
-      # HAProxy LB (also the Cribl tcpjson target in hosts/common).
-      # Logs are forwarded via macOS built-in syslogd to HAProxy -> Cribl Edge -> Splunk
+      # Remote syslog target for macOS built-in syslogd
+      # (modules/darwin/logging.nix renders it into /etc/syslog.conf).
       server = "haproxy.pve.${baseDomain}";
-      port = 1514;
+      # 521 is the dedicated macos syslog family: relayed by the ingress
+      # guest's nginx-stream UDP listener -> Cribl Edge :1521 -> Splunk
+      # index `os`, sourcetype syslog:macos.
+      port = 521;
       # Protocol: udp or tcp
       protocol = "udp";
+    };
+    cribl = {
+      # Cribl tcpjson target for every Edge output in hosts/common — its own
+      # attr (same HAProxy FQDN as syslog today) so a syslog repoint can
+      # never silently move the Edge shipping target.
+      server = "haproxy.pve.${baseDomain}";
     };
   };
 
