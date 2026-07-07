@@ -10,6 +10,7 @@
 {
   lib,
   pkgs,
+  config,
   hostConfig,
   ...
 }:

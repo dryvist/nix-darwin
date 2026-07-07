@@ -93,6 +93,16 @@ let
 
     ${apiSiteAddresses} {
       ${tlsDirective}
+      # JSON access log — the only place API-consumer traffic is visible (the
+      # model server on loopback only ever sees the proxy). Written into the
+      # gate's own logs dir (created at activation alongside the launchd
+      # stdout/stderr logs) and tailed by the Cribl Edge in_gate_access file
+      # input (hosts/common). Caddy's default rolling applies (100 MiB rolls,
+      # keep 10, 90 days), so no newsyslog entry is needed.
+      log {
+        output file ${cfg.dataDir}/logs/access.json
+        format json
+      }
       @unauthorized not header Authorization "Bearer {env.LLM_LARGE_BEARER_TOKEN}"
       respond @unauthorized 401
       reverse_proxy 127.0.0.1:${toString cfg.apiUpstreamPort}
