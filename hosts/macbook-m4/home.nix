@@ -259,6 +259,9 @@
     # Environment variables for external data locations
     # ========================================================================
     sessionVariables = {
+      # Preferred local general-purpose AI model for assistant routing
+      AI_MODEL_LOCAL = "mlx-community/Qwen3.6-35B-A3B-mxfp4";
+
       # Container data on dedicated volume
       # NOTE: This volume is separate from Ollama
       CONTAINER_DATA = "/Volumes/ContainerData";
