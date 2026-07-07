@@ -99,6 +99,13 @@
     # time: 35B path = 92.4 + 20.4 + 3.0 ≈ 115.8 GB, 27B path = 92.4 + 16.1 +
     # 3.0 ≈ 111.5 GB. The 118 GB wired ceiling still has a small margin for the
     # proxy and framework while keeping the resident pair warm.
+    #
+    # NOTE the two swap models are different architectures: 35B is the A3B MoE
+    # (3B active, ~113 tok/s measured); 27B is DENSE (no A3B variant exists on
+    # mlx-community — the id originally registered here, Qwen3.6-27B-A3B-4bit,
+    # was a phantom repo that 404'd on every load). Dense 27B decodes slower
+    # but runs all weights per token; keep it only if quality beats 35B-A3B in
+    # evals. Verify any new model id against huggingface BEFORE registering.
     mlx = {
       cacheMemoryMb = 6144;
       prefillBatchSize = 2048;
@@ -189,7 +196,7 @@
           maxNumSeqs = 2;
           maxRequestTokens = 32768;
         };
-        "mlx-community/Qwen3.6-27B-A3B-4bit" = {
+        "mlx-community/Qwen3.6-27B-4bit" = {
           cacheMemoryMb = 3072;
           autoUnloadIdleSeconds = 900;
           maxNumSeqs = 2;
@@ -217,7 +224,7 @@
           "qwen3"
         ];
       };
-      "mlx-community/Qwen3.6-27B-A3B-4bit" = {
+      "mlx-community/Qwen3.6-27B-4bit" = {
         ttl = 900;
         extraArgs = [
           "--tool-call-parser"
