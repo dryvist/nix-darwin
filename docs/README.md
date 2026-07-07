@@ -31,6 +31,11 @@ them.
   - UTI (Uniform Type Identifier) reference
   - Examples and troubleshooting
 
+- **[MACOS-LLM-PERFORMANCE-TUNING-REPORT.md][mac-studio-report]** - Point-in-time Mac Studio benchmark and tuning report
+  - Baseline vs current live measurements
+  - Merged tuning PRs and activation caveat
+  - Memory budget and eval guard
+
 - **[OPENBAO-KEYCHAIN-TEST-MATRIX.md](OPENBAO-KEYCHAIN-TEST-MATRIX.md)** - Manual verification checklist for the OpenBao keychain resolver
   - Required after every `programs.openbao-keychain` change before trusting it for autonomous secret delivery
   - Covers reboot, pre-login, sleep/wake, SSH, and the 72h auto-lock boundary
@@ -49,3 +54,5 @@ Main repository documentation is in the root directory:
 ## Contributing
 
 See root-level documentation for contribution guidelines and workflows.
+
+[mac-studio-report]: MACOS-LLM-PERFORMANCE-TUNING-REPORT.md
