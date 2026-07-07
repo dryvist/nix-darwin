@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.70.1](https://github.com/dryvist/nix-darwin/compare/v1.70.0...v1.70.1) (2026-07-07)
+
+
+### Bug Fixes
+
+* **cribl-edge:** restart the daemon when declared config content changes ([#1569](https://github.com/dryvist/nix-darwin/issues/1569)) ([d796841](https://github.com/dryvist/nix-darwin/commit/d7968419c6da92b84f262a6c874e44fe3359aecf))
+
 ## [1.70.0](https://github.com/dryvist/nix-darwin/compare/v1.69.0...v1.70.0) (2026-07-07)
 
 
