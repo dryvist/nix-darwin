@@ -69,16 +69,14 @@ in
     # Log collection agent, standalone + GitOps-managed. Shared by every host
     # that declares `mlx` (a local LLM box): the vllm-mlx log paths derive from
     # the global userConfig homeDir, so the config is identical across machines.
-    # Events ship over TCP JSON to the HAProxy-fronted Stream workers, which
-    # forward to the Splunk `llm` index. TCP JSON — not Cribl TCP: the
-    # cribl_tcp destination is refused on a standalone node ("Destination is
-    # not allowed in this deployment"; it requires a distributed deployment),
-    # and TCP JSON is Cribl's documented single-instance substitute. Until the
-    # Stream fleet exposes the matching tcpjson source behind HAProxy
-    # (ansible-proxmox-apps#525), the persistent queue buffers events locally
-    # and flushes when the port comes up. See docs/CRIBL-GITOPS.md.
-    # NOTE: the local-Stream cutover (→127.0.0.1:10301) is reverted while the
-    # containerized Stream's CPU/DNS issue is fixed — see cribl-stream below.
+    # Live path: Edge ships TCP JSON to the HAProxy-fronted Cribl Stream
+    # workers' in_cribl_s2s ingest (service port 10300), which forward to the
+    # Splunk `llm` index. TCP JSON — not Cribl TCP: the cribl_tcp destination
+    # is refused on a standalone node ("Destination is not allowed in this
+    # deployment"; it requires a distributed deployment), and TCP JSON is
+    # Cribl's documented single-instance substitute. The persistent queue
+    # buffers events locally across any HAProxy/Stream downtime and flushes
+    # when the port returns. See docs/CRIBL-GITOPS.md.
     cribl-edge = lib.mkIf (hostConfig ? mlx) {
       enable = true;
       mode = "standalone";
@@ -116,11 +114,10 @@ in
           outputs:
             cribl_stream:
               type: tcpjson
-              # Homelab HAProxy (FQDN), load-balanced across the Cribl Stream workers.
-              # Port pending in homelab-contracts service-ports (cribl_tcpjson) +
-              # HAProxy frontend + Stream tcpjson source: ansible-proxmox-apps#525.
+              # Homelab HAProxy (FQDN), load-balanced across the Cribl Stream
+              # workers' in_cribl_s2s ingest — the live path, service port 10300.
               host: ${userConfig.logging.syslog.server}
-              port: 10302
+              port: 10300
               pqEnabled: true
         '';
         # Model-server logs: the manager (Go) and its workers (Python) share
