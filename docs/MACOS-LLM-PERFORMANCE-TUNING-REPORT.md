@@ -31,7 +31,7 @@ warmup LaunchAgent is meant to remove.
 
 | Change | Effect |
 | --- | --- |
-| [nix-darwin#1545][pr-1545] | `mlx-warmup` LaunchAgent faults models at boot; adds swap-tier `Qwen3.6-35B-A3B-4bit` and `Qwen3.6-27B-A3B-4bit`. |
+| [nix-darwin#1545][pr-1545] | `mlx-warmup` LaunchAgent faults models at boot; adds swap-tier `Qwen3.6-35B-A3B-4bit`. |
 | [nix-ai#1127][pr-1127] | launchd namespace fix. |
 | [nix-darwin#1537][pr-1537] | gpt-oss reasoning parser. |
 | [nix-darwin#1539][pr-1539] | Qwen coder `maxRequestTokens` to 32768. |
@@ -42,7 +42,6 @@ warmup LaunchAgent is meant to remove.
 | --- | --- | --- |
 | Resident pair | about 92.4 GB, including 6 GB caches each | fits in 128 GB unified memory |
 | Qwen3.6-35B-A3B-4bit swap path | about 115.8 GB | larger fallback model within the same host envelope |
-| Qwen3.6-27B-A3B-4bit swap path | about 111.5 GB | second fallback without overcommitting memory |
 
 These limits keep the resident pair stable while giving the server a
 controlled swap path. The aggregate throughput numbers above were measured
