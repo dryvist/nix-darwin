@@ -95,13 +95,10 @@
 
     # MLX sizing for TWO resident workers plus a swap tier. cacheMemoryMb
     # applies PER worker, so 2 x 6144 MB resident caches + 80.4 GB resident
-    # weights ≈ 92.4 GB. That leaves room for one swap-tier Qwen3.6 model at a
-    # time: 35B path = 92.4 + 20.4 + 3.0 ≈ 115.8 GB, 27B path = 92.4 + 16.1 +
-    # 3.0 ≈ 111.5 GB. The 118 GB wired ceiling still has a small margin for the
-    # proxy and framework while keeping the resident pair warm.
-    #
-    # 35B = A3B MoE (~113 tok/s); 27B = DENSE (no A3B variant exists — a
-    # phantom id 404'd here once). Verify new model ids on HF BEFORE registering.
+    # weights ≈ 92.4 GB. The swap-tier 35B path = 92.4 + 20.4 + 3.0 ≈ 115.8 GB;
+    # the 118 GB wired ceiling keeps a small margin for the proxy and framework
+    # while the resident pair stays warm. 35B = A3B MoE (~113 tok/s measured).
+    # Verify new model ids on HF BEFORE registering (a phantom id 404'd here).
     mlx = {
       cacheMemoryMb = 6144;
       prefillBatchSize = 2048;
@@ -195,18 +192,14 @@
           maxNumSeqs = 2;
           maxRequestTokens = 32768;
         };
-        "mlx-community/Qwen3.6-27B-4bit" = {
-          cacheMemoryMb = 3072;
-          autoUnloadIdleSeconds = 900;
-          maxNumSeqs = 2;
-          maxRequestTokens = 32768;
-        };
       };
     };
 
-    # Qwen3.6 lives in the non-resident swap tier. It is not preloaded at boot;
-    # the router can load either model on demand, and the swap group unloads it
-    # after it goes idle so it does not crowd out the resident pair.
+    # Qwen3.6-35B lives in the non-resident swap tier. It is not preloaded at
+    # boot; the router loads it on demand, and the swap group unloads it after
+    # it goes idle so it does not crowd out the resident pair. (The dense 27B
+    # was retired 2026-07-07 after evals: 4x slower than the 35B MoE with no
+    # quality niche.)
     mlx.models = {
       # extraArgs must be set HERE, not in modelExtraArgs above: ad-hoc
       # models get their serve flags only from this attr. Without the
@@ -215,19 +208,6 @@
       # --tool-call-parser"), so every swap-in 500'd with llama-swap's
       # "upstream command exited prematurely" (found 2026-07-07 eval).
       "mlx-community/Qwen3.6-35B-A3B-4bit" = {
-        ttl = 900;
-        extraArgs = [
-          "--tool-call-parser"
-          "qwen3_coder"
-          "--reasoning-parser"
-          "qwen3"
-          # Thinking off by default (requests can opt back in). extraArgs are
-          # raw-concatenated + shell-parsed, so the JSON quotes itself (#1557).
-          "--default-chat-template-kwargs"
-          "'{\"enable_thinking\":false}'"
-        ];
-      };
-      "mlx-community/Qwen3.6-27B-4bit" = {
         ttl = 900;
         extraArgs = [
           "--tool-call-parser"
