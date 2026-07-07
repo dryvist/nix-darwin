@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.68.4](https://github.com/dryvist/nix-darwin/compare/v1.68.3...v1.68.4) (2026-07-07)
+
+
+### Bug Fixes
+
+* **mlx:** quote Qwen3.6 chat-template kwargs for llama-swap shell parsing ([#1557](https://github.com/dryvist/nix-darwin/issues/1557)) ([a70f810](https://github.com/dryvist/nix-darwin/commit/a70f81027b12f900cef9b070babe4bca6ba65b37))
+
 ## [1.68.3](https://github.com/dryvist/nix-darwin/compare/v1.68.2...v1.68.3) (2026-07-07)
 
 
