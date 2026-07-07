@@ -100,12 +100,8 @@
     # 3.0 ≈ 111.5 GB. The 118 GB wired ceiling still has a small margin for the
     # proxy and framework while keeping the resident pair warm.
     #
-    # NOTE the two swap models are different architectures: 35B is the A3B MoE
-    # (3B active, ~113 tok/s measured); 27B is DENSE (no A3B variant exists on
-    # mlx-community — the id originally registered here, Qwen3.6-27B-A3B-4bit,
-    # was a phantom repo that 404'd on every load). Dense 27B decodes slower
-    # but runs all weights per token; keep it only if quality beats 35B-A3B in
-    # evals. Verify any new model id against huggingface BEFORE registering.
+    # 35B = A3B MoE (~113 tok/s); 27B = DENSE (no A3B variant exists — a
+    # phantom id 404'd here once). Verify new model ids on HF BEFORE registering.
     mlx = {
       cacheMemoryMb = 6144;
       prefillBatchSize = 2048;
@@ -162,10 +158,8 @@
           "--tool-call-parser"
           "qwen3_coder"
         ];
-        # Qwen3.6 parser args live on their mlx.models entries below —
-        # modelExtraArgs only reaches role-registry models (nix-ai
-        # modules/mlx default.nix registryModels), so keys for ad-hoc
-        # swap-tier models here are silently ignored.
+        # Swap-tier (mlx.models) args go on those entries below; keys here
+        # only reach role-registry models and are otherwise silently ignored.
       };
       # vllm-mlx 0.4.0's paged KV cache is incompatible with gpt-oss's
       # alternating sliding-window attention: generation fails with
