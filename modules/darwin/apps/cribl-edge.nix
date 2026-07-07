@@ -216,6 +216,17 @@ in
         WorkingDirectory = cfg.dataDir;
         StandardOutPath = "${cfg.dataDir}/logs/cribl-stdout.log";
         StandardErrorPath = "${cfg.dataDir}/logs/cribl-stderr.log";
+        # Cribl does not hot-reload config written from outside its own API
+        # (see the extraActivation note above), so a config-only generation
+        # left the running daemon on stale config until reboot. Hashing the
+        # declared config into the plist makes nix-darwin's launchd phase
+        # restart the daemon exactly when config content changes — the env
+        # var itself is inert to Cribl.
+        EnvironmentVariables = {
+          CRIBL_DECLARED_CONFIG_SHA256 = builtins.hashString "sha256" (
+            builtins.toJSON cfg.standalone.configFiles
+          );
+        };
       };
     };
   };
