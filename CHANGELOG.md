@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.68.1](https://github.com/dryvist/nix-darwin/compare/v1.68.0...v1.68.1) (2026-07-07)
+
+
+### Bug Fixes
+
+* **mlx:** Qwen3.6 swap models crash on load — parser args were in the wrong attr ([#1550](https://github.com/dryvist/nix-darwin/issues/1550)) ([f6c0427](https://github.com/dryvist/nix-darwin/commit/f6c042707a239c185c1b3c9defb9142522f006f5))
+
 ## [1.68.0](https://github.com/dryvist/nix-darwin/compare/v1.67.2...v1.68.0) (2026-07-07)
 
 
