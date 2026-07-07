@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.68.2](https://github.com/dryvist/nix-darwin/compare/v1.68.1...v1.68.2) (2026-07-07)
+
+
+### Bug Fixes
+
+* **mlx:** Qwen3.6-27B swap model pointed at a nonexistent HF repo ([#1552](https://github.com/dryvist/nix-darwin/issues/1552)) ([593faa1](https://github.com/dryvist/nix-darwin/commit/593faa134e665a25d11693a15c17250223b5c8a2))
+
 ## [1.68.1](https://github.com/dryvist/nix-darwin/compare/v1.68.0...v1.68.1) (2026-07-07)
 
 
