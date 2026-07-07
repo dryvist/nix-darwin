@@ -150,18 +150,10 @@
           "--tool-call-parser"
           "qwen3_coder"
         ];
-        "mlx-community/Qwen3.6-35B-A3B-4bit" = [
-          "--tool-call-parser"
-          "qwen3_coder"
-          "--reasoning-parser"
-          "qwen3"
-        ];
-        "mlx-community/Qwen3.6-27B-A3B-4bit" = [
-          "--tool-call-parser"
-          "qwen3_coder"
-          "--reasoning-parser"
-          "qwen3"
-        ];
+        # Qwen3.6 parser args live on their mlx.models entries below —
+        # modelExtraArgs only reaches role-registry models (nix-ai
+        # modules/mlx default.nix registryModels), so keys for ad-hoc
+        # swap-tier models here are silently ignored.
       };
       # vllm-mlx 0.4.0's paged KV cache is incompatible with gpt-oss's
       # alternating sliding-window attention: generation fails with
@@ -210,11 +202,29 @@
     # the router can load either model on demand, and the swap group unloads it
     # after it goes idle so it does not crowd out the resident pair.
     mlx.models = {
+      # extraArgs must be set HERE, not in modelExtraArgs above: ad-hoc
+      # models get their serve flags only from this attr. Without the
+      # tool-call parser the global --enable-auto-tool-choice makes
+      # vllm-mlx exit at argparse ("--enable-auto-tool-choice requires
+      # --tool-call-parser"), so every swap-in 500'd with llama-swap's
+      # "upstream command exited prematurely" (found 2026-07-07 eval).
       "mlx-community/Qwen3.6-35B-A3B-4bit" = {
         ttl = 900;
+        extraArgs = [
+          "--tool-call-parser"
+          "qwen3_coder"
+          "--reasoning-parser"
+          "qwen3"
+        ];
       };
       "mlx-community/Qwen3.6-27B-A3B-4bit" = {
         ttl = 900;
+        extraArgs = [
+          "--tool-call-parser"
+          "qwen3_coder"
+          "--reasoning-parser"
+          "qwen3"
+        ];
       };
     };
 
