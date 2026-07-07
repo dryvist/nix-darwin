@@ -93,13 +93,15 @@
       coding = "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit";
     };
 
-    # MLX sizing for TWO resident workers — cacheMemoryMb applies PER worker,
-    # so 2 x 12288 MB caches + 80.4 GB weights ≈ 105 GB, inside the 118 GB
-    # wired ceiling with slack for the proxy/framework. Benchmark these on the
-    # machine (JAC-115) before raising.
+    # MLX sizing for TWO resident workers plus a swap tier. cacheMemoryMb
+    # applies PER worker, so 2 x 6144 MB resident caches + 80.4 GB resident
+    # weights ≈ 92.4 GB. That leaves room for one swap-tier Qwen3.6 model at a
+    # time: 35B path = 92.4 + 20.4 + 3.0 ≈ 115.8 GB, 27B path = 92.4 + 16.1 +
+    # 3.0 ≈ 111.5 GB. The 118 GB wired ceiling still has a small margin for the
+    # proxy and framework while keeping the resident pair warm.
     mlx = {
-      cacheMemoryMb = 12288;
-      prefillBatchSize = 4096;
+      cacheMemoryMb = 6144;
+      prefillBatchSize = 2048;
       # Keep both backends resident: no swap eviction, both preloaded at boot,
       # and no idle eviction anywhere — this host's entire job is holding
       # these weights, so the workstation rationale for aggressive TTLs
@@ -148,6 +150,18 @@
           "--tool-call-parser"
           "qwen3_coder"
         ];
+        "mlx-community/Qwen3.6-35B-A3B-4bit" = [
+          "--tool-call-parser"
+          "qwen3_coder"
+          "--reasoning-parser"
+          "qwen3"
+        ];
+        "mlx-community/Qwen3.6-27B-A3B-4bit" = [
+          "--tool-call-parser"
+          "qwen3_coder"
+          "--reasoning-parser"
+          "qwen3"
+        ];
       };
       # vllm-mlx 0.4.0's paged KV cache is incompatible with gpt-oss's
       # alternating sliding-window attention: generation fails with
@@ -177,6 +191,30 @@
         "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit" = {
           maxRequestTokens = 32768;
         };
+        "mlx-community/Qwen3.6-35B-A3B-4bit" = {
+          cacheMemoryMb = 3072;
+          autoUnloadIdleSeconds = 900;
+          maxNumSeqs = 2;
+          maxRequestTokens = 32768;
+        };
+        "mlx-community/Qwen3.6-27B-A3B-4bit" = {
+          cacheMemoryMb = 3072;
+          autoUnloadIdleSeconds = 900;
+          maxNumSeqs = 2;
+          maxRequestTokens = 32768;
+        };
+      };
+    };
+
+    # Qwen3.6 lives in the non-resident swap tier. It is not preloaded at boot;
+    # the router can load either model on demand, and the swap group unloads it
+    # after it goes idle so it does not crowd out the resident pair.
+    mlx.models = {
+      "mlx-community/Qwen3.6-35B-A3B-4bit" = {
+        ttl = 900;
+      };
+      "mlx-community/Qwen3.6-27B-A3B-4bit" = {
+        ttl = 900;
       };
     };
 
