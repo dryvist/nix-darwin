@@ -152,6 +152,11 @@
           "harmony"
           "--reasoning-parser"
           "gpt_oss"
+          # Server defaults keep request-level chat_template_kwargs overrideable.
+          "--default-chat-template-kwargs"
+          (builtins.toJSON {
+            reasoning_effort = "low";
+          })
         ];
         "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit" = [
           "--tool-call-parser"
@@ -222,6 +227,11 @@
           "qwen3_coder"
           "--reasoning-parser"
           "qwen3"
+          # Default thinking off at the server layer so requests can opt back in.
+          "--default-chat-template-kwargs"
+          (builtins.toJSON {
+            enable_thinking = false;
+          })
         ];
       };
       "mlx-community/Qwen3.6-27B-4bit" = {
@@ -231,6 +241,11 @@
           "qwen3_coder"
           "--reasoning-parser"
           "qwen3"
+          # Default thinking off at the server layer so requests can opt back in.
+          "--default-chat-template-kwargs"
+          (builtins.toJSON {
+            enable_thinking = false;
+          })
         ];
       };
     };
