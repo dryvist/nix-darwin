@@ -68,6 +68,10 @@ let
   mkWrapper =
     name:
     pkgs.writeShellScriptBin "${name}-logged" ''
+      if ! command -v ${name} >/dev/null 2>&1; then
+        echo "Error: ${name} is not installed or not in PATH" >&2
+        exit 127
+      fi
       exec /usr/bin/script -q -a "${logRoot}/${name}/${name}.log" ${name} "$@"
     '';
 in
@@ -91,11 +95,14 @@ in
     '') (lib.attrNames clis);
 
     # Rotate via the system newsyslog run (reads /etc/newsyslog.d/*.conf on
-    # macOS). G = the path is a glob; J = bzip2 the rotated file.
+    # macOS). G = the path is a glob; J = bzip2 the rotated file; B = binary
+    # (no plain-text rotation message injected into logs Cribl Edge tails);
+    # N = no signal to syslogd (these files aren't syslogd-written). Mode 600:
+    # session transcripts carry prompts, code, and potentially tokens.
     environment.etc."newsyslog.d/ai-cli-logs.conf".text =
       lib.concatStringsSep "\n" (
         [ "# logfilename [owner:group] mode count size when flags" ]
-        ++ map (name: "${logRoot}/${name}/*.log ${cfg.user}:staff 644 3 1024 * GJ") (lib.attrNames clis)
+        ++ map (name: "${logRoot}/${name}/*.log ${cfg.user}:staff 600 3 1024 * BGJN") (lib.attrNames clis)
       )
       + "\n";
   };
