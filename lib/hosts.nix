@@ -222,10 +222,12 @@
           "--reasoning-parser"
           "qwen3"
           # Default thinking off at the server layer so requests can opt back in.
+          # Ad-hoc mlx.models extraArgs are raw-concatenated into the llama-swap
+          # cmd (registry modelExtraArgs get escapeShellArgs; this path does
+          # not), and llama-swap shell-parses the cmd — so the JSON must carry
+          # its own single quotes to survive with double quotes intact.
           "--default-chat-template-kwargs"
-          (builtins.toJSON {
-            enable_thinking = false;
-          })
+          "'{\"enable_thinking\":false}'"
         ];
       };
       "mlx-community/Qwen3.6-27B-4bit" = {
@@ -236,10 +238,12 @@
           "--reasoning-parser"
           "qwen3"
           # Default thinking off at the server layer so requests can opt back in.
+          # Ad-hoc mlx.models extraArgs are raw-concatenated into the llama-swap
+          # cmd (registry modelExtraArgs get escapeShellArgs; this path does
+          # not), and llama-swap shell-parses the cmd — so the JSON must carry
+          # its own single quotes to survive with double quotes intact.
           "--default-chat-template-kwargs"
-          (builtins.toJSON {
-            enable_thinking = false;
-          })
+          "'{\"enable_thinking\":false}'"
         ];
       };
     };
