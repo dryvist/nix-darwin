@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.70.0](https://github.com/dryvist/nix-darwin/compare/v1.69.0...v1.70.0) (2026-07-07)
+
+
+### Features
+
+* **llm:** dedicated Cribl service ports for LLM logs + gate access log ([#1562](https://github.com/dryvist/nix-darwin/issues/1562)) ([74d2ac7](https://github.com/dryvist/nix-darwin/commit/74d2ac7581996edaad7f8d48be0471c0aec0804a))
+
 ## [1.69.0](https://github.com/dryvist/nix-darwin/compare/v1.68.5...v1.69.0) (2026-07-07)
 
 
