@@ -221,11 +221,10 @@
           "qwen3_coder"
           "--reasoning-parser"
           "qwen3"
-          # Default thinking off at the server layer so requests can opt back in.
+          # Thinking off by default (requests can opt back in). extraArgs are
+          # raw-concatenated + shell-parsed, so the JSON quotes itself (#1557).
           "--default-chat-template-kwargs"
-          (builtins.toJSON {
-            enable_thinking = false;
-          })
+          "'{\"enable_thinking\":false}'"
         ];
       };
       "mlx-community/Qwen3.6-27B-4bit" = {
@@ -235,11 +234,10 @@
           "qwen3_coder"
           "--reasoning-parser"
           "qwen3"
-          # Default thinking off at the server layer so requests can opt back in.
+          # Thinking off by default (requests can opt back in). extraArgs are
+          # raw-concatenated + shell-parsed, so the JSON quotes itself (#1557).
           "--default-chat-template-kwargs"
-          (builtins.toJSON {
-            enable_thinking = false;
-          })
+          "'{\"enable_thinking\":false}'"
         ];
       };
     };
