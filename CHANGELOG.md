@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.68.0](https://github.com/dryvist/nix-darwin/compare/v1.67.2...v1.68.0) (2026-07-07)
+
+
+### Features
+
+* tune Mac Studio serving stack for Qwen3.6 ([#1545](https://github.com/dryvist/nix-darwin/issues/1545)) ([a86c5e7](https://github.com/dryvist/nix-darwin/commit/a86c5e7bf8d897569372b2651f740fa8090ac59c))
+
 ## [1.67.2](https://github.com/dryvist/nix-darwin/compare/v1.67.1...v1.67.2) (2026-07-07)
 
 
