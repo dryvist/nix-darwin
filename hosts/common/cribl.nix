@@ -72,6 +72,10 @@ in
             in_llm_prom:
               type: prometheus
               disabled: false
+              # Required by the prometheus input schema: without it the input
+              # fails init ("should have required property 'logLevel'") and
+              # silently never scrapes — llm_metrics stays empty.
+              logLevel: info
               discoveryType: static
               targetList:
                 - http://127.0.0.1:11434/metrics
