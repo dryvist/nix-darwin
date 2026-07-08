@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.71.2](https://github.com/dryvist/nix-darwin/compare/v1.71.1...v1.71.2) (2026-07-08)
+
+
+### Bug Fixes
+
+* **cribl:** logLevel is required on the prometheus input schema ([#1580](https://github.com/dryvist/nix-darwin/issues/1580)) ([67e594f](https://github.com/dryvist/nix-darwin/commit/67e594f9f10605c51af7895426098a435f36ac07))
+
 ## [1.71.1](https://github.com/dryvist/nix-darwin/compare/v1.71.0...v1.71.1) (2026-07-08)
 
 
