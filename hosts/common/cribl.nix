@@ -63,27 +63,15 @@ in
               connections:
                 - pipeline: llm_metrics
                   output: cribl_stream
-            # vllm-mlx Prometheus metrics. The per-worker /metrics endpoints
-            # (programs.mlx enableMetrics, on by default) live on ephemeral
-            # llama-swap-managed ports (startPort 11436+), so the only
-            # statically scrapeable surface is the llama-swap proxy itself on
-            # the loopback :11434 convention (nix-ai programs.mlx.port
-            # default, mirrored by llm-gate's apiUpstreamPort).
-            in_llm_prom:
-              type: prometheus
-              disabled: false
-              # Required by the prometheus input schema: without it the input
-              # fails init ("should have required property 'logLevel'") and
-              # silently never scrapes — llm_metrics stays empty.
-              logLevel: info
-              discoveryType: static
-              targetList:
-                - http://127.0.0.1:11434/metrics
-              interval: 15
-              sendToRoutes: false
-              connections:
-                - pipeline: llm_prom
-                  output: cribl_llm
+            # NO prometheus scrape input here: the Cribl prometheus scraper
+            # source is not allowed on a standalone Edge ("Source is not
+            # allowed in this deployment" at init — same wall as the
+            # cribl_tcp destination note above). The vllm-mlx /metrics
+            # scrape (llm_metrics index) needs a redesign: either llm-gate
+            # exposes /metrics for the homelab prometheus LXC to scrape and
+            # remote_write, or the metrics ride a push path. Until then the
+            # in_system_metrics + vllm-mlx log inputs above remain the
+            # inference-host telemetry.
             # Per-AI-CLI session logs. Directories + rotation + the opt-in
             # capture wrappers come from programs.ai-cli-log-shipping
             # (enabled in ./default.nix). One input -> one dedicated tcpjson
@@ -253,18 +241,6 @@ in
                     value: "'llm'"
                   - name: sourcetype
                     value: "'mlx:metrics'"
-        '';
-        # Scraped inference metrics land in the llm_metrics METRIC index
-        # (unlike the llm event index the log pipelines stamp).
-        "pipelines/llm_prom/conf.yml" = ''
-          output: default
-          functions:
-            - id: eval
-              filter: "true"
-              conf:
-                add:
-                  - name: index
-                    value: "'llm_metrics'"
         '';
       };
       # Claude Code transcripts ship via the native in_claude_logs input ->
