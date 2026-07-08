@@ -23,6 +23,7 @@ in
     ../../modules/darwin/common.nix
     # Cribl Edge/Stream log shipping (self-gated on `hostConfig ? mlx`).
     ./cribl.nix
+    ./cribl-stream-local.nix
   ];
 
   # Network hostname from the per-host registry.
