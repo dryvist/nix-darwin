@@ -212,6 +212,23 @@
           maxNumSeqs = 2;
           maxRequestTokens = 32768;
         };
+        # Qwen3-Next-80B swap brain (see mlx.models entry above). Cache kept at
+        # 4096 MB — deliberately small so the on-demand swap-in stays under the
+        # ~109 GB trip (58.6 + 42 + 4 ≈ 104.6); idle-unload at 900 s frees the
+        # 42 GB back to the two-brain baseline. maxRequestTokens 32768 lifts the
+        # global 8192 cap (too low for the agent brain's multi-turn / retry
+        # boost) to hermes-agent's own retry ceiling; maxNumSeqs 2 keeps one
+        # continuous batch for the big model within the tight cache budget.
+        # enablePrefixCaching off: automatic prefix caching is unsupported for
+        # the qwen3_next hybrid-attention family (mlx-benchmarks model-notes) —
+        # batching still works, only cross-request TTFT reuse is lost.
+        "mlx-community/Qwen3-Next-80B-A3B-Thinking-4bit" = {
+          cacheMemoryMb = 4096;
+          autoUnloadIdleSeconds = 900;
+          maxNumSeqs = 2;
+          maxRequestTokens = 32768;
+          enablePrefixCaching = false;
+        };
       };
     };
 
@@ -238,6 +255,30 @@
           # raw-concatenated + shell-parsed, so the JSON quotes itself (#1557).
           "--default-chat-template-kwargs"
           "'{\"enable_thinking\":false}'"
+        ];
+      };
+      # Qwen3-Next-80B-A3B Thinking 4-bit — the LARGE brain for the fabric's
+      # daily rotation (ansible-proxmox-apps: ai_default_model_large). Non-
+      # resident swap tier: the router loads it on demand and it idle-unloads,
+      # so it never crowds the resident pair. Capacity fits the 128 GB box:
+      # 58.6 GB residents (coder + OptiQ) + ~42 GB weights + 4 GB cache ≈ 104.6
+      # GB, under the ~109 GB cache-clear trip (gpuMemoryUtilization 0.80). No
+      # enable_thinking kwarg: this is the dedicated *Thinking* variant — its
+      # chat template has no enable_thinking switch and always opens a <think>
+      # block (verified against the HF chat_template.jinja), so thinking is
+      # always-on and passing the kwarg would be a no-op. hermes tool parser
+      # (Qwen3 XML tool format, same as the OptiQ resident brain) + qwen3
+      # reasoning; --timeout 3600 keeps the guard chain server 3600 > router
+      # 2400 > client 1800. Native context 262144 (max_position_embeddings).
+      "mlx-community/Qwen3-Next-80B-A3B-Thinking-4bit" = {
+        ttl = 900;
+        extraArgs = [
+          "--tool-call-parser"
+          "hermes"
+          "--reasoning-parser"
+          "qwen3"
+          "--timeout"
+          "3600"
         ];
       };
     };
