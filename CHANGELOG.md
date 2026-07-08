@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.72.0](https://github.com/dryvist/nix-darwin/compare/v1.71.3...v1.72.0) (2026-07-08)
+
+
+### Features
+
+* **logging:** retire syslogd remote forward, ship firewall unified-log via Cribl Edge ([#1584](https://github.com/dryvist/nix-darwin/issues/1584)) ([bbee58d](https://github.com/dryvist/nix-darwin/commit/bbee58daa08f1651bd7f442f85e3977b394c683b))
+
 ## [1.71.3](https://github.com/dryvist/nix-darwin/compare/v1.71.2...v1.71.3) (2026-07-08)
 
 
