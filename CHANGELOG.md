@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.74.0](https://github.com/dryvist/nix-darwin/compare/v1.73.0...v1.74.0) (2026-07-08)
+
+
+### Features
+
+* **mlx:** register Qwen3-Next-80B Thinking as the swap-tier large brain ([#1591](https://github.com/dryvist/nix-darwin/issues/1591)) ([4036108](https://github.com/dryvist/nix-darwin/commit/403610880056ba5576b8929fc82bbe996746ddde))
+
 ## [1.73.0](https://github.com/dryvist/nix-darwin/compare/v1.72.1...v1.73.0) (2026-07-08)
 
 
