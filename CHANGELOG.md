@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.71.3](https://github.com/dryvist/nix-darwin/compare/v1.71.2...v1.71.3) (2026-07-08)
+
+
+### Bug Fixes
+
+* **cribl:** drop the llm_prom scraper — prometheus source not allowed standalone ([#1582](https://github.com/dryvist/nix-darwin/issues/1582)) ([27efc6c](https://github.com/dryvist/nix-darwin/commit/27efc6c3b273c34eb3b8a035f3ed5fb614b314e3))
+
 ## [1.71.2](https://github.com/dryvist/nix-darwin/compare/v1.71.1...v1.71.2) (2026-07-08)
 
 
