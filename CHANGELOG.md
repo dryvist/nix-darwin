@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.72.1](https://github.com/dryvist/nix-darwin/compare/v1.72.0...v1.72.1) (2026-07-08)
+
+
+### Bug Fixes
+
+* **logging:** HUP syslogd after /etc/syslog.conf changes ([#1586](https://github.com/dryvist/nix-darwin/issues/1586)) ([531d96a](https://github.com/dryvist/nix-darwin/commit/531d96acac6a42e5d8b10e8283aada38fd7d187d))
+
 ## [1.72.0](https://github.com/dryvist/nix-darwin/compare/v1.71.3...v1.72.0) (2026-07-08)
 
 
