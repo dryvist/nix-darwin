@@ -82,13 +82,11 @@ in
   # ==========================================================================
   logging = {
     syslog = {
-      # Remote syslog server for centralized log collection — the homelab
-      # HAProxy LB (also the Cribl tcpjson target in hosts/common).
-      # Logs are forwarded via macOS built-in syslogd to HAProxy -> Cribl Edge -> Splunk
+      # Homelab HAProxy LB — the Cribl Edge tcpjson target (hosts/common/
+      # cribl.nix). The old syslogd remote forward that also used this block
+      # is retired (see modules/darwin/logging.nix header); only the server
+      # name remains in use.
       server = "haproxy.pve.${baseDomain}";
-      port = 1514;
-      # Protocol: udp or tcp
-      protocol = "udp";
     };
   };
 

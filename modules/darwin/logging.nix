@@ -1,24 +1,43 @@
-# macOS Syslog Forwarding Configuration
+# macOS local log configuration + firewall log capture
 #
-# Configures macOS built-in syslogd to forward all logs to a remote server.
-# Uses /etc/syslog.conf which is the standard BSD syslog configuration.
+# History: this module used to forward ALL of syslogd's traffic to the
+# homelab LB via BSD /etc/syslog.conf remote rules. That path is retired at
+# the source: BSD syslogd emits RFC3164 (no year, no timezone), and this Mac
+# deliberately stays on local time while every other estate host logs UTC —
+# so every forwarded line landed hours-skewed, and it landed on the unifi
+# syslog family port (wrong index). Structured Mac telemetry ships through
+# the local Cribl Edge instead (hosts/common/cribl.nix), whose sources carry
+# absolute, TZ-qualified timestamps.
 #
-# Log flow: macOS syslogd -> HAProxy (load balancer) -> Cribl Edge -> Splunk
-#
-# Configuration is centralized in lib/user-config.nix under logging.syslog
-# to allow easy modification of the syslog server without editing this module.
+# What remains here:
+#   1. /etc/syslog.conf with the stock local rules only (keeps the file
+#      nix-managed so activation stays deterministic).
+#   2. Firewall log capture: a LaunchDaemon tails the unified log for
+#      firewall subsystems (application firewall / network extension /
+#      packet filter) in ndjson and appends to a rotated file that the
+#      Cribl Edge ships to index=firewall. ULS ndjson timestamps are
+#      absolute with a UTC offset, so local time on the Mac is skew-safe.
+#      NOTE: raw pf packet logging (pflog0) is NOT captured — macOS ships no
+#      pflogd and the default pf ruleset has no `log` rules; adding those is
+#      a deliberate security-engineering change, not log plumbing.
 
 { lib, ... }:
 
 let
   userConfig = import ../../lib/user-config.nix;
 
-  # Build the remote server specification
-  # UDP: @server:port
-  # TCP: @@server:port
-  protocolPrefix = if userConfig.logging.syslog.protocol == "tcp" then "@@" else "@";
+  logDir = "${userConfig.user.homeDir}/Library/Logs/firewall";
+  logFile = "${logDir}/firewall.log";
 
-  remoteServer = "${protocolPrefix}${userConfig.logging.syslog.server}:${toString userConfig.logging.syslog.port}";
+  # Firewall-only ULS predicate: application firewall (alf), the network
+  # extension filter that backs it on modern macOS, socketfilterfw itself,
+  # and pf's own subsystem. Broad within "firewall", nothing else.
+  predicate = lib.concatStringsSep " OR " [
+    ''subsystem == "com.apple.alf"''
+    ''process == "socketfilterfw"''
+    ''(subsystem == "com.apple.networkextension" AND category CONTAINS[c] "firewall")''
+    ''subsystem == "com.apple.pf"''
+  ];
 in
 {
   # Auto-rename syslog.conf if it has unrecognized content (runs before etc check)
@@ -34,52 +53,55 @@ in
     fi
   '';
 
-  # Create /etc/syslog.conf with remote forwarding configuration
-  # The *.* selector matches all facilities and all priorities
+  # Stock local rules only — no remote forwarding (see header).
   environment.etc."syslog.conf".text = ''
     # macOS Syslog Configuration
     # Managed by nix-darwin - do not edit manually
     #
-    # Forward ALL logs to remote syslog server
-    # Server: ${userConfig.logging.syslog.server}
-    # Port: ${toString userConfig.logging.syslog.port}
-    # Protocol: ${userConfig.logging.syslog.protocol}
+    # Local logging only. Remote shipping is handled by Cribl Edge
+    # (hosts/common/cribl.nix), never by syslogd remote rules.
 
-    # Forward all facilities, all priorities to remote server
-    *.*		${remoteServer}
-
-    # Also keep local logging intact (default macOS behavior)
-    # These are the default macOS syslog rules
     *.notice;authpriv,remoteauth,ftp,install,internal.none	/var/log/system.log
     auth,authpriv.*;remoteauth.crit			/var/log/system.log
     mail.*						/var/log/mail.log
     install.*					/var/log/install.log
   '';
 
-  # Reload syslogd after configuration changes
-  # syslogd re-reads its configuration when it receives SIGHUP
+  # Firewall log capture daemon. Runs as the login user (an admin — ULS
+  # firewall entries are readable) so the output file is user-owned and the
+  # user-run Cribl Edge can tail it. The startup marker line proves the
+  # file -> Edge -> Stream -> Splunk path end-to-end on every daemon start,
+  # even while the firewall itself has nothing to say.
+  launchd.daemons.firewall-log-shipping = {
+    serviceConfig = {
+      Label = "com.${userConfig.user.name}.firewall-log-shipping";
+      UserName = userConfig.user.name;
+      RunAtLoad = true;
+      KeepAlive = true;
+      ProgramArguments = [
+        "/bin/sh"
+        "-c"
+        ''
+          printf '{"eventMessage":"firewall-log-shipping daemon started","subsystem":"local.firewall-log-shipping","timestamp":"%s"}\n' "$(date '+%Y-%m-%d %H:%M:%S%z')"
+          exec /usr/bin/log stream --style ndjson --predicate '${predicate}'
+        ''
+      ];
+      StandardOutPath = logFile;
+      StandardErrorPath = "${logDir}/firewall-log-shipping.err.log";
+    };
+  };
+
+  # User-owned log dir (same pattern as ai-cli-log-shipping.nix: install -d
+  # so a root-created parent never blocks the user's writes).
   system.activationScripts.postActivation.text = lib.mkAfter ''
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] ============================================"
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] Syslog Configuration"
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] ============================================"
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] Remote server: ${userConfig.logging.syslog.server}:${toString userConfig.logging.syslog.port} (${userConfig.logging.syslog.protocol})"
+    /usr/bin/install -d -o ${userConfig.user.name} -g staff "${logDir}"
+  '';
 
-    # Send HUP signal to syslogd to reload configuration
-    # syslogd is managed by launchd as com.apple.syslogd
-    if /usr/bin/pkill -HUP syslogd 2>/dev/null; then
-      echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] Sent SIGHUP to syslogd - configuration reloaded"
-    else
-      echo "[$(date '+%Y-%m-%d %H:%M:%S')] [WARN] Could not signal syslogd (may not be running)" >&2
-    fi
-
-    # Verify syslogd is running
-    if /bin/launchctl print system/com.apple.syslogd >/dev/null 2>&1; then
-      echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] syslogd service is running"
-    else
-      echo "[$(date '+%Y-%m-%d %H:%M:%S')] [WARN] syslogd service not found in launchd" >&2
-    fi
-
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] Syslog configuration complete"
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] ============================================"
+  # Rotate via the system newsyslog run. Flags per ai-cli-logs.conf: G glob,
+  # J bzip2, B no rotation banner injected into files Cribl Edge tails,
+  # N no syslogd signal.
+  environment.etc."newsyslog.d/firewall-logs.conf".text = ''
+    # logfilename [owner:group] mode count size when flags
+    ${logDir}/*.log ${userConfig.user.name}:staff 640 3 1024 * BGJN
   '';
 }
