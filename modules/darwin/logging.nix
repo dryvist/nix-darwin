@@ -93,8 +93,13 @@ in
 
   # User-owned log dir (same pattern as ai-cli-log-shipping.nix: install -d
   # so a root-created parent never blocks the user's writes).
+  #
+  # Also HUP syslogd: environment.etc swaps the symlink but never signals the
+  # daemon, so without this the previous /etc/syslog.conf (including the
+  # retired remote-forward rule) keeps running from memory until reboot.
   system.activationScripts.postActivation.text = lib.mkAfter ''
     /usr/bin/install -d -o ${userConfig.user.name} -g staff "${logDir}"
+    /usr/bin/pkill -HUP syslogd 2>/dev/null || true
   '';
 
   # Rotate via the system newsyslog run. Flags per ai-cli-logs.conf: G glob,
