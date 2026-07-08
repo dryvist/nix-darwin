@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.71.1](https://github.com/dryvist/nix-darwin/compare/v1.71.0...v1.71.1) (2026-07-08)
+
+
+### Bug Fixes
+
+* **cribl:** ship Claude Code transcripts natively; drop stray conflict marker ([#1577](https://github.com/dryvist/nix-darwin/issues/1577)) ([a5665f2](https://github.com/dryvist/nix-darwin/commit/a5665f23b4e5eee45eb8c3168c5773a7ad1d47fe))
+
 ## [1.71.0](https://github.com/dryvist/nix-darwin/compare/v1.70.1...v1.71.0) (2026-07-08)
 
 
