@@ -148,6 +148,26 @@ in
               sendToRoutes: false
               connections:
                 - output: cribl_claude
+            # Firewall unified-log tail (modules/darwin/logging.nix daemon
+            # writes ndjson here). Stamped index=firewall locally; Stream's
+            # in_cribl_s2s force_splunk_meta is fill-if-missing, so the stamp
+            # survives to Splunk. ULS ndjson timestamps carry a UTC offset —
+            # the Mac staying on local time is skew-safe. _time is arrival
+            # time (live tail, bounded by the 10s poll); parse the embedded
+            # timestamp field instead if backfill accuracy ever matters.
+            in_firewall_logs:
+              type: file
+              disabled: false
+              mode: manual
+              interval: 10
+              path: ${userConfig.user.homeDir}/Library/Logs/firewall/
+              filenames:
+                - "*.log"
+              tailOnly: false
+              sendToRoutes: false
+              connections:
+                - pipeline: firewall_logs
+                  output: cribl_stream
         ''
         # Appended only where programs.llm-gate is enabled (Studio-only
         # module): other mlx hosts get no input for a path that never exists.
@@ -241,6 +261,18 @@ in
                     value: "'llm'"
                   - name: sourcetype
                     value: "'mlx:metrics'"
+        '';
+        "pipelines/firewall_logs/conf.yml" = ''
+          output: default
+          functions:
+            - id: eval
+              filter: "true"
+              conf:
+                add:
+                  - name: index
+                    value: "'firewall'"
+                  - name: sourcetype
+                    value: "'macos:firewall'"
         '';
       };
       # Claude Code transcripts ship via the native in_claude_logs input ->
