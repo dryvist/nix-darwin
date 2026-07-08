@@ -41,101 +41,121 @@ in
         # the whole config load down with it. Shape mirrors the stock
         # in_file_varlog entry in default/edge/inputs.yml.
         "inputs.yml" = ''
-                    inputs:
-                      in_llm_logs:
-                        type: file
-                        disabled: false
-                        mode: manual
-                        interval: 10
-                        path: ${userConfig.user.homeDir}/Library/Logs/vllm-mlx/
-                        filenames:
-                          - vllm-mlx.log
-                          - vllm-mlx.error.log
-                        tailOnly: false
-                        sendToRoutes: false
-                        connections:
-                          - pipeline: llm_logs
-                            output: cribl_llm
-                      in_system_metrics:
-                        type: system_metrics
-                        disabled: false
-                        sendToRoutes: false
-                        connections:
-                          - pipeline: llm_metrics
-                            output: cribl_stream
-                      # vllm-mlx Prometheus metrics. The per-worker /metrics endpoints
-                      # (programs.mlx enableMetrics, on by default) live on ephemeral
-                      # llama-swap-managed ports (startPort 11436+), so the only
-                      # statically scrapeable surface is the llama-swap proxy itself on
-                      # the loopback :11434 convention (nix-ai programs.mlx.port
-                      # default, mirrored by llm-gate's apiUpstreamPort).
-                      in_llm_prom:
-                        type: prometheus
-                        disabled: false
-                        discoveryType: static
-                        targetList:
-                          - http://127.0.0.1:11434/metrics
-                        interval: 15
-                        sendToRoutes: false
-                        connections:
-                          - pipeline: llm_prom
-                            output: cribl_llm
-                      # Per-AI-CLI session logs. Directories + rotation + the opt-in
-                      # capture wrappers come from programs.ai-cli-log-shipping
-                      # (enabled in ./default.nix). One input -> one dedicated tcpjson
-                      # output per CLI so Stream routes/enriches per service port; no
-                      # local pipeline — index/sourcetype stamping is Stream-side.
-                      # `*.log` matches the wrapper typescript plus anything a CLI's
-                      # own config drops into its directory.
-                      in_codex_logs:
-                        type: file
-                        disabled: false
-                        mode: manual
-                        interval: 10
-                        path: ${userConfig.user.homeDir}/Library/Logs/codex/
-                        filenames:
-                          - "*.log"
-                        tailOnly: false
-                        sendToRoutes: false
-                        connections:
-                          - output: cribl_codex
-                      in_agy_logs:
-                        type: file
-                        disabled: false
-                        mode: manual
-                        interval: 10
-                        path: ${userConfig.user.homeDir}/Library/Logs/agy/
-                        filenames:
-                          - "*.log"
-                        tailOnly: false
-                        sendToRoutes: false
-                        connections:
-                          - output: cribl_agy
-                      in_copilot_logs:
-                        type: file
-                        disabled: false
-                        mode: manual
-                        interval: 10
-                        path: ${userConfig.user.homeDir}/Library/Logs/copilot/
-                        filenames:
-                          - "*.log"
-                        tailOnly: false
-                        sendToRoutes: false
-                        connections:
-                          - output: cribl_copilot
-                      in_vscode_logs:
-                        type: file
-                        disabled: false
-                        mode: manual
-                        interval: 10
-                        path: ${userConfig.user.homeDir}/Library/Logs/vscode/
-                        filenames:
-                          - "*.log"
-                        tailOnly: false
-                        sendToRoutes: false
-                        connections:
-                          - output: cribl_vscode
-          ||||||| parent of 410ecbf (feat(llm): scrape llama-swap Prometheus metrics into the llm_metrics index)
+          inputs:
+            in_llm_logs:
+              type: file
+              disabled: false
+              mode: manual
+              interval: 10
+              path: ${userConfig.user.homeDir}/Library/Logs/vllm-mlx/
+              filenames:
+                - vllm-mlx.log
+                - vllm-mlx.error.log
+              tailOnly: false
+              sendToRoutes: false
+              connections:
+                - pipeline: llm_logs
+                  output: cribl_llm
+            in_system_metrics:
+              type: system_metrics
+              disabled: false
+              sendToRoutes: false
+              connections:
+                - pipeline: llm_metrics
+                  output: cribl_stream
+            # vllm-mlx Prometheus metrics. The per-worker /metrics endpoints
+            # (programs.mlx enableMetrics, on by default) live on ephemeral
+            # llama-swap-managed ports (startPort 11436+), so the only
+            # statically scrapeable surface is the llama-swap proxy itself on
+            # the loopback :11434 convention (nix-ai programs.mlx.port
+            # default, mirrored by llm-gate's apiUpstreamPort).
+            in_llm_prom:
+              type: prometheus
+              disabled: false
+              discoveryType: static
+              targetList:
+                - http://127.0.0.1:11434/metrics
+              interval: 15
+              sendToRoutes: false
+              connections:
+                - pipeline: llm_prom
+                  output: cribl_llm
+            # Per-AI-CLI session logs. Directories + rotation + the opt-in
+            # capture wrappers come from programs.ai-cli-log-shipping
+            # (enabled in ./default.nix). One input -> one dedicated tcpjson
+            # output per CLI so Stream routes/enriches per service port; no
+            # local pipeline — index/sourcetype stamping is Stream-side.
+            # `*.log` matches the wrapper typescript plus anything a CLI's
+            # own config drops into its directory.
+            in_codex_logs:
+              type: file
+              disabled: false
+              mode: manual
+              interval: 10
+              path: ${userConfig.user.homeDir}/Library/Logs/codex/
+              filenames:
+                - "*.log"
+              tailOnly: false
+              sendToRoutes: false
+              connections:
+                - output: cribl_codex
+            in_agy_logs:
+              type: file
+              disabled: false
+              mode: manual
+              interval: 10
+              path: ${userConfig.user.homeDir}/Library/Logs/agy/
+              filenames:
+                - "*.log"
+              tailOnly: false
+              sendToRoutes: false
+              connections:
+                - output: cribl_agy
+            in_copilot_logs:
+              type: file
+              disabled: false
+              mode: manual
+              interval: 10
+              path: ${userConfig.user.homeDir}/Library/Logs/copilot/
+              filenames:
+                - "*.log"
+              tailOnly: false
+              sendToRoutes: false
+              connections:
+                - output: cribl_copilot
+            in_vscode_logs:
+              type: file
+              disabled: false
+              mode: manual
+              interval: 10
+              path: ${userConfig.user.homeDir}/Library/Logs/vscode/
+              filenames:
+                - "*.log"
+              tailOnly: false
+              sendToRoutes: false
+              connections:
+                - output: cribl_vscode
+            # Claude Code session transcripts (~/.claude/projects/
+            # <project>/<session>.jsonl, nested per project). Ships
+            # natively to the dedicated :10311 claude frontend; the
+            # cc-edge-claude-code pack never worked here (its
+            # /home/$CLAUDE_USER default path does not exist on
+            # macOS). tailOnly: pre-cutover history was already
+            # indexed once via the old OrbStack path — ship appends
+            # only, don't re-ingest months of transcripts.
+            in_claude_logs:
+              type: file
+              disabled: false
+              mode: manual
+              interval: 10
+              path: ${userConfig.user.homeDir}/.claude/projects/
+              filenames:
+                - "*.jsonl"
+              recurse: true
+              tailOnly: true
+              sendToRoutes: false
+              connections:
+                - output: cribl_claude
         ''
         # Appended only where programs.llm-gate is enabled (Studio-only
         # module): other mlx hosts get no input for a path that never exists.
@@ -198,6 +218,11 @@ in
               host: ${userConfig.logging.syslog.server}
               port: 10315
               pqEnabled: true
+            cribl_claude:
+              type: tcpjson
+              host: ${userConfig.logging.syslog.server}
+              port: 10311
+              pqEnabled: true
         '';
         # Model-server logs: the manager (Go) and its workers (Python) share
         # the same two files; sourcetype is derived per line.
@@ -238,9 +263,10 @@ in
                     value: "'llm_metrics'"
         '';
       };
-      # Claude Code logs stay on the pack -> cribl_stream (:10300) path; a
-      # repoint to a dedicated per-CLI port (:10311) is an optional future
-      # step once the Stream side carves out a claude frontend.
+      # Claude Code transcripts ship via the native in_claude_logs input ->
+      # cribl_claude (:10311) above; the cc-edge-claude-code pack is not
+      # deployed by this module (its /home/$CLAUDE_USER path never matched
+      # a macOS home).
       packs = {
         cc-edge-the-mac-pack-io = pkgs.fetchzip {
           url = "https://github.com/JacobPEvans/cc-edge-the-mac-pack-io/releases/download/v0.3.0/cc-edge-the-mac-pack-io-v0.3.0.crbl";
