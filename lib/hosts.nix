@@ -102,6 +102,21 @@
     mlx = {
       cacheMemoryMb = 6144;
       prefillBatchSize = 2048;
+      # gpuMemoryUtilization is BOTH the per-worker Metal allocation ceiling
+      # AND the emergency cache-clear threshold, which vllm-mlx computes as
+      # device_mem * (util + 0.05). The global default 0.5 sets that threshold
+      # to 137.4 GB * 0.55 = 76 GB — BELOW the ~92.4 GB resident pair this host
+      # deliberately keeps warm (see sizing comment above). So the instant both
+      # backends are up (~80 GB) every worker force-clears its KV cache each
+      # step: KV thrash -> full re-prefill each turn -> agent chats die after a
+      # few messages (observed as 300+ "[Memory pressure] ... forced cache
+      # clear" events on-host). 0.5 also caps allocation_limit at 0.5*115.4 =
+      # 57.7 GB, below gpt-oss-120b's ~69 GB footprint, so it cannot even stay
+      # resident. 0.75 raises the clear threshold to 137.4 GB * 0.80 = 109.9 GB
+      # (17 GB margin over the 92.4 GB resident pair) and allocation_limit to
+      # 0.75*115.4 = 86.6 GB (holds the 69 GB 120B worker), while staying below
+      # the 115.4 GB wired ceiling so soft-clear still guards true exhaustion.
+      gpuMemoryUtilization = 0.75;
       # Keep both backends resident: no swap eviction, both preloaded at boot,
       # and no idle eviction anywhere — this host's entire job is holding
       # these weights, so the workstation rationale for aggressive TTLs
