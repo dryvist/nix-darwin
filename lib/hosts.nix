@@ -31,13 +31,11 @@
     # services.aiStack.defaultLocalModelId (hosts/*/services-ai-stack.nix, shared).
     # Non-secret public Hugging Face name; committed so evaluation stays pure (no
     # --impure, no keychain/env/file sourcing). Change via a reviewed commit.
-    # 2026-06-09: switched from mlx-community/Qwen3.6-35B-A3B-mxfp4 — its hybrid
-    # linear-attention architecture (qwen3_5_moe) crashes vllm-mlx whenever two
-    # requests batch (mlx-lm conv_state shape bug; 402 crash-recovery events in
-    # one log window, 0.1-4 tok/s effective). Qwen3-30B-A3B-Instruct-2507 is a
-    # standard-attention MoE (qwen3_moe): benched 80-98 tok/s single-stream,
-    # ~85 tok/s aggregate at 4-way concurrency, zero crashes, hermes tool
-    # calling. See dryvist/nix-ai#915.
+    # 2026-06-09: Qwen3-30B-A3B-Instruct-2507, a standard-attention MoE
+    # (qwen3_moe), benched 80-98 tok/s single / ~85 tok/s at 4-way concurrency
+    # with hermes tool calling (dryvist/nix-ai#915). The old "qwen3_5_moe crashes
+    # vllm-mlx on batching" rationale is retired — the 2026-07-08 agentic bench
+    # ran that family under continuous batching at conc4 cleanly.
     defaultLocalModelId = "mlx-community/Qwen3-30B-A3B-Instruct-2507-4bit";
 
     # Local MLX inference server sizing (programs.mlx). Multi-turn agent clients
@@ -75,30 +73,31 @@
     # defaults (hosts/common/default.nix) and nix-home's server preset.
     class = "server";
 
-    # Two-resident serving pair (selected 2026-07-02; research JAC-155 —
-    # weights measured from HF safetensors, archs verified against config.json,
-    # cross-checked via codex + agy):
-    #   default — gpt-oss-120b MXFP4-Q8: 63.3 GB, model_type gpt_oss (standard
-    #     sliding+full softmax attention — NOT the qwen3_next/qwen3_5_moe
-    #     linear-attention crash class from nix-ai#915), 117B total / 5.1B
-    #     active (best TPS in its capability class), Apache-2.0. Tool calls
-    #     need the harmony parser (vllm-mlx >= 0.4.0, nix-ai#1083).
-    #   coding — Qwen3-Coder-30B-A3B 4-bit: 17.1 GB, qwen3_moe — the exact
-    #     architecture of the previously-resident known-good 30B-A3B-2507.
-    # Combined 80.4 GB weights against the 118 GB wired ceiling leaves ~37 GB
-    # for paged-KV + framework. 8-bit coder (32.4 GB) is the tracked upgrade
-    # if coding fidelity wins over KV headroom after benchmarks.
+    # Resident brains (revised 2026-07-08 per the agentic tool-calling bench, HF
+    # JacobPEvans/mlx-benchmarks; weights from HF safetensors):
+    #   tool-calling — Qwen3.6-35B-A3B OptiQ-4bit: ~19.5 GB, qwen3_5_moe. Bench
+    #     winner (100% valid tool calls, 0/20 multi-turn degradation at conc4 +
+    #     thinking + large-ctx); the agent brain Hermes routes to by physical id.
+    #     hermes tool parser + qwen3 reasoning, thinking on. glm47 and stock 8-bit
+    #     degraded — left unregistered.
+    #   coding — Qwen3-Coder-30B-A3B 4-bit: 17.1 GB, qwen3_moe (unchanged).
+    # gpt-oss-120b MXFP4-Q8 (63.3 GB, default/oss aliases) is NO LONGER preloaded:
+    # it failed the agentic gate (0%), so it drops to on-demand and idle-unloads
+    # instead of holding 63 GB warm. Resident weights = 17.1 + 19.5 ≈ 36.6 GB.
     defaultLocalModelId = "mlx-community/gpt-oss-120b-MXFP4-Q8";
     roleModelOverrides = {
+      tool-calling = "mlx-community/Qwen3.6-35B-A3B-OptiQ-4bit";
       coding = "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit";
     };
 
-    # MLX sizing for TWO resident workers plus a swap tier. cacheMemoryMb
-    # applies PER worker, so 2 x 6144 MB resident caches + 80.4 GB resident
-    # weights ≈ 92.4 GB. The swap-tier 35B path = 92.4 + 20.4 + 3.0 ≈ 115.8 GB;
-    # the 118 GB wired ceiling keeps a small margin for the proxy and framework
-    # while the resident pair stays warm. 35B = A3B MoE (~113 tok/s measured).
-    # Verify new model ids on HF BEFORE registering (a phantom id 404'd here).
+    # MLX sizing: two resident brains (coder + OptiQ) plus on-demand swap.
+    # cacheMemoryMb is PER worker — coder keeps the 6144 MB default, OptiQ is
+    # raised to 16384 MB (below) for its 40-58K-token contexts. Resident budget ≈
+    # 36.6 GB weights + 6 + 16 GB caches ≈ 58.6 GB, far under the ~109 GB
+    # cache-clear trip (gpuMemoryUtilization 0.80 on 128 GB; never exceed 0.85).
+    # An on-demand gpt-oss swap-in (63.3 GB + cache) transiently pushes past the
+    # trip alongside the brains — pre-existing on a 128 GB box; it idle-unloads
+    # back to the 58.6 GB baseline.
     mlx = {
       cacheMemoryMb = 6144;
       prefillBatchSize = 2048;
@@ -120,9 +119,11 @@
         concurrencyLimit = 8;
       };
       autoUnloadIdleSeconds = 0;
+      # Resident brains warmed at boot: coder (coding) + OptiQ (tool-calling).
+      # gpt-oss (default) is deliberately omitted — see the composition note.
       preload = [
-        "default"
         "coding"
+        "tool-calling"
       ];
       # Parsers differ per backend, so the global parser is off and each
       # physical model pins its own (harmony needs vllm-mlx >= 0.4.0).
@@ -154,6 +155,25 @@
         "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit" = [
           "--tool-call-parser"
           "qwen3_coder"
+          "--timeout"
+          "3600"
+        ];
+        # tool-calling role (resident agent brain). hermes parser for the general
+        # Qwen3.6 XML tool format (qwen3_coder mis-parses it → empty function.name
+        # repair storms); qwen3 reasoning, thinking ON (bench winner). --timeout
+        # 3600 (on both residents) lifts the 300s disconnect_guard; keeps the
+        # guard chain strict: server 3600 > router 2400 > client 1800.
+        "mlx-community/Qwen3.6-35B-A3B-OptiQ-4bit" = [
+          "--tool-call-parser"
+          "hermes"
+          "--reasoning-parser"
+          "qwen3"
+          "--default-chat-template-kwargs"
+          (builtins.toJSON {
+            enable_thinking = true;
+          })
+          "--timeout"
+          "3600"
         ];
         # Swap-tier (mlx.models) args go on those entries below; keys here
         # only reach role-registry models and are otherwise silently ignored.
@@ -165,26 +185,26 @@
       # requires the paged cache, so both go off for this model only; the
       # Qwen coder keeps prefix caching, which its agentic workloads reuse.
       modelFlagOverrides = {
+        # gpt-oss: demoted from preload. The global autoUnloadIdleSeconds = 0
+        # would pin it resident-forever once loaded on demand, so re-arm a 15-min
+        # idle unload to free its 63 GB back to the two-brain baseline.
         "mlx-community/gpt-oss-120b-MXFP4-Q8" = {
           pagedKvCache = false;
           enablePrefixCaching = false;
+          autoUnloadIdleSeconds = 900;
         };
-        # Global programs.mlx.maxRequestTokens (8192, see modules/mlx in nix-ai)
-        # hard-caps every client-requested max_tokens on this host — good
-        # general defense against a runaway generation, but too low for this
-        # model's actual job: it is Hermes's agent brain (NousResearch
-        # hermes-agent on LXC 517000), whose multi-turn tool-calling and
-        # truncation-recovery paths legitimately need more than 8192 output
-        # tokens per turn (a ~600-word explanation alone is close to that
-        # ceiling). Raise only this model's ceiling back to vllm-mlx's own
-        # 32768 server default; gpt-oss and any future model keep the tighter
-        # 8192 safety net. 32768 (not higher) also matches hermes-agent's own
-        # hardcoded retry-boost ceiling (NousResearch/hermes-agent
-        # conversation_loop.py `max(32768, requested_cap)`), so a truncated
-        # response's retry-boost lands exactly at the server's cap instead of
-        # exceeding it.
+        # coding: resident, unchanged. The global maxRequestTokens (8192, modules/
+        # mlx in nix-ai) is too low for agentic multi-turn, so keep 32768.
         "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit" = {
           maxRequestTokens = 32768;
+        };
+        # tool-calling (resident brain): HIGH KV budget for 40-58K-token contexts;
+        # maxNumSeqs 8 = one continuous batch. The 65536 ceiling replaces the 32768
+        # cap that fed the truncation/retry death-loop.
+        "mlx-community/Qwen3.6-35B-A3B-OptiQ-4bit" = {
+          cacheMemoryMb = 16384;
+          maxNumSeqs = 8;
+          maxRequestTokens = 65536;
         };
         "mlx-community/Qwen3.6-35B-A3B-4bit" = {
           cacheMemoryMb = 3072;
