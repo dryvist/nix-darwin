@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.73.0](https://github.com/dryvist/nix-darwin/compare/v1.72.1...v1.73.0) (2026-07-08)
+
+
+### Features
+
+* **mlx:** make OptiQ-4bit 35B the resident tool-calling brain on jevans-ms ([#1589](https://github.com/dryvist/nix-darwin/issues/1589)) ([33dc416](https://github.com/dryvist/nix-darwin/commit/33dc41685c52981465e26e41bde5ac8c2321452b))
+
 ## [1.72.1](https://github.com/dryvist/nix-darwin/compare/v1.72.0...v1.72.1) (2026-07-08)
 
 
