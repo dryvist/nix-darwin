@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.71.0](https://github.com/dryvist/nix-darwin/compare/v1.70.1...v1.71.0) (2026-07-08)
+
+
+### Features
+
+* **llm:** scrape llama-swap Prometheus metrics into the llm_metrics index ([#1564](https://github.com/dryvist/nix-darwin/issues/1564)) ([d359d22](https://github.com/dryvist/nix-darwin/commit/d359d22a9225c0c318a2ae6717fb9ceff583d8d7))
+
 ## [1.70.1](https://github.com/dryvist/nix-darwin/compare/v1.70.0...v1.70.1) (2026-07-07)
 
 
