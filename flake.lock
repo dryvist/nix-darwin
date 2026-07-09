@@ -465,16 +465,16 @@
     "fabric-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1777933126,
-        "narHash": "sha256-2O/g0DC0ptxzEzXA1NYZWfdnUeIVFuLWNyw1uct2XyM=",
+        "lastModified": 1781042236,
+        "narHash": "sha256-folZ+Y5l76SKo65RJAK7kZX6DJ/AL+iLkcV8NX+1DTA=",
         "owner": "danielmiessler",
         "repo": "fabric",
-        "rev": "6a9b55a096361d368368fa8119f7dd3b8bf2673b",
+        "rev": "a420eaf63c532094eb12bc90c91a227401e96c31",
         "type": "github"
       },
       "original": {
         "owner": "danielmiessler",
-        "ref": "v1.4.452",
+        "ref": "v1.4.455",
         "repo": "fabric",
         "type": "github"
       }
@@ -928,11 +928,11 @@
         "ponytail": "ponytail"
       },
       "locked": {
-        "lastModified": 1783597202,
-        "narHash": "sha256-8fQzEUNooHH81+DMk1P8op4DGunTCrIHzCP41xXZyHg=",
+        "lastModified": 1783625684,
+        "narHash": "sha256-k/E6jWb37qb2xEKi2L9uxrz94Zs+y8YxqoA0uRWFnec=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "e6a2c8756f8f9dfb8bc56207762810cb2db6fe22",
+        "rev": "a29ccd0772765aae293c27a3ca10cb431ace9875",
         "type": "github"
       },
       "original": {
@@ -1038,11 +1038,11 @@
         "wakatime": "wakatime"
       },
       "locked": {
-        "lastModified": 1783271602,
-        "narHash": "sha256-OiWFfUJ+tQhwfXxUnsdxY9E2xQd2NAOg0quSkMZ1sdg=",
+        "lastModified": 1783622041,
+        "narHash": "sha256-oMQlhF5SggRfw4eKf5gfkUWQ3CXkFx7WDpKeDRGw9ns=",
         "owner": "dryvist",
         "repo": "nix-claude-code",
-        "rev": "e058e7451002e90c49ed12e51dcdf4ab0cfc6492",
+        "rev": "fc63a8bfdca7842569206952660818d1471b9e93",
         "type": "github"
       },
       "original": {
