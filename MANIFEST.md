@@ -135,7 +135,6 @@ copies them to `~/Applications/Home Manager Apps/` at TCC-stable paths.
 
 | Package | Description |
 | --- | --- |
-| chatgpt | OpenAI ChatGPT desktop app |
 | claudebar | Menu bar AI coding assistant quota monitoring |
 | code-cursor | Cursor AI IDE (VS Code fork) |
 | discord | Voice/video chat (copyApps for TCC camera/mic stability) |
@@ -174,6 +173,7 @@ All casks use `greedy = true` so that `brew upgrade --greedy` always installs th
 | voiceink | yes | Voice-to-text app (local whisper) |
 | claude | yes | Anthropic Claude desktop app (not in nixpkgs for Darwin) |
 | claude-code | yes | Anthropic Claude Code CLI |
+| chatgpt | yes | OpenAI ChatGPT desktop app (moved from nixpkgs — version lag + no self-update) |
 | codex | yes | OpenAI Codex CLI (moved from nixpkgs; migrated from homebrew/core to cask) |
 | antigravity | yes | Google AI-powered agent orchestrator (Gemini 3) |
 | antigravity-cli | yes | Google terminal interface for agents (agy command) |

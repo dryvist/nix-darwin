@@ -49,7 +49,9 @@ in
 
     # AI IDEs & Tools (nixpkgs - stable TCC paths via copyApps)
     code-cursor # Cursor AI IDE (VS Code fork)
-    chatgpt # OpenAI ChatGPT desktop app
+    # chatgpt: moved to homebrew.nix cask (greedy). nixpkgs lags OpenAI's
+    # weekly releases by months and a store app cannot self-update; the
+    # greedy cask mirrors the `claude` desktop pattern and stays current.
     claudebar # Menu bar app for AI coding assistant quota monitoring
 
     # Communication
