@@ -135,7 +135,6 @@ copies them to `~/Applications/Home Manager Apps/` at TCC-stable paths.
 
 | Package | Description |
 | --- | --- |
-| claudebar | Menu bar AI coding assistant quota monitoring |
 | code-cursor | Cursor AI IDE (VS Code fork) |
 | discord | Voice/video chat (copyApps for TCC camera/mic stability) |
 | ffmpeg | Audio/video recording, conversion, streaming |

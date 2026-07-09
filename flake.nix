@@ -226,7 +226,6 @@
 
       # Expose custom packages for nix-update automation
       packages.aarch64-darwin = {
-        claudebar = nixpkgs.legacyPackages.aarch64-darwin.callPackage ./packages/claudebar.nix { };
         cribl-edge = nixpkgs.legacyPackages.aarch64-darwin.callPackage ./packages/cribl-edge.nix { };
       };
 
