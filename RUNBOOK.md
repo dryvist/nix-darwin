@@ -424,8 +424,11 @@ gh issue list --search "Dependency Dashboard in:title"
 
    - Look for comment from `claude-code` bot
    - Check risk level: LOW, MEDIUM, or HIGH
-   - LOW risk: Safe to auto-merge
-   - MEDIUM/HIGH risk: Review changes carefully
+   - The `risk:*` label is **advisory only** — it does not authorize or trigger
+     auto-merge. Renovate owns merging (minor/patch auto-merge publisher-agnostically
+     after green CI; majors are reviewed).
+   - LOW risk: signals a routine update to the reviewer
+   - MEDIUM/HIGH risk: review changes carefully
 
 4. **Test locally (optional for major updates)**:
 

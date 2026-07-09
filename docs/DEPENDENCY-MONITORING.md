@@ -54,20 +54,6 @@ It provides native Nix flake support and can scan arbitrary files for package ve
 
 Tier taxonomy, cadence, and auto-merge policy are canonical — see <https://docs.jacobpevans.com/infrastructure/cicd/dependency-automation>.
 
-### Node.js Version Constraints
-
-Renovate is configured to **only track LTS releases** for Node.js:
-
-```json5
-{
-  "matchPackageNames": ["nodejs"],
-  "allowedVersions": "20.x || 22.x",  // LTS versions only
-  "schedule": ["before 3am on Monday", "before 3am on Thursday"]
-}
-```
-
-This prevents upgrading to non-LTS "Current" releases.
-
 ### How Renovate PRs Work
 
 1. **Detection**: Renovate checks for updates on schedule or when triggered
