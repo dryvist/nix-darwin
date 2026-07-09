@@ -32,10 +32,9 @@
     # Non-secret public Hugging Face name; committed so evaluation stays pure (no
     # --impure, no keychain/env/file sourcing). Change via a reviewed commit.
     # 2026-06-09: Qwen3-30B-A3B-Instruct-2507, a standard-attention MoE
-    # (qwen3_moe), benched 80-98 tok/s single / ~85 tok/s at 4-way concurrency
-    # with hermes tool calling (dryvist/nix-ai#915). The old "qwen3_5_moe crashes
-    # vllm-mlx on batching" rationale is retired — the 2026-07-08 agentic bench
-    # ran that family under continuous batching at conc4 cleanly.
+    # (qwen3_moe), ~85 tok/s at 4-way concurrency, hermes tool calling
+    # (dryvist/nix-ai#915). The retired "qwen3_5_moe batching crash" claim was
+    # disproven by the 2026-07-08 agentic bench (HF JacobPEvans/mlx-benchmarks).
     defaultLocalModelId = "mlx-community/Qwen3-30B-A3B-Instruct-2507-4bit";
 
     # Local MLX inference server sizing (programs.mlx). Multi-turn agent clients
@@ -73,49 +72,37 @@
     # defaults (hosts/common/default.nix) and nix-home's server preset.
     class = "server";
 
-    # Resident brains (revised 2026-07-08 per the agentic tool-calling bench, HF
-    # JacobPEvans/mlx-benchmarks; weights from HF safetensors):
-    #   tool-calling — Qwen3.6-35B-A3B OptiQ-4bit: ~19.5 GB, qwen3_5_moe. Bench
-    #     winner (100% valid tool calls, 0/20 multi-turn degradation at conc4 +
-    #     thinking + large-ctx); the agent brain Hermes routes to by physical id.
-    #     hermes tool parser + qwen3 reasoning, thinking on. glm47 and stock 8-bit
-    #     degraded — left unregistered.
-    #   coding — Qwen3-Coder-30B-A3B 4-bit: 17.1 GB, qwen3_moe (unchanged).
-    # gpt-oss-120b MXFP4-Q8 (63.3 GB, default/oss aliases) is NO LONGER preloaded:
-    # it failed the agentic gate (0%), so it drops to on-demand and idle-unloads
-    # instead of holding 63 GB warm. Resident weights = 17.1 + 19.5 ≈ 36.6 GB.
+    # Resident brains (2026-07-08 agentic tool-calling bench; verdicts + capacity
+    # in HF JacobPEvans/mlx-benchmarks + apps docs/BRAIN_ROTATION.md):
+    #   tool-calling — Qwen3.6-35B-A3B OptiQ-4bit (~19.5 GB, qwen3_5_moe): bench
+    #     winner, the brain Hermes routes to by physical id. glm47 + stock 8-bit
+    #     degraded, left unregistered.
+    #   coding — Qwen3-Coder-30B-A3B 4-bit (17.1 GB, qwen3_moe).
+    # gpt-oss-120b (63.3 GB, default/oss) is NOT preloaded — 0% on the agentic
+    # gate, so on-demand + idle-unload. Resident weights ≈ 36.6 GB.
     defaultLocalModelId = "mlx-community/gpt-oss-120b-MXFP4-Q8";
     roleModelOverrides = {
       tool-calling = "mlx-community/Qwen3.6-35B-A3B-OptiQ-4bit";
       coding = "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit";
     };
 
-    # MLX sizing: two resident brains (coder + OptiQ) plus on-demand swap.
-    # cacheMemoryMb is PER worker — coder keeps the 6144 MB default, OptiQ is
-    # raised to 16384 MB (below) for its 40-58K-token contexts. Resident budget ≈
-    # 36.6 GB weights + 6 + 16 GB caches ≈ 58.6 GB, far under the ~109 GB
-    # cache-clear trip (gpuMemoryUtilization 0.80 on 128 GB; never exceed 0.85).
-    # An on-demand gpt-oss swap-in (63.3 GB + cache) transiently pushes past the
-    # trip alongside the brains — pre-existing on a 128 GB box; it idle-unloads
-    # back to the 58.6 GB baseline.
+    # MLX sizing (per-worker cacheMemoryMb; derivations in mlx-benchmarks
+    # docs/RUNBOOK.md): residents ≈ 58.6 GB (coder + OptiQ weights + 6 + 16 GB
+    # caches), far under the ~109 GB cache-clear trip (gpuMemoryUtilization 0.80
+    # on 128 GB, never > 0.85). An on-demand gpt-oss swap-in transiently exceeds
+    # the trip — pre-existing; it idle-unloads back to baseline.
     mlx = {
       cacheMemoryMb = 6144;
       prefillBatchSize = 2048;
-      # Keep both backends resident: no swap eviction, both preloaded at boot,
-      # and no idle eviction anywhere — this host's entire job is holding
-      # these weights, so the workstation rationale for aggressive TTLs
-      # (idle-weight dwell starving the desktop working set) does not apply.
-      # A TTL here would mean the first request after any quiet period pays
-      # the ~60-120 s 120B cold start.
+      # Server host: no group swap, no global idle eviction (per-model unloads
+      # are set below). A blanket TTL would make each resident brain pay a
+      # 60-120 s cold start after any quiet period.
       proxy = {
         groupSwap = false;
         idleTtl = 0;
-        # llama-swap hard-429s anything beyond concurrencyLimit (default 2),
-        # while vllm-mlx itself batches 4 sequences (max-num-seqs) and queues
-        # the rest gracefully. Measured on-host: a 4-way benchmark burst got
-        # 98/100 requests rejected at the proxy before the workers saw them.
-        # 8 = one full batch running + one queued at the worker; agents and
-        # the web UI burst-tolerate instead of hard-failing.
+        # 8 (up from the default 2): llama-swap hard-429s beyond this while
+        # vllm-mlx batches + queues gracefully — a 4-way burst measured 98/100
+        # rejected at the proxy. 8 = one batch running + one queued.
         concurrencyLimit = 8;
       };
       autoUnloadIdleSeconds = 0;
@@ -125,20 +112,10 @@
         "coding"
         "tool-calling"
       ];
-      # Parsers differ per backend, so the global parser is off and each
-      # physical model pins its own (harmony needs vllm-mlx >= 0.4.0).
-      # --reasoning-parser WAS deliberately left unset for gpt-oss (comment
-      # here previously cited a --reasoning-parser/--tool-call-parser
-      # streaming conflict in vllm-mlx 0.2.6). Confirmed live 2026-07-06 that
-      # leaving it unset is the actual root cause of harmony channel markers
-      # ("analysis" ... "assistantfinal") leaking verbatim into
-      # message.content in streaming mode (OpenWebUI's request path) — the
-      # gpt-oss reasoning parser (added vllm-mlx 0.2.7 for exactly this
-      # channel-token format) was never engaged, so nothing strips the
-      # channel markers or routes analysis text to reasoning_content. Current
-      # pin is vllm-mlx 0.4.0 (lib/versions.nix), well past the 0.2.6
-      # conflict; --tool-call-parser harmony and --reasoning-parser gpt_oss
-      # coexist fine there.
+      # Global parser off; each backend pins its own below (harmony needs
+      # vllm-mlx >= 0.4.0). gpt-oss MUST set --reasoning-parser gpt_oss — unset,
+      # its harmony channel markers ("analysis"/"assistantfinal") leak into
+      # streamed message.content (root-caused 2026-07-06; nix-ai#1083).
       toolCallParser = null;
       modelExtraArgs = {
         "mlx-community/gpt-oss-120b-MXFP4-Q8" = [
@@ -178,12 +155,9 @@
         # Swap-tier (mlx.models) args go on those entries below; keys here
         # only reach role-registry models and are otherwise silently ignored.
       };
-      # vllm-mlx 0.4.0's paged KV cache is incompatible with gpt-oss's
-      # alternating sliding-window attention: generation fails with
-      # "[broadcast_shapes] Shapes (1,8,64,64) and (1,8,115,64) cannot be
-      # broadcast" (paged-cache block size vs. prompt length). Prefix caching
-      # requires the paged cache, so both go off for this model only; the
-      # Qwen coder keeps prefix caching, which its agentic workloads reuse.
+      # gpt-oss needs pagedKvCache + prefix caching OFF: its sliding-window
+      # attention hits a [broadcast_shapes] failure with vllm-mlx 0.4.0's paged
+      # cache. The Qwen models keep prefix caching for agentic reuse.
       modelFlagOverrides = {
         # gpt-oss: demoted from preload. The global autoUnloadIdleSeconds = 0
         # would pin it resident-forever once loaded on demand, so re-arm a 15-min
@@ -212,16 +186,11 @@
           maxNumSeqs = 2;
           maxRequestTokens = 32768;
         };
-        # Qwen3-Next-80B swap brain (see mlx.models entry above). Cache kept at
-        # 4096 MB — deliberately small so the on-demand swap-in stays under the
-        # ~109 GB trip (58.6 + 42 + 4 ≈ 104.6); idle-unload at 900 s frees the
-        # 42 GB back to the two-brain baseline. maxRequestTokens 32768 lifts the
-        # global 8192 cap (too low for the agent brain's multi-turn / retry
-        # boost) to hermes-agent's own retry ceiling; maxNumSeqs 2 keeps one
-        # continuous batch for the big model within the tight cache budget.
-        # enablePrefixCaching off: automatic prefix caching is unsupported for
-        # the qwen3_next hybrid-attention family (mlx-benchmarks model-notes) —
-        # batching still works, only cross-request TTFT reuse is lost.
+        # Qwen3-Next-80B swap brain (mlx.models entry below). Small 4096 MB cache
+        # keeps the on-demand swap-in under the ~109 GB trip (≈104.6 GB with
+        # residents; derivation in mlx-benchmarks docs/RUNBOOK.md); idle-unload
+        # frees it. prefixCaching off — unsupported for the qwen3_next
+        # hybrid-attention family (mlx-benchmarks model-notes).
         "mlx-community/Qwen3-Next-80B-A3B-Thinking-4bit" = {
           cacheMemoryMb = 4096;
           autoUnloadIdleSeconds = 900;
@@ -232,18 +201,12 @@
       };
     };
 
-    # Qwen3.6-35B lives in the non-resident swap tier. It is not preloaded at
-    # boot; the router loads it on demand, and the swap group unloads it after
-    # it goes idle so it does not crowd out the resident pair. (The dense 27B
-    # was retired 2026-07-07 after evals: 4x slower than the 35B MoE with no
-    # quality niche.)
+    # Non-resident swap tier: router loads on demand, idle-unloads so it never
+    # crowds the resident pair. (Dense 27B retired 2026-07-07: 4x slower.)
     mlx.models = {
-      # extraArgs must be set HERE, not in modelExtraArgs above: ad-hoc
-      # models get their serve flags only from this attr. Without the
-      # tool-call parser the global --enable-auto-tool-choice makes
-      # vllm-mlx exit at argparse ("--enable-auto-tool-choice requires
-      # --tool-call-parser"), so every swap-in 500'd with llama-swap's
-      # "upstream command exited prematurely" (found 2026-07-07 eval).
+      # Swap-tier serve flags go on extraArgs HERE (modelExtraArgs only reaches
+      # role-registry models). The tool-call parser is required — the global
+      # --enable-auto-tool-choice makes vllm-mlx exit at argparse without it.
       "mlx-community/Qwen3.6-35B-A3B-4bit" = {
         ttl = 900;
         extraArgs = [
@@ -257,19 +220,11 @@
           "'{\"enable_thinking\":false}'"
         ];
       };
-      # Qwen3-Next-80B-A3B Thinking 4-bit — the LARGE brain for the fabric's
-      # daily rotation (ansible-proxmox-apps: ai_default_model_large). Non-
-      # resident swap tier: the router loads it on demand and it idle-unloads,
-      # so it never crowds the resident pair. Capacity fits the 128 GB box:
-      # 58.6 GB residents (coder + OptiQ) + ~42 GB weights + 4 GB cache ≈ 104.6
-      # GB, under the ~109 GB cache-clear trip (gpuMemoryUtilization 0.80). No
-      # enable_thinking kwarg: this is the dedicated *Thinking* variant — its
-      # chat template has no enable_thinking switch and always opens a <think>
-      # block (verified against the HF chat_template.jinja), so thinking is
-      # always-on and passing the kwarg would be a no-op. hermes tool parser
-      # (Qwen3 XML tool format, same as the OptiQ resident brain) + qwen3
-      # reasoning; --timeout 3600 keeps the guard chain server 3600 > router
-      # 2400 > client 1800. Native context 262144 (max_position_embeddings).
+      # Qwen3-Next-80B-A3B Thinking 4-bit — the LARGE daily-rotation brain (apps
+      # ai_default_model_large; rotation + capacity in apps docs/BRAIN_ROTATION.md
+      # and mlx-benchmarks docs/RUNBOOK.md). No enable_thinking kwarg: the
+      # dedicated Thinking variant is always-on (no chat-template switch). hermes
+      # tool parser + qwen3 reasoning; --timeout 3600 per the guard chain above.
       "mlx-community/Qwen3-Next-80B-A3B-Thinking-4bit" = {
         ttl = 900;
         extraArgs = [
