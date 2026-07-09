@@ -53,9 +53,18 @@ in
                 - vllm-mlx.error.log
               tailOnly: false
               sendToRoutes: false
+              # Ship through cribl_stream (:10300 in_cribl_s2s), the ONLY live
+              # frontend — NOT cribl_llm (:10321), whose Stream frontend was
+              # never provisioned (#1562: "events buffer locally until each
+              # frontend exists"), so those events sit in the PQ forever and
+              # never reach Splunk. The llm_logs pipeline stamps index=llm +
+              # sourcetype locally; in_cribl_s2s force_splunk_meta is
+              # fill-if-missing, so the stamp survives — same proven path as
+              # in_firewall_logs below. Flip back to cribl_llm once the :10321
+              # frontend lands (ansible-proxmox-apps#525).
               connections:
                 - pipeline: llm_logs
-                  output: cribl_llm
+                  output: cribl_stream
             in_system_metrics:
               type: system_metrics
               disabled: false
@@ -197,6 +206,10 @@ in
               pqEnabled: true
             # Dedicated LLM service ports (Stream routes/enriches off the
             # port). Same HAProxy target; cribl_gate idles without its input.
+            # cribl_llm also idles for now: its :10321 frontend is not yet
+            # provisioned, so in_llm_logs ships via cribl_stream (:10300)
+            # instead — see the in_llm_logs connection note above. Kept
+            # defined so re-pointing is one word once :10321 lands.
             cribl_llm:
               type: tcpjson
               host: ${userConfig.logging.syslog.server}
