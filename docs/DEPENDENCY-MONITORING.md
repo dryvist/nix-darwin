@@ -52,32 +52,7 @@ It provides native Nix flake support and can scan arbitrary files for package ve
 
 ### Update Schedule by Package Group
 
-| Group | Packages | Schedule | Auto-merge |
-| --- | --- | --- | --- |
-| **Critical Infrastructure** | nixpkgs, darwin, home-manager, ai-assistant-instructions | Daily after 7am | No (manual review) |
-| **AI Tools** | claude-code-plugins, nix-ai, anthropics, etc. | Daily after 7am | Yes (all types) |
-| **npm Packages** | cclint, chatgpt-cli, gh-copilot | Monday 10pm | Yes (patch/minor) |
-
-**Auto-merge policy:**
-
-- **Patch updates** (1.2.3 → 1.2.4): Auto-merge after CI passes
-- **Minor updates** (1.2.3 → 1.3.0): Auto-merge after CI passes
-- **Major updates** (1.2.3 → 2.0.0): Manual review required
-  - Exception: **AI Tools** group auto-merges all update types (all packages are JacobPEvans-owned or trusted)
-
-### Node.js Version Constraints
-
-Renovate is configured to **only track LTS releases** for Node.js:
-
-```json5
-{
-  "matchPackageNames": ["nodejs"],
-  "allowedVersions": "20.x || 22.x",  // LTS versions only
-  "schedule": ["before 3am on Monday", "before 3am on Thursday"]
-}
-```
-
-This prevents upgrading to non-LTS "Current" releases.
+Tier taxonomy, cadence, and auto-merge policy are canonical — see <https://docs.jacobpevans.com/infrastructure/cicd/dependency-automation>.
 
 ### How Renovate PRs Work
 

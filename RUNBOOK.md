@@ -384,18 +384,7 @@ the standard "update and rebuild" workflow in [Updating Packages](#updating-pack
 
 #### Renovate Update Schedule
 
-Renovate creates PRs on a schedule based on package criticality:
-
-| Package Group | Schedule | Auto-merge |
-| --- | --- | --- |
-| Critical Infrastructure (nixpkgs, darwin, home-manager) | Mon/Thu 3am | No |
-| AI Tools (claude-code-plugins, etc.) | Sun/Wed/Fri 10pm | Yes (patch/minor) |
-| npm Packages (cclint, chatgpt-cli, gh-copilot) | Monday 10pm | Yes (patch/minor) |
-
-**Auto-merge policy:**
-
-- **Patch** (1.2.3 → 1.2.4) and **Minor** (1.2.3 → 1.3.0): Auto-merge after CI passes
-- **Major** (1.2.3 → 2.0.0): Manual review required
+Tier taxonomy, cadence, and auto-merge policy are canonical — see <https://docs.jacobpevans.com/infrastructure/cicd/dependency-automation>.
 
 #### Check for Renovate PRs
 
@@ -435,8 +424,11 @@ gh issue list --search "Dependency Dashboard in:title"
 
    - Look for comment from `claude-code` bot
    - Check risk level: LOW, MEDIUM, or HIGH
-   - LOW risk: Safe to auto-merge
-   - MEDIUM/HIGH risk: Review changes carefully
+   - The `risk:*` label is **advisory only** — it does not authorize or trigger
+     auto-merge. Renovate owns merging (minor/patch auto-merge publisher-agnostically
+     after green CI; majors are reviewed).
+   - LOW risk: signals a routine update to the reviewer
+   - MEDIUM/HIGH risk: review changes carefully
 
 4. **Test locally (optional for major updates)**:
 
