@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.74.2](https://github.com/dryvist/nix-darwin/compare/v1.74.1...v1.74.2) (2026-07-09)
+
+
+### Bug Fixes
+
+* **mac-studio:** 256-token paged-cache blocks + DRY serving groups ([#1609](https://github.com/dryvist/nix-darwin/issues/1609)) ([4774f37](https://github.com/dryvist/nix-darwin/commit/4774f37d693f7647cd3e7993473b40d8a1ef09a3))
+
 ## [1.74.1](https://github.com/dryvist/nix-darwin/compare/v1.74.0...v1.74.1) (2026-07-09)
 
 
