@@ -6,7 +6,7 @@ on:
   workflow_run:
     workflows: ["Nix Build", "Nix Validate"]
     types: [completed]
-    branches: [main]
+    branches: [main, develop]
 if: ${{ github.event.workflow_run.conclusion == 'failure' || github.event.workflow_run.conclusion == 'cancelled' }}
 ---
 
