@@ -66,42 +66,32 @@
 
   mac-studio =
     let
-      # ---- Serving groups (single source for values shared across models) ----
-      # A value repeated across models means they belong to a FAMILY (same
-      # model lineage → same parser stack) or a CLASS (same serving role →
-      # same lifecycle/sizing). Set shared values here, never per-model.
+      # Serving groups: shared values live here, never per-model (FAMILY =
+      # lineage → parser stack; CLASS = role → lifecycle/sizing).
       #
-      # Family: Qwen3.6/Next MoE general lineage. The XML tool format needs
-      # the hermes parser (qwen3_coder mis-parses it → empty function.name
-      # repair storms) + qwen3 reasoning extraction.
+      # Qwen3.6/Next MoE lineage: XML tool format needs hermes (qwen3_coder
+      # mis-parses it → empty function.name repair storms) + qwen3 reasoning.
       qwenMoeGeneralParser = [
         "--tool-call-parser"
         "hermes"
         "--reasoning-parser"
         "qwen3"
       ];
-      # Class: agentic backends on the timeout guard chain. 3600 lifts the
-      # 300 s disconnect_guard; keeps the chain strict:
-      # server 3600 > router 2400 > client 1800.
+      # Guard chain: server 3600 > router 2400 > client 1800 (lifts the
+      # 300 s disconnect_guard).
       agentTimeout = [
         "--timeout"
         "3600"
       ];
-      # Class: resident brains (preloaded, long-lived). 256-token paged-cache
-      # blocks (up from the 64 default): a long agentic session near the
-      # 65536-token ceiling shatters into ~1000 blocks/seq × layers × K/V
-      # Metal buffers and trips MLX's buffer-COUNT limit ("[metal::malloc]
-      # Resource limit (499000) exceeded" at ~66 GB active — not a byte OOM),
-      # aborting the request mid-stream (litellm.MidStreamFallbackError).
-      # 256-token blocks cut the count 4× while keeping paged cache + prefix
-      # reuse. Validated 2026-07-09 on OptiQ solo: the repro prompt that
-      # reliably tripped block-size 64 completes clean at 256.
+      # Residents: 256-token paged-cache blocks (default 64) — long sessions
+      # shattered the KV into enough per-block Metal buffers to trip MLX's
+      # buffer-count limit ("Resource limit (499000) exceeded", not a
+      # byte OOM). Validated 2026-07-09 (#1609).
       residentBrainArgs = agentTimeout ++ [
         "--paged-cache-block-size"
         "256"
       ];
-      # Class: swap tier (on-demand, idle-unloaded after 900 s so it never
-      # crowds the residents; small footprint caps).
+      # Swap tier: on-demand, idle-unloaded; small caps.
       swapTierTtl = 900;
       swapTierFlags = {
         autoUnloadIdleSeconds = swapTierTtl;
@@ -239,10 +229,8 @@
         # Swap-tier serve flags go on extraArgs HERE (modelExtraArgs only reaches
         # role-registry models). The tool-call parser is required — the global
         # --enable-auto-tool-choice makes vllm-mlx exit at argparse without it.
-        # NOTE: parser anomaly — this stock sibling still runs qwen3_coder while
-        # the family group uses hermes (which the OptiQ bench showed is required
-        # for the general XML tool format). Predates the 2026-07-08 bench; flip
-        # to qwenMoeGeneralParser only with a bench validating this variant.
+        # Parser anomaly: still qwen3_coder (predates the 2026-07-08 bench);
+        # flip to qwenMoeGeneralParser only with a bench on this variant.
         "mlx-community/Qwen3.6-35B-A3B-4bit" = {
           ttl = swapTierTtl;
           extraArgs = [
