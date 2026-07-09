@@ -1,30 +1,17 @@
-// Renovate Bot Configuration
-// Automated dependency updates for Nix flakes
+// Renovate configuration for nix-darwin.
 //
-// Documentation: https://docs.renovatebot.com/configuration-options/
-// Schema: https://docs.renovatebot.com/config-presets/
-
+// Inherits all org policy (auto-merge tiers, trusted orgs, dependency dashboard,
+// PR/branch limits, commit-message format, 0-day CVE handling) from the shared
+// nix preset: local>dryvist/.github:renovate-nix (= org default + native nix
+// manager). Only genuinely repo-specific config lives here: the Cribl Edge
+// custom datasource/manager and the flake-input grouping/scheduling that the
+// org's minor/patch tiers do not cover for git-refs digest updates.
 {
-  // Base configuration presets
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended",
-    ":dependencyDashboard",
-    ":semanticCommits",
-    ":enablePreCommit",
-    "local>dryvist/.github"
+    "local>dryvist/.github:renovate-nix",
+    ":enablePreCommit"
   ],
-
-  // Repository settings
-  "baseBranchPatterns": ["main"],
-  "labels": ["dependencies", "renovate"],
-  "assignees": ["@JacobPEvans-personal"],
-  "reviewers": ["@JacobPEvans-personal"],
-
-  // Nix flake support (native manager)
-  "nix": {
-    "enabled": true
-  },
 
   // Custom datasource: Cribl Edge CDN version feed
   // https://cdn.cribl.io/versions.json → {"version":"4.17.0-7e952fa7",...}
@@ -36,7 +23,7 @@
     }
   },
 
-  // Custom regex manager: track Cribl Edge version
+  // Custom regex manager: track Cribl Edge version in packages/cribl-edge.nix
   "customManagers": [
     {
       "customType": "regex",
@@ -48,15 +35,12 @@
     }
   ],
 
-  // Package grouping and scheduling strategy
-  //
-  // matchPackageNames uses GitHub repo paths (owner/repo), not flake input names.
-  // Own-org auto-merge (dryvist/**, JacobPEvans/**, JacobPEvans-personal/**) is
-  // owned by the org preset (local>dryvist/.github) — not redeclared here.
+  // Flake-input grouping/scheduling. These match git-refs (flake input) digest
+  // updates, which the org's minor/patch/major tiers do not schedule — so the
+  // cadence for critical inputs is set here deliberately.
   "packageRules": [
-    // GROUP 1: External critical infrastructure (Daily 7am, 2-day delay for nixpkgs cache lag)
     {
-      "description": "External critical system inputs - 2-day delay for nixpkgs-25.11-darwin Hydra eval lag",
+      "description": "External critical system inputs - 2-day delay for nixpkgs-darwin Hydra eval lag",
       "matchDatasources": ["git-refs"],
       "matchPackageNames": [
         "NixOS/nixpkgs",
@@ -68,8 +52,6 @@
       "schedule": ["after 7am"],
       "minimumReleaseAge": "2 days"
     },
-
-    // GROUP 2: External AI tooling (Daily 7am)
     {
       "description": "External AI-focused flake inputs - daily updates at 7am",
       "matchDatasources": ["git-refs"],
@@ -80,16 +62,12 @@
       "groupName": "ai-tools-external",
       "schedule": ["after 7am"]
     },
-
-    // GROUP 3: GitHub Actions - Weekly Monday 7am
     {
       "description": "GitHub Actions updates - weekly at 7am Monday",
       "matchManagers": ["github-actions"],
       "groupName": "github-actions",
       "schedule": ["after 7am on Monday"]
     },
-
-    // GROUP 4: Cribl Edge - Weekly Monday 7am
     {
       "description": "Cribl Edge version - weekly at 7am Monday",
       "matchDatasources": ["custom.cribl-edge"],
@@ -98,38 +76,5 @@
       "commitMessageTopic": "Cribl Edge",
       "commitMessageExtra": "to {{newVersion}}"
     }
-  ],
-
-  // Commit message formatting
-  "commitMessagePrefix": "chore(deps): ",
-  "commitMessageAction": "update",
-  "commitMessageTopic": "{{{depName}}}",
-  "commitMessageExtra": "to {{{newVersion}}}",
-  "commitBody": "Co-Authored-By: Renovate Bot <bot@renovateapp.com>",
-
-  // PR configuration
-  "prConcurrentLimit": 3, // Max 3 PRs open at once (default: 0 = unlimited)
-  "prCreation": "immediate", // Create PR as soon as update detected
-  "prHourlyLimit": 1, // Max 1 new PR per hour (prevent spam)
-
-  // Branch naming
-  "branchPrefix": "chore/renovate/",
-  "branchConcurrentLimit": 5,
-
-  // Dependency dashboard (GitHub issue)
-  "dependencyDashboard": true,
-  "dependencyDashboardTitle": "Dependency Dashboard (Renovate)",
-  "dependencyDashboardHeader": "This issue tracks pending dependency updates managed by Renovate Bot.",
-  "dependencyDashboardFooter": "For manual updates, use: `nix flake update` or trigger the deps-update-flake.yml workflow.",
-
-  // Vulnerability alerts
-  "vulnerabilityAlerts": {
-    "enabled": true,
-    "labels": ["security"],
-    "automerge": true,
-    "minimumReleaseAge": "3 days"
-  },
-
-  // Platform-specific settings
-  "platformCommit": "enabled" // Use GitHub API for commits (enables signing)
+  ]
 }
