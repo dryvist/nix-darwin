@@ -7,7 +7,7 @@ name: Nix Build
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - '**.nix'
       - 'flake.lock'
