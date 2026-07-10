@@ -40,11 +40,11 @@ in
         # fails validation ("should have required property 'path'") and takes
         # the whole config load down with it. Shape mirrors the stock
         # in_file_varlog entry in default/edge/inputs.yml.
-        # `filenames` entries MUST contain a glob character: a literal
-        # filename ("vllm-mlx.log") silently matches NOTHING — the input
-        # reports health Green with zero files tracked (verified empirically
-        # both ways via the local API, 4.18.0; root cause of #1623's "ships
-        # nothing").
+        # `filenames` patterns match against the FULL PATH, not the basename
+        # (docs.cribl.io/edge/sources-file-monitor). A pattern without a
+        # leading wildcard ("vllm-mlx*.log", "access.json") silently matches
+        # NOTHING — health Green, zero files tracked (verified via the local
+        # API, 4.18.0; root cause of #1623). Always lead with "*/".
         "inputs.yml" = ''
           inputs:
             in_llm_logs:
@@ -54,7 +54,7 @@ in
               interval: 10
               path: ${userConfig.user.homeDir}/Library/Logs/vllm-mlx/
               filenames:
-                - "vllm-mlx*.log"
+                - "*/vllm-mlx*.log"
               tailOnly: false
               sendToRoutes: false
               # Ship through cribl_stream (:10300 in_cribl_s2s), the ONLY live
@@ -186,7 +186,7 @@ in
         # module): other mlx hosts get no input for a path that never exists.
         + lib.optionalString config.programs.llm-gate.enable ''
           # llm-gate JSON access log (Caddy `log` directive, llm-gate.nix).
-          # Glob required — a literal filename matches nothing (see above).
+          # Full-path-matched pattern — must lead with "*/" (see above).
             in_gate_access:
               type: file
               disabled: false
@@ -194,7 +194,7 @@ in
               interval: 10
               path: ${config.programs.llm-gate.logDir}/
               filenames:
-                - "access.*"
+                - "*/access.*"
               tailOnly: false
               sendToRoutes: false
               connections:
