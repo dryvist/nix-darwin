@@ -31,6 +31,13 @@ in
     export OPENAI_API_KEY=''${OPENAI_API_KEY:-"$(security find-generic-password -s 'OPENAI_API_KEY' -a '${userConfig.keychain.aiAccount}' -w '${userConfig.keychain.aiDb}' 2>/dev/null || echo "")"}
   '';
 
+  # Vikunja task-management MCP (nix-ai catalog ships it disabled). This
+  # workstation is the consumer: VIKUNJA_URL + VIKUNJA_API_TOKEN are injected
+  # from Doppler ai-ci-automation/prd via the `d-claude` launch alias, so enable
+  # it here. Runs under a d-claude session; a bare `claude` lacks the token and
+  # the server logs a startup error (harmless — other servers keep working).
+  programs.aiMcp.servers.vikunja.disabled = lib.mkForce false;
+
   # ==========================================================================
   # TCC-Sensitive GUI Applications (using copyApps for stable paths)
   # ==========================================================================
