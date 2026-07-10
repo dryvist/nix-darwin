@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Night-restore (worker Mac) — undo night-quiesce.sh after the cable is out.
 #
 # Bootstraps back exactly the agents the quiesce recorded (labels whose

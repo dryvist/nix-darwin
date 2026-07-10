@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Night-quiesce (worker Mac) — free memory/GPU for the night rank.
 #
 # Explicit KEEP allowlist: every user LaunchAgent whose label does not match
