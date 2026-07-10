@@ -152,6 +152,11 @@
             ''export HF_TOKEN=''${HF_TOKEN:-"$(_get_keychain_secret 'HF_TOKEN' "$_KC_AI_ACCOUNT" "$_KC_AI_DB")"}''
         }
 
+        # openHarness local-LLM bearer (workstation only; no server sops fallback).
+        ${lib.optionalString (!hostConfig.isServer) ''
+          export OPENAI_API_KEY=''${OPENAI_API_KEY:-"$(_get_keychain_secret 'OPENAI_API_KEY' "$_KC_AI_ACCOUNT" "$_KC_AI_DB")"}
+        ''}
+
         unset -f _get_keychain_secret  # No longer needed after init
         unset _KC_USER _KC_AI_DB  # _KC_AI_ACCOUNT persists for runtime gh-token switching
 
