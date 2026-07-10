@@ -29,9 +29,11 @@ in
   # Network hostname from the per-host registry.
   networking.hostName = hostConfig.hostName;
 
-  # Workstations keep macOS' automatic timezone behavior. Server hosts pin UTC
-  # so the Friday 00:00 launchd schedule lands at Friday 00:00 UTC there.
-  time.timeZone = if hostConfig.isServer then "UTC" else null;
+  # Workstations keep macOS' automatic timezone behavior. Server hosts pin GMT
+  # (UTC-equivalent, no DST) so the Friday 00:00 launchd schedule lands at 00:00
+  # there. macOS `systemsetup -settimezone` rejects bare "UTC" (not in its
+  # listtimezones); "GMT" is the accepted +00:00 value.
+  time.timeZone = if hostConfig.isServer then "GMT" else null;
 
   # SSH/Remote Login — macOS Remote Login via launchd (Settings > General > Sharing).
   services.openssh.enable = true;
