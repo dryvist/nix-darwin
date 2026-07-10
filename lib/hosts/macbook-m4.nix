@@ -30,6 +30,15 @@
   mlx = {
     cacheMemoryMb = 16384;
     prefillBatchSize = 2048;
+
+    # Night cluster: this Mac is rank 1 (worker) of the two-Mac JACCL brain
+    # when the Thunderbolt cable is in. The worker-side quiesce/restore hooks
+    # (GUI quit + agent bootout allowlist sweep) are wired by
+    # hosts/common/night-quiesce.nix. Day config above is untouched.
+    nightCluster = {
+      enable = true;
+      role = "worker";
+    };
   };
 
   # OrbStack container runtime. The ContainerData volume is created by

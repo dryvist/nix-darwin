@@ -81,6 +81,26 @@ let
     lib.unique ([ cfg.domain ] ++ cfg.extraHostnames)
   );
 
+  # Optional second gated site for the night-cluster endpoint (same bearer
+  # token, same cert, own port + access log). Rendered only when a night
+  # upstream is configured.
+  nightSite = lib.optionalString (cfg.nightUpstreamPort != null) ''
+    ${
+      lib.concatMapStringsSep " " (host: "https://${host}:${toString cfg.nightPort}") (
+        lib.unique ([ cfg.domain ] ++ cfg.extraHostnames)
+      )
+    } {
+      ${tlsDirective}
+      log {
+        output file ${cfg.logDir}/night-access.json
+        format json
+      }
+      @unauthorized not header Authorization "Bearer {env.LLM_LARGE_BEARER_TOKEN}"
+      respond @unauthorized 401
+      reverse_proxy 127.0.0.1:${toString cfg.nightUpstreamPort}
+    }
+  '';
+
   # The whole Caddyfile is a plain, secret-free nix store file: every sensitive
   # value is an {env.VAR} placeholder resolved by Caddy at parse time from the
   # Doppler-injected environment. Safe to be world-readable — it contains no
@@ -108,6 +128,8 @@ let
       respond @unauthorized 401
       reverse_proxy 127.0.0.1:${toString cfg.apiUpstreamPort}
     }
+
+    ${nightSite}
   '';
 in
 {
@@ -153,6 +175,18 @@ in
       type = lib.types.port;
       default = 11434;
       description = "Loopback llama-swap port the API site proxies to.";
+    };
+
+    nightPort = lib.mkOption {
+      type = lib.types.port;
+      default = 11440;
+      description = "Gated night-cluster API port on the LAN bind address (mirrors the loopback night port, same convention as apiPort).";
+    };
+
+    nightUpstreamPort = lib.mkOption {
+      type = lib.types.nullOr lib.types.port;
+      default = null;
+      description = "Loopback night-cluster (mlx-lm rank 0) port to gate; null renders no night site.";
     };
 
     user = lib.mkOption {

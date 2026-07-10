@@ -62,6 +62,16 @@
     ];
     # Global parser off; every backend's parser comes from its catalog entry.
     toolCallParser = null;
+
+    # Night cluster: this Mac is rank 0 (coordinator) of the two-Mac JACCL
+    # brain when the Thunderbolt cable is in — it binds the night endpoint on
+    # loopback :11440, gated by llm-gate (hosts/mac-studio/default.nix). The
+    # link watcher quiesces day serving at link-up and re-warms the preload
+    # list on unplug.
+    nightCluster = {
+      enable = true;
+      role = "coordinator";
+    };
   };
 
   # OrbStack stays OFF — this host uses the Apple `container` runtime, not
