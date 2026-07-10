@@ -13,7 +13,13 @@
   ...
 }:
 let
-  nightRole = hostConfig.mlx.nightCluster.role or null;
+  # Attribute-existence gate (repo convention), not a bare `or` fallback:
+  # non-inference hosts have no `mlx` at all.
+  nightRole =
+    if hostConfig ? mlx && hostConfig.mlx ? nightCluster then
+      hostConfig.mlx.nightCluster.role or null
+    else
+      null;
 
   quiescePkg = pkgs.writeShellApplication {
     name = "night-quiesce";

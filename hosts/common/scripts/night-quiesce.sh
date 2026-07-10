@@ -16,6 +16,13 @@
 uid="$(id -u)"
 state_file="$HOME/Library/Application Support/mlx-night/quiesced-agents"
 mkdir -p "$(dirname "$state_file")"
+
+# Idempotence guard: a second quiesce before the restore would truncate the
+# record while the agents are already booted out, losing the restore list.
+if [ -s "$state_file" ]; then
+  echo "night-quiesce: active quiesce state detected; already quiesced"
+  exit 0
+fi
 : > "$state_file"
 
 # 1. Quit every visible GUI app, honoring save prompts. Terminals are
