@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.76.0](https://github.com/dryvist/nix-darwin/compare/v1.75.0...v1.76.0) (2026-07-10)
+
+
+### Features
+
+* **cribl:** ship mlx bench-events feed to Splunk (mlx:bench) ([#1640](https://github.com/dryvist/nix-darwin/issues/1640)) ([7e0522a](https://github.com/dryvist/nix-darwin/commit/7e0522a2a89dd34a52108736b6cee612202b233f))
+
+
+### Bug Fixes
+
+* **hosts:** codify application firewall on (Studio drift closes firewall.log gap) ([#1643](https://github.com/dryvist/nix-darwin/issues/1643)) ([700ac6c](https://github.com/dryvist/nix-darwin/commit/700ac6c90ccd728ff52cfed5757bf2f49291b492))
+
 ## [1.75.0](https://github.com/dryvist/nix-darwin/compare/v1.74.3...v1.75.0) (2026-07-10)
 
 
