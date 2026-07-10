@@ -80,6 +80,10 @@ in
       # the public zone issues cleanly, same as the host FQDN. (A future
       # public-facing capability name is tracked separately.)
       extraHostnames = [ "llm-large.${userConfig.baseDomain}" ];
+      # Night-cluster endpoint (mlx-lm rank 0 on loopback :11440, see
+      # lib/hosts/mac-studio.nix nightCluster): second gated site, same
+      # bearer token and cert, mirrored external:loopback port convention.
+      nightUpstreamPort = 11440;
     };
 
     # ========================================================================
