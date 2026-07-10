@@ -36,6 +36,19 @@ in
   # SSH/Remote Login — macOS Remote Login via launchd (Settings > General > Sharing).
   services.openssh.enable = true;
 
+  # Application firewall on every host. The MBP had this enabled by hand; the
+  # Studio shipped disabled, which left the firewall-log-shipping feed with
+  # nothing to say (its `log stream` daemon was alive but the ALF subsystem
+  # was silent). allowSigned/allowSignedApp match the working MBP posture so
+  # LAN services (sshd, llama-swap via signed python) keep accepting inbound.
+  networking.applicationFirewall = {
+    enable = true;
+    allowSigned = true;
+    allowSignedApp = true;
+    blockAllIncoming = false;
+    enableStealthMode = false;
+  };
+
   programs = {
     # Custom file extensions recognized as tar.gz archives (Finder auto-extract
     # + shell autocomplete).

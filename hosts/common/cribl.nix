@@ -85,6 +85,22 @@ in
               connections:
                 - pipeline: llm_logs
                   output: cribl_stream
+            # Benchmark result events (mlx-benchmarks#119): mlx-bench-publish
+            # appends one flat JSON line per result row; derived state,
+            # replayable from the HF dataset via `mlx-bench-events replay`.
+            in_bench_events:
+              type: file
+              disabled: false
+              mode: manual
+              interval: 10
+              path: ${userConfig.user.homeDir}/.local/state/mlx-benchmarks/
+              filenames:
+                - "*/bench-events.jsonl"
+              tailOnly: false
+              sendToRoutes: false
+              connections:
+                - pipeline: bench_events
+                  output: cribl_stream
             in_system_metrics:
               type: system_metrics
               disabled: false
@@ -285,6 +301,18 @@ in
                     value: "'llm'"
                   - name: sourcetype
                     value: "_raw.match(/^(INFO|DEBUG|WARNING|ERROR|CRITICAL):/) ? 'vllm:mlx' : 'llamaswap'"
+        '';
+        "pipelines/bench_events/conf.yml" = ''
+          output: default
+          functions:
+            - id: eval
+              filter: "true"
+              conf:
+                add:
+                  - name: index
+                    value: "'llm'"
+                  - name: sourcetype
+                    value: "'mlx:bench'"
         '';
         "pipelines/llm_metrics/conf.yml" = ''
           output: default
