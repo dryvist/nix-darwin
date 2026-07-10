@@ -152,7 +152,7 @@ jobs:
 | --- | --- |
 | `review-code.yml` | Claude Code PR review |
 | `review-deps.yml` | Dependency update reviews |
-| `deps-update-flake.yml` | Unified flake.lock updates (schedule + instant sync) |
+| `deps-update-flake.yml` | JacobPEvans flake.lock updates (manual dispatch) |
 
 ## Configuration
 
