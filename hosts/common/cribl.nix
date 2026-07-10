@@ -40,6 +40,11 @@ in
         # fails validation ("should have required property 'path'") and takes
         # the whole config load down with it. Shape mirrors the stock
         # in_file_varlog entry in default/edge/inputs.yml.
+        # `filenames` patterns match against the FULL PATH, not the basename
+        # (docs.cribl.io/edge/sources-file-monitor). A pattern without a
+        # leading wildcard ("vllm-mlx*.log", "access.json") silently matches
+        # NOTHING — health Green, zero files tracked (verified via the local
+        # API, 4.18.0; root cause of #1623). Always lead with "*/".
         "inputs.yml" = ''
           inputs:
             in_llm_logs:
@@ -49,13 +54,21 @@ in
               interval: 10
               path: ${userConfig.user.homeDir}/Library/Logs/vllm-mlx/
               filenames:
-                - vllm-mlx.log
-                - vllm-mlx.error.log
+                - "*/vllm-mlx*.log"
               tailOnly: false
               sendToRoutes: false
+              # Ship through cribl_stream (:10300 in_cribl_s2s), the ONLY live
+              # frontend — NOT cribl_llm (:10321), whose Stream frontend was
+              # never provisioned (#1562: "events buffer locally until each
+              # frontend exists"), so those events sit in the PQ forever and
+              # never reach Splunk. The llm_logs pipeline stamps index=llm +
+              # sourcetype locally; in_cribl_s2s force_splunk_meta is
+              # fill-if-missing, so the stamp survives — same proven path as
+              # in_firewall_logs below. Flip back to cribl_llm once the :10321
+              # frontend lands (ansible-proxmox-apps#525).
               connections:
                 - pipeline: llm_logs
-                  output: cribl_llm
+                  output: cribl_stream
             in_system_metrics:
               type: system_metrics
               disabled: false
@@ -173,6 +186,7 @@ in
         # module): other mlx hosts get no input for a path that never exists.
         + lib.optionalString config.programs.llm-gate.enable ''
           # llm-gate JSON access log (Caddy `log` directive, llm-gate.nix).
+          # Full-path-matched pattern — must lead with "*/" (see above).
             in_gate_access:
               type: file
               disabled: false
@@ -180,7 +194,7 @@ in
               interval: 10
               path: ${config.programs.llm-gate.logDir}/
               filenames:
-                - access.json
+                - "*/access.*"
               tailOnly: false
               sendToRoutes: false
               connections:
@@ -197,6 +211,10 @@ in
               pqEnabled: true
             # Dedicated LLM service ports (Stream routes/enriches off the
             # port). Same HAProxy target; cribl_gate idles without its input.
+            # cribl_llm also idles for now: its :10321 frontend is not yet
+            # provisioned, so in_llm_logs ships via cribl_stream (:10300)
+            # instead — see the in_llm_logs connection note above. Kept
+            # defined so re-pointing is one word once :10321 lands.
             cribl_llm:
               type: tcpjson
               host: ${userConfig.logging.syslog.server}

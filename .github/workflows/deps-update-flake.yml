@@ -1,39 +1,22 @@
-# Flake dependency updates (on-demand and scheduled)
+# Flake dependency updates (manual, on-demand)
 #
-# Two modes controlled by the `target` input:
+# Bumps all JacobPEvans-owned flake inputs to latest. Use after shipping
+# changes in upstream repos (nix-home, nix-ai, etc.) to pull them into
+# nix-darwin immediately instead of waiting for Renovate.
+#   CLI: gh workflow run deps-update-flake.yml
 #
-#   jacobpevans  — Bump all JacobPEvans-owned flake inputs to latest.
-#                  Use after shipping changes in upstream repos (nix-home,
-#                  nix-ai, etc.) to pull them into nix-darwin immediately.
-#                  CLI: gh workflow run deps-update-flake.yml -f target=jacobpevans
-#
-#   custom       — Update custom packages with pinned source hashes that
-#                  Renovate cannot manage (currently: claudebar via nix-update).
-#                  Runs weekly on Monday at noon UTC and on manual dispatch.
-#
-# Flake input updates for third-party inputs (nixpkgs, home-manager, etc.)
-# are handled by Renovate's nix manager — see renovate.json5.
+# Third-party inputs (nixpkgs, home-manager, etc.) are handled by Renovate's
+# nix manager — see renovate.json5.
 name: Update flake dependencies
 
 on:
-  schedule:
-    - cron: "0 12 * * 1"
   workflow_dispatch:
-    inputs:
-      target:
-        description: "What to update"
-        required: true
-        default: "custom"
-        type: choice
-        options:
-          - custom
-          - jacobpevans
 
 jobs:
   update:
-    name: Update (${{ inputs.target || 'custom' }})
-    # Always macOS: claudebar requires aarch64-darwin for nix-update prefetch,
-    # and nix flake update works fine on Darwin too.
+    name: Update JacobPEvans flake inputs
+    # Runs on macOS to match the primary target platform; `nix flake update`
+    # itself is platform-agnostic.
     runs-on: macos-latest
     environment: automation
     permissions:
@@ -59,12 +42,7 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/determinate-nix-action@v3
 
-      - name: Update custom packages
-        if: inputs.target != 'jacobpevans'
-        run: nix run nixpkgs#nix-update -- --flake --system aarch64-darwin claudebar
-
       - name: Update JacobPEvans flake inputs
-        if: inputs.target == 'jacobpevans'
         run: nix flake update nix-home nix-ai ai-assistant-instructions jacobpevans-cc-plugins
 
       - name: Validate flake
@@ -75,12 +53,12 @@ jobs:
         with:
           token: ${{ steps.app-token.outputs.token }}
           sign-commits: true
-          branch: chore/update-${{ inputs.target || 'custom' }}-packages
+          branch: chore/update-jacobpevans-inputs
           delete-branch: true
-          commit-message: "chore(deps): update ${{ inputs.target || 'custom' }} packages"
-          title: "chore(deps): update ${{ inputs.target || 'custom' }} packages"
+          commit-message: "chore(deps): update JacobPEvans flake inputs"
+          title: "chore(deps): update JacobPEvans flake inputs"
           body: |
-            Automated dependency update (${{ inputs.target || 'custom' }}).
+            Automated JacobPEvans flake-input update.
 
             Triggered via `${{ github.event_name }}` on `deps-update-flake.yml`.
           labels: dependencies

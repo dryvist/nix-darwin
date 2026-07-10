@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.74.3](https://github.com/dryvist/nix-darwin/compare/v1.74.2...v1.74.3) (2026-07-10)
+
+
+### Bug Fixes
+
+* Cribl Edge in_llm_logs ships nothing — vllm-mlx.log never reaches Splunk ([#1623](https://github.com/dryvist/nix-darwin/issues/1623)) ([#1624](https://github.com/dryvist/nix-darwin/issues/1624)) ([c39ab21](https://github.com/dryvist/nix-darwin/commit/c39ab212dbcbe47835f99b70d7fe66dacaeb12d1))
+
 ## [1.74.2](https://github.com/dryvist/nix-darwin/compare/v1.74.1...v1.74.2) (2026-07-09)
 
 

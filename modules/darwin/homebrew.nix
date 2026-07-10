@@ -103,7 +103,7 @@ let
     # assumes the app will update itself. In practice, built-in updaters are
     # unreliable (require the app to be open, can be dismissed, etc.), so greedy
     # ensures updates land deterministically when running brew upgrade.
-    # NOTE: ChatGPT and Cursor are in nixpkgs - see home.packages.
+    # NOTE: Cursor is in nixpkgs - see home.packages. ChatGPT is a cask below.
     # NOTE: AI-tool casks (claude-code@latest, antigravity suite) are appended
     # below from nix-ai.lib.homebrewCasks (source: nix-ai/lib/homebrew.nix).
 
@@ -148,6 +148,14 @@ let
     # claude-code@latest moved to nix-ai/lib/homebrew.nix
 
     # --- OpenAI ---
+    # ChatGPT desktop app. Cask, NOT nixpkgs: nixpkgs lags OpenAI's ~weekly
+    # releases by months and a read-only store app cannot self-update.
+    # greedy mirrors the `claude` desktop pattern so brew upgrade keeps it
+    # current. Moved from home.packages (nixpkgs chatgpt).
+    {
+      name = "chatgpt";
+      greedy = true;
+    } # ChatGPT desktop app (ex-nixpkgs; version lag + no self-update)
     # OpenAI Codex CLI (AI coding agent) - migrated from homebrew/core to cask
     # Moved from nixpkgs to match claude/gemini installation pattern
     {
