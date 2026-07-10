@@ -912,11 +912,11 @@
         "ponytail": "ponytail"
       },
       "locked": {
-        "lastModified": 1783719204,
-        "narHash": "sha256-qvHMwcc+XhuJ1FZi7Bn2MrjQmQAqujzS/E11hOhr12k=",
+        "lastModified": 1783723550,
+        "narHash": "sha256-BJIzD5Lk8Qn6+nsXn0bsQIUtaSbh4igsIJ8RRxRZ1QQ=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "9cd0e3f6d478690cbade0a7bcf37cc7bc50ef150",
+        "rev": "4e6174ede09dc68188d7c1e72925d652a7ae1245",
         "type": "github"
       },
       "original": {
@@ -1025,11 +1025,11 @@
         "wakatime": "wakatime"
       },
       "locked": {
-        "lastModified": 1783699561,
-        "narHash": "sha256-Oc681A3Au311QturqPVhvwTCBsg8XEIITJy2iVJwyVI=",
+        "lastModified": 1783723192,
+        "narHash": "sha256-xclX8LzvWAmNWSFEisfaJWUg3f2emUJMUZ/zGlJQZMs=",
         "owner": "dryvist",
         "repo": "nix-claude-code",
-        "rev": "cc523447193a24bc32c623d4ece8dc0118b8c64b",
+        "rev": "d63a213af4f2c90ce3d576a2aab0c3a3ff2e4b12",
         "type": "github"
       },
       "original": {
