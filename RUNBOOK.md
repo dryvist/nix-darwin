@@ -592,10 +592,11 @@ gh issue list --search "Dependency Dashboard in:title"
 
 Renovate has a 3 concurrent PR limit. Merge some PRs to allow new ones.
 
-**Custom workflow conflicts with Renovate:**
+**`deps-update-flake.yml` and Renovate:**
 
-The custom workflow (`.github/workflows/deps-update-flake.yml`) automatically skips
-if a Renovate PR exists. No manual intervention needed.
+`deps-update-flake.yml` runs only on manual dispatch — it never fires on a schedule,
+so it cannot collide with Renovate on its own. Trigger it only when you need an
+immediate JacobPEvans flake-input bump.
 
 ---
 
