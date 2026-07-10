@@ -27,6 +27,8 @@
     ./git-global-excludes.nix
     # Ghostty terminfo (package + ~/.terminfo) — split out for the byte cap.
     ./ghostty-terminfo.nix
+    # Worker-side night-cluster quiesce/restore hooks (byte cap split).
+    ./night-quiesce.nix
   ];
 
   # Share system-level Homebrew taps with nix-ai's trust.json.
