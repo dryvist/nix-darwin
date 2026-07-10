@@ -13,12 +13,31 @@ log() { echo "$prefix INFO $*"; }
 warn() { echo "$prefix WARN $*" >&2; }
 
 # iogpu.wired_limit_mb — GPU wired-memory ceiling.
+#
+# At early boot the IOGPU sysctl node can register a few seconds after launchd
+# fires this RunAtLoad daemon. A single write then races: `sysctl -w` fails (or
+# the value fails to stick) and the daemon exits, leaving the ceiling at the OS
+# default (0) until the next `darwin-rebuild switch`. Retry a bounded number of
+# times, verifying the read-back each attempt, so a boot-time race self-heals
+# and every boot leaves exactly one INFO/WARN line in the log.
 if [ -n "${WIRED_LIMIT_MB:-}" ]; then
-  if /usr/sbin/sysctl -w "iogpu.wired_limit_mb=${WIRED_LIMIT_MB}" >/dev/null; then
-    log "iogpu.wired_limit_mb=${WIRED_LIMIT_MB}"
-  else
-    warn "sysctl iogpu.wired_limit_mb failed"
-  fi
+  attempts="${WIRED_LIMIT_ATTEMPTS:-30}"
+  delay="${WIRED_LIMIT_RETRY_DELAY:-2}"
+  n=1
+  while true; do
+    if /usr/sbin/sysctl -w "iogpu.wired_limit_mb=${WIRED_LIMIT_MB}" >/dev/null 2>&1 &&
+      [ "$(/usr/sbin/sysctl -n iogpu.wired_limit_mb 2>/dev/null || true)" = "${WIRED_LIMIT_MB}" ]; then
+      log "iogpu.wired_limit_mb=${WIRED_LIMIT_MB} (attempt ${n}/${attempts})"
+      break
+    fi
+    if [ "${n}" -ge "${attempts}" ]; then
+      warn "sysctl iogpu.wired_limit_mb still not ${WIRED_LIMIT_MB} after ${attempts} attempts"
+      break
+    fi
+    warn "iogpu.wired_limit_mb not ready (attempt ${n}/${attempts}); retrying in ${delay}s"
+    n=$((n + 1))
+    /bin/sleep "${delay}"
+  done
 fi
 
 # iogpu.wired_lwm_mb — low-water mark (optional, rarely set).

@@ -238,7 +238,9 @@ in
     # rather than an /etc/sysctl.conf-style mechanism. Label/log path are kept
     # stable (was set-iogpu-wired-limit) to avoid orphaning the old plist; it
     # now runs the shared volatile-sysctl script (wired limit + optional lwm +
-    # optional compressor mode).
+    # optional compressor mode). The script retries the wired-limit write until
+    # the IOGPU sysctl node registers, so an early-boot race no longer leaves
+    # the ceiling at the OS default until the next darwin-rebuild.
     launchd.daemons.set-iogpu-wired-limit = {
       serviceConfig = {
         Label = "dev.local.set-iogpu-wired-limit";
