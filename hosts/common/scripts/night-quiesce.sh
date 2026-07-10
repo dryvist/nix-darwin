@@ -25,7 +25,7 @@ tell application "System Events"
 end tell
 repeat with appName in appNames
     set appText to appName as text
-    if appText is not in {"Finder", "Ghostty", "Terminal", "iTerm2"} then
+    if appText is not in {"Finder", "Ghostty", "Terminal", "iTerm2", "WezTerm", "Alacritty", "kitty"} then
         try
             with timeout of 15 seconds
                 tell application appText to quit
@@ -42,7 +42,7 @@ keep='^(com\.apple\.|org\.nix-community\.|com\.nix-darwin\.|dev\.mlx-night\.|org
 for plist in "$HOME/Library/LaunchAgents/"*.plist; do
   [ -f "$plist" ] || continue
   label="$(basename "$plist" .plist)"
-  if printf '%s' "$label" | grep -qE "$keep"; then
+  if [[ "$label" =~ $keep ]]; then
     continue
   fi
   if launchctl bootout "gui/$uid/$label" 2> /dev/null; then
