@@ -6,6 +6,9 @@ extended:
     - AGENTS
     - ANTHROPIC-ECOSYSTEM
     - TROUBLESHOOTING
+    # cribl.nix crossed the 12KB error limit on develop, failing every PR's
+    # merge-ref file-size check; split the module if it approaches this ceiling
+    - cribl
 
 exempt:
   - RUNBOOK
