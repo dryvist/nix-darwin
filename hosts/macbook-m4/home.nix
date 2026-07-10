@@ -20,23 +20,25 @@ in
   # Open local-LLM fallback harness. Workstation-only: flake.nix imports the
   # module only for macbook-m4, and this host gets the runtime token from the
   # automation keychain instead of a server-side sops file.
-  programs.openHarness = {
-    enable = true;
-    endpoint = llmEndpoint;
-    tokenEnvVar = "OPENAI_API_KEY";
+  programs = {
+    openHarness = {
+      enable = true;
+      endpoint = llmEndpoint;
+      tokenEnvVar = "OPENAI_API_KEY";
+    };
+
+    zsh.initContent = lib.mkAfter ''
+      # Local LLM router bearer token for OpenAI-compatible fallback harnesses.
+      export OPENAI_API_KEY=''${OPENAI_API_KEY:-"$(security find-generic-password -s 'OPENAI_API_KEY' -a '${userConfig.keychain.aiAccount}' -w '${userConfig.keychain.aiDb}' 2>/dev/null || echo "")"}
+    '';
+
+    # Vikunja task-management MCP (nix-ai catalog ships it disabled). This
+    # workstation is the consumer: VIKUNJA_URL + VIKUNJA_API_TOKEN are injected
+    # from Doppler ai-ci-automation/prd via the `d-claude` launch alias, so enable
+    # it here. Runs under a d-claude session; a bare `claude` lacks the token and
+    # the server logs a startup error (harmless — other servers keep working).
+    aiMcp.servers.vikunja.disabled = lib.mkForce false;
   };
-
-  programs.zsh.initContent = lib.mkAfter ''
-    # Local LLM router bearer token for OpenAI-compatible fallback harnesses.
-    export OPENAI_API_KEY=''${OPENAI_API_KEY:-"$(security find-generic-password -s 'OPENAI_API_KEY' -a '${userConfig.keychain.aiAccount}' -w '${userConfig.keychain.aiDb}' 2>/dev/null || echo "")"}
-  '';
-
-  # Vikunja task-management MCP (nix-ai catalog ships it disabled). This
-  # workstation is the consumer: VIKUNJA_URL + VIKUNJA_API_TOKEN are injected
-  # from Doppler ai-ci-automation/prd via the `d-claude` launch alias, so enable
-  # it here. Runs under a d-claude session; a bare `claude` lacks the token and
-  # the server logs a startup error (harmless — other servers keep working).
-  programs.aiMcp.servers.vikunja.disabled = lib.mkForce false;
 
   # ==========================================================================
   # TCC-Sensitive GUI Applications (using copyApps for stable paths)
