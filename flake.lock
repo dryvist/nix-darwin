@@ -3,11 +3,11 @@
     "ai-assistant-instructions": {
       "flake": false,
       "locked": {
-        "lastModified": 1783633279,
-        "narHash": "sha256-rmC4zL1pW0ctQjIkozPH7zIvciIKRgRUwjmWkiakWig=",
+        "lastModified": 1783794801,
+        "narHash": "sha256-mkTCn5FX1+zBPWVNn9YiBQ39kZGCyNafuDKZAotMZls=",
         "owner": "dryvist",
         "repo": "ai-assistant-instructions",
-        "rev": "a914d8d7c7312abea49c7266c4f2362d1041b1b8",
+        "rev": "2fd68bb7671cad690697da3dbc26991755679db3",
         "type": "github"
       },
       "original": {
@@ -29,6 +29,22 @@
       "original": {
         "owner": "anthropics",
         "repo": "skills",
+        "type": "github"
+      }
+    },
+    "autoresearch": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782200080,
+        "narHash": "sha256-nrV6ZUo6Q7p2tzGWCLurur4X8QXuZfOu5ioOZTyaqNQ=",
+        "owner": "uditgoenka",
+        "repo": "autoresearch",
+        "rev": "870e9b8eca4fbe53cd6cb1247410373692e4aec3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "uditgoenka",
+        "repo": "autoresearch",
         "type": "github"
       }
     },
@@ -212,11 +228,11 @@
     "claude-code-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1783122630,
-        "narHash": "sha256-2HzcrlulegtmDMTe53GsabhfvXeFMZzI1r5io13eNPo=",
+        "lastModified": 1783731124,
+        "narHash": "sha256-fVtZ5SpQO75FKHgRXWQwImFoCg5pwRWbrzkIQ7RDQPY=",
         "owner": "anthropics",
         "repo": "claude-code",
-        "rev": "c489eb25c7e32dec227916e1663cab3538ba594d",
+        "rev": "d4d8fbbb333c627d8fe2c1c583a5ccc26fdb1aed",
         "type": "github"
       },
       "original": {
@@ -894,6 +910,7 @@
         "ai-assistant-instructions": [
           "ai-assistant-instructions"
         ],
+        "autoresearch": "autoresearch",
         "claude-code-plugins": [
           "claude-code-plugins"
         ],
@@ -912,11 +929,11 @@
         "ponytail": "ponytail"
       },
       "locked": {
-        "lastModified": 1783723550,
-        "narHash": "sha256-BJIzD5Lk8Qn6+nsXn0bsQIUtaSbh4igsIJ8RRxRZ1QQ=",
+        "lastModified": 1783795164,
+        "narHash": "sha256-SX1qMHNLTgf6QR93xDWymhwABAefOoqsfWC4sV/5KE4=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "4e6174ede09dc68188d7c1e72925d652a7ae1245",
+        "rev": "6ebe93eb6111754e17a47fb7106baed26cec2e29",
         "type": "github"
       },
       "original": {
