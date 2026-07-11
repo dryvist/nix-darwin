@@ -20,6 +20,7 @@ in
   ++ [
     ./energy.nix
     ./file-extensions.nix
+    ./night-link-prep.nix
     ./finder.nix
     ./homebrew.nix
     ./nix-homebrew.nix
