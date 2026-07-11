@@ -59,10 +59,13 @@ in
       (
         rdma_iface=${if cfg.interface != null then lib.escapeShellArg cfg.interface else ''""''}
         if [ -z "$rdma_iface" ]; then
-          # Auto-detect: every Thunderbolt hardware port's device, first one
-          # with an active link wins. A dangling (uncabled) port stays inactive.
+          # Auto-detect: every physical Thunderbolt port's device, first one
+          # with an active link wins. "Thunderbolt [0-9]" only — the virtual
+          # "Thunderbolt Bridge" port (device bridge0) also starts with
+          # "Thunderbolt" and must never be a candidate. A dangling
+          # (uncabled) port stays inactive.
           for dev in $(/usr/sbin/networksetup -listallhardwareports \
-                        | /usr/bin/awk '/^Hardware Port: Thunderbolt/{getline; print $2}'); do
+                        | /usr/bin/awk '/^Hardware Port: Thunderbolt [0-9]/{getline; print $2}'); do
             if /sbin/ifconfig "$dev" 2>/dev/null | /usr/bin/grep -q "status: active"; then
               rdma_iface="$dev"
               break
