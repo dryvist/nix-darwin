@@ -112,6 +112,14 @@ in
     # value still wins. `mkIf isServer` gates each: a workstation needs nothing —
     # the module defaults already match the laptop.
     nixDarwinAutoUpgrade.enable = true; # Friday 00:00 local-time launchd target; server hosts are pinned to UTC above.
+    # Both hosts are night-cluster nodes: keep every RDMA-capable Thunderbolt
+    # port out of bridge0 and converge the role link address onto whichever
+    # port the cable is in. Role follows machine class: the headless desktop
+    # is the coordinator (rank 0), the laptop the worker.
+    nightLinkPrep = {
+      enable = true;
+      role = if hostConfig.isServer then "coordinator" else "worker";
+    };
     energy.wakeOnMagicPacket = lib.mkIf hostConfig.isServer (lib.mkDefault true); # Wake-on-LAN for a headless box
     networkTuning.enable = lib.mkIf hostConfig.isServer (lib.mkDefault true); # socket buffers for LAN serving
     appleSiliconTunables.energyMode = lib.mkIf hostConfig.isServer (lib.mkDefault "unmanaged"); # no High Power Mode on a desktop
