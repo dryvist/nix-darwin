@@ -8,6 +8,11 @@
 # Consumed environment (set declaratively by the LaunchDaemon):
 #   NIGHT_LINK_IP   this host's link address (role-derived synthetic)
 
+# Guard rails: RDMA tooling may be absent (non-RDMA host) and the link IP
+# comes from the plist — bail cleanly rather than erroring every 30s tick.
+[ -x /usr/bin/ibv_devices ] || exit 0
+: "${NIGHT_LINK_IP:?NIGHT_LINK_IP must be set}"
+
 iface=""
 for dev in $(/usr/bin/ibv_devices 2>/dev/null | awk 'NR>2 {print $1}'); do
   cand="${dev#rdma_}"
@@ -27,7 +32,7 @@ if /sbin/ifconfig bridge0 2>/dev/null | grep -q "member: $iface "; then
   /sbin/ifconfig bridge0 deletem "$iface" && echo "night-link: removed $iface from bridge0"
 fi
 
-if ! /sbin/ifconfig "$iface" | grep -q "inet $NIGHT_LINK_IP "; then
+if ! /sbin/ifconfig "$iface" 2>/dev/null | grep -q "inet $NIGHT_LINK_IP "; then
   # The cable moved (or first assignment): clear the address from any other
   # interface, then alias it onto the live port.
   for other in $(/sbin/ifconfig -l); do
