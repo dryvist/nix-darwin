@@ -16,9 +16,9 @@
 
 {
   imports = [
-    # services.aiStack.defaultLocalModelId — supplied from the committed
-    # lib/hosts.nix (non-secret model id). Extracted to keep files under the
-    # per-file size cap.
+    # services.aiStack.defaultLocalModelId — supplied shared (non-secret model
+    # id) from services-ai-stack.nix, pinned once for every host. Extracted to
+    # keep files under the per-file size cap.
     ./services-ai-stack.nix
     # Disables nix-ai's auto-discovery of locally-cached HF models so the
     # registry stays at the single defaultLocalModelId entry.
