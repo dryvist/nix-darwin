@@ -41,6 +41,16 @@ in
     # Raise kern.maxfiles* + launchctl maxfiles to 524288 for large mmap'd models.
     resourceLimits.enable = true;
 
+    # --- Thunderbolt RDMA link (night cluster) ---
+    # Coordinator (rank 0); its TB cable landed on en3 → rdma_en3 (en2/en4/en5
+    # idle). Pin this end so the watcher and JACCL rendezvous bind 192.168.208.1.
+    # See modules/darwin/night-link.nix.
+    rdmaLink = {
+      enable = true;
+      interface = "en3";
+      address = "192.168.208.1";
+    };
+
     # --- Energy & Sleep ---
     # Always-on: never idle-sleep on AC (module sleep.ac default = 0). Wake-on-LAN,
     # network tuning, and energyMode come from the server class in ../common.

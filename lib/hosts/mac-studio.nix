@@ -74,6 +74,9 @@
     nightCluster = {
       enable = true;
       role = "coordinator";
+      # Studio's TB cable landed on en3 (en2/en4/en5 idle) → its RDMA device is
+      # rdma_en3; the module default rdma_en2 is the MBP worker's port.
+      rdmaDevice = "rdma_en3";
     };
   };
 

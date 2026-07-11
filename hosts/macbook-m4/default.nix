@@ -105,6 +105,16 @@ in
     # measured bottleneck. Loopback inference does not need it.
     networkTuning.enable = false;
 
+    # --- Thunderbolt RDMA link (night cluster) ---
+    # Worker (rank 1); its TB cable is on en2 → rdma_en2. Pin this end of the
+    # point-to-point link so the night-cluster watcher can reach the coordinator
+    # at 192.168.208.1. See modules/darwin/night-link.nix.
+    rdmaLink = {
+      enable = true;
+      interface = "en2";
+      address = "192.168.208.2";
+    };
+
     # --- Energy & Sleep Configuration ---
     energy = {
       enable = true;

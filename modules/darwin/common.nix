@@ -39,6 +39,7 @@ in
     ./apple-silicon-tunables.nix
     ./system-limits.nix
     ./network-tuning.nix
+    ./night-link.nix # Static IP on the unbridged Thunderbolt RDMA link
   ];
 
   # --- Nixpkgs Configuration ---
