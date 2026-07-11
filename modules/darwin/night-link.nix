@@ -33,14 +33,17 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    # Runs as root at activation. Detach the cabled port from the auto
-    # Thunderbolt bridge (Apple RDMA needs exclusive L2 on the link), then pin
-    # the static point-to-point address. Idempotent + non-fatal: no cable, or a
-    # port already detached, must never fail the rebuild.
-    system.activationScripts.rdmaLink.text = ''
+    # Runs as root at the end of system activation. `rdmaLink` is NOT a
+    # recognized activation-script phase — nix-darwin only emits the named
+    # phases (pre/extra/postActivation), so a custom key type-checks but its
+    # text is silently dropped. Hook postActivation instead. Detach the cabled
+    # port from the auto Thunderbolt bridge (Apple RDMA needs exclusive L2 on
+    # the link), then pin the static point-to-point address. Idempotent +
+    # non-fatal: no cable, or a port already detached, must never fail rebuild.
+    system.activationScripts.postActivation.text = lib.mkAfter ''
+      echo "rdmaLink: pinning ${cfg.interface} -> ${cfg.address}/24 (detach from bridge0)"
       /sbin/ifconfig bridge0 deletem ${cfg.interface} 2>/dev/null || true
       /sbin/ifconfig ${cfg.interface} inet ${cfg.address} netmask 255.255.255.0 2>/dev/null || true
-      echo "rdmaLink: pinned ${cfg.interface} -> ${cfg.address}/24 (detached from bridge0)"
     '';
   };
 }
