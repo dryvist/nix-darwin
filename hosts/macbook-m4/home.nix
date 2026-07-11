@@ -29,6 +29,12 @@
     # d-claude Doppler session (ai-ci-automation/prd); a bare `claude` lacks them
     # and the server logs a harmless startup error.
     aiMcp.servers.vikunja.disabled = lib.mkForce false;
+
+    # Recreates the tmux "cc" session at every login — a reboot always kills
+    # the tmux server, and Termius' "tmux attach -t cc" startup command needs
+    # the session to already exist. Workstation-only: this is the box reached
+    # over SSH from Termius, not the headless mac-studio.
+    tmux-session-autostart.enable = true;
   };
 
   # ==========================================================================
