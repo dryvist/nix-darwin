@@ -60,6 +60,12 @@ if cache_is_fresh; then
   exit 0
 fi
 
+# The lock dir lives INSIDE the cache dir, so the cache dir must exist before
+# the first lock attempt (mkdir without -p fails on a missing parent, which
+# would spin the acquisition loop forever on a cold start).
+/bin/mkdir -p "${CACHE_DIR}"
+/bin/chmod 0700 "${CACHE_DIR}"
+
 # Cache miss/stale: acquire a short-lived atomic lock so concurrent
 # invocations (terraform issues many AWS calls in parallel) don't each
 # independently log in and mint a fresh STS lease. mkdir is atomic on a local
@@ -114,7 +120,6 @@ fi
 
 expiration="$(/bin/date -u -v+"${lease_seconds}"S +'%Y-%m-%dT%H:%M:%SZ')"
 
-/bin/mkdir -p "${CACHE_DIR}"
 umask 077
 jq -n \
   --arg akid "${access_key}" \
