@@ -68,24 +68,19 @@
   # --severity=warning: Only fail on warning/error level (not info style suggestions)
   # SC1091: Exclude "not following" errors for external sources (can't resolve in Nix sandbox)
   # Excludes zsh scripts (shellcheck only supports sh/bash/dash/ksh)
-  # Uses find with -print0 and xargs -0 for robustness with filenames containing spaces and special characters
+  # Loop, skip rules, and failure semantics live in scripts/check-shellcheck-runner.sh
+  # (fails if ANY script fails, not just the last; UTF-8 locale for shellcheck output).
   # TODO: Fix info-level issues (SC2086 quoting) in shell scripts for stricter checking
-  shellcheck = pkgs.runCommand "check-shellcheck" { } ''
-    cd ${src}
-    find . -name "*.sh" -not -path "./.git/*" -not -path "./result/*" -print0 | \
-    xargs -0 bash -c '
-      for script in "$@"; do
-        # Skip zsh scripts (shellcheck does not support them)
-        if head -1 "$script" | grep -q "zsh"; then
-          echo "Skipping zsh script: $script"
-        else
-          echo "Checking $script..."
-          ${pkgs.lib.getExe pkgs.shellcheck} --severity=warning --exclude=SC1091 "$script"
-        fi
-      done
-    ' bash
-    touch $out
-  '';
+  shellcheck =
+    pkgs.runCommand "check-shellcheck"
+      {
+        SRC_DIR = src;
+        SHELLCHECK_BIN = pkgs.lib.getExe pkgs.shellcheck;
+      }
+      ''
+        bash ${../scripts/check-shellcheck-runner.sh}
+        touch $out
+      '';
 
 }
 // pkgs.lib.optionalAttrs (darwinConfigurations != { }) {

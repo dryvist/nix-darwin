@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Enable the macOS Screen Sharing (VNC) launchd service and start it if it
 # is not already running.
 #

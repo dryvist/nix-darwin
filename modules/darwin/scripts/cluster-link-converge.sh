@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Cluster-link converge — one tick per launchd interval (root).
 #
 # Finds the active RDMA-capable Thunderbolt interface (the cabled port),
