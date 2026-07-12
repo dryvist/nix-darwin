@@ -81,7 +81,6 @@ Source: nix-home (`home.packages` via flake input)
 | Package | Description |
 | --- | --- |
 | pre-commit | Git pre-commit hook framework |
-| shellcheck | Shell script static analysis |
 | shfmt | Shell script formatter |
 | lychee | Link checker for markdown and HTML (global: pre-commit language: system) |
 | markdownlint-cli2 | Markdown linter |

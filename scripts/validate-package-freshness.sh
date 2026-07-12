@@ -72,8 +72,8 @@ matches_exemption_pattern() {
   shift
   local array=("$@")
   for pattern in "${array[@]}"; do
-    # Use glob pattern matching (supports wildcards like "prefix*")
-    # shellcheck disable=SC2053  # Intentional: unquoted for glob matching
+    # Use glob pattern matching (supports wildcards like "prefix*"); $pattern is
+    # deliberately unquoted so the glob applies.
     [[ "$element" == $pattern ]] && return 0
   done
   return 1
