@@ -89,7 +89,6 @@ in
     # disk unlock and zero prompts after.
     defaults.loginwindow.autoLoginUser = userConfig.user.name;
 
-
     # --- Apple Silicon Tunables ---
     # Wired-memory ceiling, pmset perf flags, App Nap, Spotlight + TM excludes,
     # Metal debug-env guard. See modules/darwin/apple-silicon-tunables.nix.
