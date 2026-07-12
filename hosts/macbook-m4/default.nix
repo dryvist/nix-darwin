@@ -65,6 +65,16 @@ in
   # credentials. See modules/darwin/apps/openbao-keychain.nix.
   programs.openbao-keychain.enable = true;
 
+  # --- Reboot-continuity auto-resume ---
+  # Login-time LaunchAgent that resumes an armed Claude Code mission in tmux,
+  # so a planned reboot (e.g. clearing leaked RDMA Protection Domains during
+  # cluster work) doesn't lose the in-flight session. No-op unless armed at
+  # runtime. See modules/darwin/apps/claude-continuity.nix.
+  programs.claude-continuity = {
+    enable = true;
+    user = userConfig.user.name;
+  };
+
   # ==========================================================================
   # System-Level Tuning (inference performance, power, limits, network)
   # ==========================================================================

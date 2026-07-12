@@ -155,6 +155,14 @@ in
     # this always-on host is a first-class autonomous OpenBao consumer too.
     # See modules/darwin/apps/openbao-keychain.nix.
     openbao-keychain.enable = true;
+
+    # --- Reboot-continuity auto-resume ---
+    # Same login-time armed-mission resume as the laptop; no-op unless armed
+    # at runtime. See modules/darwin/apps/claude-continuity.nix.
+    claude-continuity = {
+      enable = true;
+      user = userConfig.user.name;
+    };
   };
 
   # nix-prebuild: warm the darwin closure nightly so the morning
