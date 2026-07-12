@@ -70,28 +70,15 @@ in
       };
     };
 
-    system.activationScripts.postActivation.text = lib.mkAfter ''
-      echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Preparing RDMA-capable Thunderbolt interfaces..."
-      if [ -x /usr/bin/ibv_devices ]; then
-        /usr/bin/ibv_devices 2>/dev/null | /usr/bin/awk 'NR>2 {print $1}' | while read -r rdma_dev; do
-          iface="''${rdma_dev#rdma_}"
-          /sbin/ifconfig "$iface" > /dev/null 2>&1 || continue
-          if /sbin/ifconfig bridge0 2>/dev/null | /usr/bin/grep -q "member: $iface "; then
-            if /sbin/ifconfig bridge0 deletem "$iface"; then
-              echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Removed $iface from bridge0"
-            else
-              echo "$(date '+%Y-%m-%d %H:%M:%S') [WARN] Failed to remove $iface from bridge0" >&2
-            fi
-          fi
-          if /usr/sbin/ipconfig set "$iface" AUTOMATIC-V6 2>/dev/null; then
-            echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] IPv6 link-local enabled on $iface"
-          else
-            echo "$(date '+%Y-%m-%d %H:%M:%S') [WARN] Failed to enable IPv6 on $iface" >&2
-          fi
-        done
-      else
-        echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] ibv_devices not present; skipping RDMA link prep"
-      fi
-    '';
+    # postActivation (root, boot + rebuild): when an RDMA-capable Thunderbolt
+    # port is actively cabled, disable the bridge0 network service so macOS
+    # stops re-enslaving the port, then detach it from bridge0 and enable IPv6
+    # link-local. No active RDMA link → clean no-op with the Thunderbolt Bridge
+    # left enabled for ordinary Thunderbolt networking. Shell lives in
+    # scripts/cluster-link-prep.sh (readFile, not writeShellApplication, so the
+    # intentionally non-fatal steps run without `set -e`).
+    system.activationScripts.postActivation.text = lib.mkAfter (
+      builtins.readFile ./scripts/cluster-link-prep.sh
+    );
   };
 }
