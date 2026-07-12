@@ -26,7 +26,10 @@ let
   cfg = config.system.nightLinkPrep;
   convergePkg = pkgs.writeShellApplication {
     name = "night-link-converge";
-    runtimeInputs = [ pkgs.gawk ];
+    runtimeInputs = [
+      pkgs.gawk
+      pkgs.gnugrep
+    ];
     text = builtins.readFile ./scripts/night-link-converge.sh;
   };
 in
@@ -70,10 +73,10 @@ in
     system.activationScripts.postActivation.text = lib.mkAfter ''
       echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Preparing RDMA-capable Thunderbolt interfaces..."
       if [ -x /usr/bin/ibv_devices ]; then
-        /usr/bin/ibv_devices 2>/dev/null | awk 'NR>2 {print $1}' | while read -r rdma_dev; do
+        /usr/bin/ibv_devices 2>/dev/null | /usr/bin/awk 'NR>2 {print $1}' | while read -r rdma_dev; do
           iface="''${rdma_dev#rdma_}"
           /sbin/ifconfig "$iface" > /dev/null 2>&1 || continue
-          if /sbin/ifconfig bridge0 2>/dev/null | grep -q "member: $iface "; then
+          if /sbin/ifconfig bridge0 2>/dev/null | /usr/bin/grep -q "member: $iface "; then
             if /sbin/ifconfig bridge0 deletem "$iface"; then
               echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Removed $iface from bridge0"
             else

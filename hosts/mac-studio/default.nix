@@ -46,11 +46,13 @@ in
     # network tuning, and energyMode come from the server class in ../common.
     energy.enable = true;
 
-    # --- Thunderbolt RDMA link (night cluster, coordinator / rank 0) ---
-    # Auto-detects the cabled TB port and detaches it from bridge0; no IP is
-    # written (IPv6 link-local is the link identity). See
-    # modules/darwin/night-link.nix for the JACCL link-local gate + fallback.
-    rdmaLink.enable = true;
+    # --- Thunderbolt RDMA link (cluster mode, coordinator / rank 0) ---
+    # Disabled: conflicts with the deployed nightLinkPrep converge daemon
+    # (hosts/common), which owns the TB link (bridge0 sweep + static IPv4) and
+    # is the mechanism the cluster rendezvous was proven on. Re-enable only
+    # when the zero-IP rework in modules/darwin/night-link.nix replaces
+    # nightLinkPrep in the same change.
+    rdmaLink.enable = false;
 
     # --- Auto-login ---
     # The MLX stack and the gh-runner lifecycle are launchd USER agents — a
