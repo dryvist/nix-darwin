@@ -1,4 +1,6 @@
+# shellcheck shell=bash
 # Reboot-continuity resume: relaunch an armed Claude Code mission at login.
+# (Fragment for writeShellApplication — it supplies the shebang and strict mode.)
 #
 # Armed state lives in ~/.claude/run/continuity/ (runtime state, never nix):
 #   armed-session-id  line 1 = Claude Code session id to resume
