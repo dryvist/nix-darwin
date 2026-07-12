@@ -46,6 +46,12 @@ in
     # network tuning, and energyMode come from the server class in ../common.
     energy.enable = true;
 
+    # --- Thunderbolt RDMA link (night cluster, coordinator / rank 0) ---
+    # Auto-detects the cabled TB port and detaches it from bridge0; no IP is
+    # written (IPv6 link-local is the link identity). See
+    # modules/darwin/night-link.nix for the JACCL link-local gate + fallback.
+    rdmaLink.enable = true;
+
     # --- Auto-login ---
     # The MLX stack and the gh-runner lifecycle are launchd USER agents — a
     # headless reboot serves nothing until a session exists. Auto-

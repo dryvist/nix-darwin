@@ -40,6 +40,7 @@ in
     ./apple-silicon-tunables.nix
     ./system-limits.nix
     ./network-tuning.nix
+    ./night-link.nix # Unbridged Thunderbolt RDMA link (auto-detected, link-local)
   ];
 
   # --- Nixpkgs Configuration ---
