@@ -22,6 +22,7 @@ _:
     ./openbao-keychain.nix
     ./orbstack.nix
     ./raycast.nix
+    ./screen-sharing.nix
     ./streamline-login.nix
   ];
 

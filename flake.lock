@@ -791,11 +791,11 @@
     "jacobpevans-cc-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1783130206,
-        "narHash": "sha256-WFY6ARAzWGPcpn9f31IBgDSMAGjk8Ws1ikFnhrAcXEw=",
+        "lastModified": 1783847174,
+        "narHash": "sha256-0x5NB1/ruQil0MNgk1cEmg31GOLIneYABzoyguUqtMQ=",
         "owner": "dryvist",
         "repo": "claude-code-plugins",
-        "rev": "38a6a8aa3cec2cf9047fc7cac3fa884c130a2182",
+        "rev": "4fc2185a3628a392702d37ed4b0876951967f325",
         "type": "github"
       },
       "original": {
@@ -929,11 +929,11 @@
         "ponytail": "ponytail"
       },
       "locked": {
-        "lastModified": 1783831481,
-        "narHash": "sha256-fJUNY5L/5gO7XGShl4ObkSbII156OjBs4Mvsj0JsDcg=",
+        "lastModified": 1783853800,
+        "narHash": "sha256-lZBG2EsYlDDNtzzQxM7C0i/YsAoYNPTL+MtyacyI0iw=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "ab29b05f3f27c4d87ee5bd193bb39e3d3b9b6dc6",
+        "rev": "a311bca42b89889ca4ea6a46b09cba7f980d5e6e",
         "type": "github"
       },
       "original": {
