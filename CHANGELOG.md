@@ -1,5 +1,37 @@
 # Changelog
 
+## [2.0.0](https://github.com/dryvist/nix-darwin/compare/v1.76.0...v2.0.0) (2026-07-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* **cluster:** rename night/day naming to clustered/normal mode ([#1666](https://github.com/dryvist/nix-darwin/issues/1666))
+
+### Features
+
+* **continuity:** login-time auto-resume of an armed Claude mission ([#1664](https://github.com/dryvist/nix-darwin/issues/1664)) ([8ba62e4](https://github.com/dryvist/nix-darwin/commit/8ba62e4decccefa1b2e95b8bdac3df890cfdfa30))
+* **darwin:** scoped NOPASSWD sudoers for cluster ops ([289b66c](https://github.com/dryvist/nix-darwin/commit/289b66cc950d27b2fcd432498e4f8cbd744067a4))
+* **energy:** AC-power display sleep via displaysleepAc ([#1655](https://github.com/dryvist/nix-darwin/issues/1655)) ([8503c79](https://github.com/dryvist/nix-darwin/commit/8503c79ccbec1ef5fe0840433e72b2d41a8ccfb5))
+* **macbook-m4:** enable tmux cc-session autostart ([c521089](https://github.com/dryvist/nix-darwin/commit/c521089c2bd63d5041c6c9f9f8c612c23117f391))
+* **mcp:** enable vikunja MCP on jevans-mbp ([#1646](https://github.com/dryvist/nix-darwin/issues/1646)) ([f802d81](https://github.com/dryvist/nix-darwin/commit/f802d81d79a337bdaec5ad1daeaa1b93427092cc))
+* **night-link:** auto-detect the RDMA port, zero written IP ([#1657](https://github.com/dryvist/nix-darwin/issues/1657)) ([67d1ab2](https://github.com/dryvist/nix-darwin/commit/67d1ab2ab96ca6b2f33383fc6e92ab4e1b4ab08a))
+* **night-link:** RDMA link prep — bridge detach, IPv6, role-IP converge daemon ([#1656](https://github.com/dryvist/nix-darwin/issues/1656)) ([6bbf78a](https://github.com/dryvist/nix-darwin/commit/6bbf78acf3c58e24e09d7394a3434bf1ac354241))
+* **openbao-keychain:** AWS credential_process wrapper for tf-proxmox ([#1663](https://github.com/dryvist/nix-darwin/issues/1663)) ([2474e04](https://github.com/dryvist/nix-darwin/commit/2474e04c1730c2599b124184551c4fce373d8562))
+
+
+### Bug Fixes
+
+* **hosts:** pin server timezone to GMT, not UTC ([894a3ff](https://github.com/dryvist/nix-darwin/commit/894a3ffa38ddeba64b3e8795d7f9e375853e2ae1))
+* **night-link:** address review findings from promotion [#1660](https://github.com/dryvist/nix-darwin/issues/1660) ([#1665](https://github.com/dryvist/nix-darwin/issues/1665)) ([e475939](https://github.com/dryvist/nix-darwin/commit/e475939ba9bff01309610a30c0f4d7a7e3a9e2a8))
+* server timezone GMT + pull marketplace settings-merge fix ([#1650](https://github.com/dryvist/nix-darwin/issues/1650)) ([d9b901f](https://github.com/dryvist/nix-darwin/commit/d9b901f1b537ebf46985e461a0101f76c6a61aa5))
+* set-iogpu-wired-limit boot daemon did not run at boot (Studio, Jul 4) ([#1644](https://github.com/dryvist/nix-darwin/issues/1644)) ([#1645](https://github.com/dryvist/nix-darwin/issues/1645)) ([fb3146a](https://github.com/dryvist/nix-darwin/commit/fb3146a2ccfac58de1a7fca5d43d8f89121936c9))
+* use absolute paths for grep/awk in cluster-link-converge.sh ([9b7695b](https://github.com/dryvist/nix-darwin/commit/9b7695be2d74278d0fa6c0473f2985689411b562))
+
+
+### Refactoring
+
+* **cluster:** rename night/day naming to clustered/normal mode ([#1666](https://github.com/dryvist/nix-darwin/issues/1666)) ([5c0aa5e](https://github.com/dryvist/nix-darwin/commit/5c0aa5e3f5f137589931aab71795342983feed6d))
+
 ## [1.76.0](https://github.com/dryvist/nix-darwin/compare/v1.75.0...v1.76.0) (2026-07-10)
 
 
