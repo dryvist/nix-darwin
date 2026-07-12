@@ -1,4 +1,3 @@
-# shellcheck shell=bash
 # Reboot-continuity resume: relaunch an armed Claude Code mission at login.
 # (Fragment for writeShellApplication — it supplies the shebang and strict mode.)
 #

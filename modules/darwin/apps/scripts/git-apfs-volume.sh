@@ -1,4 +1,3 @@
-# shellcheck shell=bash
 # Ensure a dedicated "git" APFS volume (100 GiB quota) exists on the internal
 # APFS container. Create-if-absent — no data migration, and re-runs are no-ops.
 #
