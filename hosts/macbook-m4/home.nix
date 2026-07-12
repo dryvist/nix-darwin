@@ -11,25 +11,31 @@
   ...
 }:
 
-let
-  llmEndpoint = "https://llm.${userConfig.baseDomain}/v1";
-in
 {
   imports = [ ../common/home.nix ];
 
-  # Open local-LLM fallback harness. Workstation-only: flake.nix imports the
-  # module only for macbook-m4, and this host gets the runtime token from the
-  # automation keychain instead of a server-side sops file.
-  programs.openHarness = {
-    enable = true;
-    endpoint = llmEndpoint;
-    tokenEnvVar = "OPENAI_API_KEY";
-  };
+  # Open local-LLM fallback harness (Crush / MiMoCode / Goose). Workstation-only:
+  # flake.nix imports the module on macbook-m4 alone. The runtime bearer token
+  # OPENAI_API_KEY is exported from the automation keychain in ../common/home.nix
+  # (alongside HF_TOKEN etc.), so this host only names the endpoint.
+  programs = {
+    openHarness = {
+      enable = true;
+      endpoint = "https://llm.${userConfig.baseDomain}/v1";
+    };
 
-  programs.zsh.initContent = lib.mkAfter ''
-    # Local LLM router bearer token for OpenAI-compatible fallback harnesses.
-    export OPENAI_API_KEY=''${OPENAI_API_KEY:-"$(security find-generic-password -s 'OPENAI_API_KEY' -a '${userConfig.keychain.aiAccount}' -w '${userConfig.keychain.aiDb}' 2>/dev/null || echo "")"}
-  '';
+    # Vikunja task-management MCP: the nix-ai catalog ships it disabled; this
+    # workstation opts in. Its VIKUNJA_URL + VIKUNJA_API_TOKEN come from the
+    # d-claude Doppler session (ai-ci-automation/prd); a bare `claude` lacks them
+    # and the server logs a harmless startup error.
+    aiMcp.servers.vikunja.disabled = lib.mkForce false;
+
+    # Recreates the tmux "cc" session at every login — a reboot always kills
+    # the tmux server, and Termius' "tmux attach -t cc" startup command needs
+    # the session to already exist. Workstation-only: this is the box reached
+    # over SSH from Termius, not the headless mac-studio.
+    tmux-session-autostart.enable = true;
+  };
 
   # ==========================================================================
   # TCC-Sensitive GUI Applications (using copyApps for stable paths)

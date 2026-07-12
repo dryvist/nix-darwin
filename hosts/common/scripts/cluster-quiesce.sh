@@ -1,32 +1,32 @@
 #!/usr/bin/env bash
-# Night-quiesce (worker Mac) — free memory/GPU for the night rank.
+# Cluster-quiesce (worker Mac) — free memory/GPU for the cluster rank.
 #
 # Explicit KEEP allowlist: every user LaunchAgent whose label does not match
 # the reviewed patterns below is booted out, and every visible GUI app is
-# quit. What was booted out is recorded to a state file so night-restore.sh
+# quit. What was booted out is recorded to a state file so cluster-restore.sh
 # brings back exactly that set. The allowlist (not a kill list) keeps
 # machine-specific agent names out of this public file and means a newly
 # installed memory hog is quiesced by default instead of silently surviving.
 #
 # KEEP: nix-managed plumbing (com.nix-darwin.* — includes the log shippers),
-# home-manager agents (org.nix-community.*), the night cluster itself
-# (dev.mlx-night.*), day-log rotation (harmless, avoids a restore step),
+# home-manager agents (org.nix-community.*), the cluster rank itself
+# (dev.mlx-cluster.*), day-log rotation (harmless, avoids a restore step),
 # ssh/gpg agents, and git background maintenance.
 
 uid="$(id -u)"
-state_file="$HOME/Library/Application Support/mlx-night/quiesced-agents"
+state_file="$HOME/Library/Application Support/mlx-cluster/quiesced-agents"
 mkdir -p "$(dirname "$state_file")"
 
 # Idempotence guard: a second quiesce before the restore would truncate the
 # record while the agents are already booted out, losing the restore list.
 if [ -s "$state_file" ]; then
-  echo "night-quiesce: active quiesce state detected; already quiesced"
+  echo "cluster-quiesce: active quiesce state detected; already quiesced"
   exit 0
 fi
 : > "$state_file"
 
 # 1. Quit every visible GUI app, honoring save prompts. Terminals are
-#    excluded so a plug-night test session cannot saw off its own branch.
+#    excluded so a live cable test session cannot saw off its own branch.
 /usr/bin/osascript <<'EOF' || true
 tell application "System Events"
     set appNames to name of every application process whose background only is false
@@ -45,8 +45,8 @@ EOF
 
 # 2. Boot out every user agent not on the KEEP allowlist, recording each
 #    label for restore. Only agents with a plist under ~/Library/LaunchAgents
-#    are swept — those are the ones night-restore.sh can bootstrap back.
-keep='^(com\.apple\.|org\.nix-community\.|com\.nix-darwin\.|dev\.mlx-night\.|org\.git-scm\.|com\.openssh\.)|^dev\.vllm-mlx\.logrotate$'
+#    are swept — those are the ones cluster-restore.sh can bootstrap back.
+keep='^(com\.apple\.|org\.nix-community\.|com\.nix-darwin\.|dev\.mlx-cluster\.|org\.git-scm\.|com\.openssh\.)|^dev\.vllm-mlx\.logrotate$'
 for plist in "$HOME/Library/LaunchAgents/"*.plist; do
   [ -f "$plist" ] || continue
   label="$(basename "$plist" .plist)"
@@ -58,4 +58,4 @@ for plist in "$HOME/Library/LaunchAgents/"*.plist; do
   fi
 done
 
-echo "night-quiesce: GUI apps quit; booted out $(wc -l < "$state_file" | tr -d ' ') agents"
+echo "cluster-quiesce: GUI apps quit; booted out $(wc -l < "$state_file" | tr -d ' ') agents"

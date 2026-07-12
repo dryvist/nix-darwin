@@ -16,9 +16,9 @@
 
 {
   imports = [
-    # services.aiStack.defaultLocalModelId — supplied from the committed
-    # lib/hosts.nix (non-secret model id). Extracted to keep files under the
-    # per-file size cap.
+    # services.aiStack.defaultLocalModelId — supplied shared (non-secret model
+    # id) from services-ai-stack.nix, pinned once for every host. Extracted to
+    # keep files under the per-file size cap.
     ./services-ai-stack.nix
     # Disables nix-ai's auto-discovery of locally-cached HF models so the
     # registry stays at the single defaultLocalModelId entry.
@@ -27,8 +27,8 @@
     ./git-global-excludes.nix
     # Ghostty terminfo (package + ~/.terminfo) — split out for the byte cap.
     ./ghostty-terminfo.nix
-    # Worker-side night-cluster quiesce/restore hooks (byte cap split).
-    ./night-quiesce.nix
+    # Worker-side cluster-mode quiesce/restore hooks (byte cap split).
+    ./cluster-quiesce.nix
   ];
 
   # Share system-level Homebrew taps with nix-ai's trust.json.
@@ -151,6 +151,11 @@
           else
             ''export HF_TOKEN=''${HF_TOKEN:-"$(_get_keychain_secret 'HF_TOKEN' "$_KC_AI_ACCOUNT" "$_KC_AI_DB")"}''
         }
+
+        # openHarness local-LLM bearer (workstation only; no server sops fallback).
+        ${lib.optionalString (!hostConfig.isServer) ''
+          export OPENAI_API_KEY=''${OPENAI_API_KEY:-"$(_get_keychain_secret 'OPENAI_API_KEY' "$_KC_AI_ACCOUNT" "$_KC_AI_DB")"}
+        ''}
 
         unset -f _get_keychain_secret  # No longer needed after init
         unset _KC_USER _KC_AI_DB  # _KC_AI_ACCOUNT persists for runtime gh-token switching

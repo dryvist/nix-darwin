@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# Night-restore (worker Mac) — undo night-quiesce.sh after the cable is out.
+# Cluster-restore (worker Mac) — undo cluster-quiesce.sh after the cable is out.
 #
 # Bootstraps back exactly the agents the quiesce recorded (labels whose
 # plists have since disappeared are skipped silently). GUI apps deliberately
-# stay closed — it is morning, the user reopens what they want.
+# stay closed — the user reopens what they want.
 
 uid="$(id -u)"
-state_file="$HOME/Library/Application Support/mlx-night/quiesced-agents"
+state_file="$HOME/Library/Application Support/mlx-cluster/quiesced-agents"
 
 [ -f "$state_file" ] || {
-  echo "night-restore: nothing recorded, nothing to do"
+  echo "cluster-restore: nothing recorded, nothing to do"
   exit 0
 }
 
@@ -23,4 +23,4 @@ while IFS= read -r label; do
 done < "$state_file"
 
 rm -f "$state_file"
-echo "night-restore: bootstrapped $restored agents back"
+echo "cluster-restore: bootstrapped $restored agents back"

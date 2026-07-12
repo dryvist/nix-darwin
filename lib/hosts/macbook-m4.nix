@@ -13,15 +13,10 @@
   # CI hmActivationPackage output. Exactly one host should set this.
   primary = true;
 
-  # Local MLX physical model id, consumed at Nix eval time by
-  # services.aiStack.defaultLocalModelId (hosts/*/services-ai-stack.nix, shared).
-  # Non-secret public Hugging Face name; committed so evaluation stays pure (no
-  # --impure, no keychain/env/file sourcing). Change via a reviewed commit.
-  # 2026-06-09: Qwen3-30B-A3B-Instruct-2507, a standard-attention MoE
-  # (qwen3_moe), ~85 tok/s at 4-way concurrency, hermes tool calling
-  # (dryvist/nix-ai#915). The retired "qwen3_5_moe batching crash" claim was
-  # disproven by the 2026-07-08 agentic bench (HF JacobPEvans/mlx-benchmarks).
-  defaultLocalModelId = "mlx-community/Qwen3-30B-A3B-Instruct-2507-4bit";
+  # The default local model id is SHARED and pinned in
+  # hosts/common/services-ai-stack.nix — this host deliberately sets no
+  # per-host `defaultLocalModelId`. With no roleModelOverrides here, every role
+  # (incl. the preloaded default) resolves to that shared id.
 
   # Local MLX inference server sizing (programs.mlx). Multi-turn agent clients
   # re-prefill 5-40K-token contexts; the 8192 MB default left no paged-cache
@@ -31,11 +26,11 @@
     cacheMemoryMb = 16384;
     prefillBatchSize = 2048;
 
-    # Night cluster: this Mac is rank 1 (worker) of the two-Mac JACCL brain
+    # Clustered mode: this Mac is rank 1 (worker) of the two-Mac JACCL cluster
     # when the Thunderbolt cable is in. The worker-side quiesce/restore hooks
     # (GUI quit + agent bootout allowlist sweep) are wired by
-    # hosts/common/night-quiesce.nix. Day config above is untouched.
-    nightCluster = {
+    # hosts/common/cluster-quiesce.nix. Day config above is untouched.
+    clusterMode = {
       enable = true;
       role = "worker";
     };

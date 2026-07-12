@@ -29,9 +29,11 @@ in
   # Network hostname from the per-host registry.
   networking.hostName = hostConfig.hostName;
 
-  # Workstations keep macOS' automatic timezone behavior. Server hosts pin UTC
-  # so the Friday 00:00 launchd schedule lands at Friday 00:00 UTC there.
-  time.timeZone = if hostConfig.isServer then "UTC" else null;
+  # Workstations keep macOS' automatic timezone behavior. Server hosts pin GMT
+  # (UTC-equivalent, no DST) so the Friday 00:00 launchd schedule lands at 00:00
+  # there. macOS `systemsetup -settimezone` rejects bare "UTC" (not in its
+  # listtimezones); "GMT" is the accepted +00:00 value.
+  time.timeZone = if hostConfig.isServer then "GMT" else null;
 
   # SSH/Remote Login — macOS Remote Login via launchd (Settings > General > Sharing).
   services.openssh.enable = true;
@@ -110,6 +112,14 @@ in
     # value still wins. `mkIf isServer` gates each: a workstation needs nothing —
     # the module defaults already match the laptop.
     nixDarwinAutoUpgrade.enable = true; # Friday 00:00 local-time launchd target; server hosts are pinned to UTC above.
+    # Both hosts are cluster-mode nodes: keep every RDMA-capable Thunderbolt
+    # port out of bridge0 and converge the role link address onto whichever
+    # port the cable is in. Role follows machine class: the headless desktop
+    # is the coordinator (rank 0), the laptop the worker.
+    clusterLinkPrep = {
+      enable = true;
+      role = if hostConfig.isServer then "coordinator" else "worker";
+    };
     energy.wakeOnMagicPacket = lib.mkIf hostConfig.isServer (lib.mkDefault true); # Wake-on-LAN for a headless box
     networkTuning.enable = lib.mkIf hostConfig.isServer (lib.mkDefault true); # socket buffers for LAN serving
     appleSiliconTunables.energyMode = lib.mkIf hostConfig.isServer (lib.mkDefault "unmanaged"); # no High Power Mode on a desktop

@@ -12,14 +12,17 @@
   # defaults (hosts/common/default.nix) and nix-home's server preset.
   class = "server";
 
-  # Roles (2026-07-08 agentic tool-calling bench; verdicts + capacity in
-  # HF JacobPEvans/mlx-benchmarks + apps docs/BRAIN_ROTATION.md):
+  # The default local model id is SHARED and pinned in
+  # hosts/common/services-ai-stack.nix (no per-host default). This host pins its
+  # two warm brains via roleModelOverrides (2026-07-08 agentic tool-calling
+  # bench; verdicts + capacity in HF JacobPEvans/mlx-benchmarks + apps
+  # docs/BRAIN_ROTATION.md):
   #   tool-calling — Qwen3.6-35B-A3B OptiQ-4bit: bench winner, the brain
   #     Hermes routes to by physical id.
   #   coding — Qwen3-Coder-30B-A3B 4-bit.
-  # gpt-oss-120b (63.3 GB, default/oss role) is swap-class: 0% on the agentic
-  # gate, so on-demand + idle-unload, never preloaded.
-  defaultLocalModelId = "mlx-community/gpt-oss-120b-MXFP4-Q8";
+  # gpt-oss-120b (63.3 GB) stays in the catalog as swap-class (on-demand,
+  # idle-unload, never preloaded); reach it by physical id or add a role
+  # override if a role should target it.
   roleModelOverrides = {
     tool-calling = "mlx-community/Qwen3.6-35B-A3B-OptiQ-4bit";
     coding = "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit";
@@ -63,12 +66,12 @@
     # Global parser off; every backend's parser comes from its catalog entry.
     toolCallParser = null;
 
-    # Night cluster: this Mac is rank 0 (coordinator) of the two-Mac JACCL
-    # brain when the Thunderbolt cable is in — it binds the night endpoint on
+    # Clustered mode: this Mac is rank 0 (coordinator) of the two-Mac JACCL
+    # brain when the Thunderbolt cable is in — it binds the cluster endpoint on
     # loopback :11440, gated by llm-gate (hosts/mac-studio/default.nix). The
-    # link watcher quiesces day serving at link-up and re-warms the preload
+    # link watcher quiesces normal serving at link-up and re-warms the preload
     # list on unplug.
-    nightCluster = {
+    clusterMode = {
       enable = true;
       role = "coordinator";
     };

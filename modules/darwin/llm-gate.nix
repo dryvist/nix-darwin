@@ -81,23 +81,23 @@ let
     lib.unique ([ cfg.domain ] ++ cfg.extraHostnames)
   );
 
-  # Optional second gated site for the night-cluster endpoint (same bearer
-  # token, same cert, own port + access log). Rendered only when a night
+  # Optional second gated site for the cluster-mode endpoint (same bearer
+  # token, same cert, own port + access log). Rendered only when a cluster
   # upstream is configured.
-  nightSite = lib.optionalString (cfg.nightUpstreamPort != null) ''
+  clusterSite = lib.optionalString (cfg.clusterUpstreamPort != null) ''
     ${
-      lib.concatMapStringsSep " " (host: "https://${host}:${toString cfg.nightPort}") (
+      lib.concatMapStringsSep " " (host: "https://${host}:${toString cfg.clusterPort}") (
         lib.unique ([ cfg.domain ] ++ cfg.extraHostnames)
       )
     } {
       ${tlsDirective}
       log {
-        output file ${cfg.logDir}/night-access.json
+        output file ${cfg.logDir}/cluster-access.json
         format json
       }
       @unauthorized not header Authorization "Bearer {env.LLM_LARGE_BEARER_TOKEN}"
       respond @unauthorized 401
-      reverse_proxy 127.0.0.1:${toString cfg.nightUpstreamPort}
+      reverse_proxy 127.0.0.1:${toString cfg.clusterUpstreamPort}
     }
   '';
 
@@ -129,7 +129,7 @@ let
       reverse_proxy 127.0.0.1:${toString cfg.apiUpstreamPort}
     }
 
-    ${nightSite}
+    ${clusterSite}
   '';
 in
 {
@@ -177,16 +177,16 @@ in
       description = "Loopback llama-swap port the API site proxies to.";
     };
 
-    nightPort = lib.mkOption {
+    clusterPort = lib.mkOption {
       type = lib.types.port;
       default = 11440;
-      description = "Gated night-cluster API port on the LAN bind address (mirrors the loopback night port, same convention as apiPort).";
+      description = "Gated cluster-mode API port on the LAN bind address (mirrors the loopback cluster port, same convention as apiPort).";
     };
 
-    nightUpstreamPort = lib.mkOption {
+    clusterUpstreamPort = lib.mkOption {
       type = lib.types.nullOr lib.types.port;
       default = null;
-      description = "Loopback night-cluster (mlx-lm rank 0) port to gate; null renders no night site.";
+      description = "Loopback cluster-mode (mlx-lm rank 0) port to gate; null renders no cluster site.";
     };
 
     user = lib.mkOption {

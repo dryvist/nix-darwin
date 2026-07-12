@@ -22,48 +22,60 @@ in
   imports = [ ../common/default.nix ];
 
   # --- Streamline Login Items ---
-  # Persistently disable unwanted updaters and remove junk plists.
-  # Edit these lists to add/remove services — enforced on every rebuild.
-  programs.streamline-login = {
-    enable = true;
+  programs = {
+    # Persistently disable unwanted updaters and remove junk plists.
+    # Edit these lists to add/remove services — enforced on every rebuild.
+    streamline-login = {
+      enable = true;
 
-    # Junk/dead plists to delete from ~/Library/LaunchAgents/
-    removePlists = [
-      "com.google.keystone.agent.plist" # Legacy Google Keystone (empty, replaced by GoogleUpdater)
-      "com.google.keystone.xpcservice.plist" # Legacy Google Keystone (empty)
-    ];
+      # Junk/dead plists to delete from ~/Library/LaunchAgents/
+      removePlists = [
+        "com.google.keystone.agent.plist" # Legacy Google Keystone (empty, replaced by GoogleUpdater)
+        "com.google.keystone.xpcservice.plist" # Legacy Google Keystone (empty)
+      ];
 
-    # User-domain services to disable (updaters, redundant apps, broken daemons)
-    disableUserServices = [
-      "com.google.GoogleUpdater.wake" # Google hourly updater
-      "us.zoom.updater" # Zoom hourly updater
-      "us.zoom.updater.login.check" # Zoom login check at login
-      # Boot-time race condition daemons — crash-loop before dependencies ready,
-      # corrupt WindowServer client dispatch table, cause sustained UI lag/freezes
-      "com.apple.universalaccessd" # No accessibility features enabled
-      "com.apple.macos.studentd" # Classroom daemon, no MDM enrollment
-      "com.apple.passd" # Apple Wallet not used
-    ];
+      # User-domain services to disable (updaters, redundant apps, broken daemons)
+      disableUserServices = [
+        "com.google.GoogleUpdater.wake" # Google hourly updater
+        "us.zoom.updater" # Zoom hourly updater
+        "us.zoom.updater.login.check" # Zoom login check at login
+        # Boot-time race condition daemons — crash-loop before dependencies ready,
+        # corrupt WindowServer client dispatch table, cause sustained UI lag/freezes
+        "com.apple.universalaccessd" # No accessibility features enabled
+        "com.apple.macos.studentd" # Classroom daemon, no MDM enrollment
+        "com.apple.passd" # Apple Wallet not used
+      ];
 
-    # System-domain services to disable
-    disableSystemServices = [
-      "com.google.GoogleUpdater.wake.system" # Google system updater (hourly)
-      "com.duosecurity.duoappupdater" # Duo updater (every 10 minutes)
-      "us.zoom.ZoomDaemon" # Zoom privileged helper daemon
-    ];
+      # System-domain services to disable
+      disableSystemServices = [
+        "com.google.GoogleUpdater.wake.system" # Google system updater (hourly)
+        "com.duosecurity.duoappupdater" # Duo updater (every 10 minutes)
+        "us.zoom.ZoomDaemon" # Zoom privileged helper daemon
+      ];
 
-    # Dangling zsh completion symlinks to prune on every rebuild. nix-homebrew
-    # leaves a dead `_brew` here (its /opt/homebrew/completions target is never
-    # materialized), which makes compinit warn on every new login shell.
-    pruneCompletionDirs = [
-      "/opt/homebrew/share/zsh/site-functions"
-    ];
+      # Dangling zsh completion symlinks to prune on every rebuild. nix-homebrew
+      # leaves a dead `_brew` here (its /opt/homebrew/completions target is never
+      # materialized), which makes compinit warn on every new login shell.
+      pruneCompletionDirs = [
+        "/opt/homebrew/share/zsh/site-functions"
+      ];
+    };
+
+    # --- OpenBao keychain-backed secret-zero ---
+    # Dedicated 72h-auto-lock keychain + resolver agent for OpenBao AppRole
+    # credentials. See modules/darwin/apps/openbao-keychain.nix.
+    openbao-keychain.enable = true;
+
+    # --- Reboot-continuity auto-resume ---
+    # Login-time LaunchAgent that resumes an armed Claude Code mission in tmux,
+    # so a planned reboot (e.g. clearing leaked RDMA Protection Domains during
+    # cluster work) doesn't lose the in-flight session. No-op unless armed at
+    # runtime. See modules/darwin/apps/claude-continuity.nix.
+    claude-continuity = {
+      enable = true;
+      user = userConfig.user.name;
+    };
   };
-
-  # --- OpenBao keychain-backed secret-zero ---
-  # Dedicated 72h-auto-lock keychain + resolver agent for OpenBao AppRole
-  # credentials. See modules/darwin/apps/openbao-keychain.nix.
-  programs.openbao-keychain.enable = true;
 
   # ==========================================================================
   # System-Level Tuning (inference performance, power, limits, network)
@@ -104,6 +116,14 @@ in
     # Exposed but OFF — enable + set buffers only if LAN model-serving becomes a
     # measured bottleneck. Loopback inference does not need it.
     networkTuning.enable = false;
+
+    # --- Thunderbolt RDMA link (clustered mode, worker / rank 1) ---
+    # Disabled: conflicts with the deployed clusterLinkPrep converge daemon
+    # (hosts/common), which owns the TB link (bridge0 sweep + static IPv4) and
+    # is the mechanism the cluster rendezvous was proven on. Re-enable only
+    # when the zero-IP rework in modules/darwin/cluster-link.nix replaces
+    # clusterLinkPrep in the same change.
+    rdmaLink.enable = false;
 
     # --- Energy & Sleep Configuration ---
     energy = {

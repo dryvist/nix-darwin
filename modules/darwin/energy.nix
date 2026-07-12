@@ -30,7 +30,13 @@ in
     displaysleep = lib.mkOption {
       type = lib.types.int;
       default = 10;
-      description = "Display sleep timer in minutes (0 = never). Applies to all power sources.";
+      description = "Display sleep timer in minutes (0 = never). Base for all power sources; AC is overridden by displaysleepAc.";
+    };
+
+    displaysleepAc = lib.mkOption {
+      type = lib.types.int;
+      default = 60;
+      description = "Display sleep timer when on AC power (minutes, 0 = never). Overrides displaysleep while plugged in.";
     };
 
     sleep = {
@@ -82,10 +88,10 @@ in
         failures=$((failures + 1))
       fi
 
-      if sudo pmset -c sleep ${toString cfg.sleep.ac}; then
-        echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] AC power settings applied (sleep: ${toString cfg.sleep.ac} min)"
+      if sudo pmset -c sleep ${toString cfg.sleep.ac} displaysleep ${toString cfg.displaysleepAc}; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] AC power settings applied (sleep: ${toString cfg.sleep.ac} min, display: ${toString cfg.displaysleepAc} min)"
       else
-        echo "$(date '+%Y-%m-%d %H:%M:%S') [WARN] Failed to apply AC power settings (attempted: ${toString cfg.sleep.ac} min)" >&2
+        echo "$(date '+%Y-%m-%d %H:%M:%S') [WARN] Failed to apply AC power settings (attempted: sleep ${toString cfg.sleep.ac} min, display ${toString cfg.displaysleepAc} min)" >&2
         failures=$((failures + 1))
       fi
 
