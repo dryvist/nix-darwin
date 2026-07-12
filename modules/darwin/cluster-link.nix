@@ -1,6 +1,6 @@
 # Thunderbolt RDMA link — auto-detected, zero written IP.
 #
-# The two-Mac night cluster (nix-ai `programs.mlx.nightCluster`) serves one
+# The two-Mac clustered mode (nix-ai `programs.mlx.clusterMode`) serves one
 # ~353B model split over a direct Thunderbolt cable with Apple RDMA. macOS
 # auto-enslaves every Thunderbolt port into the "Thunderbolt Bridge" (bridge0),
 # but Apple RDMA needs the cabled port OUT of that bridge with exclusive L2.
@@ -8,13 +8,13 @@
 # This module detects the cabled port at activation (any Thunderbolt
 # `enX` with an active link) and detaches it from bridge0. It assigns NO
 # address: the interface's automatic IPv6 link-local (fe80::) is the link
-# identity, and the nightCluster runtime discovers the peer via all-nodes
+# identity, and the clusterMode runtime discovers the peer via all-nodes
 # multicast (ff02::1) — so moving the cable to another port needs no edit
-# in any repo. Supersedes the static-IP approach (feat/night-link-ip /
+# in any repo. Supersedes the static-IP approach (feat/cluster-link-ip /
 # PR #1654, closed): no per-Mac interface or address facts are committed.
 #
 # GATE: JACCL accepting a link-local `[fe80::…%iface]` rendezvous address is
-# unvalidated until the next supervised cluster night. If it rejects
+# unvalidated until the next supervised clustered-mode session. If it rejects
 # link-local, set `staticAddress` per host (the documented fallback) — the
 # detection/detach logic is identical either way.
 { lib, config, ... }:
