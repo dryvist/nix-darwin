@@ -17,6 +17,13 @@
 # one-time operator step performed once the live OpenBao cluster's RBAC
 # actually mints those AppRoles.
 #
+# Two different consumption patterns read this same keychain: the resolver
+# LaunchAgent above publishes each domain's role_id/secret_id ambiently via
+# `launchctl setenv` (for domains in its DOMAINS list); `openbao-aws-creds`
+# below reads `openbao/terraform-apply` directly, on demand, as an AWS
+# `credential_process` provider — it needs no ambient env var and is not one
+# of the resolver's published domains.
+#
 # Neither of the two existing keychains is Nix-managed today (both were
 # created by hand, passwords never stored anywhere) — this is the first
 # Nix-managed keychain in this repo. Its own unlock password IS sops-managed
@@ -59,6 +66,21 @@ let
     runtimeInputs = [ ];
     text = builtins.readFile ./../scripts/openbao-keychain-resolver.sh;
   };
+
+  # AWS `credential_process` provider (see modules/darwin/scripts/openbao-aws-creds.sh)
+  # — exposed system-wide via environment.systemPackages below so `aws` (invoked
+  # from any shell, any PATH) can find it by name in ~/.aws/config's
+  # `credential_process = openbao-aws-creds <role>` line. Needs jq + curl on
+  # PATH; `security`/`date` inside the script are hardcoded to their macOS
+  # system paths since neither is a nixpkgs package.
+  awsCredsScript = pkgs.writeShellApplication {
+    name = "openbao-aws-creds";
+    runtimeInputs = [
+      pkgs.jq
+      pkgs.curl
+    ];
+    text = builtins.readFile ./../scripts/openbao-aws-creds.sh;
+  };
 in
 {
   options.programs.openbao-keychain = {
@@ -76,6 +98,8 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    environment.systemPackages = [ awsCredsScript ];
+
     # Create the log dir with user ownership up front (matches
     # claude-scheduled-jobs.nix's rationale: install -d would otherwise leave
     # missing parents root-owned, blocking the user agents' log writes). This
