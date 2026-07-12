@@ -6,9 +6,10 @@
 
 **Current inputs**:
 - `nix-ai` — AI CLI ecosystem (Claude, Gemini, Copilot, MCP)
+- `nix-ai-open-harness` — Fallback harness for open/local-LLM agent CLIs
 - `nix-home` — Cross-platform home-manager modules (git, zsh, vscode, monitoring)
 - `ai-assistant-instructions` — Shared AI assistant configurations (rules, skills)
-- `claude-code-plugins` — Claude Code plugin marketplace
+- `jacobpevans-cc-plugins` — Claude Code plugin marketplace (non-flake input)
 
 **Private repos** (explicitly excluded from sync rule):
 - Any repositories marked as private in GitHub are completely ignored
@@ -30,11 +31,11 @@ When you've just merged changes in nix-home, nix-ai, or another JacobPEvans repo
 need nix-darwin to pick them up immediately — don't wait for Renovate:
 
 ```bash
-gh workflow run deps-update-flake.yml --repo JacobPEvans/nix-darwin
+gh workflow run deps-update-flake.yml --repo dryvist/nix-darwin
 ```
 
 This triggers `.github/workflows/deps-update-flake.yml` which:
-1. Runs `nix flake update nix-home nix-ai ai-assistant-instructions claude-code-plugins`
+1. Runs `nix flake update nix-home nix-ai nix-ai-open-harness ai-assistant-instructions jacobpevans-cc-plugins`
 2. Opens a PR with the updated `flake.lock`
 3. CI validates, then auto-merge (via org Renovate preset) handles the rest
 
