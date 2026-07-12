@@ -114,8 +114,13 @@ in
   #   RDMA port is auto-detected at runtime — see cluster-link.nix — so its index
   #   cannot be pinned in a static pattern), but up/down on those is recoverable
   #   and non-destructive.
-  # - reboot/shutdown are deliberately NOT granted here; those stay
-  #   interactive pending explicit user approval.
+  # - reboot is granted (added 2026-07-12 with explicit user approval) so the
+  #   autonomous agent can clear a reboot-only RDMA/Protection-Domain wedge and
+  #   let the reboot-continuity agent (claude-continuity.nix) resume the session
+  #   unattended. Only the two restart verbs are granted — `/sbin/reboot` and
+  #   `/sbin/shutdown -r now` — never a bare `/sbin/shutdown` (which could halt
+  #   or power the host off). Both always restart, so the Mac returns to a login
+  #   where FileVault auto-unlock + auto-login fire and continuity resumes.
   #
   # To disable: comment out or remove the environment.etc block
   environment.etc."sudoers.d/cluster-ops".text = ''
@@ -125,5 +130,7 @@ in
     ${userConfig.user.name} ALL=(ALL) NOPASSWD: /sbin/ifconfig bridge0 deletem en[0-9]*
     ${userConfig.user.name} ALL=(ALL) NOPASSWD: /sbin/ifconfig en[0-9]* up
     ${userConfig.user.name} ALL=(ALL) NOPASSWD: /sbin/ifconfig en[0-9]* down
+    ${userConfig.user.name} ALL=(ALL) NOPASSWD: /sbin/reboot
+    ${userConfig.user.name} ALL=(ALL) NOPASSWD: /sbin/shutdown -r now
   '';
 }
