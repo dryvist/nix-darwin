@@ -26,11 +26,11 @@
     cacheMemoryMb = 16384;
     prefillBatchSize = 2048;
 
-    # Night cluster: this Mac is rank 1 (worker) of the two-Mac JACCL brain
+    # Clustered mode: this Mac is rank 1 (worker) of the two-Mac JACCL cluster
     # when the Thunderbolt cable is in. The worker-side quiesce/restore hooks
     # (GUI quit + agent bootout allowlist sweep) are wired by
-    # hosts/common/night-quiesce.nix. Day config above is untouched.
-    nightCluster = {
+    # hosts/common/cluster-quiesce.nix. Day config above is untouched.
+    clusterMode = {
       enable = true;
       role = "worker";
     };

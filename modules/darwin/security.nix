@@ -16,7 +16,7 @@ let
   # ==========================================================================
   # Cluster / RDMA launchd targets
   # ==========================================================================
-  # The two-Mac Thunderbolt-RDMA cluster (see night-link.nix, night-link-prep.nix)
+  # The two-Mac Thunderbolt-RDMA cluster (see cluster-link.nix, cluster-link-prep.nix)
   # is driven by launchd services under these label prefixes. `gui/501` is
   # ${userConfig.user.name}'s login-session domain (uid 501, the sole macOS
   # account on both hosts — launchd's gui/<uid> syntax needs the literal
@@ -24,11 +24,11 @@ let
   clusterLaunchdTargets = [
     {
       domain = "system";
-      labelGlob = "dev.night-link.*";
+      labelGlob = "dev.cluster-link.*";
     }
     {
       domain = "gui/501";
-      labelGlob = "dev.mlx-night.*";
+      labelGlob = "dev.mlx-cluster.*";
     }
     {
       domain = "gui/501";
@@ -93,13 +93,13 @@ in
   # ==========================================================================
   # Passwordless sudo: Thunderbolt-RDMA / cluster troubleshooting
   # ==========================================================================
-  # Purpose: let an autonomous agent inspect and converge the night-cluster
+  # Purpose: let an autonomous agent inspect and converge the cluster-mode
   # Thunderbolt link and its launchd services without an interactive password
   # prompt, so unattended cluster bring-up recovery does not stall mid-run.
   #
   # Security considerations:
   # - launchctl access is scoped to the three cluster label prefixes above
-  #   (system/dev.night-link.*, gui/501/dev.mlx-night.*, gui/501/dev.vllm-mlx.*)
+  #   (system/dev.cluster-link.*, gui/501/dev.mlx-cluster.*, gui/501/dev.vllm-mlx.*)
   #   — never a blanket `launchctl` grant. `bootstrap` (the only plist-loading
   #   verb) is granted ONLY against the root-owned /Library/LaunchDaemons path;
   #   see the clusterLaunchdRules comment on why user-agent bootstrap is dropped.
@@ -111,7 +111,7 @@ in
   #   pinned to `en[0-9]*` with a fixed verb — no arbitrary trailing args — so
   #   it can neither reassign an address, change MTU, nor destroy an interface.
   #   Trade-off: `en[0-9]*` still covers the built-in en0/en1 ports (the cabled
-  #   RDMA port is auto-detected at runtime — see night-link.nix — so its index
+  #   RDMA port is auto-detected at runtime — see cluster-link.nix — so its index
   #   cannot be pinned in a static pattern), but up/down on those is recoverable
   #   and non-destructive.
   # - reboot/shutdown are deliberately NOT granted here; those stay

@@ -105,12 +105,12 @@ in
     # measured bottleneck. Loopback inference does not need it.
     networkTuning.enable = false;
 
-    # --- Thunderbolt RDMA link (cluster mode, worker / rank 1) ---
-    # Disabled: conflicts with the deployed nightLinkPrep converge daemon
+    # --- Thunderbolt RDMA link (clustered mode, worker / rank 1) ---
+    # Disabled: conflicts with the deployed clusterLinkPrep converge daemon
     # (hosts/common), which owns the TB link (bridge0 sweep + static IPv4) and
     # is the mechanism the cluster rendezvous was proven on. Re-enable only
-    # when the zero-IP rework in modules/darwin/night-link.nix replaces
-    # nightLinkPrep in the same change.
+    # when the zero-IP rework in modules/darwin/cluster-link.nix replaces
+    # clusterLinkPrep in the same change.
     rdmaLink.enable = false;
 
     # --- Energy & Sleep Configuration ---

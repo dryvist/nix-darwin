@@ -46,12 +46,12 @@ in
     # network tuning, and energyMode come from the server class in ../common.
     energy.enable = true;
 
-    # --- Thunderbolt RDMA link (cluster mode, coordinator / rank 0) ---
-    # Disabled: conflicts with the deployed nightLinkPrep converge daemon
+    # --- Thunderbolt RDMA link (clustered mode, coordinator / rank 0) ---
+    # Disabled: conflicts with the deployed clusterLinkPrep converge daemon
     # (hosts/common), which owns the TB link (bridge0 sweep + static IPv4) and
     # is the mechanism the cluster rendezvous was proven on. Re-enable only
-    # when the zero-IP rework in modules/darwin/night-link.nix replaces
-    # nightLinkPrep in the same change.
+    # when the zero-IP rework in modules/darwin/cluster-link.nix replaces
+    # clusterLinkPrep in the same change.
     rdmaLink.enable = false;
 
     # --- Auto-login ---
@@ -88,10 +88,10 @@ in
       # the public zone issues cleanly, same as the host FQDN. (A future
       # public-facing capability name is tracked separately.)
       extraHostnames = [ "llm-large.${userConfig.baseDomain}" ];
-      # Night-cluster endpoint (mlx-lm rank 0 on loopback :11440, see
-      # lib/hosts/mac-studio.nix nightCluster): second gated site, same
+      # Clustered-mode endpoint (mlx-lm rank 0 on loopback :11440, see
+      # lib/hosts/mac-studio.nix clusterMode): second gated site, same
       # bearer token and cert, mirrored external:loopback port convention.
-      nightUpstreamPort = 11440;
+      clusterUpstreamPort = 11440;
     };
 
     # ========================================================================
@@ -159,7 +159,7 @@ in
     openbao-keychain.enable = true;
   };
 
-  # nix-prebuild: warm the darwin closure nightly so the morning
+  # nix-prebuild: warm the darwin closure on a schedule so the next
   # `darwin-rebuild switch` is a near-instant cache hit instead of a cold build.
   # Plain launchd agent (no claude, no token) — inline ProgramArguments, logs to
   # ~/Library/Logs/nix-prebuild/, Background priority.

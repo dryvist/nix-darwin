@@ -1,11 +1,11 @@
-# Night-Link Prep — RDMA Thunderbolt link preparation + address convergence
+# Cluster-Link Prep — RDMA Thunderbolt link preparation + address convergence
 #
-# The two-Mac night cluster runs Apple RDMA over a direct Thunderbolt cable.
+# The two-Mac clustered mode runs Apple RDMA over a direct Thunderbolt cable.
 # JACCL's rendezvous parser is IPv4-only (verified 2026-07-11: every IPv6
 # form, including [::1]:port, fails with "Can't parse address"), so the link
 # uses role-derived synthetic IPv4 addresses. They are module-defined
 # defaults on a deliberately-non-LAN /24 — not site topology; the canonical
-# copy lives in nix-ai `programs.mlx.nightCluster.linkIps` and these defaults
+# copy lives in nix-ai `programs.mlx.clusterMode.linkIps` and these defaults
 # must match it.
 #
 # Two root-side pieces (user-space cannot do either):
@@ -23,18 +23,18 @@
 }:
 
 let
-  cfg = config.system.nightLinkPrep;
+  cfg = config.system.clusterLinkPrep;
   convergePkg = pkgs.writeShellApplication {
-    name = "night-link-converge";
+    name = "cluster-link-converge";
     runtimeInputs = [
       pkgs.gawk
       pkgs.gnugrep
     ];
-    text = builtins.readFile ./scripts/night-link-converge.sh;
+    text = builtins.readFile ./scripts/cluster-link-converge.sh;
   };
 in
 {
-  options.system.nightLinkPrep = {
+  options.system.clusterLinkPrep = {
     enable = lib.mkEnableOption "RDMA Thunderbolt link preparation (bridge detach, IPv6, role address convergence)";
 
     role = lib.mkOption {
@@ -49,7 +49,7 @@ in
       type = lib.types.attrsOf lib.types.str;
       default = {
         # Synthetic point-to-point net for the Thunderbolt cable itself —
-        # must match the nix-ai nightCluster.linkIps defaults (canonical).
+        # must match the nix-ai clusterMode.linkIps defaults (canonical).
         coordinator = "192.168.208.1";
         worker = "192.168.208.2";
       };
@@ -58,15 +58,15 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    launchd.daemons.night-link-converge = {
+    launchd.daemons.cluster-link-converge = {
       serviceConfig = {
-        Label = "dev.night-link.converge";
+        Label = "dev.cluster-link.converge";
         ProgramArguments = [ (lib.getExe convergePkg) ];
         RunAtLoad = true;
         StartInterval = 30;
-        EnvironmentVariables.NIGHT_LINK_IP = cfg.linkIps.${cfg.role};
-        StandardOutPath = "/var/log/night-link-converge.log";
-        StandardErrorPath = "/var/log/night-link-converge.error.log";
+        EnvironmentVariables.CLUSTER_LINK_IP = cfg.linkIps.${cfg.role};
+        StandardOutPath = "/var/log/cluster-link-converge.log";
+        StandardErrorPath = "/var/log/cluster-link-converge.error.log";
       };
     };
 
