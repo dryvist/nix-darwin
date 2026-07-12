@@ -83,6 +83,11 @@ in
       volumes = hostConfig.apfsVolumes;
     };
 
+    # Dedicated 100 GiB-quota "git" APFS volume on every Mac. The container is
+    # resolved at runtime (no disk id hardcoded); create-if-absent, no data
+    # migration. See modules/darwin/apps/git-apfs-volume.nix.
+    gitApfsVolume.enable = true;
+
     # Per-AI-CLI log directories (~/Library/Logs/<cli>/), newsyslog rotation,
     # and opt-in `<cli>-logged` session-capture wrappers. All hosts: the dirs
     # and rotation are harmless where a CLI is absent; the Cribl Edge file
