@@ -42,6 +42,6 @@ if ! /sbin/ifconfig "$iface" 2>/dev/null | grep -q "inet $NIGHT_LINK_IP "; then
       echo "night-link: cleared $NIGHT_LINK_IP from $other"
     fi
   done
-  /sbin/ifconfig "$iface" inet "$NIGHT_LINK_IP/24" alias
+  /sbin/ifconfig "$iface" inet "$NIGHT_LINK_IP" netmask 255.255.255.0 alias
   echo "night-link: assigned $NIGHT_LINK_IP to $iface"
 fi
