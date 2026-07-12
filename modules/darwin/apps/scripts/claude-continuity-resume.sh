@@ -52,10 +52,12 @@ fi
 work_dir=$(sed -n '2p' "$ARMED")
 work_dir="${work_dir:-$HOME/git}"
 
+host=$(/bin/hostname -s)
+attach_hint="ssh $host then: tmux attach -t $TMUX_SESSION"
 if [ -f "$STATE_DIR/resume-prompt.md" ]; then
   prompt=$(cat "$STATE_DIR/resume-prompt.md")
 else
-  prompt="You were auto-resumed after a planned reboot. Read $STATE_DIR/RESUME-CONTINUITY.md and the mission plan it points at, verify current state, then continue the mission."
+  prompt="You were auto-resumed after a planned reboot. FIRST post a Slack status to the user's channel confirming the resume and your remote-control handle ($attach_hint) so the user can reach and steer you. Then read $STATE_DIR/RESUME-CONTINUITY.md and the mission plan it points at, verify current state, and continue the mission."
 fi
 
 # tmux execs a multi-argument command directly — no shell quoting layer, so
@@ -66,3 +68,4 @@ tmux new-session -d -s "$TMUX_SESSION" -c "$work_dir" \
 mv "$ARMED" "$STATE_DIR/fired-$now"
 printf '%s\n' "$now" >"$MARKER"
 echo "claude-continuity: resumed session $session_id in tmux session $TMUX_SESSION (cwd $work_dir)"
+echo "claude-continuity: remote control: $attach_hint"
