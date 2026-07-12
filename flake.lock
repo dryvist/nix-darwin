@@ -1067,11 +1067,11 @@
         "orbstack-kubernetes": "orbstack-kubernetes"
       },
       "locked": {
-        "lastModified": 1783734680,
-        "narHash": "sha256-mNdL9wmRaTw7WZ7UnybFfCp4rulTIIkq6zg5/M6tB3E=",
+        "lastModified": 1783838889,
+        "narHash": "sha256-dO08hsHPcHE7ZIcf8s0DhBtK/nk+H0J1uVhD96sp5WA=",
         "owner": "dryvist",
         "repo": "nix-home",
-        "rev": "e90b0d9c3976669a087105e4e82bbf7af6dab3f3",
+        "rev": "575a8f4a73b44e898594bbd3b079def9de8f1881",
         "type": "github"
       },
       "original": {
