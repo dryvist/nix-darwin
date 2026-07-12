@@ -117,11 +117,13 @@ in
     # measured bottleneck. Loopback inference does not need it.
     networkTuning.enable = false;
 
-    # --- Thunderbolt RDMA link (night cluster, worker / rank 1) ---
-    # Auto-detects the cabled TB port and detaches it from bridge0; no IP is
-    # written (IPv6 link-local is the link identity). See
-    # modules/darwin/night-link.nix for the JACCL link-local gate + fallback.
-    rdmaLink.enable = true;
+    # --- Thunderbolt RDMA link (clustered mode, worker / rank 1) ---
+    # Disabled: conflicts with the deployed clusterLinkPrep converge daemon
+    # (hosts/common), which owns the TB link (bridge0 sweep + static IPv4) and
+    # is the mechanism the cluster rendezvous was proven on. Re-enable only
+    # when the zero-IP rework in modules/darwin/cluster-link.nix replaces
+    # clusterLinkPrep in the same change.
+    rdmaLink.enable = false;
 
     # --- Energy & Sleep Configuration ---
     energy = {

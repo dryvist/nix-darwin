@@ -69,17 +69,17 @@ in
               connections:
                 - pipeline: llm_logs
                   output: cribl_stream
-            # Night-cluster logs (rank + link watcher + prefetch, both Macs).
+            # Clustered-mode logs (rank + link watcher + prefetch, both Macs).
             # Same proven path and pipeline as in_llm_logs above; the "*/"
             # lead on every pattern is the #1623 lesson.
-            in_night_logs:
+            in_cluster_logs:
               type: file
               disabled: false
               mode: manual
               interval: 10
-              path: ${userConfig.user.homeDir}/Library/Logs/mlx-night/
+              path: ${userConfig.user.homeDir}/Library/Logs/mlx-cluster/
               filenames:
-                - "*/night-*.log"
+                - "*/cluster-*.log"
               tailOnly: false
               sendToRoutes: false
               connections:
@@ -227,8 +227,8 @@ in
               path: ${config.programs.llm-gate.logDir}/
               filenames:
                 - "*/access.*"
-                # Night-cluster site's own access log (llm-gate nightSite).
-                - "*/night-access.*"
+                # Clustered-mode site's own access log (llm-gate clusterSite).
+                - "*/cluster-access.*"
               tailOnly: false
               sendToRoutes: false
               connections:

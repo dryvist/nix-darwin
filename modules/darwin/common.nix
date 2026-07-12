@@ -20,7 +20,7 @@ in
   ++ [
     ./energy.nix
     ./file-extensions.nix
-    ./night-link-prep.nix
+    ./cluster-link-prep.nix
     ./finder.nix
     ./homebrew.nix
     ./nix-homebrew.nix
@@ -40,7 +40,7 @@ in
     ./apple-silicon-tunables.nix
     ./system-limits.nix
     ./network-tuning.nix
-    ./night-link.nix # Unbridged Thunderbolt RDMA link (auto-detected, link-local)
+    ./cluster-link.nix # Unbridged Thunderbolt RDMA link (auto-detected, link-local)
   ];
 
   # --- Nixpkgs Configuration ---

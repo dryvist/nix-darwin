@@ -66,12 +66,12 @@
     # Global parser off; every backend's parser comes from its catalog entry.
     toolCallParser = null;
 
-    # Night cluster: this Mac is rank 0 (coordinator) of the two-Mac JACCL
-    # brain when the Thunderbolt cable is in — it binds the night endpoint on
+    # Clustered mode: this Mac is rank 0 (coordinator) of the two-Mac JACCL
+    # brain when the Thunderbolt cable is in — it binds the cluster endpoint on
     # loopback :11440, gated by llm-gate (hosts/mac-studio/default.nix). The
-    # link watcher quiesces day serving at link-up and re-warms the preload
+    # link watcher quiesces normal serving at link-up and re-warms the preload
     # list on unplug.
-    nightCluster = {
+    clusterMode = {
       enable = true;
       role = "coordinator";
     };
