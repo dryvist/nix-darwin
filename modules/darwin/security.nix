@@ -116,11 +116,22 @@ in
   #   and non-destructive.
   # - reboot is granted (added 2026-07-12 with explicit user approval) so the
   #   autonomous agent can clear a reboot-only RDMA/Protection-Domain wedge and
-  #   let the reboot-continuity agent (claude-continuity.nix) resume the session
-  #   unattended. Only the two restart verbs are granted — `/sbin/reboot` and
+  #   let the reboot-continuity agent (claude-continuity.nix) resume the session.
+  #   Only the two restart verbs are granted — `/sbin/reboot` and
   #   `/sbin/shutdown -r now` — never a bare `/sbin/shutdown` (which could halt
-  #   or power the host off). Both always restart, so the Mac returns to a login
-  #   where FileVault auto-unlock + auto-login fire and continuity resumes.
+  #   or power the host off).
+  # - FileVault caveat (corrected 2026-07-12 after a live self-reboot test): a
+  #   plain `/sbin/reboot` does NOT auto-unlock FileVault. A FileVault host
+  #   strands at the pre-boot unlock screen until the password is typed, so
+  #   auto-login + continuity never fire (observed: MBP stranded ~45 min).
+  #   `/usr/bin/fdesetup authrestart` is the verb that pre-authorizes the next
+  #   boot's unlock; it is granted here so a *supervised* authrestart needs no
+  #   sudo password. It is NOT sufficient for a fully unattended reboot on its
+  #   own — `fdesetup authrestart` still requires a FileVault credential, and
+  #   feeding that credential automatically (via `-inputplist`) is a separate
+  #   security decision left to the user; this module deliberately neither
+  #   stores nor feeds it. FileVault-OFF hosts (e.g. the Studio) already reboot
+  #   unattended with `/sbin/reboot` alone.
   #
   # To disable: comment out or remove the environment.etc block
   environment.etc."sudoers.d/cluster-ops".text = ''
@@ -132,5 +143,6 @@ in
     ${userConfig.user.name} ALL=(ALL) NOPASSWD: /sbin/ifconfig en[0-9]* down
     ${userConfig.user.name} ALL=(ALL) NOPASSWD: /sbin/reboot
     ${userConfig.user.name} ALL=(ALL) NOPASSWD: /sbin/shutdown -r now
+    ${userConfig.user.name} ALL=(ALL) NOPASSWD: /usr/bin/fdesetup authrestart
   '';
 }
