@@ -38,6 +38,7 @@ let
     "${homeDir}/.local/bin"
     "/etc/profiles/per-user/${cfg.user}/bin"
     "/run/current-system/sw/bin"
+    "/opt/homebrew/bin"
     "/usr/bin"
     "/bin"
   ];

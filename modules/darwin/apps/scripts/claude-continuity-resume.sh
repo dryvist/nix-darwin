@@ -11,7 +11,8 @@
 #   2. No reboot since arming (boottime)   -> no-op. Makes arming safe while
 #      the original session is still alive, including the RunAtLoad fire that
 #      darwin-rebuild triggers at apply time.
-#   3. Cadence gate (durable marker)       -> a storming launchd no-ops.
+#   3. Cadence gate (durable marker)       -> repeated launchd fires within
+#      the min interval do nothing.
 #   4. Dedicated tmux session exists       -> no-op (already resumed).
 #   5. Armed file is CONSUMED (renamed) only after a successful launch —
 #      one-shot per arming, marker written after the work (loop-cadence).
@@ -27,6 +28,13 @@ CLAUDE_BIN="${CLAUDE_BIN:-$HOME/.local/bin/claude}"
 
 # Fire only on the first login of a boot that happened AFTER arming.
 boot_sec=$(/usr/sbin/sysctl -n kern.boottime | sed -E 's/^\{ sec = ([0-9]+).*/\1/')
+case "$boot_sec" in
+'' | *[!0-9]*)
+  # kern.boottime format changed or the regex missed — fail safe, stay armed.
+  echo "claude-continuity: could not parse boot time ('$boot_sec'); standing by" >&2
+  exit 0
+  ;;
+esac
 armed_sec=$(/usr/bin/stat -f %m "$ARMED")
 if [ "$boot_sec" -lt "$armed_sec" ]; then
   echo "claude-continuity: armed but no reboot since arming; standing by"
