@@ -65,21 +65,6 @@ in
       CRIBL_TOKEN = rootOnly // {
         sopsFile = ../../secrets/cribl-edge.yaml;
       };
-
-      # openbao.keychain-db unlock password — read by a user-domain LaunchAgent
-      # (modules/darwin/apps/openbao-keychain.nix) that creates + configures
-      # the keychain natively as the login user. userOnly, not rootOnly: a
-      # root-run activation script crossing into the user's securityd session
-      # via sudo/asuser was confirmed on real hardware to silently fail for
-      # session-scoped operations (the keychain search-list update never
-      # persisted); a native user LaunchAgent needs no privilege crossing at
-      # all, so its own secret should be readable by that same user directly.
-      # This password only unlocks a keychain only this user can use anyway,
-      # so userOnly costs nothing over rootOnly here.
-      # Source: secrets/openbao-keychain.yaml (age-encrypted, committed to git).
-      OPENBAO_KEYCHAIN_PASSWORD = userOnly // {
-        sopsFile = ../../secrets/openbao-keychain.yaml;
-      };
     }
     // lib.optionalAttrs isServer {
       # NOTE: the llm-gate (Caddy) secrets — bearer token, Route53 ACME creds,
