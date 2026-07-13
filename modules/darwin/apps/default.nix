@@ -17,10 +17,12 @@ _:
     ./claude-scheduled-jobs.nix
     ./cribl-edge.nix
     ./cribl-stream.nix
+    ./git-apfs-volume.nix
     ./github-runner-container.nix
     ./openbao-keychain.nix
     ./orbstack.nix
     ./raycast.nix
+    ./screen-sharing.nix
     ./streamline-login.nix
   ];
 

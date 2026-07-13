@@ -39,16 +39,16 @@
     track_activation_phase() {
       local phase_name="$1"
       local exit_code="$2"
-      # shellcheck disable=SC2034
-      local elapsed_time=$(($(date '+%s') - PHASE_START_TIME))
+      local elapsed_time
+      elapsed_time=$(($(date '+%s') - PHASE_START_TIME))
 
       if [ "$exit_code" -ne 0 ]; then
         TOTAL_PHASES_FAILED=$((TOTAL_PHASES_FAILED + 1))
         ACTIVATION_PHASES_FAILED="''${ACTIVATION_PHASES_FAILED}
-        - $phase_name (exit $exit_code, elapsed: $${elapsed_time}s)"
-        echo "$(date '+%Y-%m-%d %H:%M:%S') [WARN] Activation phase '$phase_name' returned exit code $exit_code (elapsed: $${elapsed_time}s)" >&2
+        - $phase_name (exit $exit_code, elapsed: ''${elapsed_time}s)"
+        echo "$(date '+%Y-%m-%d %H:%M:%S') [WARN] Activation phase '$phase_name' returned exit code $exit_code (elapsed: ''${elapsed_time}s)" >&2
       else
-        echo "$(date '+%Y-%m-%d %H:%M:%S') [DEBUG] Activation phase '$phase_name' completed successfully (elapsed: $${elapsed_time}s)"
+        echo "$(date '+%Y-%m-%d %H:%M:%S') [DEBUG] Activation phase '$phase_name' completed successfully (elapsed: ''${elapsed_time}s)"
       fi
     }
 

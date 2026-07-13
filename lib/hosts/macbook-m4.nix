@@ -31,7 +31,11 @@
     # (GUI quit + agent bootout allowlist sweep) are wired by
     # hosts/common/cluster-quiesce.nix. Day config above is untouched.
     clusterMode = {
-      enable = true;
+      # DISABLED 2026-07-12: the boot-time watcher auto-started a rank whose
+      # ~99 GB wired shard starved WindowServer into a watchdog kernel panic
+      # on both hosts. Re-enable only with a wired-headroom mitigation that
+      # provably leaves the GUI working set unwirable.
+      enable = false;
       role = "worker";
     };
   };

@@ -43,7 +43,7 @@ jobs:
         uses: DeterminateSystems/determinate-nix-action@v3
 
       - name: Update JacobPEvans flake inputs
-        run: nix flake update nix-home nix-ai ai-assistant-instructions jacobpevans-cc-plugins
+        run: nix flake update nix-home nix-ai nix-ai-open-harness ai-assistant-instructions jacobpevans-cc-plugins
 
       - name: Validate flake
         run: nix flake check --no-build

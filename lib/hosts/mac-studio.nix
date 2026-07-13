@@ -72,7 +72,10 @@
     # link watcher quiesces normal serving at link-up and re-warms the preload
     # list on unplug.
     clusterMode = {
-      enable = true;
+      # DISABLED 2026-07-12: boot-time auto-bring-up panicked both hosts
+      # (WindowServer starvation under the shard's wired load). Re-enable
+      # together with the worker once the wired-headroom mitigation lands.
+      enable = false;
       role = "coordinator";
     };
   };

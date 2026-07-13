@@ -18,8 +18,8 @@
 # concurrent invocations racing on a cold/expired cache into one fetch.
 #
 # `pkgs.writeShellApplication` (used to build this script) wraps it in
-# `set -euo pipefail` and runs shellcheck regardless of this file's own
-# content (see openbao-keychain-resolver.sh for the same note).
+# `set -euo pipefail`, so this file omits its own (see
+# openbao-keychain-resolver.sh for the same note).
 #
 # macOS-only: `/bin/date -v` below is BSD date syntax, not GNU.
 

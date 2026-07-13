@@ -236,7 +236,7 @@
       #
       # Scoped to x86_64-linux only so `nix flake check --all-systems` succeeds
       # from a single linux runner. All checks in lib/checks.nix are source-only
-      # (formatting, statix, deadnix, shellcheck, shell-tests) — they operate
+      # (formatting, statix, deadnix, shell-tests) — they operate
       # on the same source files regardless of target system, so running once
       # on the CI system is sufficient and equivalent. Other systems
       # intentionally have no `checks` entries.

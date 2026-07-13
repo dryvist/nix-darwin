@@ -38,6 +38,11 @@ in
   # SSH/Remote Login — macOS Remote Login via launchd (Settings > General > Sharing).
   services.openssh.enable = true;
 
+  # Screen Sharing (VNC) — macOS Remote Login's GUI counterpart, enabled on
+  # every host so a reboot always leaves remote recovery available without a
+  # trip to the physical console. See modules/darwin/apps/screen-sharing.nix.
+  programs.screenSharing.enable = true;
+
   # Application firewall on every host. The MBP had this enabled by hand; the
   # Studio shipped disabled, which left the firewall-log-shipping feed with
   # nothing to say (its `log stream` daemon was alive but the ALF subsystem
@@ -82,6 +87,11 @@ in
       inherit (hostConfig) apfsContainer;
       volumes = hostConfig.apfsVolumes;
     };
+
+    # Dedicated 100 GiB-quota "git" APFS volume on every Mac. The container is
+    # resolved at runtime (no disk id hardcoded); create-if-absent, no data
+    # migration. See modules/darwin/apps/git-apfs-volume.nix.
+    gitApfsVolume.enable = true;
 
     # Per-AI-CLI log directories (~/Library/Logs/<cli>/), newsyslog rotation,
     # and opt-in `<cli>-logged` session-capture wrappers. All hosts: the dirs
