@@ -61,10 +61,11 @@ in
       ];
     };
 
-    # --- OpenBao keychain-backed secret-zero ---
-    # Dedicated 72h-auto-lock keychain + resolver agent for OpenBao AppRole
-    # credentials. See modules/darwin/apps/openbao-keychain.nix.
-    openbao-keychain.enable = true;
+    # --- OpenBao-minted AWS STS credential_process ---
+    # Installs the `openbao-aws-creds` wrapper for the tf-proxmox AWS profile.
+    # Secret-zero (VAULT_ADDR + the terraform AppRole) is supplied ambiently by
+    # `doppler run`, not a local keychain. See modules/darwin/apps/openbao-aws-creds.nix.
+    openbao-aws-creds.enable = true;
 
     # --- Reboot-continuity auto-resume ---
     # Login-time LaunchAgent that resumes an armed Claude Code mission in tmux,

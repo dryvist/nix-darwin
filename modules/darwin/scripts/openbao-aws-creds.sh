@@ -2,12 +2,16 @@
 #
 # AWS `credential_process` provider — replaces a static aws-vault base key
 # with short-lived STS creds minted on demand by OpenBao's AWS secrets engine
-# (assumed_role). Reads the terraform-apply AppRole's role_id/secret_id from
-# the openbao.keychain-db keychain (same read pattern as
-# openbao-keychain-resolver.sh — keychain LOCK STATE is the access boundary).
+# (assumed_role). Secret-zero is read from the AMBIENT ENVIRONMENT, not a local
+# keychain: VAULT_ADDR + the terraform AppRole's role_id/secret_id. In practice
+# these are injected by running terragrunt under `doppler run` (the iac secret
+# store holds the OpenBao bootstrap; OpenBao serves everything else).
 #
 # Usage (as an ~/.aws/config credential_process line):
 #   credential_process = openbao-aws-creds tf-proxmox
+# The invoking process must carry VAULT_ADDR, OPENBAO_APPROLE_TERRAFORM_ROLE_ID
+# and OPENBAO_APPROLE_TERRAFORM_SECRET_ID in its environment (credential_process
+# children inherit the terragrunt/`doppler run` env).
 #
 # Caches the emitted STS creds at 0600 under ~/.cache/openbao-aws/, keyed by
 # role name, and only re-authenticates + re-mints when the cached lease is
@@ -18,12 +22,10 @@
 # concurrent invocations racing on a cold/expired cache into one fetch.
 #
 # `pkgs.writeShellApplication` (used to build this script) wraps it in
-# `set -euo pipefail`, so this file omits its own (see
-# openbao-keychain-resolver.sh for the same note).
+# `set -euo pipefail` and runs shellcheck, so this file omits its own.
 #
 # macOS-only: `/bin/date -v` below is BSD date syntax, not GNU.
 
-readonly KEYCHAIN="${HOME}/Library/Keychains/openbao.keychain-db"
 readonly CACHE_DIR="${HOME}/.cache/openbao-aws"
 readonly ROLE="${1:?usage: openbao-aws-creds <aws-role-name>}"
 readonly CACHE_FILE="${CACHE_DIR}/${ROLE}.json"
@@ -35,14 +37,6 @@ readonly SAFETY_MARGIN_SECONDS=600
 prefix="[openbao-aws-creds]"
 warn() { echo "$prefix WARN $*" >&2; }
 die() { echo "$prefix ERROR $*" >&2; exit 1; }
-
-read_item() {
-  local service="$1" account="$2"
-  # A missing keychain item (locked keychain, not-yet-seeded role) is an
-  # EXPECTED outcome here, not a script failure — see the resolver script's
-  # note on why `|| true` is required under set -e.
-  /usr/bin/security find-generic-password -s "${service}" -a "${account}" -w "${KEYCHAIN}" 2>/dev/null || true
-}
 
 # Fast path: a cached lease that's still comfortably valid — no network call.
 cache_is_fresh() {
@@ -94,11 +88,11 @@ if cache_is_fresh; then
   exit 0
 fi
 
-bao_addr="$(read_item "openbao" "bao_addr")"
-role_id="$(read_item "openbao/terraform-apply" "role_id")"
-secret_id="$(read_item "openbao/terraform-apply" "secret_id")"
+bao_addr="${VAULT_ADDR:-}"
+role_id="${OPENBAO_APPROLE_TERRAFORM_ROLE_ID:-}"
+secret_id="${OPENBAO_APPROLE_TERRAFORM_SECRET_ID:-}"
 if [ -z "${bao_addr}" ] || [ -z "${role_id}" ] || [ -z "${secret_id}" ]; then
-  die "openbao/bao_addr or openbao/terraform-apply role_id/secret_id not found in ${KEYCHAIN} — keychain locked or not yet seeded"
+  die "VAULT_ADDR / OPENBAO_APPROLE_TERRAFORM_ROLE_ID / OPENBAO_APPROLE_TERRAFORM_SECRET_ID not in environment — run terragrunt under 'doppler run' so the OpenBao bootstrap is injected"
 fi
 
 login_resp="$(curl -sf --max-time 10 -X POST \
