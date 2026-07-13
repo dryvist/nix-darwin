@@ -12,18 +12,19 @@
 volume_name="git"
 quota="100g"
 
-# Guard: a volume named "git" already exists -> nothing to do. APFS volume names
-# are case-insensitive, so match case-insensitively on the "Name:" line.
-if /usr/sbin/diskutil apfs list | /usr/bin/grep -qiE "Name:[[:space:]]+${volume_name} \("; then
-  echo "[git-apfs-volume] volume '${volume_name}' already exists; nothing to do"
-  exit 0
-fi
-
 # Resolve the internal APFS container from the booted root volume.
 container="$(/usr/sbin/diskutil info -plist / | /usr/bin/plutil -extract APFSContainerReference raw -)"
 if [ -z "$container" ]; then
   echo "[git-apfs-volume] could not resolve internal APFS container from /" >&2
   exit 1
+fi
+
+# Guard: a volume named "git" already exists on the target container -> nothing
+# to do. APFS volume names are case-insensitive, so match case-insensitively on
+# the complete "Name:" field without depending on a parenthetical suffix.
+if /usr/sbin/diskutil apfs list "$container" | /usr/bin/grep -qiE "Name:[[:space:]]+${volume_name}([[:space:]]+\(|$)"; then
+  echo "[git-apfs-volume] volume '${volume_name}' already exists on container ${container}; nothing to do"
+  exit 0
 fi
 
 echo "[git-apfs-volume] creating volume '${volume_name}' (quota ${quota}) on container ${container}"
