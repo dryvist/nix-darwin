@@ -46,13 +46,15 @@
   # already checked during their builds, but repository helpers under scripts/
   # otherwise have no ShellCheck coverage.
   shellcheck = pkgs.runCommand "check-shellcheck" { } ''
+    set -o pipefail
     cd ${src}
     find ./scripts -name "*.sh" -print0 | \
     xargs -0 bash -c '
       failed=0
       for script in "$@"; do
         # ShellCheck does not support zsh.
-        if head -1 "$script" | grep -q "zsh"; then
+        read -r shebang < "$script" || true
+        if [[ "$shebang" == *zsh* ]]; then
           echo "Skipping zsh script: $script"
         else
           echo "Checking $script..."
