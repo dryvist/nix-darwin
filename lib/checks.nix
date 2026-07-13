@@ -42,6 +42,30 @@
     touch $out
   '';
 
+  # Lint standalone shell scripts. Scripts wrapped by writeShellApplication are
+  # already checked during their builds, but repository helpers under scripts/
+  # otherwise have no ShellCheck coverage.
+  shellcheck = pkgs.runCommand "check-shellcheck" { } ''
+    cd ${src}
+    find ./scripts -name "*.sh" -print0 | \
+    xargs -0 bash -c '
+      failed=0
+      for script in "$@"; do
+        # ShellCheck does not support zsh.
+        if head -1 "$script" | grep -q "zsh"; then
+          echo "Skipping zsh script: $script"
+        else
+          echo "Checking $script..."
+          if ! ${pkgs.lib.getExe pkgs.shellcheck} --severity=warning --exclude=SC1091 "$script"; then
+            failed=1
+          fi
+        fi
+      done
+      exit "$failed"
+    ' bash
+    touch $out
+  '';
+
   # Run the BATS (Bash Automated Testing System) test suite
   # Runs specific shell integration tests from tests/shell/
   shell-tests =
