@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.1.0](https://github.com/dryvist/nix-darwin/compare/v2.0.0...v2.1.0) (2026-07-13)
+
+
+### Features
+
+* **apfs:** git APFS volume on every Mac; chore: remove shellcheck ([#1674](https://github.com/dryvist/nix-darwin/issues/1674)) ([e36a421](https://github.com/dryvist/nix-darwin/commit/e36a421fb433962977a74c1e5f8b9b3fa216400d))
+* enable macOS Screen Sharing by default on all Macs ([#1675](https://github.com/dryvist/nix-darwin/issues/1675)) ([01e3f0f](https://github.com/dryvist/nix-darwin/commit/01e3f0f078e7ba16e200379bd622d67ee13d32bb))
+* **hosts:** auto-login on both Macs; disable cluster auto-bring-up ([#1668](https://github.com/dryvist/nix-darwin/issues/1668)) ([81ee684](https://github.com/dryvist/nix-darwin/commit/81ee684d1f18cbbce63f617814604d593c3277e2))
+* **security:** grant passwordless fdesetup authrestart ([#1677](https://github.com/dryvist/nix-darwin/issues/1677)) ([f03ec0e](https://github.com/dryvist/nix-darwin/commit/f03ec0e78714c31bdea731b29da2a8f68a8c5f6f))
+* **security:** grant passwordless reboot for unattended cluster recovery ([#1676](https://github.com/dryvist/nix-darwin/issues/1676)) ([cfa4c99](https://github.com/dryvist/nix-darwin/commit/cfa4c99c4c657d3013f357a9fe2d73b6755921c8))
+
+
+### Bug Fixes
+
+* **activation:** correct elapsed_time escape and drop ls parsing ([6aa550d](https://github.com/dryvist/nix-darwin/commit/6aa550d25719436f8d336aceb26acbff02a9208e))
+* address promotion review findings ([#1679](https://github.com/dryvist/nix-darwin/issues/1679)) ([873f31f](https://github.com/dryvist/nix-darwin/commit/873f31f867f6b30d0ad4f7b5511aa49f1d110f48))
+* cover nix-ai-open-harness in flake-update automation ([00561b8](https://github.com/dryvist/nix-darwin/commit/00561b87e86b1abc4eed8209e9c243948c0cac13))
+
 ## [2.0.0](https://github.com/dryvist/nix-darwin/compare/v1.76.0...v2.0.0) (2026-07-12)
 
 
