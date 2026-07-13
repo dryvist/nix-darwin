@@ -35,7 +35,7 @@ else
   # The service name is derived from its device (bridge0) via networksetup
   # rather than hardcoded, since the display name is localisable.
   echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Active RDMA link on $iface; disabling the bridge0 network service to stop re-enslavement..."
-  svc=$(/usr/sbin/networksetup -listnetworkserviceorder | /usr/bin/awk '/Device: bridge0\)/{print prev} {sub(/^\([0-9]+\) /,""); prev=$0}')
+  svc=$(/usr/sbin/networksetup -listnetworkserviceorder | /usr/bin/awk '/Device: bridge0\)/{print prev; exit} {sub(/^\([0-9]+\) /,""); prev=$0}')
   if [ -n "$svc" ]; then
     if /usr/sbin/networksetup -setnetworkserviceenabled "$svc" off 2>/dev/null; then
       echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Disabled network service '$svc' (device bridge0)"
