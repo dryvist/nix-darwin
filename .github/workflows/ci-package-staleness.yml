@@ -33,7 +33,7 @@ jobs:
 
       - name: Check for skip label
         id: check-skip
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           script: |
             const labels = context.payload.pull_request?.labels || [];
@@ -70,7 +70,7 @@ jobs:
 
       - name: Post staleness report as PR comment
         if: steps.check-skip.outputs.skip == 'false' && steps.validate.outputs.exit_code != '0'
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           script: |
             // SECURITY: All inputs here are from trusted sources (our own script output)
