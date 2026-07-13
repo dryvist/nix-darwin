@@ -19,7 +19,7 @@ _:
     ./cribl-stream.nix
     ./git-apfs-volume.nix
     ./github-runner-container.nix
-    ./openbao-keychain.nix
+    ./openbao-aws-creds.nix
     ./orbstack.nix
     ./raycast.nix
     ./screen-sharing.nix

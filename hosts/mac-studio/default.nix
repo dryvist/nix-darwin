@@ -152,11 +152,11 @@ in
       };
     };
 
-    # --- OpenBao keychain-backed secret-zero ---
-    # Same dedicated 72h-auto-lock keychain + resolver agent as the laptop —
-    # this always-on host is a first-class autonomous OpenBao consumer too.
-    # See modules/darwin/apps/openbao-keychain.nix.
-    openbao-keychain.enable = true;
+    # --- OpenBao-minted AWS STS credential_process ---
+    # Installs the `openbao-aws-creds` wrapper for the tf-proxmox AWS profile.
+    # Secret-zero (VAULT_ADDR + the terraform AppRole) is supplied ambiently by
+    # `doppler run`, not a local keychain. See modules/darwin/apps/openbao-aws-creds.nix.
+    openbao-aws-creds.enable = true;
 
     # --- Reboot-continuity auto-resume ---
     # Same login-time armed-mission resume as the laptop; no-op unless armed
