@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.2.0](https://github.com/dryvist/nix-darwin/compare/v2.1.0...v2.2.0) (2026-07-13)
+
+
+### Features
+
+* **cluster-link:** disable Thunderbolt Bridge service to stop RDMA port re-enslavement ([#1684](https://github.com/dryvist/nix-darwin/issues/1684)) ([3eb3170](https://github.com/dryvist/nix-darwin/commit/3eb3170b2c6f9380b5fcb1b0ea69a389a0d8d608))
+
+
+### Bug Fixes
+
+* **security:** enumerate sudoers args + cluster-link-prep awk exit ([#1690](https://github.com/dryvist/nix-darwin/issues/1690)) ([a6ad162](https://github.com/dryvist/nix-darwin/commit/a6ad1623210be1aa01d682d3055f96d37fc8f393))
+
 ## [2.1.0](https://github.com/dryvist/nix-darwin/compare/v2.0.0...v2.1.0) (2026-07-13)
 
 
