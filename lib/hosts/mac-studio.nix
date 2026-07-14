@@ -17,14 +17,16 @@
   # two warm brains via roleModelOverrides (2026-07-08 agentic tool-calling
   # bench; verdicts + capacity in HF JacobPEvans/mlx-benchmarks + apps
   # docs/BRAIN_ROTATION.md):
-  #   tool-calling — Qwen3.6-35B-A3B OptiQ-4bit: bench winner, the brain
-  #     Hermes routes to by physical id.
+  #   tool-calling — stock Qwen3.6-35B-A3B-4bit: the live ai-default fleet
+  #     brain (nix-ai#915) and the brain Hermes routes to. Replaces the
+  #     OptiQ-4bit twin, whose vllm-mlx VLM-misdetect crashes it; revert to
+  #     OptiQ once that engine bug is fixed.
   #   coding — Qwen3-Coder-30B-A3B 4-bit.
   # gpt-oss-120b (63.3 GB) stays in the catalog as swap-class (on-demand,
   # idle-unload, never preloaded); reach it by physical id or add a role
   # override if a role should target it.
   roleModelOverrides = {
-    tool-calling = "mlx-community/Qwen3.6-35B-A3B-OptiQ-4bit";
+    tool-calling = "mlx-community/Qwen3.6-35B-A3B-4bit";
     coding = "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit";
   };
 
@@ -34,10 +36,14 @@
     # (gpuMemoryUtilization 0.80 on 128 GB); an on-demand gpt-oss swap-in
     # transiently exceeds the trip — pre-existing; it idle-unloads.
     catalog = {
-      qwen36-optiq.class = "resident";
+      # Stock 35B is the resident fleet brain (ai-default, nix-ai#915). OptiQ
+      # is demoted to swap: its vllm-mlx VLM-misdetect crashes it, so it must
+      # not be a preloaded resident. Same ~19.4 GB weights either way, so the
+      # resident footprint is unchanged.
+      qwen36-35b.class = "resident";
       qwen3-coder-30b.class = "resident";
+      qwen36-optiq.class = "swap";
       gpt-oss-120b.class = "swap";
-      qwen36-35b.class = "swap";
       # LARGE daily-rotation brain (apps ai_default_model_large;
       # docs/BRAIN_ROTATION.md).
       qwen3-next-80b.class = "swap";
@@ -57,8 +63,8 @@
       concurrencyLimit = 8;
     };
     autoUnloadIdleSeconds = 0;
-    # Resident brains warmed at boot: coder (coding) + OptiQ (tool-calling).
-    # gpt-oss (default) deliberately omitted — swap-class above.
+    # Resident brains warmed at boot: coder (coding) + stock 35B (tool-calling,
+    # the ai-default fleet brain). gpt-oss + OptiQ omitted — swap-class above.
     preload = [
       "coding"
       "tool-calling"
