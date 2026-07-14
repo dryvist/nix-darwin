@@ -82,7 +82,8 @@ addr="$(resolve BAO_ADDR)"
 
 # This domain's AppRole role_id/secret_id, named e.g. LLM_GATE_VAULT_ROLE_ID
 # (domain uppercased, - -> _).
-env_prefix="$(printf '%s' "$domain" | tr '[:lower:]-' '[:upper:]_')"
+env_prefix="${domain^^}"
+env_prefix="${env_prefix//-/_}"
 role_id="$(resolve "${env_prefix}_VAULT_ROLE_ID")"
 secret_id="$(resolve "${env_prefix}_VAULT_SECRET_ID")"
 [ -n "$role_id" ] || die "${env_prefix}_VAULT_ROLE_ID not in environment or keychain '$keychain'"
@@ -93,20 +94,20 @@ export BAO_ADDR="$addr"
 # AppRole login -> a short-lived token, used only for the reads below. Never
 # persisted; scoped to this process.
 token="$(bao write -field=token auth/approle/login \
-  role_id="$role_id" secret_id="$secret_id" 2>/dev/null)" \
+  role_id="$role_id" secret_id="$secret_id")" \
   || die "AppRole login failed for domain '$domain' at $addr"
 export BAO_TOKEN="$token"
 
 # Fetch each mapping and export it. Format: ENV_NAME=<kv-path>#<field>.
 # KV v2 mount is `secret`; paths are given mount-relative (e.g. ai/llm).
 for spec in "${specs[@]}"; do
-  env_name="${spec%%=*}"
-  rest="${spec#*=}"
-  kv_path="${rest%%#*}"
-  field="${rest#*#}"
-  [ -n "$env_name" ] && [ -n "$kv_path" ] && [ -n "$field" ] \
-    || die "bad --secret spec '$spec' (want ENV=path#field)"
-  value="$(bao kv get -mount=secret -field="$field" "$kv_path" 2>/dev/null)" \
+  if [[ ! "$spec" =~ ^([A-Za-z_][A-Za-z0-9_]*)=([^#]+)#(.+)$ ]]; then
+    die "bad --secret spec '$spec' (want ENV=path#field)"
+  fi
+  env_name="${BASH_REMATCH[1]}"
+  kv_path="${BASH_REMATCH[2]}"
+  field="${BASH_REMATCH[3]}"
+  value="$(bao kv get -mount=secret -field="$field" "$kv_path")" \
     || die "read failed: secret/$kv_path field '$field' (policy or path missing?)"
   export "$env_name=$value"
 done

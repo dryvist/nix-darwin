@@ -7,7 +7,7 @@
 #
 # Secret-zero (BAO_ADDR + <DOMAIN>_VAULT_ROLE_ID/_SECRET_ID) is supplied
 # ambiently by the openbao keychain resolver; no fetched secret is written to
-# disk. `bao` (OpenBao CLI) + jq come from runtimeInputs.
+# disk. `bao` (OpenBao CLI) comes from runtimeInputs.
 {
   lib,
   config,
@@ -22,15 +22,22 @@ let
     name = "openbao-run";
     runtimeInputs = [
       pkgs.openbao
-      pkgs.jq
     ];
     text = builtins.readFile ./../scripts/openbao-run.sh;
   };
 in
 {
-  options.programs.openbao-run.enable = lib.mkEnableOption "the OpenBao AppRole env-injection wrapper (doppler run replacement)";
+  options.programs.openbao-run = {
+    enable = lib.mkEnableOption "the OpenBao AppRole env-injection wrapper (doppler run replacement)";
+    package = lib.mkOption {
+      type = lib.types.package;
+      default = openbaoRunScript;
+      readOnly = true;
+      description = "The built openbao-run derivation, for other modules (e.g. llm-gate) to reference in launchd ProgramArguments.";
+    };
+  };
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = [ openbaoRunScript ];
+    environment.systemPackages = [ cfg.package ];
   };
 }
