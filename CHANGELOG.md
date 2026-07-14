@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.1](https://github.com/dryvist/nix-darwin/compare/v2.2.0...v2.2.1) (2026-07-14)
+
+
+### Bug Fixes
+
+* **mac-studio:** make stock 35B the resident tool-calling brain ([#1694](https://github.com/dryvist/nix-darwin/issues/1694)) ([a63e95c](https://github.com/dryvist/nix-darwin/commit/a63e95cf0e2172ef9755fa2c0f8af4bf292f0133))
+
 ## [2.2.0](https://github.com/dryvist/nix-darwin/compare/v2.1.0...v2.2.0) (2026-07-13)
 
 
