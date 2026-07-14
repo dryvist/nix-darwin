@@ -257,11 +257,15 @@ in
       ThrottleInterval = 15;
       WorkingDirectory = cfg.dataDir;
       EnvironmentVariables = {
-        # HOME so `doppler` finds ~/.doppler (its scoped service token); Caddy's
-        # own storage is pinned under the gate dir via XDG below.
+        # HOME so `doppler` finds ~/.doppler (its WorkingDirectory-scoped service
+        # token). Do NOT set XDG_CONFIG_HOME here: `doppler` honors it OVER
+        # ~/.doppler, so pinning it (for Caddy's sake) silently redirects the CLI's
+        # config lookup to an empty dir and the gate dies "you must provide a
+        # token" -> exit 78 -> crash-loop (2026-07-14 outage). Caddy needs no
+        # XDG_CONFIG_HOME: its config comes from --config and its cert/state
+        # storage is pinned via XDG_DATA_HOME below.
         HOME = userConfig.user.homeDir;
         XDG_DATA_HOME = "${cfg.dataDir}/data";
-        XDG_CONFIG_HOME = "${cfg.dataDir}/config";
       };
       StandardOutPath = "${cfg.logDir}/llm-gate.log";
       StandardErrorPath = "${cfg.logDir}/llm-gate.error.log";
