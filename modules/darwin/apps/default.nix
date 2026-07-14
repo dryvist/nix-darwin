@@ -20,6 +20,7 @@ _:
     ./git-apfs-volume.nix
     ./github-runner-container.nix
     ./openbao-aws-creds.nix
+    ./openbao-github-creds.nix
     ./orbstack.nix
     ./raycast.nix
     ./screen-sharing.nix
