@@ -26,6 +26,7 @@ in
     ./nix-homebrew.nix
     ./keyboard.nix
     ./launchd-bootstrap.nix
+    ./launchd-self-heal.nix # Reload penalty-boxed critical KeepAlive daemons
     ./logging.nix # Syslog forwarding to remote server
     ./boot-activation.nix # Creates /run/current-system at boot
     ./auto-recovery.nix

@@ -25,6 +25,11 @@ them.
   - GitHub Actions templates
   - Troubleshooting and maintenance
 
+- **[LAUNCHD-SELF-HEAL.md](LAUNCHD-SELF-HEAL.md)** - Auto-reload of penalty-boxed critical KeepAlive daemons
+  - The launchd penalty-box failure mode (loaded-but-not-running)
+  - How the post-activation self-heal reloads dead daemons
+  - Manual recovery (bootout/bootstrap, never kickstart)
+
 - **[FILE-EXTENSIONS.md](FILE-EXTENSIONS.md)** - Custom file extension mappings for macOS
   - Configure non-standard archive extensions (e.g., .spl, .crbl)
   - Enable Finder auto-extract and shell autocomplete

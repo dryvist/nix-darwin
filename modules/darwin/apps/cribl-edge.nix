@@ -229,5 +229,11 @@ in
         };
       };
     };
+
+    # Edge ships all Mac-origin telemetry; if it crash-loops into launchd's
+    # penalty box a config-unchanged `darwin-rebuild switch` won't restart it
+    # and ingestion goes dark silently. Self-heal it after every activation.
+    # See modules/darwin/launchd-self-heal.nix + docs/LAUNCHD-SELF-HEAL.md.
+    services.launchdSelfHeal.labels = [ "com.nix-darwin.cribl-edge" ];
   };
 }
