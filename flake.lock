@@ -791,31 +791,15 @@
     "jacobpevans-cc-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1783847174,
-        "narHash": "sha256-0x5NB1/ruQil0MNgk1cEmg31GOLIneYABzoyguUqtMQ=",
+        "lastModified": 1784062929,
+        "narHash": "sha256-aTE2Rrkabc/LiQfqZBQiB9y/yne5vJKpXrvWXJLpgt8=",
         "owner": "dryvist",
         "repo": "claude-code-plugins",
-        "rev": "4fc2185a3628a392702d37ed4b0876951967f325",
+        "rev": "0b39041e8c9ed555c62667e89eb72abc5dcef0cd",
         "type": "github"
       },
       "original": {
         "owner": "dryvist",
-        "repo": "claude-code-plugins",
-        "type": "github"
-      }
-    },
-    "jacobpevans-cc-plugins_2": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1783096239,
-        "narHash": "sha256-9fK/q7nQRyRxu3GOf+JzhrdwNZ00lcs7YnBUIIZafFE=",
-        "owner": "JacobPEvans",
-        "repo": "claude-code-plugins",
-        "rev": "281ab4d7f780e39f53ca2a77b7858f593e6a941e",
-        "type": "github"
-      },
-      "original": {
-        "owner": "JacobPEvans",
         "repo": "claude-code-plugins",
         "type": "github"
       }
@@ -1027,7 +1011,9 @@
           "home-manager"
         ],
         "huggingface-skills": "huggingface-skills",
-        "jacobpevans-cc-plugins": "jacobpevans-cc-plugins_2",
+        "jacobpevans-cc-plugins": [
+          "jacobpevans-cc-plugins"
+        ],
         "karpathy-skills": "karpathy-skills_2",
         "lunar-claude": "lunar-claude",
         "nixpkgs": [
