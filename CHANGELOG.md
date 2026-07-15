@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.3.0](https://github.com/dryvist/nix-darwin/compare/v2.2.1...v2.3.0) (2026-07-15)
+
+
+### Features
+
+* **launchd:** self-heal penalty-boxed critical KeepAlive daemons ([#1697](https://github.com/dryvist/nix-darwin/issues/1697)) ([0491098](https://github.com/dryvist/nix-darwin/commit/04910981e74720cdb4948bde6dd483bd407767b1))
+
+
+### Bug Fixes
+
+* **launchd:** harden self-heal checks ([#1704](https://github.com/dryvist/nix-darwin/issues/1704)) ([3d59a68](https://github.com/dryvist/nix-darwin/commit/3d59a68f17be3ae4c0751a79774a688d6721e893))
+* **llm-gate:** stop XDG_CONFIG_HOME from breaking doppler token lookup ([76aba4f](https://github.com/dryvist/nix-darwin/commit/76aba4ff84dc73f5d182c768c7244d527417e6e9))
+* **llm-gate:** stop XDG_CONFIG_HOME from breaking doppler token lookup ([9c76019](https://github.com/dryvist/nix-darwin/commit/9c76019d9ee8dbdb61e71a688c111105e3ef2054))
+* **skills:** unify Codex plugin source ([23cb8e6](https://github.com/dryvist/nix-darwin/commit/23cb8e6f822a30ea3aeb984db3b616c30dc59250))
+
 ## [2.2.1](https://github.com/dryvist/nix-darwin/compare/v2.2.0...v2.2.1) (2026-07-14)
 
 
