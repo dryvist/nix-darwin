@@ -57,6 +57,7 @@
         home-manager.follows = "home-manager";
         ai-assistant-instructions.follows = "ai-assistant-instructions";
         claude-code-plugins.follows = "claude-code-plugins";
+        jacobpevans-cc-plugins.follows = "jacobpevans-cc-plugins";
       };
     };
 
