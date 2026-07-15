@@ -91,6 +91,12 @@ in
     };
   };
 
+  # This daemon's plist is labelled com.<user>.* so launchd-bootstrap.nix's
+  # org.nixos.*/com.nix-darwin.* glob never sees it; register it for self-heal
+  # so a penalty-boxed instance is reloaded after each activation.
+  # See modules/darwin/launchd-self-heal.nix + docs/LAUNCHD-SELF-HEAL.md.
+  services.launchdSelfHeal.labels = [ "com.${userConfig.user.name}.firewall-log-shipping" ];
+
   # User-owned log dir (same pattern as ai-cli-log-shipping.nix: install -d
   # so a root-created parent never blocks the user's writes).
   #
