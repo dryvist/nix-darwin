@@ -1,4 +1,4 @@
-# llm-large L7 Gate (launchd Caddy, secrets pulled live from Doppler)
+# llm-large L7 Gate (launchd Caddy, secrets pulled live from OpenBao)
 #
 # ADR (docs-starlight d/decisions/llm-large-studio-serving.mdx): the model
 # server stays bound to 127.0.0.1; this Caddy front terminates TLS on the
@@ -12,26 +12,26 @@
 # Secrets are NOT stored on this host. Nothing sensitive is baked into the
 # Caddyfile, the plist, or sops — not the bearer token, not the Route53 ACME
 # credentials, not even the AWS region (infra topology is treated as sensitive
-# in a public repo). Doppler is the single source of truth. The launchd agent
-# wraps Caddy in `doppler run`, which injects the secrets as environment
-# variables live at each (re)start; the Caddyfile references them purely as
-# `{env.VAR}` placeholders that Caddy resolves at parse time. Rotate a value in
-# Doppler and restart the agent — nothing local ever holds a copy, so there is
-# no sops<->Doppler drift. (OpenBao with fine-grained policies is the eventual
-# target, JAC-153; Doppler is the current stopgap that already backs the fleet.)
+# in a public repo). OpenBao is the single source of truth. The launchd agent
+# wraps Caddy in `openbao-run`, which logs in with the least-privilege llm-gate
+# AppRole and injects the secrets as environment variables live at each
+# (re)start; the Caddyfile references them purely as `{env.VAR}` placeholders
+# that Caddy resolves at parse time. Rotate a value in OpenBao and restart the
+# agent — nothing local ever holds a copy. (This removes the external Doppler
+# dependency that previously fronted the gate; a lapsed Doppler token once took
+# the whole serving path down, which is exactly what OpenBao-native avoids.)
 #
-# User agent, not root daemon: the gated port is non-privileged and Doppler
-# auth lives in the login user's ~/.doppler (a headless root daemon has no
-# Doppler session — the same reason activation scripts must never call Doppler).
-# The server host auto-logs-in, so the agent comes up unattended on boot. The
-# one local bootstrap credential is a read-only, config-scoped Doppler service
-# token provisioned once into ~/.doppler, scoped to this agent's WorkingDirectory
-# — a pointer to Doppler, never a copy of the secrets it fetches.
+# User agent, not root daemon: the gated port is non-privileged, and the gate's
+# OpenBao secret-zero (BAO_ADDR + the llm-gate AppRole role_id/secret_id) lives
+# in an auto-readable login keychain (secretZeroKeychain), which unlocks at
+# login so the agent comes up unattended on boot. The keychain holds only a
+# pointer to OpenBao (the AppRole), never a copy of the secrets it fetches;
+# activation scripts (root, no keychain access) never touch it.
 #
 # TLS modes:
 #   route53  — real Let's Encrypt cert via DNS-01 against the public zone,
-#              using the same least-privilege `acme` AWS user the cluster
-#              ingress already uses (credentials injected from Doppler).
+#              using the least-privilege `acme` AWS user the cluster ingress
+#              also uses (credentials from OpenBao secret/platform/acme).
 #   internal — Caddy's local CA (autonomous, no external dependency); clients
 #              must trust the CA or skip verification. Bring-up stopgap only.
 
@@ -57,7 +57,7 @@ let
     else
       pkgs.caddy;
 
-  # Route53 credentials + region come from Doppler-injected env at runtime; the
+  # Route53 credentials + region come from openbao-run-injected env at runtime; the
   # Caddyfile only names them. `internal` mode needs no credentials at all.
   tlsDirective =
     if cfg.tlsMode == "route53" then
@@ -103,7 +103,7 @@ let
 
   # The whole Caddyfile is a plain, secret-free nix store file: every sensitive
   # value is an {env.VAR} placeholder resolved by Caddy at parse time from the
-  # Doppler-injected environment. Safe to be world-readable — it contains no
+  # openbao-run-injected environment. Safe to be world-readable — it contains no
   # secrets, only the (already public) hostnames.
   caddyfile = pkgs.writeText "llm-gate.Caddyfile" ''
     {
@@ -162,7 +162,7 @@ in
         "internal"
       ];
       default = "route53";
-      description = "Certificate source: Let's Encrypt DNS-01 via Route53 (ACME AWS credentials injected from Doppler) or Caddy's internal CA (autonomous stopgap).";
+      description = "Certificate source: Let's Encrypt DNS-01 via Route53 (ACME AWS credentials from OpenBao secret/platform/acme) or Caddy's internal CA (autonomous stopgap).";
     };
 
     apiPort = lib.mkOption {
@@ -192,25 +192,26 @@ in
     user = lib.mkOption {
       type = lib.types.str;
       default = userConfig.user.name;
-      description = "Login user that owns the agent, the data dir, and the ~/.doppler service token (Doppler auth is per-user; the gate runs as a user LaunchAgent).";
+      description = "Login user that owns the agent, the data dir, and the secret-zero keychain (keychain auth is per-user; the gate runs as a user LaunchAgent).";
     };
 
-    dopplerProject = lib.mkOption {
+    secretZeroKeychain = lib.mkOption {
       type = lib.types.str;
-      default = "iac-conf-mgmt";
-      description = "Doppler project supplying the gate's secrets (bearer token + Route53 ACME creds + region). The scoped service token in ~/.doppler already binds this project/config; kept here for documentation and a drift-free reference.";
-    };
-
-    dopplerConfig = lib.mkOption {
-      type = lib.types.str;
-      default = "prd";
-      description = "Doppler config within the project (see dopplerProject).";
+      default = "${userConfig.user.homeDir}/Library/Keychains/automation.keychain-db";
+      description = ''
+        Auto-readable keychain holding the gate's OpenBao secret-zero:
+        BAO_ADDR and the llm-gate AppRole's LLM_GATE_VAULT_ROLE_ID /
+        LLM_GATE_VAULT_SECRET_ID. openbao-run reads these unattended at each
+        (re)start (env first, then this keychain) and logs in to fetch the
+        gate's secrets — no Doppler session, no password prompt (the keychain
+        unlocks at login). Replaces the per-user ~/.doppler service token.
+      '';
     };
 
     dataDir = lib.mkOption {
       type = lib.types.str;
       default = "${userConfig.user.homeDir}/.local/share/llm-gate";
-      description = "User-owned state dir (Caddy cert/config storage). Also the agent's WorkingDirectory, which the ~/.doppler service token is scoped to so `doppler run` resolves the right config non-interactively.";
+      description = "User-owned state dir (Caddy cert/config storage) and the launchd agent's WorkingDirectory.";
     };
 
     logDir = lib.mkOption {
@@ -221,30 +222,43 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    # The gate fetches its secrets from OpenBao via openbao-run (no Doppler).
+    programs.openbao-run.enable = true;
+
     # User-owned state dir (install -d as root during activation, owned by the
-    # login user so the agent — and `doppler run` — can read/write it).
+    # login user so the agent — and openbao-run/Caddy — can read/write it).
     system.activationScripts.postActivation.text = ''
       /usr/bin/install -d -o ${cfg.user} -g staff -m 0700 "${cfg.dataDir}" "${cfg.dataDir}/data" "${cfg.dataDir}/config"
       /usr/bin/install -d -o ${cfg.user} -g staff -m 0755 "${cfg.logDir}"
     '';
 
-    # launchd USER agent: `doppler run` fetches the gate's secrets from Doppler
-    # and injects them as env vars, then execs Caddy against the secret-free
-    # Caddyfile. KeepAlive keeps it running and restarts it (picking up rotated
-    # secrets on restart); no RunAtLoad/PathState dance is needed because there
-    # is no sops-rendered file to wait for anymore. If the network or Doppler is
-    # briefly unavailable at boot, Caddy exits and launchd retries on the
-    # ThrottleInterval (Doppler's local fallback cache covers transient API
-    # outages).
+    # launchd USER agent: `openbao-run` logs in with the llm-gate AppRole,
+    # fetches the gate's secrets from OpenBao and injects them as env vars, then
+    # execs Caddy against the secret-free Caddyfile. KeepAlive keeps it running
+    # and restarts it (picking up rotated secrets on restart); no
+    # RunAtLoad/PathState dance is needed because there is no sops-rendered file
+    # to wait for. If the network or OpenBao is briefly unavailable at boot,
+    # Caddy exits and launchd retries on the ThrottleInterval.
     launchd.user.agents.llm-gate.serviceConfig = {
       Label = "com.nix-darwin.llm-gate";
       ProgramArguments = [
-        (lib.getExe pkgs.doppler)
-        "run"
-        "--project"
-        cfg.dopplerProject
-        "--config"
-        cfg.dopplerConfig
+        (lib.getExe config.programs.openbao-run.package)
+        "--domain"
+        "llm-gate"
+        "--keychain"
+        cfg.secretZeroKeychain
+      ]
+      ++ lib.optionals (cfg.tlsMode == "route53") [
+        "--secret"
+        "AWS_ACME_ACCESS_KEY_ID=platform/acme#access_key_id"
+        "--secret"
+        "AWS_ACME_SECRET_ACCESS_KEY=platform/acme#secret_access_key"
+        "--secret"
+        "LLM_GATE_AWS_REGION=platform/acme#region"
+      ]
+      ++ [
+        "--secret"
+        "LLM_LARGE_BEARER_TOKEN=ai/llm#LLM_LARGE_BEARER_TOKEN"
         "--"
         (lib.getExe caddyPkg)
         "run"
@@ -257,15 +271,12 @@ in
       ThrottleInterval = 15;
       WorkingDirectory = cfg.dataDir;
       EnvironmentVariables = {
-        # HOME so `doppler` finds ~/.doppler (its WorkingDirectory-scoped service
-        # token). Do NOT set XDG_CONFIG_HOME here: `doppler` honors it OVER
-        # ~/.doppler, so pinning it (for Caddy's sake) silently redirects the CLI's
-        # config lookup to an empty dir and the gate dies "you must provide a
-        # token" -> exit 78 -> crash-loop (2026-07-14 outage). Caddy needs no
-        # XDG_CONFIG_HOME: its config comes from --config and its cert/state
-        # storage is pinned via XDG_DATA_HOME below.
+        # Caddy's storage is pinned under the gate dir via XDG below. HOME is
+        # kept for tools that expect it; openbao-run reads its secret-zero
+        # keychain by absolute path, so it needs no ~/.doppler session.
         HOME = userConfig.user.homeDir;
         XDG_DATA_HOME = "${cfg.dataDir}/data";
+        XDG_CONFIG_HOME = "${cfg.dataDir}/config";
       };
       StandardOutPath = "${cfg.logDir}/llm-gate.log";
       StandardErrorPath = "${cfg.logDir}/llm-gate.error.log";
