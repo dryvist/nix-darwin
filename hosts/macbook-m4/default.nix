@@ -67,6 +67,15 @@ in
     # `doppler run`, not a local keychain. See modules/darwin/apps/openbao-aws-creds.nix.
     openbao-aws-creds.enable = true;
 
+    # --- OpenBao-backed GitHub token provider ---
+    # Ships the `openbao-github-creds` wrapper (git credential helper + gh env
+    # source) that retires the local GH_PAT_* keychain tiers. Purely additive:
+    # installing the wrapper changes no git/gh config, so the current
+    # keychain-backed path keeps working until the interactive cutover (see
+    # terraform-proxmox docs/github-token-openbao-migration runbook). Secret-zero
+    # (VAULT_ADDR + the GitHub AppRole) is supplied ambiently by `doppler run`.
+    openbao-github-creds.enable = true;
+
     # --- Reboot-continuity auto-resume ---
     # Login-time LaunchAgent that resumes an armed Claude Code mission in tmux,
     # so a planned reboot (e.g. clearing leaked RDMA Protection Domains during
