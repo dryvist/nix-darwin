@@ -7,6 +7,7 @@
 # quiesce natively from the watcher (llama-swap unload + warmup re-warm),
 # so this module is worker-only.
 {
+  config,
   lib,
   pkgs,
   hostConfig,
@@ -23,6 +24,10 @@ let
 
   quiescePkg = pkgs.writeShellApplication {
     name = "cluster-quiesce";
+    # Feed the terminal keep list to the script (newline-separated) so a
+    # session in a non-default terminal can be protected from the GUI quit
+    # without editing the public script.
+    runtimeEnv.CLUSTER_QUIESCE_TERMINALS = lib.concatStringsSep "\n" config.programs.clusterQuiesce.terminalAllowlist;
     text = builtins.readFile ./scripts/cluster-quiesce.sh;
   };
 
@@ -32,6 +37,24 @@ let
   };
 in
 {
+  options.programs.clusterQuiesce.terminalAllowlist = lib.mkOption {
+    type = lib.types.listOf lib.types.str;
+    default = [
+      "Finder"
+      "Ghostty"
+      "Terminal"
+      "iTerm2"
+      "WezTerm"
+      "Alacritty"
+      "kitty"
+    ];
+    description = ''
+      GUI apps cluster-quiesce leaves running so a live cable-test session
+      cannot quit its own terminal. Add the terminal you run the test from if
+      it is not one of the macOS defaults listed here.
+    '';
+  };
+
   config = lib.mkIf (clusterRole == "worker") {
     programs.mlx.clusterMode = {
       quiesceCommand = lib.getExe quiescePkg;
