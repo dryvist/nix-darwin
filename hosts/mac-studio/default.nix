@@ -46,14 +46,6 @@ in
     # network tuning, and energyMode come from the server class in ../common.
     energy.enable = true;
 
-    # --- Thunderbolt RDMA link (clustered mode, coordinator / rank 0) ---
-    # Disabled: conflicts with the deployed clusterLinkPrep converge daemon
-    # (hosts/common), which owns the TB link (bridge0 sweep + static IPv4) and
-    # is the mechanism the cluster rendezvous was proven on. Re-enable only
-    # when the zero-IP rework in modules/darwin/cluster-link.nix replaces
-    # clusterLinkPrep in the same change.
-    rdmaLink.enable = false;
-
     # --- Auto-login ---
     # The MLX stack and the gh-runner lifecycle are launchd USER agents — a
     # headless reboot serves nothing until a session exists. Auto-

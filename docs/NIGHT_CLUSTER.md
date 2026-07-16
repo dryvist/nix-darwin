@@ -6,16 +6,25 @@ can hold alone — and the rest of the fabric never notices the seam. Plugging
 in is the entire ceremony; unplugging in the morning reverses everything
 unattended.
 
+> **STATUS (2026-07-16): clustered mode is DISABLED on both hosts.** The
+> 2026-07-12 boot-time auto-bring-up wired a ~99 GB rank shard and starved
+> WindowServer into a watchdog kernel panic on both Macs. Re-enable
+> `programs.mlx.clusterMode.enable` only together with a wired-headroom
+> mitigation that provably leaves the GUI working set unwirable, and only in a
+> supervised session. RDMA itself is ready: `rdma_ctl` reports `enabled` on
+> both Macs (Recovery step completed 2026-07-16).
+
 Component map (all IaC):
 
 | Piece | Where |
 | --- | --- |
-| `programs.mlx.nightCluster` (ranks, link watcher, prefetch) | nix-ai `modules/mlx/night-cluster.nix` |
-| Host roles (coordinator = server, worker = workstation) | `lib/hosts/*.nix` |
-| Worker quiesce/restore (GUI quit + agent allowlist sweep) | `hosts/common/night-quiesce.nix` + `scripts/` |
-| Gated night endpoint (`:11440`, same bearer token) | `modules/darwin/llm-gate.nix` `nightUpstreamPort` |
+| `programs.mlx.clusterMode` (ranks, link watcher, prefetch, log rotation) | nix-ai `modules/mlx/cluster-mode.nix` + `cluster-mode-maintenance.nix` |
+| Host roles (coordinator = server, worker = workstation) | `lib/hosts/*.nix` (`clusterMode.role`) |
+| RDMA link prep (bridge0 detach + role IPv4 convergence, root) | `modules/darwin/cluster-link-prep.nix` (`system.clusterLinkPrep`) |
+| Worker quiesce/restore (GUI quit + agent allowlist sweep) | `hosts/common/cluster-quiesce.nix` + `scripts/cluster-{quiesce,restore}.sh` |
+| Gated cluster endpoint (`:11440`, same bearer token) | `modules/darwin/llm-gate.nix` `clusterUpstreamPort` / `clusterPort` |
 | Router: night brain in the large phase + solo fallback | ansible-proxmox-apps `roles/llm_router` (`ai_night_brain_enabled`) |
-| Log shipping (`in_night_logs`, `night-access.*`) | `hosts/common/cribl.nix` |
+| Log shipping (`in_cluster_logs`, gate `cluster-access.json`) | `hosts/common/cribl.nix` |
 
 Serving stack: first-party **mlx-lm** — `mlx_lm.server --pipeline` on both
 ranks (rank 0 binds the OpenAI-compatible endpoint; both ranks join every
@@ -26,49 +35,55 @@ SSH orchestration. `--pipeline` is required: the pinned mlx-lm ships
 `PipelineMixin` for `glm4_moe` but not tensor-parallel `shard()`; revisit TP
 on an mlx-lm bump.
 
+Link identity: the cabled Thunderbolt port is auto-detected at runtime, and
+the link uses **role-derived synthetic IPv4** addresses
+(`clusterMode.staticLinkIps`, converged onto the cabled port by the
+`cluster-link-converge` root daemon). IPv6 link-local was validated 2026-07-11
+and REJECTED — the pinned mlx-lm's JACCL rendezvous parser is IPv4-only.
+
 **Night model**: `GLM-4.7-4bit` (352.8B, 198 GB — `glm4_moe`). It is the only
 frontier-class (>128 GB) architecture with distributed support in the pinned
 mlx-lm. Qwen3-235B (`qwen3_moe`) and Qwen3.5-397B (`qwen3_5_moe`) have **no**
 shard/pipeline support upstream yet (ml-explore/mlx-lm#1138 stale since
 April 2026) — recheck before every bench night; either landing would make a
-strong head-to-head candidate.
+strong head-to-head candidate. `GLM-4.7-REAP-50-mxfp4` (98.2 GB, same
+`glm4_moe` arch, ~49 GB/rank) is the memory-safe candidate while the
+wired-headroom mitigation is unproven.
 
 ## One-time prep (BEFORE the first plug night — no cable needed)
 
-1. **Enable RDMA on BOTH Macs** (physical presence required): boot into macOS
-   Recovery → Utilities → Terminal → `rdma_ctl enable` → reboot. Verify from
-   normal boot: `ibv_devices` lists `rdma_enX` devices.
-2. **Confirm weights on both Macs**: the `dev.mlx-night.prefetch` agent
-   downloads the night model into `$HF_HOME` on each host (retry-until-
-   complete). `hf download mlx-community/GLM-4.7-4bit` resumes manually if
-   needed; mirroring the workstation's cache over the second TB cable beats
-   re-downloading 198 GB.
-3. **Dry-run the worker quiesce WITHOUT a cable**: run `night-quiesce`, then
+1. **Enable RDMA on BOTH Macs** — DONE 2026-07-16 (`rdma_ctl status` →
+   `enabled` on both). Procedure recorded in
+   [TB5-RDMA-CLUSTER.md](TB5-RDMA-CLUSTER.md).
+2. **Confirm weights on both Macs**: the `dev.mlx-cluster.prefetch` agent
+   downloads the cluster model into `$HF_HOME` on each host (retry-until-
+   complete). `hf download <model>` resumes manually if needed; mirroring the
+   workstation's cache over the second TB cable beats re-downloading 198 GB.
+3. **Dry-run the worker quiesce WITHOUT a cable**: run `cluster-quiesce`, then
    assert the agent table matches the allowlist
-   (`launchctl list | grep -v com.apple`), then `night-restore` and confirm
+   (`launchctl list | grep -v com.apple`), then `cluster-restore` and confirm
    the recorded agents return.
 4. **Check the fabric config is live**: rebuild both Macs; confirm
-   `launchctl print gui/$UID/dev.mlx-night.watcher` exists on both and the
+   `launchctl print gui/$UID/dev.mlx-cluster.watcher` exists on both and the
    rank agent is idle (link down → watcher no-ops).
 
 ## Plug night checklist (execution only — zero code)
 
-1. Assign the link IPs once (System Settings or `networksetup -setmanual` on
-   the Thunderbolt interface; the module defaults are
-   `programs.mlx.nightCluster.linkIps`). Make sure the RDMA interface is NOT
-   a member of the Thunderbolt bridge (remove it from bridge0 in System
-   Settings; RDMA requires the bridge disabled on that link).
+1. No manual IP step: the `cluster-link-converge` root daemon detaches every
+   RDMA-capable port from the Thunderbolt bridge and converges this host's
+   role link address onto the cabled port within one 30 s tick.
 2. Cable #1 in (the RDMA rail). Verify: `ibv_devices` shows the device on
-   both; note the real device name and correct
-   `programs.mlx.nightCluster.rdmaDevice` if it differs from `rdma_en2` —
-   the `MLX_IBV_DEVICES` matrix ships UNVALIDATED until this step. Optionally
-   run `mlx.distributed_config --over thunderbolt --backend jaccl --hosts …`
+   both; note the real device name and set
+   `programs.mlx.clusterMode.rdmaDevice` only if it differs from the
+   runtime-derived `rdma_<iface>` — the `MLX_IBV_DEVICES` matrix ships
+   UNVALIDATED until this step. Optionally run
+   `mlx.distributed_config --over thunderbolt --backend jaccl --hosts …`
    to cross-check the generated hostfile against the module's env contract.
 3. JACCL hello-world: `mlx.launch --backend jaccl --hostfile <generated> --
    python -c 'import mlx.core as mx; print(mx.distributed.init().rank())'`
    (or watch the two rank logs — the watcher will have started the ranks
    as soon as the peer ping succeeded).
-4. Watch the seam: `night-watcher.log` on both Macs shows
+4. Watch the seam: `cluster-watcher.log` on both Macs shows
    `down -> up` → day models unload (coordinator) / quiesce sweep (worker) →
    rank kickstart. First token can take minutes (198 GB load).
 5. Smoke the endpoint through the gate:
@@ -85,6 +100,13 @@ strong head-to-head candidate.
    watcher stops the rank and re-warms day serving. Surprise-yank and
    graceful shutdown converge on the same code path; there is no hardware or
    filesystem risk (each Mac's memory is its own).
+
+> **Reboot-with-cable-in caveat:** the watcher's link-state file survives a
+> reboot. A host that reboots with the cable still in comes up seeing
+> `up -> up`, so the down→up quiesce (day-model unload / worker sweep) is
+> skipped while the rank is kickstarted — day serving and the rank then
+> contend for wired memory. Until the watcher re-quiesces on kickstart, pull
+> the cable before any reboot.
 
 ## Morning
 
@@ -103,8 +125,8 @@ pair is expected to be "no"; test once and record the result here.
 
 ## Observability
 
-- `in_night_logs` ships rank/watcher/prefetch logs; the gate's
-  `night-access.json` rides the existing gate input (both → index=llm).
+- `in_cluster_logs` ships rank/watcher/prefetch logs; the gate's
+  `cluster-access.json` rides the existing gate input (both → index=llm).
 - Saved searches (ansible-splunk): night-rank crash/JACCL-error detector;
   "night mode active but no night-brain tokens in 30 min"; worker
   quiesce-violation (unexpected agent during the night window).

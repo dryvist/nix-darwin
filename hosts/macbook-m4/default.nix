@@ -110,13 +110,14 @@ in
       energyMode = "high";
       # pmset perf flags (lowPowerMode / powerNap / proximityWake off) and the
       # Metal debug-env guard use the module's safe-win defaults.
-      # 104000 (not the module's 118000 default): guarantee 24 GB of unwirable
-      # headroom. At 118000 only ~10 GB was guaranteed pageable and the desktop
-      # working set alone exceeds 25 GB, so any large resident MLX model pushed
-      # the host into compressor + swap saturation (nix-mac-performance RC14;
-      # 2026-06-10 snapshot: swap 94 % with a single healthy 53 GB worker).
-      # Still fits the largest model in use (~75 GB resident).
-      wiredLimitMb = 0; # OS default (~96 GB on 128 GB); leave headroom for the rest of the system
+      # 0 = OS default (~96 GB on 128 GB). The desktop working set alone
+      # exceeds 25 GB, so this workstation needs guaranteed unwirable headroom:
+      # a raised ceiling (118000, and later 104000) pushed the host into
+      # compressor + swap saturation under a large resident MLX model
+      # (nix-mac-performance RC14; 2026-06-10 snapshot: swap 94 % with a single
+      # healthy 53 GB worker). The OS default keeps ~32 GB unwirable and still
+      # fits the largest model in use (~75 GB resident).
+      wiredLimitMb = 0;
       # Set explicitly rather than relying on the module default: a list option
       # drops its default once any config value is set, so the generic excludes
       # must be a config def here for a private host layer to append to via merge.
@@ -135,13 +136,6 @@ in
     # measured bottleneck. Loopback inference does not need it.
     networkTuning.enable = false;
 
-    # --- Thunderbolt RDMA link (clustered mode, worker / rank 1) ---
-    # Disabled: conflicts with the deployed clusterLinkPrep converge daemon
-    # (hosts/common), which owns the TB link (bridge0 sweep + static IPv4) and
-    # is the mechanism the cluster rendezvous was proven on. Re-enable only
-    # when the zero-IP rework in modules/darwin/cluster-link.nix replaces
-    # clusterLinkPrep in the same change.
-    rdmaLink.enable = false;
 
     # --- Energy & Sleep Configuration ---
     energy = {

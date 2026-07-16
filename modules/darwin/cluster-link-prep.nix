@@ -5,8 +5,8 @@
 # form, including [::1]:port, fails with "Can't parse address"), so the link
 # uses role-derived synthetic IPv4 addresses. They are module-defined
 # defaults on a deliberately-non-LAN /24 — not site topology; the canonical
-# copy lives in nix-ai `programs.mlx.clusterMode.linkIps` and these defaults
-# must match it.
+# copy lives in nix-ai `programs.mlx.clusterMode.staticLinkIps` and these
+# defaults must match it.
 #
 # Two root-side pieces (user-space cannot do either):
 #   1. Activation sweep: every RDMA-capable port (ibv_devices: rdma_enX ->
