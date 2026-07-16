@@ -136,7 +136,6 @@ in
     # measured bottleneck. Loopback inference does not need it.
     networkTuning.enable = false;
 
-
     # --- Energy & Sleep Configuration ---
     energy = {
       enable = true;
