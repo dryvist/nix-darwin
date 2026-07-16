@@ -87,7 +87,7 @@ in
       # The JACCL rendezvous listener needs an explicit application-firewall
       # allowance (uv CPython is ad-hoc-signed) — see scripts/cluster-alf-allow.sh.
       + ''
-        CLUSTER_USER_HOME=${userConfig.user.homeDir} ${lib.getExe alfAllowPkg}
+        CLUSTER_USER_HOME="${userConfig.user.homeDir}" ${lib.getExe alfAllowPkg}
       ''
     );
   };
