@@ -61,20 +61,20 @@ die() { echo "$prefix ERROR $*" >&2; exit 1; }
 resolve_tier() {
   local mode="${1:-${GH_ENV_MODE:-}}"
   case "${mode}" in
-    ADMIN)                 purpose="personal-admin"  approle_prefix="GITHUB_ADMIN" ;;
-    ORG_ADMIN)             purpose="org-admin"       approle_prefix="GITHUB_ADMIN" ;;
-    SECRETS_MANAGER)       purpose="actions-secrets" approle_prefix="GITHUB_ADMIN" ;;
-    CLASSIC_ADMIN)         purpose="classic-admin"   approle_prefix="GITHUB_ADMIN" ;;
-    VISICORE)              purpose="visicore"        approle_prefix="GITHUB_ADMIN" ;;
-    *)                     purpose="repo-write"      approle_prefix="GITHUB_READ"  ;;
+    ADMIN|personal-admin)           purpose="personal-admin"  approle_prefix="GITHUB_ADMIN" ;;
+    ORG_ADMIN|org-admin)            purpose="org-admin"       approle_prefix="GITHUB_ADMIN" ;;
+    SECRETS_MANAGER|actions-secrets) purpose="actions-secrets" approle_prefix="GITHUB_ADMIN" ;;
+    CLASSIC_ADMIN|classic-admin)    purpose="classic-admin"   approle_prefix="GITHUB_ADMIN" ;;
+    VISICORE|visicore)              purpose="visicore"        approle_prefix="GITHUB_ADMIN" ;;
+    *)                              purpose="${mode:-repo-write}" approle_prefix="GITHUB_READ" ;;
   esac
 }
 
 # Print the GitHub token for the resolved purpose to stdout.
 fetch_token() {
   local explicit_purpose="${1:-}"
-  resolve_tier
-  [ -n "${explicit_purpose}" ] && purpose="${explicit_purpose}"
+  local purpose="" approle_prefix=""
+  resolve_tier "${explicit_purpose}"
 
   # Indirect-expand the AppRole secret-zero for the chosen tier, e.g.
   # OPENBAO_APPROLE_GITHUB_READ_ROLE_ID / _SECRET_ID.
