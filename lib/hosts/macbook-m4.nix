@@ -38,7 +38,7 @@
       # (clusterLinkPrep.clusterWiredLimitMb) exists.
       enable = false;
       role = "worker";
-      # Explicit night model, identical on both ranks — see the coordinator
+      # Explicit cluster model, identical on both ranks — see the coordinator
       # block (lib/hosts/mac-studio.nix) for the sizing rationale.
       model = "mlx-community/GLM-4.7-REAP-50-mxfp4";
     };

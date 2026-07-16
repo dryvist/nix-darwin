@@ -84,9 +84,9 @@
       # link-state wired ceiling (clusterLinkPrep.clusterWiredLimitMb) exists.
       enable = false;
       role = "coordinator";
-      # Explicit night model, identical on both ranks. The expert-pruned
+      # Explicit cluster model, identical on both ranks. The expert-pruned
       # REAP-50 build (~98 GB, glm4_moe) halves the per-rank shard to ~49 GB
-      # so it fits under the night wired ceiling with real KV headroom; the
+      # so it fits under the cluster wired ceiling with real KV headroom; the
       # full 198 GB GLM-4.7-4bit (module default) is reserved for supervised
       # sessions until the ceiling values are validated.
       model = "mlx-community/GLM-4.7-REAP-50-mxfp4";
