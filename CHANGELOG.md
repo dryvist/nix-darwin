@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.5.0](https://github.com/dryvist/nix-darwin/compare/v2.4.0...v2.5.0) (2026-07-16)
+
+
+### Features
+
+* **openbao:** GitHub token provider wrapper to retire GH_PAT keychain tiers ([#1699](https://github.com/dryvist/nix-darwin/issues/1699)) ([b41d54f](https://github.com/dryvist/nix-darwin/commit/b41d54f493e7a8687d0964e8f2e3c3f8f30eb27d))
+* **packages:** add entire CLI to core system packages ([#1710](https://github.com/dryvist/nix-darwin/issues/1710)) ([a32db0f](https://github.com/dryvist/nix-darwin/commit/a32db0fb1e75bc112954ee1562f690f095abfe3e))
+
+
+### Bug Fixes
+
+* **cluster-link:** allow uv CPython through the application firewall ([#1708](https://github.com/dryvist/nix-darwin/issues/1708)) ([ccde5ed](https://github.com/dryvist/nix-darwin/commit/ccde5ed6dc7b956b7df24828ed5155c70a0be547))
+* **deps:** refresh gh-aw action SHA pins [aw:gh-aw-pin-refresh] ([#1712](https://github.com/dryvist/nix-darwin/issues/1712)) ([98382dd](https://github.com/dryvist/nix-darwin/commit/98382dd356d13c6c1c3ba13e455f51c9fcb576d5))
+
 ## [2.4.0](https://github.com/dryvist/nix-darwin/compare/v2.3.0...v2.4.0) (2026-07-16)
 
 
