@@ -9,7 +9,7 @@ single-digit-µs latency).
 This file is the committed record of the physical/Recovery steps that code
 cannot apply. Everything software-side (link prep, wired-memory limits, the
 `clusterMode` serving stack) lives in nix-darwin/nix-ai modules, not here —
-see [NIGHT_CLUSTER.md](NIGHT_CLUSTER.md) for the component map.
+see [CLUSTER_MODE.md](CLUSTER_MODE.md) for the component map.
 
 ## One-time RDMA enable (per Mac, physical) — DONE 2026-07-16
 

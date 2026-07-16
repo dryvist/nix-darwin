@@ -1,10 +1,9 @@
-# Night Cluster — two-Mac Thunderbolt 5 distributed brain
+# Cluster mode — two-Mac Thunderbolt 5 distributed brain
 
-Every night, one Thunderbolt 5 cable turns the two M4 Max / 128 GB Macs into a
-single 256 GB inference cluster running a frontier-class model neither machine
-can hold alone — and the rest of the fabric never notices the seam. Plugging
-in is the entire ceremony; unplugging in the morning reverses everything
-unattended.
+One Thunderbolt 5 cable turns the two M4 Max / 128 GB Macs into a single
+256 GB inference cluster running a frontier-class model neither machine can
+hold alone — and the rest of the fabric never notices the seam. Plugging in
+is the entire ceremony; unplugging reverses everything unattended.
 
 > **STATUS (2026-07-16): clustered mode is DISABLED on both hosts.** The
 > 2026-07-12 boot-time auto-bring-up wired a ~99 GB rank shard and starved
@@ -23,7 +22,7 @@ Component map (all IaC):
 | RDMA link prep (bridge0 detach + role IPv4 convergence, root) | `modules/darwin/cluster-link-prep.nix` (`system.clusterLinkPrep`) |
 | Worker quiesce/restore (GUI quit + agent allowlist sweep) | `hosts/common/cluster-quiesce.nix` + `scripts/cluster-{quiesce,restore}.sh` |
 | Gated cluster endpoint (`:11440`, same bearer token) | `modules/darwin/llm-gate.nix` `clusterUpstreamPort` / `clusterPort` |
-| Router: night brain in the large phase + solo fallback | ansible-proxmox-apps `roles/llm_router` (`ai_night_brain_enabled`) |
+| Router: cluster brain in the large phase + solo fallback | ansible-proxmox-apps `roles/llm_router` (`ai_night_brain_enabled`) |
 | Log shipping (`in_cluster_logs`, gate `cluster-access.json`) | `hosts/common/cribl.nix` |
 
 Serving stack: first-party **mlx-lm** — `mlx_lm.server --pipeline` on both
@@ -41,16 +40,16 @@ the link uses **role-derived synthetic IPv4** addresses
 `cluster-link-converge` root daemon). IPv6 link-local was validated 2026-07-11
 and REJECTED — the pinned mlx-lm's JACCL rendezvous parser is IPv4-only.
 
-**Night model**: `GLM-4.7-4bit` (352.8B, 198 GB — `glm4_moe`). It is the only
-frontier-class (>128 GB) architecture with distributed support in the pinned
-mlx-lm. Qwen3-235B (`qwen3_moe`) and Qwen3.5-397B (`qwen3_5_moe`) have **no**
-shard/pipeline support upstream yet (ml-explore/mlx-lm#1138 stale since
-April 2026) — recheck before every bench night; either landing would make a
+**Cluster model**: `GLM-4.7-4bit` (352.8B, 198 GB — `glm4_moe`). It is the
+only frontier-class (>128 GB) architecture with distributed support in the
+pinned mlx-lm. Qwen3-235B (`qwen3_moe`) and Qwen3.5-397B (`qwen3_5_moe`) have
+**no** shard/pipeline support upstream yet (ml-explore/mlx-lm#1138 stale since
+April 2026) — recheck before every bench session; either landing would make a
 strong head-to-head candidate. `GLM-4.7-REAP-50-mxfp4` (98.2 GB, same
 `glm4_moe` arch, ~49 GB/rank) is the memory-safe candidate while the
 wired-headroom mitigation is unproven.
 
-## One-time prep (BEFORE the first plug night — no cable needed)
+## One-time prep (BEFORE the first plug session — no cable needed)
 
 1. **Enable RDMA on BOTH Macs** — DONE 2026-07-16 (`rdma_ctl status` →
    `enabled` on both). Procedure recorded in
@@ -67,7 +66,7 @@ wired-headroom mitigation is unproven.
    `launchctl print gui/$UID/dev.mlx-cluster.watcher` exists on both and the
    rank agent is idle (link down → watcher no-ops).
 
-## Plug night checklist (execution only — zero code)
+## Plug-session checklist (execution only — zero code)
 
 1. No manual IP step: the `cluster-link-converge` root daemon detaches every
    RDMA-capable port from the Thunderbolt bridge and converges this host's
@@ -90,16 +89,17 @@ wired-headroom mitigation is unproven.
    `curl -H "Authorization: Bearer $TOKEN" https://<serving-host>:11440/v1/models`.
 6. Flip the router: set `ai_night_brain_enabled: true` (+ `ai_night_model`,
    `ai_night_context_window`, and the `llm_night_api` port constant in the
-   tofu registry), converge the routers. Large phase now serves `ai-default`
-   on the night brain with the solo 80B as automatic fallback.
-7. Bench: two runs on the night model (verdict-maturity rule: results stay
-   PROVISIONAL until ≥4 runs / ≥5 days). Then let Hermes's overnight digest
+   tofu registry — variable names owned by the router/tofu repos), converge
+   the routers. Large phase now serves `ai-default` on the cluster brain with
+   the solo 80B as automatic fallback.
+7. Bench: two runs on the cluster model (verdict-maturity rule: results stay
+   PROVISIONAL until ≥4 runs / ≥5 days). Then let Hermes's scheduled digest
    run on it.
-8. **Unplug test before bed is optional but recommended**: yank the cable —
-   in-flight generations abort, LiteLLM falls back to the solo brain, the
-   watcher stops the rank and re-warms day serving. Surprise-yank and
-   graceful shutdown converge on the same code path; there is no hardware or
-   filesystem risk (each Mac's memory is its own).
+8. **Unplug test before ending the session is optional but recommended**:
+   yank the cable — in-flight generations abort, LiteLLM falls back to the
+   solo brain, the watcher stops the rank and re-warms day serving.
+   Surprise-yank and graceful shutdown converge on the same code path; there
+   is no hardware or filesystem risk (each Mac's memory is its own).
 
 > **Reboot-with-cable-in caveat:** the watcher's link-state file survives a
 > reboot. A host that reboots with the cable still in comes up seeing
@@ -108,7 +108,7 @@ wired-headroom mitigation is unproven.
 > contend for wired memory. Until the watcher re-quiesces on kickstart, pull
 > the cable before any reboot.
 
-## Morning
+## Unplug
 
 Pull the cable (glance that no generation is mid-stream if you care about
 it finishing). Everything reverses unattended: ranks exit, day workers
@@ -127,8 +127,8 @@ pair is expected to be "no"; test once and record the result here.
 
 - `in_cluster_logs` ships rank/watcher/prefetch logs; the gate's
   `cluster-access.json` rides the existing gate input (both → index=llm).
-- Saved searches (ansible-splunk): night-rank crash/JACCL-error detector;
-  "night mode active but no night-brain tokens in 30 min"; worker
-  quiesce-violation (unexpected agent during the night window).
+- Saved searches (ansible-splunk): cluster-rank crash/JACCL-error detector;
+  "cluster mode active but no cluster-brain tokens in 30 min"; worker
+  quiesce-violation (unexpected agent during a cluster window).
 - The memory-headroom alert and verdict-maturity benchmarking extend to the
-  night brain unchanged.
+  cluster brain unchanged.
