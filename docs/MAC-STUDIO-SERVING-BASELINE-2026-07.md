@@ -14,8 +14,8 @@ sudo password — this document does not attempt it; see "Parked steps" below):
 
 | PR | What it does | Committed | Live on host (verified via `ps` over SSH) |
 | --- | --- | --- | --- |
-| [#1537](https://github.com/dryvist/nix-darwin/pull/1537) | Adds `--reasoning-parser gpt_oss` to the gpt-oss-120b backend, fixing a harmony channel-marker leak into `message.content` in streaming mode | Yes | **No** — flag absent from the running process |
-| [#1539](https://github.com/dryvist/nix-darwin/pull/1539) | Raises `maxRequestTokens` to 32768 for the Qwen3-Coder-30B-A3B backend only (via `modelFlagOverrides`), matching hermes-agent's retry-boost ceiling | Yes | **No** — process still shows `--max-request-tokens 8192` |
+| [#1537](https://github.com/dryvist/nix-darwin/pull/1537) | `--reasoning-parser gpt_oss` on gpt-oss-120b | Yes | **No** — flag absent |
+| [#1539](https://github.com/dryvist/nix-darwin/pull/1539) | `maxRequestTokens` 32768 for Qwen3-Coder only | Yes | **No** — still 8192 |
 
 Companion PR [`ansible-proxmox-apps#658`](https://github.com/dryvist/ansible-proxmox-apps/pull/658)
 (hermes-agent `max_tokens` clamp fix + router repoint from the dead
@@ -28,7 +28,7 @@ Only two models are configured for jevans-ms — no others are in the registry:
 
 | Role | Model | Size | Tool parser | Notes |
 | --- | --- | --- | --- | --- |
-| `default` | `mlx-community/gpt-oss-120b-MXFP4-Q8` | 63.3 GB | `harmony` | Sliding+full softmax attention; `pagedKvCache`/`enablePrefixCaching` both off (incompatible with vllm-mlx 0.4.0's paged cache) |
+| `default` | `mlx-community/gpt-oss-120b-MXFP4-Q8` | 63.3 GB | `harmony` | Paged KV cache + prefix caching off (vllm-mlx 0.4.0 conflict) |
 | `coding` | `mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit` | 17.1 GB | `qwen3_coder` | Prefix caching + paged cache on |
 
 Shared sizing: `cacheMemoryMb=12288` per worker, `prefillBatchSize=4096`,
@@ -169,8 +169,8 @@ conflicting with this tuning work:
 | --- | --- |
 | `fix/gptoss-harmony-reasoning-leak` | Merged (#1537) — worktree + local branch removed |
 | `fix-mac-studio-qwen-coder-output-cap` | Merged (#1539) — worktree + local branch removed |
-| `feature/dynamic-local-ai-model` (nix-darwin) | Closed [#1542](https://github.com/dryvist/nix-darwin/pull/1542) — its `AI_MODEL_LOCAL` value (`Qwen3.6-35B-A3B-mxfp4`) references a model not served anywhere in the current registry; superseded |
-| `feat/macos-llm-perf-tunables` | Left open ([#1541](https://github.com/dryvist/nix-darwin/pull/1541)) — real, valuable macOS/launchd tuning work, but 2+ weeks stale; a naive rebase would delete `hosts/mac-studio/*` and `modules/darwin/llm-gate.nix`. Documented the risk on the PR; needs a dedicated rebase session |
+| `feature/dynamic-local-ai-model` (nix-darwin) | Closed [#1542](https://github.com/dryvist/nix-darwin/pull/1542) — model not in registry |
+| `feat/macos-llm-perf-tunables` | Open [#1541](https://github.com/dryvist/nix-darwin/pull/1541) — stale; naive rebase risk noted on PR |
 
 The companion cross-repo branch `feature/dynamic-local-ai-model` in
 `ai-assistant-instructions` ([#716](https://github.com/dryvist/ai-assistant-instructions/pull/716))
