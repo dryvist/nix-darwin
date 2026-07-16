@@ -41,6 +41,11 @@ them.
   - Merged tuning PRs and activation caveat
   - Memory budget and eval guard
 
+- **[MAC-STUDIO-SERVING-BASELINE-2026-07.md](MAC-STUDIO-SERVING-BASELINE-2026-07.md)** - jevans-ms LLM serving baseline snapshot (2026-07-06/07)
+  - Config-as-committed vs. config-as-deployed drift (merged PRs pending `darwin-rebuild switch`)
+  - Per-model benchmark table (cold-start, TTFT, decode/prefill tok/s, concurrency 2/4/8)
+  - Concurrency, cold-start/preload, and max-context findings with concrete recommendations
+
 ## Related Documentation
 
 Main repository documentation is in the root directory:

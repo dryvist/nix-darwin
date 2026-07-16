@@ -24,6 +24,7 @@
 
 let
   cfg = config.system.clusterLinkPrep;
+  userConfig = import ../../lib/user-config.nix;
   convergePkg = pkgs.writeShellApplication {
     name = "cluster-link-converge";
     runtimeInputs = [
@@ -31,6 +32,10 @@ let
       pkgs.gnugrep
     ];
     text = builtins.readFile ./scripts/cluster-link-converge.sh;
+  };
+  alfAllowPkg = pkgs.writeShellApplication {
+    name = "cluster-alf-allow";
+    text = builtins.readFile ./scripts/cluster-alf-allow.sh;
   };
 in
 {
@@ -79,6 +84,11 @@ in
     # intentionally non-fatal steps run without `set -e`).
     system.activationScripts.postActivation.text = lib.mkAfter (
       builtins.readFile ./scripts/cluster-link-prep.sh
+      # The JACCL rendezvous listener needs an explicit application-firewall
+      # allowance (uv CPython is ad-hoc-signed) — see scripts/cluster-alf-allow.sh.
+      + ''
+        CLUSTER_USER_HOME="${userConfig.user.homeDir}" ${lib.getExe alfAllowPkg}
+      ''
     );
   };
 }
