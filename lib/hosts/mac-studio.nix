@@ -80,9 +80,16 @@
     clusterMode = {
       # DISABLED 2026-07-12: boot-time auto-bring-up panicked both hosts
       # (WindowServer starvation under the shard's wired load). Re-enable
-      # together with the worker once the wired-headroom mitigation lands.
+      # together with the worker, in a supervised session, now that the
+      # link-state wired ceiling (clusterLinkPrep.clusterWiredLimitMb) exists.
       enable = false;
       role = "coordinator";
+      # Explicit night model, identical on both ranks. The expert-pruned
+      # REAP-50 build (~98 GB, glm4_moe) halves the per-rank shard to ~49 GB
+      # so it fits under the night wired ceiling with real KV headroom; the
+      # full 198 GB GLM-4.7-4bit (module default) is reserved for supervised
+      # sessions until the ceiling values are validated.
+      model = "mlx-community/GLM-4.7-REAP-50-mxfp4";
     };
   };
 

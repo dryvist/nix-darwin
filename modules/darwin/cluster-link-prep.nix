@@ -25,6 +25,10 @@
 let
   cfg = config.system.clusterLinkPrep;
   userConfig = import ../../lib/user-config.nix;
+  # Day-serving wired ceiling to restore on link-down: the appleSiliconTunables
+  # value when that module is enabled, else 0 (= macOS default ceiling).
+  tunables = config.system.appleSiliconTunables;
+  dayWiredLimitMb = if tunables.enable then tunables.wiredLimitMb else 0;
   convergePkg = pkgs.writeShellApplication {
     name = "cluster-link-converge";
     runtimeInputs = [
@@ -54,11 +58,27 @@ in
       type = lib.types.attrsOf lib.types.str;
       default = {
         # Synthetic point-to-point net for the Thunderbolt cable itself —
-        # must match the nix-ai clusterMode.linkIps defaults (canonical).
+        # must match the nix-ai clusterMode.staticLinkIps defaults (canonical).
         coordinator = "192.168.208.1";
         worker = "192.168.208.2";
       };
       description = "Link addresses of the two ends of the Thunderbolt cable.";
+    };
+
+    clusterWiredLimitMb = lib.mkOption {
+      type = lib.types.nullOr lib.types.int;
+      default = null;
+      example = 90000;
+      description = ''
+        iogpu.wired_limit_mb to hold while the RDMA link is active — sized for
+        this node's pipeline SHARD plus KV headroom, never the whole pooled
+        model, and low enough that the GUI working set stays unwirable (the
+        2026-07-12 panic was a ~99 GB shard wiring out WindowServer). The
+        converge daemon applies it on link-up and restores the day value
+        (appleSiliconTunables.wiredLimitMb, else the OS default) on link-down.
+        null = never touch the wired limit. Values are UNVALIDATED until the
+        first supervised plug night.
+      '';
     };
   };
 
@@ -69,7 +89,13 @@ in
         ProgramArguments = [ (lib.getExe convergePkg) ];
         RunAtLoad = true;
         StartInterval = 30;
-        EnvironmentVariables.CLUSTER_LINK_IP = cfg.linkIps.${cfg.role};
+        EnvironmentVariables = {
+          CLUSTER_LINK_IP = cfg.linkIps.${cfg.role};
+        }
+        // lib.optionalAttrs (cfg.clusterWiredLimitMb != null) {
+          CLUSTER_WIRED_LIMIT_MB = toString cfg.clusterWiredLimitMb;
+          DAY_WIRED_LIMIT_MB = toString dayWiredLimitMb;
+        };
         StandardOutPath = "/var/log/cluster-link-converge.log";
         StandardErrorPath = "/var/log/cluster-link-converge.error.log";
       };
