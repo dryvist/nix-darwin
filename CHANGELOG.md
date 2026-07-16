@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.4.0](https://github.com/dryvist/nix-darwin/compare/v2.3.0...v2.4.0) (2026-07-16)
+
+
+### Features
+
+* **llm-gate:** migrate the gate from Doppler to OpenBao (openbao-run) ([b4dfeea](https://github.com/dryvist/nix-darwin/commit/b4dfeea24d563b79b13b275fb11e2eae450c80d1))
+* **openbao:** add openbao-run, an AppRole env-injector (doppler run replacement) ([a90f9b3](https://github.com/dryvist/nix-darwin/commit/a90f9b380f3bd5c9313f295e3d526bfcd02cafef))
+* **openbao:** migrate the llm-large gate off Doppler onto OpenBao ([40552e6](https://github.com/dryvist/nix-darwin/commit/40552e67b1e4763fe93dde87bb697b71a5984902))
+
 ## [2.3.0](https://github.com/dryvist/nix-darwin/compare/v2.2.1...v2.3.0) (2026-07-15)
 
 
