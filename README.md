@@ -26,8 +26,8 @@ as flake inputs.
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/JacobPEvans/nix-darwin.git ${GIT_HOME_PUBLIC}/nix-darwin
-cd ${GIT_HOME_PUBLIC}/nix-darwin
+git clone https://github.com/JacobPEvans/nix-darwin.git $GIT_HOME_PUBLIC/nix-darwin
+cd $GIT_HOME_PUBLIC/nix-darwin
 
 # 2. Build and activate for the first time
 sudo darwin-rebuild switch --flake .
