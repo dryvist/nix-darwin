@@ -19,28 +19,39 @@ mkdir -p "$(dirname "$state_file")"
 
 # Idempotence guard: a second quiesce before the restore would truncate the
 # record while the agents are already booted out, losing the restore list.
-if [ -s "$state_file" ]; then
+# Create the state file atomically under `set -C` (noclobber) so two
+# near-simultaneous invocations cannot both pass a check-then-truncate race —
+# the create fails for whichever loses, and that one exits untouched.
+if ! (set -C; : > "$state_file") 2> /dev/null; then
   echo "cluster-quiesce: active quiesce state detected; already quiesced"
   exit 0
 fi
-: > "$state_file"
 
 # 1. Quit every visible GUI app, honoring save prompts. Terminals are
 #    excluded so a live cable test session cannot saw off its own branch.
-/usr/bin/osascript <<'EOF' || true
-tell application "System Events"
-    set appNames to name of every application process whose background only is false
-end tell
-repeat with appName in appNames
-    set appText to appName as text
-    if appText is not in {"Finder", "Ghostty", "Terminal", "iTerm2", "WezTerm", "Alacritty", "kitty"} then
-        try
-            with timeout of 15 seconds
-                tell application appText to quit
-            end timeout
-        end try
-    end if
-end repeat
+#    The keep list is fed in via CLUSTER_QUIESCE_TERMINALS (newline-separated,
+#    set by the module from programs.clusterQuiesce.terminalAllowlist) so a
+#    session in any other terminal can be protected without editing this file.
+default_terminals=$'Finder\nGhostty\nTerminal\niTerm2\nWezTerm\nAlacritty\nkitty'
+terminals="${CLUSTER_QUIESCE_TERMINALS:-$default_terminals}"
+/usr/bin/osascript - "$terminals" <<'EOF' || true
+on run argv
+    set AppleScript's text item delimiters to linefeed
+    set keepList to text items of (item 1 of argv)
+    tell application "System Events"
+        set appNames to name of every application process whose background only is false
+    end tell
+    repeat with appName in appNames
+        set appText to appName as text
+        if appText is not in keepList then
+            try
+                with timeout of 15 seconds
+                    tell application appText to quit
+                end timeout
+            end try
+        end if
+    end repeat
+end run
 EOF
 
 # 2. Boot out every user agent not on the KEEP allowlist, recording each
