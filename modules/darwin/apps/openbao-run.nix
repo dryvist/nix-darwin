@@ -5,9 +5,10 @@
 # same shape `doppler run -- <cmd>` provided. This removes the external Doppler
 # dependency from local serving components (starting with the llm-large gate).
 #
-# Secret-zero (BAO_ADDR + <DOMAIN>_VAULT_ROLE_ID/_SECRET_ID) is supplied
-# ambiently by the openbao keychain resolver; no fetched secret is written to
-# disk. `bao` (OpenBao CLI) comes from runtimeInputs.
+# Secret-zero (BAO_ADDR + <DOMAIN>_VAULT_ROLE_ID/_SECRET_ID) comes from the
+# ambient environment or a caller-supplied 0600 `--env-file` (unattended
+# agents); no keychain involvement, no fetched secret written to disk. `bao`
+# (OpenBao CLI) comes from runtimeInputs.
 {
   lib,
   config,

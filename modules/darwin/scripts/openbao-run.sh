@@ -4,13 +4,19 @@
 # Fetches named secrets from OpenBao via an AppRole login and execs a command
 # with them injected as environment variables - exactly what `doppler run` did,
 # with no external dependency. Secret-zero (the OpenBao address + a domain
-# AppRole's role_id/secret_id) is read from the AMBIENT ENVIRONMENT, published
-# per-domain by the openbao keychain resolver (launchctl setenv
-# <DOMAIN>_VAULT_ROLE_ID / _SECRET_ID). No fetched secret is ever written to
-# disk; the values live only in the environment of the exec'd child.
+# AppRole's role_id/secret_id) is read from the AMBIENT ENVIRONMENT first; for
+# unattended launchd agents with no ambient session, `--env-file` names a
+# 0600 user-owned file sourced before resolution. macOS keychains are NOT a
+# secret-zero path: only the login keychain auto-unlocks at login, and custom
+# keychains start locked in every new security session, so a keychain-backed
+# agent can never start unattended (the 2026-07 llm-gate outage; the old
+# `--keychain` flag was removed for exactly that reason). No fetched secret is
+# ever written to disk; the values live only in the environment of the exec'd
+# child.
 #
 # Usage:
 #   openbao-run --domain local-llm \
+#     [--env-file <0600-path>] \
 #     --secret ENV_NAME=<kv-path>#<field> [--secret ...] \
 #     -- <command> [args...]
 #
@@ -32,7 +38,7 @@ die() {
 }
 
 domain=""
-keychain=""
+env_file=""
 declare -a specs=()
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -40,8 +46,8 @@ while [ "$#" -gt 0 ]; do
       domain="${2:?--domain needs a value}"
       shift 2
       ;;
-    --keychain)
-      keychain="${2:?--keychain needs a path}"
+    --env-file)
+      env_file="${2:?--env-file needs a path}"
       shift 2
       ;;
     --secret)
@@ -52,7 +58,7 @@ while [ "$#" -gt 0 ]; do
       shift
       break
       ;;
-    *) die "unknown argument: $1 (expected --domain, --keychain, --secret, or --)" ;;
+    *) die "unknown argument: $1 (expected --domain, --env-file, --secret, or --)" ;;
   esac
 done
 
@@ -60,25 +66,33 @@ done
 [ "${#specs[@]}" -gt 0 ] || die "no --secret mappings given"
 [ "$#" -gt 0 ] || die "no command after -- to exec"
 
-# Secret-zero resolution: env first (for interactive/CI callers), then the
-# macOS keychain (for unattended launchd agents with no Doppler session). The
-# keychain is the doppler-free delivery: an auto-readable keychain unlocks at
-# login, so `security find-generic-password -s <name> -w <keychain>` returns
-# the value with no password prompt. `security` is hardcoded to its system path
-# (not a nixpkgs package).
+# Secret-zero env file: sourced before resolution so unattended launchd agents
+# get their bootstrap (BAO_ADDR + AppRole creds) with no keychain and no
+# ambient session. Must be user-owned 0600 — refuse anything looser, since the
+# file authenticates to OpenBao.
+if [ -n "$env_file" ]; then
+  [ -f "$env_file" ] || die "--env-file '$env_file' does not exist (seed it: BAO_ADDR + <DOMAIN>_VAULT_ROLE_ID/_SECRET_ID)"
+  perms="$(/usr/bin/stat -f '%Lp' "$env_file")"
+  [ "$perms" = "600" ] || die "--env-file '$env_file' must be mode 0600 (is $perms)"
+  set -a
+  # shellcheck source=/dev/null
+  . "$env_file"
+  set +a
+fi
+
+# Secret-zero resolution: the environment (ambient for interactive/CI callers,
+# or populated by the --env-file source above for unattended agents).
 resolve() {
-  local name="$1" val
-  val="$(printenv "$name" 2>/dev/null || true)"
-  if [ -z "$val" ] && [ -n "$keychain" ]; then
-    val="$(/usr/bin/security find-generic-password -s "$name" -w "$keychain" 2>/dev/null || true)"
-  fi
-  printf '%s' "$val"
+  printenv "$1" 2>/dev/null || true
 }
+
+src="environment"
+[ -n "$env_file" ] && src="environment or env file $env_file"
 
 # OpenBao address: honor either the OpenBao-native or the legacy Vault name.
 addr="$(resolve BAO_ADDR)"
 [ -n "$addr" ] || addr="$(resolve VAULT_ADDR)"
-[ -n "$addr" ] || die "BAO_ADDR not in environment or keychain '$keychain'"
+[ -n "$addr" ] || die "BAO_ADDR not in $src"
 
 # This domain's AppRole role_id/secret_id, named e.g. LLM_GATE_VAULT_ROLE_ID
 # (domain uppercased, - -> _).
@@ -86,8 +100,8 @@ env_prefix="${domain^^}"
 env_prefix="${env_prefix//-/_}"
 role_id="$(resolve "${env_prefix}_VAULT_ROLE_ID")"
 secret_id="$(resolve "${env_prefix}_VAULT_SECRET_ID")"
-[ -n "$role_id" ] || die "${env_prefix}_VAULT_ROLE_ID not in environment or keychain '$keychain'"
-[ -n "$secret_id" ] || die "${env_prefix}_VAULT_SECRET_ID not in environment or keychain '$keychain'"
+[ -n "$role_id" ] || die "${env_prefix}_VAULT_ROLE_ID not in $src"
+[ -n "$secret_id" ] || die "${env_prefix}_VAULT_SECRET_ID not in $src"
 
 export BAO_ADDR="$addr"
 
