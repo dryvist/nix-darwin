@@ -103,14 +103,27 @@ secret_id="$(resolve "${env_prefix}_VAULT_SECRET_ID")"
 [ -n "$role_id" ] || die "${env_prefix}_VAULT_ROLE_ID not in $src"
 [ -n "$secret_id" ] || die "${env_prefix}_VAULT_SECRET_ID not in $src"
 
-export BAO_ADDR="$addr"
+# ALL OpenBao HTTP goes through /usr/bin/curl — the APPLE PLATFORM binary,
+# hardcoded path, never a nixpkgs curl. macOS Local Network privacy silently
+# denies NON-platform binaries LAN access in GUI-session launchd contexts
+# ("connect: no route to host"), while platform binaries are exempt. Verified
+# live 2026-07-17 on macOS 26.5.2 from the same gui/501 one-shot: the
+# nix-store `bao` CLI got EHOSTUNREACH on the very login /usr/bin/curl
+# completed with HTTP 200 (ssh sessions are also exempt, which is why shell
+# tests never reproduced it). There is no supported CLI/MDM pre-approval for
+# Local Network TCC, so the fix is to keep the network path on the exempt
+# platform binary. jq (no network) parses the responses.
 
 # AppRole login -> a short-lived token, used only for the reads below. Never
-# persisted; scoped to this process.
-token="$(bao write -field=token auth/approle/login \
-  role_id="$role_id" secret_id="$secret_id")" \
+# persisted; scoped to this process. Credentials travel via a private
+# temporary payload on stdin (never argv).
+login_payload="$(jq -n --arg r "$role_id" --arg s "$secret_id" \
+  '{role_id: $r, secret_id: $s}')"
+token="$(printf '%s' "$login_payload" \
+  | /usr/bin/curl -sf -X POST -H 'Content-Type: application/json' \
+      --data-binary @- "$addr/v1/auth/approle/login" \
+  | jq -re '.auth.client_token')" \
   || die "AppRole login failed for domain '$domain' at $addr"
-export BAO_TOKEN="$token"
 
 # Fetch each mapping and export it. Format: ENV_NAME=<kv-path>#<field>.
 # KV v2 mount is `secret`; paths are given mount-relative (e.g. ai/llm).
@@ -121,13 +134,15 @@ for spec in "${specs[@]}"; do
   env_name="${BASH_REMATCH[1]}"
   kv_path="${BASH_REMATCH[2]}"
   field="${BASH_REMATCH[3]}"
-  value="$(bao kv get -mount=secret -field="$field" "$kv_path")" \
+  value="$(/usr/bin/curl -sf -H "X-Vault-Token: $token" \
+      "$addr/v1/secret/data/$kv_path" \
+    | jq -re --arg f "$field" '.data.data[$f]')" \
     || die "read failed: secret/$kv_path field '$field' (policy or path missing?)"
   export "$env_name=$value"
 done
 
-# Drop the login token from the child's environment - it only needed the
-# exported secret values, not OpenBao access.
-unset BAO_TOKEN
+# The login token dies with this shell; only the exported secret values reach
+# the exec'd child.
+unset token
 
 exec "$@"

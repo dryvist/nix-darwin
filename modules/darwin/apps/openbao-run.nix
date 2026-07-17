@@ -7,8 +7,11 @@
 #
 # Secret-zero (BAO_ADDR + <DOMAIN>_VAULT_ROLE_ID/_SECRET_ID) comes from the
 # ambient environment or a caller-supplied 0600 `--env-file` (unattended
-# agents); no keychain involvement, no fetched secret written to disk. `bao`
-# (OpenBao CLI) comes from runtimeInputs.
+# agents); no keychain involvement, no fetched secret written to disk. All
+# OpenBao HTTP rides /usr/bin/curl — the Apple PLATFORM binary, exempt from
+# macOS Local Network privacy, which silently EHOSTUNREACHes non-platform
+# binaries (e.g. a nix-store bao CLI) in GUI-session launchd contexts. jq
+# (no network) comes from runtimeInputs for response parsing.
 {
   lib,
   config,
@@ -22,7 +25,7 @@ let
   openbaoRunScript = pkgs.writeShellApplication {
     name = "openbao-run";
     runtimeInputs = [
-      pkgs.openbao
+      pkgs.jq
     ];
     text = builtins.readFile ./../scripts/openbao-run.sh;
   };
