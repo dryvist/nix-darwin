@@ -129,6 +129,13 @@ in
     clusterLinkPrep = {
       enable = true;
       role = if hostConfig.isServer then "coordinator" else "worker";
+      # Shard-sized cluster wired ceilings, applied around rank start/stop by
+      # the cluster watcher (day value restored at link-down). This is the
+      # wired-headroom mitigation the 2026-07-12 panic gated clusterMode
+      # re-enable on: the laptop keeps a larger unwirable share to protect
+      # its ~25 GB GUI working set. UNVALIDATED until the first supervised
+      # plug session.
+      clusterWiredLimitMb = if hostConfig.isServer then 90000 else 80000;
     };
     energy.wakeOnMagicPacket = lib.mkIf hostConfig.isServer (lib.mkDefault true); # Wake-on-LAN for a headless box
     networkTuning.enable = lib.mkIf hostConfig.isServer (lib.mkDefault true); # socket buffers for LAN serving

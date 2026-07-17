@@ -33,10 +33,14 @@
     clusterMode = {
       # DISABLED 2026-07-12: the boot-time watcher auto-started a rank whose
       # ~99 GB wired shard starved WindowServer into a watchdog kernel panic
-      # on both hosts. Re-enable only with a wired-headroom mitigation that
-      # provably leaves the GUI working set unwirable.
+      # on both hosts. Re-enable only together with the coordinator, in a
+      # supervised session, now that the link-state wired ceiling
+      # (clusterLinkPrep.clusterWiredLimitMb) exists.
       enable = false;
       role = "worker";
+      # Explicit cluster model, identical on both ranks — see the coordinator
+      # block (lib/hosts/mac-studio.nix) for the sizing rationale.
+      model = "mlx-community/GLM-4.7-REAP-50-mxfp4";
     };
   };
 

@@ -41,23 +41,24 @@ to be executed from Recovery OS", exit 77, even as root):
 The RDMA transport is point-to-point and is NOT IP-over-Thunderbolt-Bridge.
 macOS keeps re-enslaving Thunderbolt ports into the "Thunderbolt Bridge"
 network service (device bridge0), which breaks the exclusive L2 that Apple
-RDMA needs. The `system.clusterLinkPrep` module owns this: at activation it
-disables the bridge0 network service when an RDMA link is active, and its
-`cluster-link-converge` root daemon (30 s tick) detaches the cabled port from
-bridge0 and converges this host's role-derived link IPv4 onto it.
+RDMA needs. The `system.clusterLinkPrep` module owns this, statically, at
+activation: the Thunderbolt Bridge network service is disabled, and every
+physical Thunderbolt port's network service carries the SAME manual role
+IPv4 — only one port is ever cabled to the peer, inactive services install
+no routes, so whichever port the cable lands in has the address. No runtime
+daemon, no per-plug convergence.
 
 - The rendezvous address is **IPv4 only**: the pinned mlx-lm's JACCL parser
   rejects every IPv6 form, including `[::1]:port` (validated 2026-07-11). The
   link addresses are module-defined synthetic defaults
   (`programs.mlx.clusterMode.staticLinkIps`), not site topology.
-- Keep an IP path (Thunderbolt Bridge on another port, or the regular LAN)
-  only for out-of-band bootstrap/SSH between the nodes.
-- Never hardcode the interface name — the cabled port is auto-detected each
-  tick, so moving the cable to another port converges with no config change.
+- Use the regular LAN for out-of-band bootstrap/SSH between the nodes (the
+  Thunderbolt Bridge service is disabled on cluster hosts).
+- Never hardcode the interface name anywhere — every Thunderbolt port
+  carries the link address, so moving the cable needs no config change.
 - Assert the RDMA transport is actually active before benchmarking:
-  `ibv_devices` lists the RDMA device, and the rank log prints the resolved
-  `iface`/`dev`/coordinator line at startup. A working `ping` between the
-  nodes proves only the IP fallback path.
+  `ibv_devices` lists the RDMA device. A working `ping` between the nodes
+  proves only the IP path, not RDMA.
 
 ## Memory sizing (per node, not per model)
 

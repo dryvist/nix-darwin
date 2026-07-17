@@ -19,7 +19,7 @@ Component map (all IaC):
 | --- | --- |
 | `programs.mlx.clusterMode` (ranks, link watcher, prefetch, log rotation) | nix-ai `modules/mlx/cluster-mode.nix` + `cluster-mode-maintenance.nix` |
 | Host roles (coordinator = server, worker = workstation) | `lib/hosts/*.nix` (`clusterMode.role`) |
-| RDMA link prep (bridge0 detach + role IPv4 convergence, root) | `modules/darwin/cluster-link-prep.nix` (`system.clusterLinkPrep`) |
+| Static link config (bridge off, role IPv4) + wired-ceiling grants | `modules/darwin/cluster-link-prep.nix` (`system.clusterLinkPrep`) |
 | Worker quiesce/restore (GUI quit + agent allowlist sweep) | `hosts/common/cluster-quiesce.nix` + `scripts/cluster-{quiesce,restore}.sh` |
 | Gated cluster endpoint (`:11440`, same bearer token) | `modules/darwin/llm-gate.nix` `clusterUpstreamPort` / `clusterPort` |
 | Router: cluster brain in the large phase + solo fallback | ansible-proxmox-apps `roles/llm_router` (`ai_night_brain_enabled`) |
@@ -34,11 +34,13 @@ SSH orchestration. `--pipeline` is required: the pinned mlx-lm ships
 `PipelineMixin` for `glm4_moe` but not tensor-parallel `shard()`; revisit TP
 on an mlx-lm bump.
 
-Link identity: the cabled Thunderbolt port is auto-detected at runtime, and
-the link uses **role-derived synthetic IPv4** addresses
-(`clusterMode.staticLinkIps`, converged onto the cabled port by the
-`cluster-link-converge` root daemon). IPv6 link-local was validated 2026-07-11
-and REJECTED — the pinned mlx-lm's JACCL rendezvous parser is IPv4-only.
+Link identity: **role-derived synthetic IPv4** addresses
+(`clusterMode.staticLinkIps`), applied statically at activation — the
+Thunderbolt Bridge network service is disabled and every physical Thunderbolt
+port's service carries the same manual role address, so whichever port the
+cable lands in has the address with zero runtime logic. IPv6 link-local was
+validated 2026-07-11 and REJECTED — the pinned mlx-lm's JACCL rendezvous
+parser is IPv4-only.
 
 **Cluster model**: `GLM-4.7-4bit` (352.8B, 198 GB — `glm4_moe`). It is the
 only frontier-class (>128 GB) architecture with distributed support in the
@@ -68,14 +70,14 @@ wired-headroom mitigation is unproven.
 
 ## Plug-session checklist (execution only — zero code)
 
-1. No manual IP step: the `cluster-link-converge` root daemon detaches every
-   RDMA-capable port from the Thunderbolt bridge and converges this host's
-   role link address onto the cabled port within one 30 s tick.
+1. No manual IP step: activation already disabled the Thunderbolt Bridge
+   service and pinned this host's role link address on every Thunderbolt
+   port.
 2. Cable #1 in (the RDMA rail). Verify: `ibv_devices` shows the device on
-   both; note the real device name and set
-   `programs.mlx.clusterMode.rdmaDevice` only if it differs from the
-   runtime-derived `rdma_<iface>` — the `MLX_IBV_DEVICES` matrix ships
-   UNVALIDATED until this step. Optionally run
+   both; note the real device name and correct
+   `programs.mlx.clusterMode.rdmaDevice` per host if it differs from the
+   default (`rdma_en2`) — the `MLX_IBV_DEVICES` matrix ships UNVALIDATED
+   until this step. Optionally run
    `mlx.distributed_config --over thunderbolt --backend jaccl --hosts …`
    to cross-check the generated hostfile against the module's env contract.
 3. JACCL hello-world: `mlx.launch --backend jaccl --hostfile <generated> --
@@ -117,11 +119,13 @@ restart and re-warm, the worker's booted-out agents bootstrap back, the
 
 ## Second cable
 
-A 2-node JACCL cluster is fully connected with ONE cable. Cable #2 is the
-control/mirror rail (plain TB bridge IP link: HF-cache sync, health checks,
-monitoring) and the tested spare — the cable is the single physical failure
-point of the whole design. Whether JACCL uses a second link between the same
-pair is expected to be "no"; test once and record the result here.
+A 2-node JACCL cluster is fully connected with ONE cable. Cable #2 was
+envisioned as a control/mirror rail over the Thunderbolt Bridge — but the
+bridge service is now disabled on cluster hosts (RDMA needs exclusive L2),
+so a second rail needs its own addressing scheme; design it when the mirror
+need is real. The cable remains the single physical failure point; whether
+JACCL uses a second link between the same pair is expected to be "no" —
+test once and record the result here.
 
 ## Observability
 
