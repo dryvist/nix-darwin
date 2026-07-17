@@ -120,7 +120,7 @@ secret_id="$(resolve "${env_prefix}_VAULT_SECRET_ID")"
 login_payload="$(jq -n --arg r "$role_id" --arg s "$secret_id" \
   '{role_id: $r, secret_id: $s}')"
 token="$(printf '%s' "$login_payload" \
-  | /usr/bin/curl -sf -X POST -H 'Content-Type: application/json' \
+  | /usr/bin/curl -sf --max-time 30 -X POST -H 'Content-Type: application/json' \
       --data-binary @- "$addr/v1/auth/approle/login" \
   | jq -re '.auth.client_token')" \
   || die "AppRole login failed for domain '$domain' at $addr"
@@ -134,7 +134,7 @@ for spec in "${specs[@]}"; do
   env_name="${BASH_REMATCH[1]}"
   kv_path="${BASH_REMATCH[2]}"
   field="${BASH_REMATCH[3]}"
-  value="$(/usr/bin/curl -sf -H "X-Vault-Token: $token" \
+  value="$(/usr/bin/curl -sf --max-time 30 -H "X-Vault-Token: $token" \
       "$addr/v1/secret/data/$kv_path" \
     | jq -re --arg f "$field" '.data.data[$f]')" \
     || die "read failed: secret/$kv_path field '$field' (policy or path missing?)"
