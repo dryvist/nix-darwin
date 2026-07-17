@@ -77,3 +77,8 @@ leaves the GUI working set unwirable on each node.
 - [ ] JACCL smoke: `mlx.launch --backend jaccl` with a small model across
       both nodes completes
 - [ ] Big-model target answers a chat completion end-to-end from the MBP
+
+The full first-plug supervised run is tracked in
+[FIRST-PLUG-VALIDATION.md](FIRST-PLUG-VALIDATION.md), including
+whether the Recovery-mode `rdma_ctl enable` needed Reduced Security (record
+that observation in the one-time-enable section above).

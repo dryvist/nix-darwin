@@ -68,6 +68,11 @@ wired-headroom mitigation is unproven.
    `launchctl print gui/$UID/dev.mlx-cluster.watcher` exists on both and the
    rank agent is idle (link down → watcher no-ops).
 
+The first supervised session runs the
+[first-plug validation checklist](FIRST-PLUG-VALIDATION.md) and records each
+observed result there; `programs.mlx.clusterMode.enable` stays `false` until
+that list is green.
+
 ## Plug-session checklist (execution only — zero code)
 
 1. No manual IP step: activation already disabled the Thunderbolt Bridge
