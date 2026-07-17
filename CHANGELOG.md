@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.6.0](https://github.com/dryvist/nix-darwin/compare/v2.5.0...v2.6.0) (2026-07-17)
+
+
+### Features
+
+* **cluster:** link-state wired-limit profile + explicit REAP-50 cluster model ([#1719](https://github.com/dryvist/nix-darwin/issues/1719)) ([579e612](https://github.com/dryvist/nix-darwin/commit/579e612e7343077ec4efa72afaf0585fb7569d56))
+
+
+### Bug Fixes
+
+* **cluster:** guard alf-allow in postActivation so it cannot fail activation ([#1734](https://github.com/dryvist/nix-darwin/issues/1734)) ([a07cddf](https://github.com/dryvist/nix-darwin/commit/a07cddfe1e83eefd7fc36162b1834235d5e62c8c))
+* **cluster:** keep failed labels for retry on partial cluster-restore ([#1720](https://github.com/dryvist/nix-darwin/issues/1720)) ([8b87b51](https://github.com/dryvist/nix-darwin/commit/8b87b51b8fbeece7469c215e4bcce127a31dff09))
+* **mlx:** remove the wedge trigger and guarantee recovery on the Macs ([#1730](https://github.com/dryvist/nix-darwin/issues/1730)) ([3b0d5da](https://github.com/dryvist/nix-darwin/commit/3b0d5da09d6a8852d46e472c6c94db12d306fc1f))
+
 ## [2.5.0](https://github.com/dryvist/nix-darwin/compare/v2.4.0...v2.5.0) (2026-07-16)
 
 
