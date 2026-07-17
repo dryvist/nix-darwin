@@ -26,6 +26,13 @@
     cacheMemoryMb = 16384;
     prefillBatchSize = 2048;
 
+    # Same batch-uniformity guard as the serving host: a repetition penalty is
+    # a logits processor, and mlx_lm's batch generator dies on a batch mixing
+    # requests that carry one with requests that do not (nix-ai#1234). This dev
+    # sidecar sees ad-hoc callers with and without sampling params, which is the
+    # same mix — set it here too rather than wait to be surprised.
+    defaultRepetitionPenalty = 1.05;
+
     # Clustered mode: this Mac is rank 1 (worker) of the two-Mac JACCL cluster
     # when the Thunderbolt cable is in. The worker-side quiesce/restore hooks
     # (GUI quit + agent bootout allowlist sweep) are wired by
