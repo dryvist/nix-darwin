@@ -62,8 +62,8 @@ in
     # ========================================================================
     # Caddy terminates TLS on the LAN address and enforces the bearer token; the
     # model server stays on 127.0.0.1. Runs as a user LaunchAgent wrapped in
-    # `doppler run` — the bearer token, Route53 ACME creds, and region are pulled
-    # live from Doppler (never stored on this host or in sops; see llm-gate.nix).
+    # `openbao-run` — the bearer token, Route53 ACME creds, and region are pulled
+    # live from OpenBao (never stored on this host or in sops; see llm-gate.nix).
     # route53 mode issues a real Let's Encrypt cert via DNS-01, so the cert covers
     # both the host FQDN and the `llm-large` service alias below and SNI succeeds
     # for either name.
