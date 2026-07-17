@@ -107,7 +107,7 @@ in
       } ${lib.getExe prepPkg} || echo "cluster-link-prep: non-fatal failure (see log above)"
       # The JACCL rendezvous listener needs an explicit application-firewall
       # allowance (uv CPython is ad-hoc-signed) — see scripts/cluster-alf-allow.sh.
-      CLUSTER_USER_HOME="${userConfig.user.homeDir}" ${lib.getExe alfAllowPkg}
+      CLUSTER_USER_HOME="${userConfig.user.homeDir}" ${lib.getExe alfAllowPkg} || echo "cluster-alf-allow: non-fatal failure (see log above)"
     '';
   };
 }
