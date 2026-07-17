@@ -63,6 +63,16 @@
       concurrencyLimit = 8;
     };
     autoUnloadIdleSeconds = 0;
+
+    # Applied to EVERY request so batches stay uniform. A penalty becomes a
+    # logits processor, and mlx_lm's batch generator dies on a batch that mixes
+    # requests carrying one with requests that do not — the wedge behind
+    # nix-ai#1234 (26916 crashes in this host's log). Router-side injection on a
+    # single alias produced exactly that mix against penalty-free health probes.
+    # Value matches what the router injected for ai-default; the uniformity is
+    # the point, not the number. Router-side injection can now be dropped.
+    defaultRepetitionPenalty = 1.05;
+
     # Resident brains warmed at boot: coder (coding) + stock 35B (tool-calling,
     # the ai-default fleet brain). gpt-oss + OptiQ omitted — swap-class above.
     preload = [
