@@ -24,12 +24,11 @@
 # User agent, not root daemon: the gated port is non-privileged, and the gate's
 # OpenBao secret-zero (BAO_ADDR + the llm-gate AppRole role_id/secret_id) lives
 # in a user-owned 0600 env file (secretZeroEnvFile) that openbao-run sources at
-# each (re)start — so the agent comes up unattended on boot with no keychain
-# and no ambient session. macOS keychains are banned from this path: only the
-# login keychain auto-unlocks at login, and a custom keychain starts locked in
-# every new security session, which made the previous keychain-based design
-# unable to ever start unattended (2026-07 outage). The env file holds only a
-# pointer to OpenBao (the AppRole), never a copy of the secrets it fetches.
+# each (re)start — the agent comes up unattended with no keychain and no ambient
+# session. Keychains are banned here: only the login keychain auto-unlocks, and
+# a custom keychain starts locked in every new security session, so the old
+# keychain design could never start unattended (2026-07 outage). The env file
+# holds only a pointer to OpenBao (the AppRole), never fetched secrets.
 #
 # TLS modes:
 #   route53  — real Let's Encrypt cert via DNS-01 against the public zone,
