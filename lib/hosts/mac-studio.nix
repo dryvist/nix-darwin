@@ -63,6 +63,16 @@
       concurrencyLimit = 8;
     };
     autoUnloadIdleSeconds = 0;
+
+    # Applied to EVERY request so batches stay uniform. A penalty becomes a
+    # logits processor, and mlx_lm's batch generator dies on a batch that mixes
+    # requests carrying one with requests that do not — the wedge behind
+    # nix-ai#1234 (26916 crashes in this host's log). Router-side injection on a
+    # single alias produced exactly that mix against penalty-free health probes.
+    # Value matches what the router injected for ai-default; the uniformity is
+    # the point, not the number. Router-side injection can now be dropped.
+    defaultRepetitionPenalty = 1.05;
+
     # Resident brains warmed at boot: coder (coding) + stock 35B (tool-calling,
     # the ai-default fleet brain). gpt-oss + OptiQ omitted — swap-class above.
     preload = [
@@ -80,9 +90,16 @@
     clusterMode = {
       # DISABLED 2026-07-12: boot-time auto-bring-up panicked both hosts
       # (WindowServer starvation under the shard's wired load). Re-enable
-      # together with the worker once the wired-headroom mitigation lands.
+      # together with the worker, in a supervised session, now that the
+      # link-state wired ceiling (clusterLinkPrep.clusterWiredLimitMb) exists.
       enable = false;
       role = "coordinator";
+      # Explicit cluster model, identical on both ranks. The expert-pruned
+      # REAP-50 build (~98 GB, glm4_moe) halves the per-rank shard to ~49 GB
+      # so it fits under the cluster wired ceiling with real KV headroom; the
+      # full 198 GB GLM-4.7-4bit (module default) is reserved for supervised
+      # sessions until the ceiling values are validated.
+      model = "mlx-community/GLM-4.7-REAP-50-mxfp4";
     };
   };
 

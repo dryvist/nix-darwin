@@ -26,6 +26,13 @@
     cacheMemoryMb = 16384;
     prefillBatchSize = 2048;
 
+    # Same batch-uniformity guard as the serving host: a repetition penalty is
+    # a logits processor, and mlx_lm's batch generator dies on a batch mixing
+    # requests that carry one with requests that do not (nix-ai#1234). This dev
+    # sidecar sees ad-hoc callers with and without sampling params, which is the
+    # same mix — set it here too rather than wait to be surprised.
+    defaultRepetitionPenalty = 1.05;
+
     # Clustered mode: this Mac is rank 1 (worker) of the two-Mac JACCL cluster
     # when the Thunderbolt cable is in. The worker-side quiesce/restore hooks
     # (GUI quit + agent bootout allowlist sweep) are wired by
@@ -33,10 +40,14 @@
     clusterMode = {
       # DISABLED 2026-07-12: the boot-time watcher auto-started a rank whose
       # ~99 GB wired shard starved WindowServer into a watchdog kernel panic
-      # on both hosts. Re-enable only with a wired-headroom mitigation that
-      # provably leaves the GUI working set unwirable.
+      # on both hosts. Re-enable only together with the coordinator, in a
+      # supervised session, now that the link-state wired ceiling
+      # (clusterLinkPrep.clusterWiredLimitMb) exists.
       enable = false;
       role = "worker";
+      # Explicit cluster model, identical on both ranks — see the coordinator
+      # block (lib/hosts/mac-studio.nix) for the sizing rationale.
+      model = "mlx-community/GLM-4.7-REAP-50-mxfp4";
     };
   };
 

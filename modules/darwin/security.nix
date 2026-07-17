@@ -16,16 +16,12 @@ let
   # ==========================================================================
   # Cluster / RDMA launchd targets
   # ==========================================================================
-  # The two-Mac Thunderbolt-RDMA cluster (see cluster-link.nix, cluster-link-prep.nix)
-  # is driven by launchd services under these label prefixes. `gui/501` is
+  # The two-Mac Thunderbolt-RDMA cluster (see cluster-link-prep.nix) is
+  # driven by launchd user agents under these label prefixes. `gui/501` is
   # ${userConfig.user.name}'s login-session domain (uid 501, the sole macOS
   # account on both hosts — launchd's gui/<uid> syntax needs the literal
   # numeric uid; it cannot be derived at sudoers-match time).
   clusterLaunchdTargets = [
-    {
-      domain = "system";
-      labelGlob = "dev.cluster-link.*";
-    }
     {
       domain = "gui/501";
       labelGlob = "dev.mlx-cluster.*";
@@ -36,7 +32,7 @@ let
     }
   ];
 
-  # One NOPASSWD line per target/verb pair, all scoped to the three cluster
+  # One NOPASSWD line per target/verb pair, all scoped to the cluster
   # label prefixes above — never a bare `launchctl` grant. The `kill`/`kickstart`
   # wildcards only widen the *signal*/flag, not the target label, so they cannot
   # reach a service outside these prefixes.
@@ -98,11 +94,12 @@ in
   # prompt, so unattended cluster bring-up recovery does not stall mid-run.
   #
   # Security considerations:
-  # - launchctl access is scoped to the three cluster label prefixes above
-  #   (system/dev.cluster-link.*, gui/501/dev.mlx-cluster.*, gui/501/dev.vllm-mlx.*)
-  #   — never a blanket `launchctl` grant. `bootstrap` (the only plist-loading
-  #   verb) is granted ONLY against the root-owned /Library/LaunchDaemons path;
-  #   see the clusterLaunchdRules comment on why user-agent bootstrap is dropped.
+  # - launchctl access is scoped to the cluster label prefixes above
+  #   (gui/501/dev.mlx-cluster.*, gui/501/dev.vllm-mlx.*) — never a blanket
+  #   `launchctl` grant. `bootstrap` (the only plist-loading verb) is granted
+  #   ONLY for system-domain targets against the root-owned
+  #   /Library/LaunchDaemons path (none currently declared); see the
+  #   clusterLaunchdRules comment on why user-agent bootstrap is dropped.
   # - networksetup grant covers disabling/enabling the bridge0 network service —
   #   the root-cause fix for macOS re-enslaving the RDMA port into the
   #   Thunderbolt Bridge (mirrors the activation-script step so the operator can
@@ -114,9 +111,9 @@ in
   #   inspection is intentionally NOT granted. The `enX` grants are pinned to
   #   `en[0-9]*` with a fixed verb — no arbitrary trailing args — so they can
   #   neither reassign an address, change MTU, nor destroy an interface.
-  #   Trade-off: `en[0-9]*` still covers the built-in en0/en1 ports (the cabled
-  #   RDMA port is auto-detected at runtime — see cluster-link.nix — so its index
-  #   cannot be pinned in a static pattern), but up/down on those is recoverable
+  #   Trade-off: `en[0-9]*` still covers the built-in en0/en1 ports (which
+  #   Thunderbolt port carries the cable varies by plug, so its index cannot
+  #   be pinned in a static pattern), but up/down on those is recoverable
   #   and non-destructive. `bridge0 *` is scoped to the single bridge interface
   #   the cluster owns.
   # - reboot is granted (added 2026-07-12 with explicit user approval) so the
