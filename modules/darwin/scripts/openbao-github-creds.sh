@@ -120,10 +120,14 @@ mint_read() {
 
 # Build the raw-token request body for one repo. Kept separate so --self-check
 # can assert its shape without a live server.
+# STRING forms are load-bearing (verified live 2026-07-18): OpenBao's ACL
+# cannot element-match a LIST-valued parameter and only matches
+# installation_id as a string — the server-side allowlist denies the
+# number/list forms outright.
 write_token_body() {
   local iid="$1" repo="$2"
-  jq -cn --argjson iid "${iid}" --arg repo "${repo}" \
-    '{installation_id: $iid, repositories: [$repo]}'
+  jq -cn --arg iid "${iid}" --arg repo "${repo}" \
+    '{installation_id: $iid, repositories: $repo}'
 }
 
 mint_write() {
@@ -249,7 +253,7 @@ cmd_token_read() { mint_read "$1"; echo; }
 self_check() {
   local out
   out="$(write_token_body 147266792 nix-darwin)"
-  [ "${out}" = '{"installation_id":147266792,"repositories":["nix-darwin"]}' ] \
+  [ "${out}" = '{"installation_id":"147266792","repositories":"nix-darwin"}' ] \
     || { echo "self-check FAIL: write body = ${out}"; return 1; }
   owner=""; repo=""; split_repo "dryvist/nix-darwin"
   [ "${owner}" = "dryvist" ] && [ "${repo}" = "nix-darwin" ] \

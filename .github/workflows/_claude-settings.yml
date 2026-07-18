@@ -73,6 +73,37 @@ jobs:
           fi
           echo "Permission patterns are valid!"
 
+      # Semantic guard: every homelab.allowRules value declared in the consumer
+      # (lib/user-config.nix) must round-trip into the host's rendered
+      # autoMode.allow. If the nix-ai flake input is pinned to a rev that predates
+      # the homelab.allowRules wiring, the `... or [ ]` fallback silently drops the
+      # values and the classifier rules never take effect — a build that passes but
+      # renders nothing ("merged != live"). This asserts that cannot happen unnoticed.
+      # jevans-mbp is representative: the wiring is host-agnostic, so one homelab
+      # host with homelab.enable = true suffices to catch a stale/broken pin.
+      - name: Assert homelab allowRules render into autoMode.allow
+        run: |
+          declared="$(nix eval --impure --json \
+            --expr "(import $PWD/lib/user-config.nix).homelab.allowRules or []")"
+          rendered="$(nix eval --json \
+            '.#darwinConfigurations.jevans-mbp.config.home-manager.users.jevans.programs.claude.autoMode.allow')"
+          python3 - "$declared" "$rendered" <<'PY'
+          import json, sys
+          declared = json.loads(sys.argv[1])
+          rendered = set(json.loads(sys.argv[2]))
+          missing = [d for d in declared if d not in rendered]
+          if missing:
+              print("::error::homelab.allowRules declared in lib/user-config.nix but NOT "
+                    "rendered into autoMode.allow.")
+              print("::error::Most likely the nix-ai flake input predates the "
+                    "homelab.allowRules wiring - bump flake.lock (deps-update-flake.yml).")
+              for m in missing:
+                  print(f"::error:: unrendered rule: {m[:70]}...")
+              sys.exit(1)
+          print(f"OK: all {len(declared)} homelab.allowRules round-trip "
+                f"into autoMode.allow ({len(rendered)} rules total).")
+          PY
+
       - name: Validation Timing
         if: always()
         run: |
