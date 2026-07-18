@@ -29,6 +29,26 @@ if [ -n "$bridge_svc" ]; then
   fi
 fi
 
+# 1.5 Create a network service for every physical Thunderbolt port that has
+#     none. Fresh installs expose the ports only as (former) bridge members —
+#     with the Bridge disabled there is NO per-port service, the assignment
+#     loop below matches nothing, and the link silently never gets its
+#     address (observed 2026-07-18: both hosts, zero services, zero logs).
+while IFS= read -r hw_port; do
+  [ -n "$hw_port" ] || continue
+  if printf '%s\n' "$order" | /usr/bin/grep -q "Hardware Port: $hw_port,"; then
+    continue
+  fi
+  if /usr/sbin/networksetup -createnetworkservice "$hw_port" "$hw_port" >/dev/null 2>&1; then
+    echo "$prefix created network service for '$hw_port'"
+  else
+    echo "$prefix WARN failed to create network service for '$hw_port'" >&2
+  fi
+done < <(/usr/sbin/networksetup -listallhardwareports \
+  | /usr/bin/awk -F': ' '/^Hardware Port: Thunderbolt [0-9]/{print $2}')
+# Re-read the service order — the loop above may have added services.
+order="$(/usr/sbin/networksetup -listnetworkserviceorder)"
+
 # 2. Same manual IPv4 on every physical Thunderbolt service (skip when the
 #    address is already set, so a steady-state activation logs nothing).
 while IFS= read -r tb_svc; do
