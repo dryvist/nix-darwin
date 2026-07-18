@@ -182,7 +182,7 @@ is missing, along with a `nix-recover` helper function.
 After making these changes:
 
 ```bash
-cd ${GIT_HOME_PUBLIC}/nix-darwin
+cd $GIT_HOME_PUBLIC/nix-darwin
 git add modules/
 git commit -m "fix: multi-layered boot failure recovery"
 sudo darwin-rebuild switch --flake .

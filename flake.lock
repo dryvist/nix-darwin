@@ -3,11 +3,11 @@
     "ai-assistant-instructions": {
       "flake": false,
       "locked": {
-        "lastModified": 1784294047,
-        "narHash": "sha256-vdYHag76jHvmy2PK8qDu3SUqfNq9O/Fh1p3ABgtJgjg=",
+        "lastModified": 1784303928,
+        "narHash": "sha256-8bZrtorGCSdKQ6Iv5NwjEyj21N5km0gsstx//uTsgWk=",
         "owner": "dryvist",
         "repo": "ai-assistant-instructions",
-        "rev": "1d64277336ea4dbe302483953ba0ce60ab39ba66",
+        "rev": "610c427724bac5ea2d53fed2737025e1edd03b79",
         "type": "github"
       },
       "original": {
@@ -916,11 +916,11 @@
         "ponytail": "ponytail"
       },
       "locked": {
-        "lastModified": 1784250875,
-        "narHash": "sha256-zK6bkqf39kmN8JTGPby2I/EDFQ+em4KXQTBjEo34jfM=",
+        "lastModified": 1784339774,
+        "narHash": "sha256-lVX0Xs0Bqyp7ccPlA/rRcCqeIMum3+sVb9A7sjuooOk=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "fb2afdb5c054d3cb45e4234fdff35411fc7f25ff",
+        "rev": "e9e0569dd49aea8c253956ff9383af601c51eb88",
         "type": "github"
       },
       "original": {

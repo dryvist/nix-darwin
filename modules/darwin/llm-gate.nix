@@ -23,10 +23,12 @@
 #
 # User agent, not root daemon: the gated port is non-privileged, and the gate's
 # OpenBao secret-zero (BAO_ADDR + the llm-gate AppRole role_id/secret_id) lives
-# in an auto-readable login keychain (secretZeroKeychain), which unlocks at
-# login so the agent comes up unattended on boot. The keychain holds only a
-# pointer to OpenBao (the AppRole), never a copy of the secrets it fetches;
-# activation scripts (root, no keychain access) never touch it.
+# in a user-owned 0600 env file (secretZeroEnvFile) that openbao-run sources at
+# each (re)start — the agent comes up unattended with no keychain and no ambient
+# session. Keychains are banned here: only the login keychain auto-unlocks, and
+# a custom keychain starts locked in every new security session, so the old
+# keychain design could never start unattended (2026-07 outage). The env file
+# holds only a pointer to OpenBao (the AppRole), never fetched secrets.
 #
 # TLS modes:
 #   route53  — real Let's Encrypt cert via DNS-01 against the public zone,
@@ -192,19 +194,21 @@ in
     user = lib.mkOption {
       type = lib.types.str;
       default = userConfig.user.name;
-      description = "Login user that owns the agent, the data dir, and the secret-zero keychain (keychain auth is per-user; the gate runs as a user LaunchAgent).";
+      description = "Login user that owns the agent, the data dir, and the secret-zero env file (the gate runs as a user LaunchAgent).";
     };
 
-    secretZeroKeychain = lib.mkOption {
+    secretZeroEnvFile = lib.mkOption {
       type = lib.types.str;
-      default = "${userConfig.user.homeDir}/Library/Keychains/automation.keychain-db";
+      default = "${userConfig.user.homeDir}/.local/share/llm-gate/bootstrap.env";
       description = ''
-        Auto-readable keychain holding the gate's OpenBao secret-zero:
+        User-owned 0600 or 0400 env file holding the gate's OpenBao secret-zero:
         BAO_ADDR and the llm-gate AppRole's LLM_GATE_VAULT_ROLE_ID /
-        LLM_GATE_VAULT_SECRET_ID. openbao-run reads these unattended at each
-        (re)start (env first, then this keychain) and logs in to fetch the
-        gate's secrets — no Doppler session, no password prompt (the keychain
-        unlocks at login). Replaces the per-user ~/.doppler service token.
+        LLM_GATE_VAULT_SECRET_ID. openbao-run sources it unattended at each
+        (re)start and logs in to fetch the gate's secrets — no Doppler
+        session, no keychain (keychains cannot auto-unlock unattended; see
+        header). Seeded out-of-band over ssh; openbao-run refuses the file
+        unless its mode is 0600 or 0400. Rotation = rewrite the file, restart
+        the agent.
       '';
     };
 
@@ -245,8 +249,8 @@ in
         (lib.getExe config.programs.openbao-run.package)
         "--domain"
         "llm-gate"
-        "--keychain"
-        cfg.secretZeroKeychain
+        "--env-file"
+        cfg.secretZeroEnvFile
       ]
       ++ lib.optionals (cfg.tlsMode == "route53") [
         "--secret"
@@ -272,8 +276,8 @@ in
       WorkingDirectory = cfg.dataDir;
       EnvironmentVariables = {
         # Caddy's storage is pinned under the gate dir via XDG below. HOME is
-        # kept for tools that expect it; openbao-run reads its secret-zero
-        # keychain by absolute path, so it needs no ~/.doppler session.
+        # kept for tools that expect it; openbao-run sources its secret-zero
+        # env file by absolute path, so it needs no ~/.doppler session.
         HOME = userConfig.user.homeDir;
         XDG_DATA_HOME = "${cfg.dataDir}/data";
         XDG_CONFIG_HOME = "${cfg.dataDir}/config";
