@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.7.0](https://github.com/dryvist/nix-darwin/compare/v2.6.0...v2.7.0) (2026-07-18)
+
+
+### Features
+
+* **openbao-github-creds:** rewrite for per-repo write minting + lease ([622610a](https://github.com/dryvist/nix-darwin/commit/622610a9d0353f0d71be6e8b7dc3815db4169ae9))
+
 ## [2.6.0](https://github.com/dryvist/nix-darwin/compare/v2.5.0...v2.6.0) (2026-07-17)
 
 
