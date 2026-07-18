@@ -29,6 +29,15 @@ jobs:
         with:
           fetch-depth: 0 # Full history for diff analysis
 
+      - name: Checkout prompt catalog
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          repository: dryvist/ai-llm-prompts
+          ref: 0431be6994d51169b9f705ddeba958eb8a4d0fc4
+          path: .prompt-catalog
+          sparse-checkout: developer-tools/nix-darwin-flake-review.md
+          sparse-checkout-cone-mode: false
+
       - name: Install Nix
         uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
 
@@ -37,10 +46,23 @@ jobs:
         run: |
           # Get the diff between base and head using PR base sha for reliability
           DIFF=$(git diff ${{ github.event.pull_request.base.sha }}...HEAD -- flake.lock)
+          printf '%s\n' "$DIFF" > "$RUNNER_TEMP/flake-lock.diff"
           # Save diff to output (escape for multiline)
           echo "content<<EOF" >> $GITHUB_OUTPUT
           echo "$DIFF" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Render review prompt
+        id: prompt
+        run: |
+          awk 'BEGIN { markers = 0 } /^---$/ { markers++; next } markers >= 2 { print }' \
+            .prompt-catalog/developer-tools/nix-darwin-flake-review.md \
+            | DIFF_FILE="$RUNNER_TEMP/flake-lock.diff" awk \
+              '/steps\.diff\.outputs\.content/ { while ((getline line < ENVIRON["DIFF_FILE"]) > 0) print line; next } { print }' \
+              > "$RUNNER_TEMP/review-prompt.md"
+          echo 'content<<EOF' >> "$GITHUB_OUTPUT"
+          cat "$RUNNER_TEMP/review-prompt.md" >> "$GITHUB_OUTPUT"
+          echo 'EOF' >> "$GITHUB_OUTPUT"
 
       - name: Run Claude Code Review
         id: claude-review
@@ -54,45 +76,7 @@ jobs:
             --max-turns 5
 
           prompt: |
-            You are reviewing a flake.lock update PR for a nix-darwin configuration.
-
-            ## Diff Content
-            ```diff
-            ${{ steps.diff.outputs.content }}
-            ```
-
-            ## Your Task
-            1. Analyze the diff above to identify what changed
-            2. For each changed input, assess the risk level
-            3. Provide a clear recommendation
-
-            ## Risk Levels
-            - **LOW**: Routine updates - nixpkgs bumps, patch updates, documentation repos, non-code flake inputs
-            - **MEDIUM**: Minor version changes, new features added, repos with breaking change potential
-            - **HIGH**: Major version changes, security-related updates, changes to core infrastructure (darwin, home-manager)
-
-            ## Important Context
-            - This is a personal nix-darwin config, not production infrastructure
-            - The CI already validates the flake builds successfully
-            - Fast-moving inputs like nixpkgs and claude-code-plugins update frequently
-
-            ## Your Response Format
-            Structure your review as:
-
-            ### Changed Inputs
-            List each changed input with old rev (first 7 chars) → new rev (first 7 chars)
-
-            ### Risk Assessment
-            For each input, state the risk level and brief reason
-
-            ### Recommendation
-            State ONE of these exactly at the end of your review:
-
-            If ALL changes are LOW risk:
-            `DECISION: AUTO-MERGE`
-
-            If ANY change is MEDIUM or HIGH risk:
-            `DECISION: HOLD - [brief reason]`
+            ${{ steps.prompt.outputs.content }}
 
       - name: Check review decision
         id: check-decision
