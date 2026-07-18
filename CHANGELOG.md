@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.8.0](https://github.com/dryvist/nix-darwin/compare/v2.7.1...v2.8.0) (2026-07-18)
+
+
+### Features
+
+* add Codex desktop app cask ([316ea6e](https://github.com/dryvist/nix-darwin/commit/316ea6e39c5c001b7e417c5032abb4c7e94df686))
+* add Codex desktop app cask ([#1759](https://github.com/dryvist/nix-darwin/issues/1759)) ([c8a6b69](https://github.com/dryvist/nix-darwin/commit/c8a6b6914373a2fcb40169068097ce4d6d143896))
+
+
+### Bug Fixes
+
+* **openbao-github-creds:** send string-form mint params — server ACL cannot match lists ([#1760](https://github.com/dryvist/nix-darwin/issues/1760)) ([7198a89](https://github.com/dryvist/nix-darwin/commit/7198a89af57e1a5d5ccfc96ab2f995843dd04516))
+
 ## [2.7.1](https://github.com/dryvist/nix-darwin/compare/v2.7.0...v2.7.1) (2026-07-18)
 
 
