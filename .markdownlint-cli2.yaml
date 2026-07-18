@@ -21,7 +21,6 @@ config:
 
 ignores:
   - "CHANGELOG.md"
-  - ".github/aw/**"
   - "worktrees/**"
   - ".claude/**"
   - ".gemini/**"
