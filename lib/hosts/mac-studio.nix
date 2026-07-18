@@ -17,16 +17,18 @@
   # two warm brains via roleModelOverrides (2026-07-08 agentic tool-calling
   # bench; verdicts + capacity in HF JacobPEvans/mlx-benchmarks + apps
   # docs/BRAIN_ROTATION.md):
-  #   tool-calling — stock Qwen3.6-35B-A3B-4bit: the live ai-default fleet
-  #     brain (nix-ai#915) and the brain Hermes routes to. Replaces the
-  #     OptiQ-4bit twin, whose vllm-mlx VLM-misdetect crashes it; revert to
-  #     OptiQ once that engine bug is fixed.
+  #   tool-calling — Qwen3-Next-80B-A3B-Instruct-4bit: the fleet brain Hermes
+  #     routes to (2026-07-17 agentic-bench winner; >=75B fleet-brain
+  #     mandate). Replaces the stock 35B stand-in from the nix-ai#915 era.
   #   coding — Qwen3-Coder-30B-A3B 4-bit.
   # gpt-oss-120b (63.3 GB) stays in the catalog as swap-class (on-demand,
   # idle-unload, never preloaded); reach it by physical id or add a role
   # override if a role should target it.
   roleModelOverrides = {
-    tool-calling = "mlx-community/Qwen3.6-35B-A3B-4bit";
+    # 2026-07-17 agentic-bench winner (1.0 valid_tool_call_rate, every
+    # single-stream cell) and the >=75B fleet-brain mandate. Replaces the
+    # stock 35B stand-in.
+    tool-calling = "mlx-community/Qwen3-Next-80B-A3B-Instruct-4bit";
     coding = "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit";
   };
 
@@ -36,16 +38,17 @@
     # (gpuMemoryUtilization 0.80 on 128 GB); an on-demand gpt-oss swap-in
     # transiently exceeds the trip — pre-existing; it idle-unloads.
     catalog = {
-      # Stock 35B is the resident fleet brain (ai-default, nix-ai#915). OptiQ
-      # is demoted to swap: its vllm-mlx VLM-misdetect crashes it, so it must
-      # not be a preloaded resident. Same ~19.4 GB weights either way, so the
-      # resident footprint is unchanged.
-      qwen36-35b.class = "resident";
+      # Qwen3-Next-80B Instruct is the resident fleet brain (2026-07-17
+      # agentic bench; >=75B mandate) and doubles as the >=64K compression
+      # model. Residents = 80B (42 GB) + coder-30B (17.1 GB) ≈ 59 GB weights
+      # + 16 GB brain KV — under the ~102 GB trip with margin, but no room
+      # for a third resident: stock 35B and OptiQ both drop to swap.
+      qwen3-next-80b-instruct.class = "resident";
       qwen3-coder-30b.class = "resident";
+      qwen36-35b.class = "swap";
       qwen36-optiq.class = "swap";
       gpt-oss-120b.class = "swap";
-      # LARGE daily-rotation brain (apps ai_default_model_large;
-      # docs/BRAIN_ROTATION.md).
+      # Thinking sibling: the deep-analysis escalation tier, on demand.
       qwen3-next-80b.class = "swap";
     };
 
@@ -73,8 +76,8 @@
     # the point, not the number. Router-side injection can now be dropped.
     defaultRepetitionPenalty = 1.05;
 
-    # Resident brains warmed at boot: coder (coding) + stock 35B (tool-calling,
-    # the ai-default fleet brain). gpt-oss + OptiQ omitted — swap-class above.
+    # Resident brains warmed at boot: coder (coding) + the 80B Instruct
+    # fleet brain (tool-calling). Everything else is swap-class above.
     preload = [
       "coding"
       "tool-calling"
