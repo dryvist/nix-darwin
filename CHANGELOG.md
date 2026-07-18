@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.7.1](https://github.com/dryvist/nix-darwin/compare/v2.7.0...v2.7.1) (2026-07-18)
+
+
+### Bug Fixes
+
+* **security:** unset AppRole bootstrap creds before exec + un-silence diagnostics ([#1754](https://github.com/dryvist/nix-darwin/issues/1754)) ([43a2111](https://github.com/dryvist/nix-darwin/commit/43a2111abb86b9342bd0c2e1d550fbfd91fd23a8))
+
 ## [2.7.0](https://github.com/dryvist/nix-darwin/compare/v2.6.0...v2.7.0) (2026-07-18)
 
 
