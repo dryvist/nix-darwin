@@ -88,11 +88,12 @@
     # link watcher quiesces normal serving at link-up and re-warms the preload
     # list on unplug.
     clusterMode = {
-      # DISABLED 2026-07-12: boot-time auto-bring-up panicked both hosts
-      # (WindowServer starvation under the shard's wired load). Re-enable
-      # together with the worker, in a supervised session, now that the
-      # link-state wired ceiling (clusterLinkPrep.clusterWiredLimitMb) exists.
-      enable = false;
+      # RE-ENABLED 2026-07-18 in the supervised session the 2026-07-12
+      # disable note called for (boot-time auto-bring-up had panicked both
+      # hosts via WindowServer starvation; the link-state wired ceiling —
+      # clusterLinkPrep.clusterWiredLimitMb — now bounds the shard's wired
+      # load). Enabled together with the worker (lib/hosts/macbook-m4.nix).
+      enable = true;
       role = "coordinator";
       # Explicit cluster model, identical on both ranks. The expert-pruned
       # REAP-50 build (~98 GB, glm4_moe) halves the per-rank shard to ~49 GB

@@ -38,12 +38,13 @@
     # (GUI quit + agent bootout allowlist sweep) are wired by
     # hosts/common/cluster-quiesce.nix. Day config above is untouched.
     clusterMode = {
-      # DISABLED 2026-07-12: the boot-time watcher auto-started a rank whose
-      # ~99 GB wired shard starved WindowServer into a watchdog kernel panic
-      # on both hosts. Re-enable only together with the coordinator, in a
-      # supervised session, now that the link-state wired ceiling
-      # (clusterLinkPrep.clusterWiredLimitMb) exists.
-      enable = false;
+      # RE-ENABLED 2026-07-18 in the supervised session the 2026-07-12
+      # disable note called for (the boot-time watcher had auto-started a
+      # rank whose ~99 GB wired shard starved WindowServer into a watchdog
+      # kernel panic on both hosts; clusterLinkPrep.clusterWiredLimitMb now
+      # bounds the wired load, and the REAP-50 build halves the shard).
+      # Enabled together with the coordinator (lib/hosts/mac-studio.nix).
+      enable = true;
       role = "worker";
       # Explicit cluster model, identical on both ranks — see the coordinator
       # block (lib/hosts/mac-studio.nix) for the sizing rationale.
