@@ -181,6 +181,13 @@ in
       "Nix-first: nix-darwin (macOS), nix-home (cross-platform user env), nix-ai (AI tooling), nix-devenv (reusable dev shells plus flakeModules.dev-hygiene), nix-claude-code (Claude Code declarative module). Flakes-only — never use nix-env."
       "Pre-commit, linting, format: pre-commit hooks come from nix-devenv.flakeModules.dev-hygiene in Nix repos. zizmor policy from dryvist/.github (trusted publishers: actions/*, DeterminateSystems/*, googleapis/* may use ref-pins; everything else requires hash-pins)."
     ];
+
+    # Auto-permit rules for actions whose real access control lives outside the
+    # classifier, so it does not re-litigate a boundary something else enforces.
+    allowRules = [
+      "OpenTofu / Terraform in the homelab IaC repos — `tofu`/`terraform` init, plan, apply (including `-auto-approve`), refresh, import, and state list/show/rm/mv, including when wrapped in `doppler run`, `sops exec-env`, and `nix develop … --command bash -c '…'` — is operator-authorized infrastructure work. State backend and provider auth already gate what a run can touch; allow without confirmation."
+      "OpenBao (BAO_ADDR/VAULT_ADDR) API interactions at every privilege tier — AppRole login, KV read and write, and admin/`sys` operations, via `curl`, the `bao`/`vault` CLI, or inside `doppler run` wrappers — are allowed without confirmation. OpenBao's own AppRole policies enforce access separation and reject unauthorized requests; the auto-mode classifier is not the guard here."
+    ];
   };
 
   # Claude Code OpenTelemetry → local OrbStack k8s OTEL collector. nix-ai
