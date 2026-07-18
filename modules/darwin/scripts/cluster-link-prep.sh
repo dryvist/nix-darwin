@@ -57,15 +57,37 @@ done < <(/usr/sbin/networksetup -listallhardwareports \
 #    every boot + rebuild (root postActivation), which is the module's
 #    existing contract. Only one port is ever cabled; un-cabled ports have no
 #    carrier, so the shared address is inert on them.
+#    ONLY the carrier-active device gets the address: with the same subnet
+#    aliased on several up interfaces the kernel binds the /24 route to the
+#    FIRST one, which silently blackholes traffic when the cable sits on a
+#    different port (verified 2026-07-18: worker route pinned to en1 while
+#    the cable was on en2). Stripping the alias elsewhere keeps the route on
+#    the cabled port; a cable move heals on the next boot/rebuild (this prep
+#    reruns then).
 while IFS= read -r tb_dev; do
   [ -n "$tb_dev" ] || continue
-  if /sbin/ifconfig "$tb_dev" 2>/dev/null | /usr/bin/grep -q "inet $CLUSTER_LINK_IP "; then
-    continue
-  fi
-  if /sbin/ifconfig "$tb_dev" inet "$CLUSTER_LINK_IP" netmask 255.255.255.0 alias 2>/dev/null; then
-    echo "$prefix set $CLUSTER_LINK_IP on $tb_dev"
-  else
-    echo "$prefix WARN failed to set $CLUSTER_LINK_IP on $tb_dev" >&2
+  dev_state="$(/sbin/ifconfig "$tb_dev" 2>/dev/null)"
+  has_ip=false
+  case "$dev_state" in *"inet $CLUSTER_LINK_IP "*) has_ip=true ;; esac
+  is_active=false
+  case "$dev_state" in *"status: active"*) is_active=true ;; esac
+  if $is_active; then
+    # Re-plumb even when the address is already present: deleting the alias
+    # from a SIBLING port can drop the shared connected route out from under
+    # this one (observed 2026-07-18 — traffic then fell through to the
+    # default route on an unrelated NIC). Delete+add restores the route.
+    $has_ip && /sbin/ifconfig "$tb_dev" inet "$CLUSTER_LINK_IP" delete 2>/dev/null
+    if /sbin/ifconfig "$tb_dev" inet "$CLUSTER_LINK_IP" netmask 255.255.255.0 alias 2>/dev/null; then
+      echo "$prefix set $CLUSTER_LINK_IP on $tb_dev (carrier active)"
+    else
+      echo "$prefix WARN failed to set $CLUSTER_LINK_IP on $tb_dev" >&2
+    fi
+  elif ! $is_active && $has_ip; then
+    if /sbin/ifconfig "$tb_dev" inet "$CLUSTER_LINK_IP" delete 2>/dev/null; then
+      echo "$prefix removed $CLUSTER_LINK_IP from $tb_dev (no carrier)"
+    else
+      echo "$prefix WARN failed to remove $CLUSTER_LINK_IP from $tb_dev" >&2
+    fi
   fi
 done < <(/usr/sbin/networksetup -listallhardwareports \
   | /usr/bin/awk '/^Hardware Port: Thunderbolt [0-9]/{getline; sub(/^Device: /, ""); print}')
