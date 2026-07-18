@@ -76,7 +76,12 @@ while IFS= read -r tb_dev; do
     # from a SIBLING port can drop the shared connected route out from under
     # this one (observed 2026-07-18 — traffic then fell through to the
     # default route on an unrelated NIC). Delete+add restores the route.
-    $has_ip && /sbin/ifconfig "$tb_dev" inet "$CLUSTER_LINK_IP" delete
+    # Guarded so a transient delete failure neither aborts the script under
+    # an inherited `set -e` nor skips the alias re-add below.
+    if $has_ip; then
+      /sbin/ifconfig "$tb_dev" inet "$CLUSTER_LINK_IP" delete \
+        || echo "$prefix WARN failed to delete $CLUSTER_LINK_IP from $tb_dev before re-add" >&2
+    fi
     if /sbin/ifconfig "$tb_dev" inet "$CLUSTER_LINK_IP" netmask 255.255.255.0 alias; then
       echo "$prefix set $CLUSTER_LINK_IP on $tb_dev (carrier active)"
     else
