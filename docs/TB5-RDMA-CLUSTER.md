@@ -88,7 +88,7 @@ model's weights + KV headroom), never the whole pooled model. A shard-sized
 wired allocation that crowds the GUI working set starves macOS and the RDMA
 stack itself — this is not theoretical: the 2026-07-12 auto-bring-up wired a
 ~99 GB shard per node and kernel-panicked BOTH hosts (WindowServer watchdog).
-The mitigation is live as of #1746: `clusterLinkPrep.clusterWiredLimitMb`
+The mitigation is live as of #1746: `system.clusterLinkPrep.clusterWiredLimitMb`
 caps each rank's ceiling before it starts (90000 MB coordinator / 80000 MB
 worker) and restores the day value at link-down. See
 [CLUSTER_MODE.md](CLUSTER_MODE.md) for current status.

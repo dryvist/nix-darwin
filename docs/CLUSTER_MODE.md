@@ -9,7 +9,7 @@ is the entire ceremony; unplugging reverses everything unattended.
 > `programs.mlx.clusterMode.enable = true` shipped for coordinator and worker
 > together in the supervised re-enable session (#1746) the 2026-07-12 disable
 > note called for. The wired-headroom mitigation is live:
-> `clusterLinkPrep.clusterWiredLimitMb` caps each rank's `iogpu.wired_limit_mb`
+> `system.clusterLinkPrep.clusterWiredLimitMb` caps each rank's `iogpu.wired_limit_mb`
 > before the rank starts (90000 MB coordinator / 80000 MB worker), bounding
 > the shard's wired load instead of leaving it uncapped the way the
 > 2026-07-12 panic did. RDMA is enabled on both Macs (`rdma_ctl status` →
