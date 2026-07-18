@@ -29,43 +29,13 @@ if [ -n "$bridge_svc" ]; then
   fi
 fi
 
-# 1.5 Create a network service for every physical Thunderbolt port that has
-#     none. Fresh installs expose the ports only as (former) bridge members —
-#     with the Bridge disabled there is NO per-port service, the assignment
-#     loop below matches nothing, and the link silently never gets its
-#     address (observed 2026-07-18: both hosts, zero services, zero logs).
-while IFS= read -r hw_port; do
-  [ -n "$hw_port" ] || continue
-  if printf '%s\n' "$order" | /usr/bin/grep -q "Hardware Port: $hw_port,"; then
-    continue
-  fi
-  if /usr/sbin/networksetup -createnetworkservice "$hw_port" "$hw_port" >/dev/null 2>&1; then
-    echo "$prefix created network service for '$hw_port'"
-  else
-    echo "$prefix WARN failed to create network service for '$hw_port'" >&2
-  fi
-done < <(/usr/sbin/networksetup -listallhardwareports \
-  | /usr/bin/awk -F': ' '/^Hardware Port: Thunderbolt [0-9]/{print $2}')
-# Re-read the service order — the loop above may have added services.
-order="$(/usr/sbin/networksetup -listnetworkserviceorder)"
-
-# 2. Same manual IPv4 on every physical Thunderbolt service (skip when the
-#    address is already set, so a steady-state activation logs nothing).
-while IFS= read -r tb_svc; do
-  [ -n "$tb_svc" ] || continue
-  if /usr/sbin/networksetup -getinfo "$tb_svc" 2>/dev/null | /usr/bin/grep -q "^IP address: $CLUSTER_LINK_IP$"; then
-    continue
-  fi
-  if /usr/sbin/networksetup -setmanual "$tb_svc" "$CLUSTER_LINK_IP" 255.255.255.0 2>/dev/null; then
-    echo "$prefix set $CLUSTER_LINK_IP on '$tb_svc'"
-  else
-    echo "$prefix WARN failed to set manual address on '$tb_svc'" >&2
-  fi
-done < <(printf '%s\n' "$order" \
-  | /usr/bin/awk '/^\([0-9*]+\)/{sub(/^\([0-9*]+\) /,""); prev=$0; next} /Hardware Port: Thunderbolt [0-9]/{print prev}')
-
-# 3. Sweep residual Thunderbolt members out of bridge0 (the disabled service
-#    stops future enslavement; current members linger until removed).
+# 1.2 Sweep Thunderbolt members out of bridge0 BEFORE creating services:
+#     SystemConfiguration refuses -createnetworkservice on an enslaved port
+#     ("Unable to access the System Configuration database" — observed
+#     2026-07-18 as root). Devices come from -listallhardwareports, never the
+#     service order: with no per-port services the service order has no
+#     Thunderbolt lines at all, which is exactly the state being repaired
+#     (the old sweep read the service order and so swept nothing, ever).
 while IFS= read -r tb_dev; do
   [ -n "$tb_dev" ] || continue
   if /sbin/ifconfig bridge0 2>/dev/null | /usr/bin/grep -q "member: $tb_dev "; then
@@ -75,5 +45,27 @@ while IFS= read -r tb_dev; do
       echo "$prefix WARN failed to remove $tb_dev from bridge0" >&2
     fi
   fi
-done < <(printf '%s\n' "$order" \
-  | /usr/bin/awk -F'Device: ' '/Hardware Port: Thunderbolt [0-9]/{sub(/\)[[:space:]]*$/, "", $2); print $2}')
+done < <(/usr/sbin/networksetup -listallhardwareports \
+  | /usr/bin/awk '/^Hardware Port: Thunderbolt [0-9]/{getline; sub(/^Device: /, ""); print}')
+
+# 2. Same link IPv4 directly on every physical Thunderbolt DEVICE via
+#    ifconfig — deliberately NOT SystemConfiguration services: on macOS 26,
+#    `networksetup -createnetworkservice` fails as root with "Unable to
+#    access the System Configuration database" even for un-enslaved ports
+#    (verified 2026-07-18), so per-port services cannot be created at all on
+#    hosts that never had them. Persistence comes from this prep rerunning at
+#    every boot + rebuild (root postActivation), which is the module's
+#    existing contract. Only one port is ever cabled; un-cabled ports have no
+#    carrier, so the shared address is inert on them.
+while IFS= read -r tb_dev; do
+  [ -n "$tb_dev" ] || continue
+  if /sbin/ifconfig "$tb_dev" 2>/dev/null | /usr/bin/grep -q "inet $CLUSTER_LINK_IP "; then
+    continue
+  fi
+  if /sbin/ifconfig "$tb_dev" inet "$CLUSTER_LINK_IP" netmask 255.255.255.0 alias 2>/dev/null; then
+    echo "$prefix set $CLUSTER_LINK_IP on $tb_dev"
+  else
+    echo "$prefix WARN failed to set $CLUSTER_LINK_IP on $tb_dev" >&2
+  fi
+done < <(/usr/sbin/networksetup -listallhardwareports \
+  | /usr/bin/awk '/^Hardware Port: Thunderbolt [0-9]/{getline; sub(/^Device: /, ""); print}')
