@@ -156,6 +156,14 @@ let
       name = "chatgpt";
       greedy = true;
     } # ChatGPT desktop app (ex-nixpkgs; version lag + no self-update)
+    # OpenAI Codex desktop app. Separate from the CLI cask below; provides the
+    # QR-code host flow for ChatGPT mobile remote access. Homebrew marks this
+    # cask discontinued upstream in favor of ChatGPT, so retain it only while
+    # that pairing flow requires the standalone app.
+    {
+      name = "codex-app";
+      greedy = true;
+    }
     # OpenAI Codex CLI (AI coding agent) - migrated from homebrew/core to cask
     # Moved from nixpkgs to match claude/gemini installation pattern
     {
