@@ -79,6 +79,10 @@ jobs:
               - '.markdownlint.yml'
             claude:
               - '.claude/**'
+              # flake.lock changes the rendered settings via the nix-ai input
+              # (e.g. homelab.allowRules), so settings validation must run on a
+              # deps-only lock bump too — otherwise a stale pin ships unchecked.
+              - 'flake.lock'
 
       - name: Detect Dependency-Only Commits
         id: detect-deps
@@ -154,5 +158,7 @@ jobs:
           # For deps-only commits: All jobs can be skipped
           # For non-Nix changes: nix-build and nix-validate can be skipped
           # For Nix changes: Only validation jobs can be skipped, nix-build must pass
-          allowed-skips: ${{ (needs.changes.outputs.is-deps-only == 'true' && 'nix-build, nix-validate, markdown-lint, claude-settings, file-size') || (needs.changes.outputs.nix == 'false' && 'nix-build, nix-validate, markdown-lint, claude-settings, file-size') || 'nix-validate, markdown-lint, claude-settings, file-size' }}
+          # claude-settings is intentionally NOT skippable for deps-only: a
+          # flake.lock bump can change the rendered settings, so it must validate.
+          allowed-skips: ${{ (needs.changes.outputs.is-deps-only == 'true' && 'nix-build, nix-validate, markdown-lint, file-size') || (needs.changes.outputs.nix == 'false' && 'nix-build, nix-validate, markdown-lint, claude-settings, file-size') || 'nix-validate, markdown-lint, claude-settings, file-size' }}
           jobs: ${{ toJSON(needs) }}
