@@ -201,13 +201,13 @@ in
       type = lib.types.str;
       default = "${userConfig.user.homeDir}/.local/share/llm-gate/bootstrap.env";
       description = ''
-        User-owned 0600 env file holding the gate's OpenBao secret-zero:
+        User-owned 0600 or 0400 env file holding the gate's OpenBao secret-zero:
         BAO_ADDR and the llm-gate AppRole's LLM_GATE_VAULT_ROLE_ID /
         LLM_GATE_VAULT_SECRET_ID. openbao-run sources it unattended at each
         (re)start and logs in to fetch the gate's secrets — no Doppler
         session, no keychain (keychains cannot auto-unlock unattended; see
         header). Seeded out-of-band over ssh; openbao-run refuses the file
-        unless its mode is exactly 0600. Rotation = rewrite the file, restart
+        unless its mode is 0600 or 0400. Rotation = rewrite the file, restart
         the agent.
       '';
     };

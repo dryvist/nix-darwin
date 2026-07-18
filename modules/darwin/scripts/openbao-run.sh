@@ -68,12 +68,12 @@ done
 
 # Secret-zero env file: sourced before resolution so unattended launchd agents
 # get their bootstrap (BAO_ADDR + AppRole creds) with no keychain and no
-# ambient session. Must be user-owned 0600 — refuse anything looser, since the
-# file authenticates to OpenBao.
+# ambient session. Must be user-owned 0600 or 0400 — refuse anything looser,
+# since the file authenticates to OpenBao.
 if [ -n "$env_file" ]; then
   [ -f "$env_file" ] || die "--env-file '$env_file' does not exist (seed it: BAO_ADDR + <DOMAIN>_VAULT_ROLE_ID/_SECRET_ID)"
   perms="$(/usr/bin/stat -f '%Lp' "$env_file")"
-  [ "$perms" = "600" ] || die "--env-file '$env_file' must be mode 0600 (is $perms)"
+  [ "$perms" = "600" ] || [ "$perms" = "400" ] || die "--env-file '$env_file' must be mode 0600 or 0400 (is $perms)"
   set -a
   # shellcheck source=/dev/null
   . "$env_file"
@@ -120,7 +120,7 @@ secret_id="$(resolve "${env_prefix}_VAULT_SECRET_ID")"
 login_payload="$(jq -n --arg r "$role_id" --arg s "$secret_id" \
   '{role_id: $r, secret_id: $s}')"
 token="$(printf '%s' "$login_payload" \
-  | /usr/bin/curl -sf --max-time 30 -X POST -H 'Content-Type: application/json' \
+  | /usr/bin/curl -sSf --max-time 30 -X POST -H 'Content-Type: application/json' \
       --data-binary @- "$addr/v1/auth/approle/login" \
   | jq -re '.auth.client_token')" \
   || die "AppRole login failed for domain '$domain' at $addr"
@@ -134,15 +134,15 @@ for spec in "${specs[@]}"; do
   env_name="${BASH_REMATCH[1]}"
   kv_path="${BASH_REMATCH[2]}"
   field="${BASH_REMATCH[3]}"
-  value="$(/usr/bin/curl -sf --max-time 30 -H "X-Vault-Token: $token" \
+  value="$(/usr/bin/curl -sSf --max-time 30 -H "X-Vault-Token: $token" \
       "$addr/v1/secret/data/$kv_path" \
     | jq -re --arg f "$field" '.data.data[$f]')" \
     || die "read failed: secret/$kv_path field '$field' (policy or path missing?)"
   export "$env_name=$value"
 done
 
-# The login token dies with this shell; only the exported secret values reach
-# the exec'd child.
-unset token
+# The login token and AppRole bootstrap creds die with this shell; only the
+# exported secret values (from the loop above) reach the exec'd child.
+unset token "${env_prefix}_VAULT_ROLE_ID" "${env_prefix}_VAULT_SECRET_ID"
 
 exec "$@"
