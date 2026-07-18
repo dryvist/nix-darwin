@@ -41,12 +41,31 @@ to be executed from Recovery OS", exit 77, even as root):
 The RDMA transport is point-to-point and is NOT IP-over-Thunderbolt-Bridge.
 macOS keeps re-enslaving Thunderbolt ports into the "Thunderbolt Bridge"
 network service (device bridge0), which breaks the exclusive L2 that Apple
-RDMA needs. The `system.clusterLinkPrep` module owns this, statically, at
-activation: the Thunderbolt Bridge network service is disabled, and every
-physical Thunderbolt port's network service carries the SAME manual role
-IPv4 — only one port is ever cabled to the peer, inactive services install
-no routes, so whichever port the cable lands in has the address. No runtime
-daemon, no per-plug convergence.
+RDMA needs. The `system.clusterLinkPrep` module owns this, idempotently, on
+every boot and rebuild (root postActivation, no runtime daemon):
+
+1. Disables the Thunderbolt Bridge network service.
+2. Sweeps any Thunderbolt device still enslaved in `bridge0` out, enumerated
+   from `networksetup -listallhardwareports` (not the service order — with
+   no per-port services the service order carries no Thunderbolt lines at
+   all in the broken state being repaired).
+3. Puts the link IPv4 directly on the carrier-active physical Thunderbolt
+   **device** via `ifconfig alias` — deliberately not a SystemConfiguration
+   network service. On macOS 26, `networksetup -createnetworkservice` fails
+   as root with "Unable to access the System Configuration database" even
+   for un-enslaved ports (verified 2026-07-18, dryvist/nix-darwin#1750), so
+   per-port services cannot be created at all on hosts that never had them.
+   Only the carrier-active device gets the address — aliasing the same
+   subnet on several up interfaces makes the kernel bind the /24 route to
+   whichever came first, which silently blackholes traffic if the cable is
+   on a different port. Persistence comes from this prep rerunning at every
+   boot and rebuild, not from SystemConfiguration state; moving the cable
+   heals on the next run.
+
+This mechanism replaced an earlier one (dryvist/nix-darwin#1747) that tried
+to create a per-port network service for each Thunderbolt hardware port and
+set its address via `networksetup -setmanual` — that approach never worked
+on macOS 26 because service creation itself fails as root (#1750).
 
 - The rendezvous address is **IPv4 only**: the pinned mlx-lm's JACCL parser
   rejects every IPv6 form, including `[::1]:port` (validated 2026-07-11). The
@@ -54,8 +73,10 @@ daemon, no per-plug convergence.
   (`programs.mlx.clusterMode.staticLinkIps`), not site topology.
 - Use the regular LAN for out-of-band bootstrap/SSH between the nodes (the
   Thunderbolt Bridge service is disabled on cluster hosts).
-- Never hardcode the interface name anywhere — every Thunderbolt port
-  carries the link address, so moving the cable needs no config change.
+- Never hardcode the interface name anywhere — the prep enumerates every
+  Thunderbolt device and addresses only the carrier-active one, so moving
+  the cable to a different port heals on the next boot/rebuild with no
+  config change.
 - Assert the RDMA transport is actually active before benchmarking:
   `ibv_devices` lists the RDMA device. A working `ping` between the nodes
   proves only the IP path, not RDMA.
@@ -67,16 +88,22 @@ model's weights + KV headroom), never the whole pooled model. A shard-sized
 wired allocation that crowds the GUI working set starves macOS and the RDMA
 stack itself — this is not theoretical: the 2026-07-12 auto-bring-up wired a
 ~99 GB shard per node and kernel-panicked BOTH hosts (WindowServer watchdog).
-Clustered mode stays disabled until a wired-headroom mitigation provably
-leaves the GUI working set unwirable on each node.
+The mitigation is live as of #1746: `clusterLinkPrep.clusterWiredLimitMb`
+caps each rank's ceiling before it starts (90000 MB coordinator / 80000 MB
+worker) and restores the day value at link-down. See
+[CLUSTER_MODE.md](CLUSTER_MODE.md) for current status.
 
 ## Verification checklist
 
 - [x] `rdma_ctl status` → `enabled` on both Macs (2026-07-16)
-- [ ] `ibv_devices` shows the TB RDMA device on both
-- [ ] JACCL smoke: `mlx.launch --backend jaccl` with a small model across
-      both nodes completes
-- [ ] Big-model target answers a chat completion end-to-end from the MBP
+- [x] `ibv_devices` shows the TB RDMA device on both — link verified up at
+      80 Gb/s in both directions (#1746)
+- [x] JACCL smoke: production `--pipeline` serving is live on both ranks
+      (#1746)
+- [ ] Big-model target answers a chat completion end-to-end from the MBP —
+      **(verify)**: a real request reached prefill and then hung mid-generation
+      in the 2026-07-17/18 session (nix-ai#1275, open); a clean end-to-end
+      completion is not yet separately confirmed.
 
 The full first-plug supervised run is tracked in
 [FIRST-PLUG-VALIDATION.md](FIRST-PLUG-VALIDATION.md), including

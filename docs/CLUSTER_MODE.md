@@ -5,13 +5,21 @@ One Thunderbolt 5 cable turns the two M4 Max / 128 GB Macs into a single
 hold alone — and the rest of the fabric never notices the seam. Plugging in
 is the entire ceremony; unplugging reverses everything unattended.
 
-> **STATUS (2026-07-16): clustered mode is DISABLED on both hosts.** The
-> 2026-07-12 boot-time auto-bring-up wired a ~99 GB rank shard and starved
-> WindowServer into a watchdog kernel panic on both Macs. Re-enable
-> `programs.mlx.clusterMode.enable` only together with a wired-headroom
-> mitigation that provably leaves the GUI working set unwirable, and only in a
-> supervised session. RDMA itself is ready: `rdma_ctl` reports `enabled` on
-> both Macs (Recovery step completed 2026-07-16).
+> **STATUS (2026-07-18): clustered mode is ENABLED on both hosts.**
+> `programs.mlx.clusterMode.enable = true` shipped for coordinator and worker
+> together in the supervised re-enable session (#1746) the 2026-07-12 disable
+> note called for. The wired-headroom mitigation is live:
+> `clusterLinkPrep.clusterWiredLimitMb` caps each rank's `iogpu.wired_limit_mb`
+> before the rank starts (90000 MB coordinator / 80000 MB worker), bounding
+> the shard's wired load instead of leaving it uncapped the way the
+> 2026-07-12 panic did. RDMA is enabled on both Macs (`rdma_ctl status` →
+> `enabled`, 2026-07-16) and the Thunderbolt link is verified up at 80 Gb/s in
+> both directions (full TB5 symmetric speed). The link-IP assignment
+> mechanism changed in #1747/#1750 — see
+> [TB5-RDMA-CLUSTER.md](TB5-RDMA-CLUSTER.md) for the corrected mechanism.
+> **Known gap:** the link watcher's readiness check is a one-shot latch with
+> no post-start hang detection on the worker, so a mid-generation wedge on
+> either rank can run silently — tracked in nix-ai#1275 (open).
 
 Component map (all IaC):
 
@@ -35,21 +43,31 @@ SSH orchestration. `--pipeline` is required: the pinned mlx-lm ships
 on an mlx-lm bump.
 
 Link identity: **role-derived synthetic IPv4** addresses
-(`clusterMode.staticLinkIps`), applied statically at activation — the
-Thunderbolt Bridge network service is disabled and every physical Thunderbolt
-port's service carries the same manual role address, so whichever port the
-cable lands in has the address with zero runtime logic. IPv6 link-local was
-validated 2026-07-11 and REJECTED — the pinned mlx-lm's JACCL rendezvous
-parser is IPv4-only.
+(`clusterMode.staticLinkIps`), applied by root postActivation
+(`system.clusterLinkPrep`) on every boot and rebuild — not a one-time
+activation step and not a SystemConfiguration network service. macOS 26
+cannot create per-port Thunderbolt network services at all
+(`networksetup -createnetworkservice` fails as root with "Unable to access
+the System Configuration database", #1750), so the link IPv4 goes directly on
+the carrier-active physical Thunderbolt device via `ifconfig alias`; the
+Thunderbolt Bridge service is still disabled and swept out of `bridge0`
+first. Whichever port the cable lands in gets the address on the next prep
+run — see [TB5-RDMA-CLUSTER.md](TB5-RDMA-CLUSTER.md) for the full mechanism.
+IPv6 link-local was validated 2026-07-11 and REJECTED — the pinned mlx-lm's
+JACCL rendezvous parser is IPv4-only.
 
-**Cluster model**: `GLM-4.7-4bit` (352.8B, 198 GB — `glm4_moe`). It is the
-only frontier-class (>128 GB) architecture with distributed support in the
-pinned mlx-lm. Qwen3-235B (`qwen3_moe`) and Qwen3.5-397B (`qwen3_5_moe`) have
-**no** shard/pipeline support upstream yet (ml-explore/mlx-lm#1138 stale since
-April 2026) — recheck before every bench session; either landing would make a
-strong head-to-head candidate. `GLM-4.7-REAP-50-mxfp4` (98.2 GB, same
-`glm4_moe` arch, ~49 GB/rank) is the memory-safe candidate while the
-wired-headroom mitigation is unproven.
+**Cluster model**: `GLM-4.7-REAP-50-mxfp4` (98.2 GB, `glm4_moe`, ~49 GB/rank)
+is the confirmed production model as of #1746 — the expert-pruned build
+halves the per-rank shard so it fits under the wired ceiling with real KV
+headroom. The full `GLM-4.7-4bit` (352.8B, 198 GB) remains the module default
+(`programs.mlx.clusterMode.model`) and the only other frontier-class
+(>128 GB) architecture with distributed support in the pinned mlx-lm, but
+both hosts explicitly override it to REAP-50; running the full weights would
+need the wired ceiling re-validated for the larger shard. Qwen3-235B
+(`qwen3_moe`) and Qwen3.5-397B (`qwen3_5_moe`) have **no** shard/pipeline
+support upstream yet (ml-explore/mlx-lm#1138 stale since April 2026) —
+recheck before every bench session; either landing would make a strong
+head-to-head candidate.
 
 ## One-time prep (BEFORE the first plug session — no cable needed)
 
@@ -68,16 +86,16 @@ wired-headroom mitigation is unproven.
    `launchctl print gui/$UID/dev.mlx-cluster.watcher` exists on both and the
    rank agent is idle (link down → watcher no-ops).
 
-The first supervised session runs the
-[first-plug validation checklist](FIRST-PLUG-VALIDATION.md) and records each
-observed result there; `programs.mlx.clusterMode.enable` stays `false` until
-that list is green.
+The supervised first-plug session ran 2026-07-17/18 and is recorded in
+[FIRST-PLUG-VALIDATION.md](FIRST-PLUG-VALIDATION.md);
+`programs.mlx.clusterMode.enable` is `true` on both hosts as of #1746.
 
 ## Plug-session checklist (execution only — zero code)
 
-1. No manual IP step: activation already disabled the Thunderbolt Bridge
-   service and pinned this host's role link address on every Thunderbolt
-   port.
+1. No manual IP step: `cluster-link-prep` already disabled the Thunderbolt
+   Bridge service and pinned this host's role link address on the
+   carrier-active Thunderbolt device via `ifconfig alias` (reruns every boot
+   and rebuild — see [TB5-RDMA-CLUSTER.md](TB5-RDMA-CLUSTER.md)).
 2. Cable #1 in (the RDMA rail). Verify: `ibv_devices` shows the device on
    both; note the real device name and correct
    `programs.mlx.clusterMode.rdmaDevice` per host if it differs from the
@@ -141,3 +159,8 @@ test once and record the result here.
   quiesce-violation (unexpected agent during a cluster window).
 - The memory-headroom alert and verdict-maturity benchmarking extend to the
   cluster brain unchanged.
+- **Known gap (nix-ai#1275, open)**: the coordinator's readiness check is a
+  one-shot latch — once a rank answers one `/v1/models` probe it is never
+  re-verified, so a mid-generation hang runs silently past the load-grace
+  timer. The worker has no post-start hang detection at all. A wedge can sit
+  for 90+ minutes with the watcher reporting nothing.

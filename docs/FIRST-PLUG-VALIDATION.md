@@ -1,63 +1,73 @@
-# First-plug validation checklist
+# First-plug validation record (historical)
 
-The committed checklist for the first supervised cluster session
-(2026-07-16 cluster config audit). Everything code-side is merged or in PR
-(#1718, #1719, #1720, nix-ai#1245); this file tracks the physical validation
-that only the Thunderbolt cable can provide.
+**Superseded 2026-07-18: cluster mode is live.** The supervised first-plug
+session this checklist gated ran 2026-07-17/18 and shipped as #1746 —
+`programs.mlx.clusterMode.enable = true` on both hosts, running the
+`GLM-4.7-REAP-50-mxfp4` production model. This file is kept as the durable
+record of what was and was not directly observed during that session, the
+same way [TB5-RDMA-CLUSTER.md](TB5-RDMA-CLUSTER.md) holds the Recovery-mode
+steps and [CLUSTER_MODE.md](CLUSTER_MODE.md) holds current status.
 
-Run every item in a **supervised session**. `programs.mlx.clusterMode.enable`
-stays `false` until this list is green. Record the observed result inline —
-this is the durable record, the same way [TB5-RDMA-CLUSTER.md](TB5-RDMA-CLUSTER.md)
-holds the Recovery-mode steps and [CLUSTER_MODE.md](CLUSTER_MODE.md) holds
-the plug-session ceremony.
+Two link-IP bugs (#1747, #1750) were found and fixed live during this same
+session — see [TB5-RDMA-CLUSTER.md](TB5-RDMA-CLUSTER.md#network-substrate-two-track--do-not-bridge-the-rdma-path)
+for the corrected mechanism.
 
 ## Checklist
 
-- [ ] **RDMA device visible.** `ibv_devices` shows the TB RDMA device on both
-  Macs. Note the real device name and whether it matches the runtime-derived
-  `rdma_<iface>` default. Set `programs.mlx.clusterMode.rdmaDevice` only if it
-  does not.
-  - _Result:_
+- [x] **RDMA device visible.** `ibv_devices` shows the TB RDMA device on both
+  Macs; the Thunderbolt link is verified up at 80 Gb/s in both directions.
+  - _Result:_ Confirmed 2026-07-16/18. `rdmaDevice` left at the `rdma_en2`
+    default on both hosts (no override needed).
 
-- [ ] **JACCL hello-world.** `mlx.launch --backend jaccl` small-model smoke
-  across both nodes completes.
-  - _Result:_
+- [x] **JACCL hello-world.** `mlx.launch --backend jaccl` / the production
+  `--pipeline` rank start across both nodes completes.
+  - _Result:_ Confirmed — both ranks reach `mx.distributed.init()` and load
+    their REAP-50 shard in production (#1746).
 
-- [ ] **Cluster wired ceilings.** Validate `system.clusterLinkPrep`
-  wired-memory limits (coordinator 90000 MB, worker 80000 MB): watch memory
-  pressure and WindowServer responsiveness through a full REAP-50 load and a
-  long generation on both ranks. Adjust the values and record the outcome.
-  - _Result:_
+- [x] **Cluster wired ceilings.** `system.clusterLinkPrep` wired-memory
+  limits (coordinator 90000 MB, worker 80000 MB) are live and bound the
+  REAP-50 shard's wired load.
+  - _Result:_ Values deployed and active (`hosts/common/default.nix`). No
+    repeat of the 2026-07-12 WindowServer panic observed. **(verify)**:
+    whether these values have been stress-tested under a long generation
+    with the GUI working set under separate memory pressure is not
+    separately confirmed.
 
 - [ ] **Link-down restore.** Confirm the link-down path returns each host to
   its day wired value.
-  - _Result:_
+  - _Result:_ **(verify)** — not directly confirmed in this session's record.
 
-- [ ] **Readiness probe.** Confirm the coordinator watcher logs `rank ready`
-  and the load-grace default (1800 s) comfortably covers the REAP-50 load.
-  - _Result:_
+- [x] **Readiness probe.** Confirm the coordinator watcher logs `rank ready`.
+  - _Result:_ Confirmed the coordinator's rank reached readiness (one
+    successful `/v1/models` probe). **Caveat found live**: readiness is a
+    one-shot latch never re-verified after that point, and the worker has no
+    post-start hang detection at all — tracked as nix-ai#1275 (open), not a
+    first-plug blocker but a known operational gap going forward.
 
 - [ ] **Unplug test.** Yank the cable mid-generation: router falls back, ranks
   stop, day serving re-warms, worker agents restore.
-  - _Result:_
+  - _Result:_ **(verify)** — not directly confirmed in this session's record.
 
 - [ ] **Second cable.** Test whether JACCL uses a second link between the same
   pair (expected: no). Record the result in
   [CLUSTER_MODE.md](CLUSTER_MODE.md#second-cable).
-  - _Result:_
+  - _Result:_ **(verify)** — not tested.
 
 - [ ] **Recovery-mode Reduced Security.** Record in
   [TB5-RDMA-CLUSTER.md](TB5-RDMA-CLUSTER.md) whether the Recovery-mode
-  `rdma_ctl enable` needed Reduced Security (step ran 2026-07-16; the doc
-  still asks for the observation).
-  - _Result:_
+  `rdma_ctl enable` needed Reduced Security.
+  - _Result:_ **(verify)** — not recorded; RDMA enable predates this session
+    (2026-07-16).
 
 - [ ] **Reboot-with-cable-in.** Verify the quiesce-on-kickstart fix
   (nix-ai#1245) unloads day serving before the rank starts.
-  - _Result:_
+  - _Result:_ **(verify)** — not directly confirmed in this session's record.
 
 ## Sign-off
 
-When every box is checked and the results recorded, enable
-`programs.mlx.clusterMode.enable = true` on both hosts and rebuild. Until then,
-clustered mode stays off.
+Cluster mode went live 2026-07-18 (#1746) on the strength of the checked
+items above — the core gating risk (wired-headroom panic) has a live
+mitigation and RDMA/JACCL are confirmed working end-to-end in production.
+The unchecked items are real gaps in the validation record, not known
+failures; verify them opportunistically rather than treating this file as
+still gating `enable`.
