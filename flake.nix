@@ -60,6 +60,7 @@
         nixpkgs.follows = "nixpkgs";
         home-manager.follows = "home-manager";
         ai-assistant-instructions.follows = "ai-assistant-instructions";
+        ai-llm-prompts.follows = "ai-llm-prompts";
         claude-code-plugins.follows = "claude-code-plugins";
         jacobpevans-cc-plugins.follows = "jacobpevans-cc-plugins";
       };
