@@ -31,6 +31,26 @@ let
 in
 {
   config = lib.mkIf clusterEnabled {
+    # Cross-repo safety gate (INC-17076/17077 failure class). This bridge only
+    # carries the wired ceilings into nix-ai's env; the values themselves — and
+    # the exact-value sudoers grants the watcher needs to apply them — live in
+    # system.clusterLinkPrep. Enabling clusterMode while that system module is
+    # off pushes a null/day ceiling with no grant and no link configured: the
+    # decorative-guard bug this module exists to kill. Refuse to build the
+    # half-wired configuration rather than ship an inert guard.
+    assertions = [
+      {
+        assertion = osConfig.system.clusterLinkPrep.enable;
+        message = ''
+          programs.mlx.clusterMode is enabled but system.clusterLinkPrep.enable
+          is false. The cluster wired-memory ceiling guard would be inert: no
+          exact-value sudoers grant is emitted and no Thunderbolt link is
+          configured, so the nix-ai watcher/lifecycle commands cannot apply the
+          ceiling (INC-17076/17077). Enable system.clusterLinkPrep on this host.
+        '';
+      }
+    ];
+
     programs.mlx.clusterMode = {
       wiredLimitMb = linkPrep.clusterWiredLimitMb;
       inherit (linkPrep) dayWiredLimitMb;
