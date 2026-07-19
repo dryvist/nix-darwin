@@ -915,6 +915,9 @@
         "ai-assistant-instructions": [
           "ai-assistant-instructions"
         ],
+        "ai-llm-prompts": [
+          "ai-llm-prompts"
+        ],
         "autoresearch": "autoresearch",
         "claude-code-plugins": [
           "claude-code-plugins"
@@ -937,11 +940,11 @@
         "ponytail": "ponytail"
       },
       "locked": {
-        "lastModified": 1784407629,
-        "narHash": "sha256-vGjw1rMD9yYt2gWs+2bT4/ZTZyuCcSsGx3CFZPPtkfw=",
+        "lastModified": 1784493224,
+        "narHash": "sha256-ysaEnLily9ZtwyjjRvfehxdppIw2B5MypmLlHt2bArw=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "6791b6859915a1605568312d4afe5ffdcc751895",
+        "rev": "b7f34841f447dffb2c7fce2caafa4555c1168423",
         "type": "github"
       },
       "original": {
