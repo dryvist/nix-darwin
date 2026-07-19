@@ -9,10 +9,19 @@
 # This file adds the host-unique bits: ComputerName, headless inference/power
 # tuning, the llm-large serving gate, and the ephemeral GitHub Actions runner.
 
-{ config, hostConfig, ... }:
+{
+  ai-llm-prompts,
+  config,
+  hostConfig,
+  lib,
+  ...
+}:
 
 let
   userConfig = import ../../lib/user-config.nix;
+  promptBody =
+    path:
+    lib.concatStringsSep "\n---\n" (lib.drop 1 (lib.splitString "\n---\n" (builtins.readFile path)));
 in
 {
   imports = [ ../common/default.nix ];
@@ -133,14 +142,9 @@ in
           hour = 3;
           minute = 30;
         };
-        prompt = ''
-          You are running unattended on ${hostConfig.hostName}. For each git
-          repository under ~/git (each <repo>/main checkout): run git fetch
-          --all --prune; delete local branches whose upstream is gone and remove
-          their worktrees; NEVER touch a branch or worktree with uncommitted
-          changes or unpushed commits; skip anything ambiguous; print a one-line
-          summary per repo; make no other changes; open no PRs.
-        '';
+        prompt = lib.replaceStrings [ "\${hostConfig.hostName}" ] [ hostConfig.hostName ] (
+          promptBody "${ai-llm-prompts}/developer-tools/nix-darwin-studio-hygiene.md"
+        );
       };
     };
 

@@ -4,5 +4,3 @@
 # Uses custom merge driver defined in git config (merge.flakelock.driver)
 # Driver runs: nix flake lock --no-update-lock-file
 flake.lock merge=flakelock
-
-.github/workflows/*.lock.yml linguist-generated=true merge=ours

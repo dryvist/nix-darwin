@@ -32,6 +32,10 @@
       url = "github:dryvist/ai-assistant-instructions";
       flake = false;
     };
+    ai-llm-prompts = {
+      url = "github:dryvist/ai-llm-prompts/0431be6994d51169b9f705ddeba958eb8a4d0fc4";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     claude-code-plugins = {
       url = "github:anthropics/claude-code";
       flake = false;
@@ -108,6 +112,7 @@
       sops-nix,
       nix-homebrew,
       dotgithub,
+      ai-llm-prompts,
       ...
     }:
     let
@@ -157,7 +162,12 @@
           # hostConfig threads the per-host attrset to every darwin module.
           # nix-homebrew: consumed by modules/darwin/homebrew.nix.
           specialArgs = {
-            inherit nix-ai hostConfig nix-homebrew;
+            inherit
+              ai-llm-prompts
+              nix-ai
+              hostConfig
+              nix-homebrew
+              ;
           };
           modules = [
             ./hosts/${label}/default.nix

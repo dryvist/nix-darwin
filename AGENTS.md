@@ -116,7 +116,7 @@ and on-demand patterns.
   `.markdownlint-cli2.yaml` synced from
   [`dryvist/.github`](https://github.com/dryvist/.github).
   `MD013 line_length: 160`; no 80-char heading/code restrictions.
-  `CHANGELOG.md`, `.github/aw/**`, and `worktrees/**` are ignored.
+  `CHANGELOG.md` and `worktrees/**` are ignored.
   `MD024` strict-by-default everywhere actually linted — never disabled
   across the board.
 - **Pre-commit hooks**: see `.pre-commit-config.yaml`. Stack:
