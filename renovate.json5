@@ -40,6 +40,25 @@
   // cadence for critical inputs is set here deliberately.
   "packageRules": [
     {
+      // Cluster-critical configs must NEVER be auto-updated by Renovate. The
+      // wired-memory ceilings, the cluster rank server args (extraServerArgs,
+      // e.g. --prompt-cache-size), and the static Thunderbolt link config are
+      // correctness-critical for Mac-to-Mac cluster parity and panic avoidance
+      // (INC-17070 / INC-17076 / INC-17077): any change must be a deliberate,
+      // supervised PR, never an automated bump. This disables ONLY the org-wide
+      // `# renovate:`-annotated .nix version-pin customManager for these files
+      // (harmless today since none is annotated; a standing guard so a future
+      // annotation here can never trigger an update). It does NOT affect
+      // flake.lock / flake-input maintenance — those live in flake.{nix,lock}
+      // and keep their normal cadence.
+      "matchFileNames": [
+        "hosts/common/cluster-wired-limit.nix",
+        "hosts/common/cluster-quiesce.nix",
+        "modules/darwin/cluster-link-prep.nix"
+      ],
+      "enabled": false
+    },
+    {
       "description": "External critical system inputs - 2-day delay for nixpkgs-darwin Hydra eval lag",
       "matchDatasources": ["git-refs"],
       "matchPackageNames": [
