@@ -154,6 +154,13 @@ in
     # `doppler run`, not a local keychain. See modules/darwin/apps/openbao-aws-creds.nix.
     openbao-aws-creds.enable = true;
 
+    # --- OpenBao-backed GitHub token provider ---
+    # Same wrapper the laptop ships (hosts/macbook-m4): ambient READ tokens,
+    # per-repo WRITE behind a claim/lease, keychain-free. The git credential
+    # wiring lives in hosts/common/home.nix, so enabling this module is all a
+    # host needs for the OpenBao GitHub path.
+    openbao-github-creds.enable = true;
+
     # --- Reboot-continuity auto-resume ---
     # Same login-time armed-mission resume as the laptop; no-op unless armed
     # at runtime. See modules/darwin/apps/claude-continuity.nix.
