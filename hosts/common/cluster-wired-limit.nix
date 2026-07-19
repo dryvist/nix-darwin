@@ -34,6 +34,15 @@ in
     programs.mlx.clusterMode = {
       wiredLimitMb = linkPrep.clusterWiredLimitMb;
       inherit (linkPrep) dayWiredLimitMb;
+
+      # EXPERIMENT (INC-17070, remove once resolved): disables the prompt cache
+      # on both cluster ranks to isolate a multi-request pipeline hang. The only
+      # knob the clusterMode module exposes for rank server args is
+      # extraServerArgs (appended verbatim to mlx_lm.server ProgramArguments).
+      extraServerArgs = [
+        "--prompt-cache-size"
+        "0"
+      ];
     };
   };
 }
