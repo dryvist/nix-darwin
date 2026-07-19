@@ -29,6 +29,9 @@
     ./ghostty-terminfo.nix
     # Worker-side cluster-mode quiesce/restore hooks (byte cap split).
     ./cluster-quiesce.nix
+    # Feeds the system-level clusterLinkPrep wired ceilings into nix-ai's
+    # programs.mlx.clusterMode so the watcher/lifecycle env carries them.
+    ./cluster-wired-limit.nix
   ];
 
   # Share system-level Homebrew taps with nix-ai's trust.json.
