@@ -136,7 +136,6 @@ copies them to `~/Applications/Home Manager Apps/` at TCC-stable paths.
 | Package | Description |
 | --- | --- |
 | code-cursor | Cursor AI IDE (VS Code fork) |
-| discord | Voice/video chat (copyApps for TCC camera/mic stability) |
 | ffmpeg | Audio/video recording, conversion, streaming |
 | ghostty-bin | Terminal emulator |
 | rapidapi | Full-featured HTTP client |
@@ -170,6 +169,7 @@ All casks use `greedy = true` so that `brew upgrade --greedy` always installs th
 | bitwarden | yes | Password manager desktop app (moved from nixpkgs — EOL electron_39) |
 | wispr-flow | yes | AI-powered voice dictation |
 | voiceink | yes | Voice-to-text app (local whisper) |
+| discord | yes | Voice/video chat (moved from nixpkgs — 8.9 GB build, 8.3 GB of it unused Windows icon assets) |
 | claude | yes | Anthropic Claude desktop app (not in nixpkgs for Darwin) |
 | claude-code | yes | Anthropic Claude Code CLI |
 | chatgpt | yes | OpenAI ChatGPT desktop app (moved from nixpkgs — version lag + no self-update) |
