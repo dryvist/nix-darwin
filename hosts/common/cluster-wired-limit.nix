@@ -1,17 +1,15 @@
 # Cluster wired-ceiling wiring (split out for the per-file byte cap).
 #
-# The cluster wired ceilings (coordinator 90000 / worker 80000) and their
-# day-restore counterparts (coordinator 118000 / worker 0) live ONCE in
-# nix-darwin's system.clusterLinkPrep (clusterWiredLimitMb + the computed,
-# read-only dayWiredLimitMb), which also emits the exact-value sudoers grants.
-# This module feeds those SAME values into nix-ai's programs.mlx.clusterMode so
-# the link watcher and cluster-join/cluster-detach commands actually receive
-# CLUSTER_WIRED_LIMIT_MB / CLUSTER_DAY_WIRED_LIMIT_MB in their environment.
+# The clustered wired ceilings and their standalone-restore counterparts live
+# ONCE in nix-darwin's system.clusterLinkPrep (clusterWiredLimitMb + the
+# computed, read-only standaloneWiredLimitMb), which also emits the exact-value
+# sudoers grants. This module feeds those SAME values into nix-ai's
+# programs.mlx.clusterMode so the link watcher and cluster-join/cluster-detach
+# commands actually receive CLUSTER_WIRED_LIMIT_MB and
+# CLUSTER_STANDALONE_WIRED_LIMIT_MB in their environment.
 #
-# Without this bridge the pin is a no-op: the guard against the 2026-07-19
-# WindowServer watchdog panic (INC-17076) and the Studio contention panic class
-# (INC-17062) was believed deployed but was decorative — the sudoers grants
-# existed with nothing configured to invoke them.
+# Without this bridge the pin is a no-op — the sudoers grants exist with
+# nothing configured to invoke them (INC-17076, INC-17062).
 #
 # Both ranks need the ceiling, so this is NOT gated on role like
 # cluster-quiesce.nix. Deriving from osConfig (never re-declaring the numbers)
@@ -35,7 +33,7 @@ in
     # carries the wired ceilings into nix-ai's env; the values themselves — and
     # the exact-value sudoers grants the watcher needs to apply them — live in
     # system.clusterLinkPrep. Enabling clusterMode while that system module is
-    # off pushes a null/day ceiling with no grant and no link configured: the
+    # off pushes a null/standalone ceiling with no grant and no link: the
     # decorative-guard bug this module exists to kill. Refuse to build the
     # half-wired configuration rather than ship an inert guard.
     assertions = [
@@ -53,7 +51,7 @@ in
 
     programs.mlx.clusterMode = {
       wiredLimitMb = linkPrep.clusterWiredLimitMb;
-      inherit (linkPrep) dayWiredLimitMb;
+      inherit (linkPrep) standaloneWiredLimitMb;
 
       # EXPERIMENT (INC-17070, remove once resolved): disables the prompt cache
       # on both cluster ranks to isolate a multi-request pipeline hang. The only
