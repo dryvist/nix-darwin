@@ -14,9 +14,22 @@ on:
       - 'modules/**'
       - 'scripts/**'
 
+# Never cancel a run on a cache-saving branch.
+#
+# This workflow is the ONLY thing that populates the Nix store cache, and it does
+# so on the default branch. The build takes hours, so with `cancel-in-progress`
+# unconditionally true every merge killed the run that was about to save — and
+# the next merge killed its replacement. Measured over the last 40 runs:
+# develop 16 success / 23 cancelled, main 20 success / 0 cancelled. The branch
+# that saves the cache is the one that almost never finishes.
+#
+# Superseding is still right for throwaway refs, so this cancels everywhere else
+# and only protects the branches whose completion has a side effect worth
+# keeping.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: >-
+    ${{ github.ref != 'refs/heads/develop' && github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
