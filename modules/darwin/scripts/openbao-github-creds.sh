@@ -217,6 +217,9 @@ bg_read_scope='{"contents":"read","metadata":"read","issues":"read","pull_reques
 bg_write_scope='{"contents":"write","pull_requests":"write","issues":"write","metadata":"read","checks":"read","actions":"read","statuses":"read"}'
 
 cmd_break_glass() {
+  # split_repo assigns owner/repo; scope them here so a break-glass call cannot
+  # leave them set for anything that runs afterwards.
+  local owner repo
   case "${1:-read}" in
     read)
       mint_break_glass "${2:-${default_owner}}" "${bg_read_scope}" ""; echo ;;
