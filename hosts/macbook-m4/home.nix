@@ -60,12 +60,7 @@
     # greedy cask mirrors the `claude` desktop pattern and stays current.
 
     # Communication
-    # discord: moved to homebrew.nix cask (greedy). The nixpkgs darwin build
-    # unpacks to 8.9 GB, of which 8.3 GB is eleven `badge-*.ico` files at
-    # 808 MB each — Windows taskbar-badge assets macOS never reads. That single
-    # package was ~48% of the home-manager activation closure, so every CI run
-    # substituted it to prove nothing but that a URL still resolved. The cask
-    # keeps the app self-updating and TCC-stable, same as `claude`/`chatgpt`.
+    discord # Voice/video chat - copyApps gives TCC-stable path for camera/mic permissions
     # zoom-us # DISABLED - no longer using Zoom
 
     # Productivity / menu bar (moved from system-level; copyApps gives the same
