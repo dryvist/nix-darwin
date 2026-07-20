@@ -69,11 +69,12 @@ in
 
     # --- OpenBao-backed GitHub token provider ---
     # Ships the `openbao-github-creds` wrapper (git credential helper + gh env
-    # source) that retires the local GH_PAT_* keychain tiers. Purely additive:
-    # installing the wrapper changes no git/gh config, so the current
-    # keychain-backed path keeps working until the interactive cutover (see
-    # terraform-proxmox docs/github-token-openbao-migration runbook). Secret-zero
-    # (VAULT_ADDR + the GitHub AppRole) is supplied ambiently by `doppler run`.
+    # source) that is now the ONLY GitHub token path — the local GH_PAT_*
+    # keychain tiers have been retired (see terraform-proxmox
+    # docs/github-token-openbao-migration runbook). Tokens are ephemeral GitHub
+    # App installation tokens, with a break-glass App-JWT mint fallback (#1776).
+    # Secret-zero (VAULT_ADDR + the GitHub AppRole) is supplied ambiently by
+    # `doppler run`.
     openbao-github-creds.enable = true;
 
     # --- Reboot-continuity auto-resume ---

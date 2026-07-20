@@ -103,48 +103,11 @@ in
     aiDb = "automation.keychain-db";
   };
 
-  # ==========================================================================
-  # GitHub Token Configuration
-  # ==========================================================================
-  github = {
-    tokens = {
-      # Tiered GitHub PATs — each tier specifies its keychain service + DB.
-      # Auto-readable automation keychain (no password prompt; AI can access freely):
-      #   restricted → public repos
-      #   dryvist    → dryvist org repos (public + private) — the DEFAULT tier
-      # Password-protected keychain (requires interactive user unlock):
-      #   private    → JacobPEvans-personal public + private repos
-      #   admin      → JacobPEvans-personal admin (rulesets, branch protection)
-      #   orgAdmin   → dryvist org admin (org-level rulesets)
-      #
-      # NOTE: dryvist lives in the auto-readable keychain by deliberate choice —
-      # it is the default tier (see home.nix), so it must load without a password
-      # prompt on every shell. This means the dryvist token (write access to all
-      # dryvist repos) is freely readable by the user session and AI agents. This
-      # trades the former least-privilege RESTRICTED default for zero keychain
-      # popups, per an explicit decision on 2026-05-28.
-      restricted = {
-        service = "GH_PAT_RESTRICTED";
-        keychain = "automation.keychain-db";
-      };
-      dryvist = {
-        service = "GH_PAT_DRYVIST";
-        keychain = "automation.keychain-db";
-      };
-      private = {
-        service = "GH_PAT_PRIVATE";
-        keychain = "elevate-access.keychain-db";
-      };
-      admin = {
-        service = "GH_PAT_ADMIN";
-        keychain = "elevate-access.keychain-db";
-      };
-      orgAdmin = {
-        service = "GH_PAT_ORG_ADMIN";
-        keychain = "elevate-access.keychain-db";
-      };
-    };
-  };
+  # GitHub token configuration intentionally removed: tokens are now minted on
+  # demand by OpenBao (ephemeral GitHub App installation tokens) via the
+  # openbao-github-creds git credential helper. The former tiered-PAT keychain
+  # services (GH_PAT_RESTRICTED / DRYVIST / PRIVATE / ADMIN / ORG_ADMIN) are
+  # retired — see the openbao-github-creds wrapper in modules/darwin.
 
   # ==========================================================================
   # Nix/NixOS Configuration
@@ -173,7 +136,7 @@ in
       "Single-developer personal homelab plus day-job (Splunk/Cribl architect). Public docs map: https://${docsHost} (source github.com/${fullName}/docs) covers Infrastructure, Nix ecosystem, AI development, Observability, Security, and Tools surfaces."
       "Workspace layout: each repo is a clone on its default branch. Create an isolated worktree for feature work via the AI tool's native mechanism (Claude's EnterWorktree, which lands worktrees under .claude/worktrees/). Never run `git worktree add` into a path inside the repo's working tree — that pollutes the main checkout; place any manual worktree as a sibling of the clone, never a child."
       "Cloud: AWS via aws-vault profiles (terraform-aws, terraform-aws-bedrock); Proxmox cluster on the home LAN (terraform-proxmox plus ansible-proxmox-*). No multi-tenant production."
-      "Secrets stores: Doppler (ai-ci-automation/prd project carries AI/MCP keys); macOS Keychain (ai-secrets keychain holds ANTHROPIC_API_KEY etc.; elevate-access keychain holds elevated GH tokens via the RESTRICTED/PRIVATE/ADMIN tier system); Mozilla SOPS handles at-rest encryption; Bitwarden vault plus Bitwarden Secrets Manager. No long-lived AWS keys — OIDC handles CI."
+      "Secrets stores: Doppler (ai-ci-automation/prd project carries AI/MCP keys); macOS Keychain (ai-secrets keychain holds ANTHROPIC_API_KEY etc.; elevate-access keychain holds the break-glass OPENBAO_TOKEN); OpenBao mints GitHub tokens on demand (ephemeral GitHub App installation tokens via the openbao-github-creds credential helper — the old GH_PAT keychain tiers are retired) and short-lived AWS STS creds; Mozilla SOPS handles at-rest encryption; Bitwarden vault plus Bitwarden Secrets Manager. No long-lived AWS keys — OIDC handles CI."
       "AI runtimes: local MLX server on this Mac (mlx-server devenv shell); Claude / Codex / Gemini / Copilot CLIs all routed through local dev shells; HuggingFace CLI handles model management."
       "Observability stack: OpenTelemetry instrumentation → Cribl Stream → Splunk Enterprise (homelab). splunk-dev devenv shell on local Splunk work."
       "Self-hosted runners: GitHub Actions self-hosted RunsOn runners labeled per the ${fullName}/.github v3 catalog. Jobs targeting RunsOn labels are routine."

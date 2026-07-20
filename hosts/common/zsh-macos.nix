@@ -3,9 +3,11 @@
 # Split out of hosts/common/home.nix for the per-file byte cap. The base zsh
 # config is provided by nix-home (sharedModule); these additions are
 # macOS-specific and merge via the NixOS/home-manager module system. Holds the
-# keychain API-key reads, the GitHub tiered-token switching setup, and the
-# custom claude/macos launcher sourcing — all Mac-only. References only lib,
-# userConfig, and hostConfig; the ./*.zsh sources resolve from this directory.
+# keychain API-key reads (non-GitHub) and the custom claude/macos launcher
+# sourcing — all Mac-only. GitHub tokens now come exclusively from OpenBao via
+# the openbao-github-creds git credential helper (see hosts/macbook-m4), not a
+# keychain tier. References only lib, userConfig, and hostConfig; the ./*.zsh
+# sources resolve from this directory.
 {
   lib,
   userConfig,
@@ -40,9 +42,8 @@
       _KC_AI_DB='${userConfig.keychain.aiDb}'
 
       # --- API Keys (from macOS Keychain) ---
-
-      # GitHub - for github@claude-plugins-official MCP server
-      export GITHUB_PERSONAL_ACCESS_TOKEN=''${GITHUB_PERSONAL_ACCESS_TOKEN:-"$(_get_keychain_secret 'github-pat' "$_KC_USER")"}
+      # GitHub tokens are deliberately NOT read here — they come from OpenBao via
+      # the openbao-github-creds git credential helper (see hosts/macbook-m4).
 
       # Context7 - for context7@claude-plugins-official MCP server
       export CONTEXT7_API_KEY=''${CONTEXT7_API_KEY:-"$(_get_keychain_secret 'CONTEXT7_API_KEY' "$_KC_USER")"}
@@ -65,42 +66,16 @@
       ''}
 
       unset -f _get_keychain_secret  # No longer needed after init
-      unset _KC_USER _KC_AI_DB  # _KC_AI_ACCOUNT persists for runtime gh-token switching
+      unset _KC_USER _KC_AI_ACCOUNT _KC_AI_DB
 
-      # --- GitHub Token Context Switching (workstation only) ---
-      # Server-class hosts are keychain-free (matching HF_TOKEN above): their
-      # only GitHub need is the Actions runner, which authenticates via the
-      # sops-rendered GH_RUNNER_PAT, not this interactive tiered-PAT flow. On a
-      # server the whole block is omitted, so `gh-dryvist` never runs against a
-      # non-existent automation.keychain-db (which otherwise errors on login).
-      ${lib.optionalString (!hostConfig.isServer) ''
-        _GH_SVC_RESTRICTED='${userConfig.github.tokens.restricted.service}'
-        _GH_DB_RESTRICTED='${userConfig.github.tokens.restricted.keychain}'
-        _GH_SVC_PRIVATE='${userConfig.github.tokens.private.service}'
-        _GH_DB_PRIVATE='${userConfig.github.tokens.private.keychain}'
-        _GH_SVC_DRYVIST='${userConfig.github.tokens.dryvist.service}'
-        _GH_DB_DRYVIST='${userConfig.github.tokens.dryvist.keychain}'
-        _GH_SVC_ADMIN='${userConfig.github.tokens.admin.service}'
-        _GH_DB_ADMIN='${userConfig.github.tokens.admin.keychain}'
-        _GH_SVC_ORG_ADMIN='${userConfig.github.tokens.orgAdmin.service}'
-        _GH_DB_ORG_ADMIN='${userConfig.github.tokens.orgAdmin.keychain}'
-
-        source ${./gh-token-switching.zsh}
-
-        # Default to the dryvist tier on every new shell. dryvist's token lives
-        # in the auto-readable automation keychain, so this loads with no password
-        # prompt. This is NOT least-privilege — every shell + AI session defaults
-        # to dryvist write access — a deliberate popups-vs-privilege tradeoff
-        # (2026-05-28). Use gh-private / gh-admin / gh-org-admin to elevate further.
-        unset GITHUB_TOKEN
-        gh-dryvist
-      ''}
+      # --- GitHub authentication ---
+      # GitHub tokens are minted on demand by OpenBao (ephemeral GitHub App
+      # installation tokens) through the openbao-github-creds git credential
+      # helper, wired in hosts/macbook-m4. The former keychain GH_PAT tier
+      # switching (gh-restricted / gh-dryvist / gh-admin / ...) has been retired.
 
       # --- Custom-auth launcher for `claude` ---
-      # Defines av-claude <profile> (aws-vault exec <profile> -- claude). The
-      # gh-claude-* GitHub-token relaunch wrappers were removed as unused; to
-      # run claude under a non-default tier, switch the parent shell with the
-      # gh-* functions sourced above first.
+      # Defines av-claude <profile> (aws-vault exec <profile> -- claude).
       source ${./claude-launchers.zsh}
 
       # --- macOS setup ---
