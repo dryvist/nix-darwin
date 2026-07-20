@@ -103,6 +103,15 @@
     # (read token, 403) instead of silently riding a broader credential.
     gh.gitCredentialHelper.enable = false;
     git.settings.credential = {
+      # nixpkgs' git ships `credential.helper = osxkeychain` in the package's
+      # own /etc/gitconfig. That generic helper is consulted BEFORE the
+      # url-scoped ones below, and its `store` action writes every credential
+      # git sees into login.keychain — so an OpenBao-minted token stops being
+      # ephemeral the moment it is used, and a stale long-lived token in the
+      # keychain wins over the wrapper. An empty value resets the helper list,
+      # and ~/.config/git/config is read after the package gitconfig, so this
+      # clears it. Leaves the url-scoped helpers (a separate list) intact.
+      helper = "";
       "https://github.com" = {
         helper = "!doppler run -- openbao-github-creds";
         useHttpPath = true;
