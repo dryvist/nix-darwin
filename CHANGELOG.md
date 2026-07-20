@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.9.0](https://github.com/dryvist/nix-darwin/compare/v2.8.0...v2.9.0) (2026-07-20)
+
+
+### Features
+
+* **github-auth:** break-glass App-JWT mint fallback for GitHub creds ([#1776](https://github.com/dryvist/nix-darwin/issues/1776)) ([4e30831](https://github.com/dryvist/nix-darwin/commit/4e30831a2b88fee51f08294764e069cebe462d13))
+* **github-auth:** cut git over to the OpenBao credential wrapper ([#1773](https://github.com/dryvist/nix-darwin/issues/1773)) ([d02b2be](https://github.com/dryvist/nix-darwin/commit/d02b2beff8b199f94cd916b7109513534d4833c6))
+* **security:** NOPASSWD grants for the vllm-mlx serving-restore ladder ([#1772](https://github.com/dryvist/nix-darwin/issues/1772)) ([6245b35](https://github.com/dryvist/nix-darwin/commit/6245b3587ffe0a707e728c87b1bcb93797099c7d))
+
+
+### Bug Fixes
+
+* **cluster:** wire wired-ceiling values into nix-ai clusterMode so the guard is live ([#1769](https://github.com/dryvist/nix-darwin/issues/1769)) ([78e0798](https://github.com/dryvist/nix-darwin/commit/78e079893411dfe2772c0d798c85ad943d320d5b))
+
 ## [2.8.0](https://github.com/dryvist/nix-darwin/compare/v2.7.1...v2.8.0) (2026-07-18)
 
 
