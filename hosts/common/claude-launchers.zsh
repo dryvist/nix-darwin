@@ -5,9 +5,8 @@
 #   av-claude <profile> [claude-args...]   aws-vault exec <profile> -- claude ...
 #
 # (The gh-claude-* GitHub-token relaunch wrappers were removed — they were
-# unused. To run claude under a non-default GitHub token tier, switch the
-# parent shell with the gh-* functions in gh-token-switching.zsh first, then
-# launch claude.)
+# unused. GitHub tokens now come from OpenBao via the openbao-github-creds git
+# credential helper, so there is no per-tier shell switch to relaunch under.)
 #
 # av-claude prints a short status banner to stderr before invoking claude. The
 # banner is aimed at nested AI sessions: when a Claude Code agent invokes it via
