@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.10.0](https://github.com/dryvist/nix-darwin/compare/v2.9.0...v2.10.0) (2026-07-20)
+
+
+### Features
+
+* **cluster:** stamp configurationRevision + wire generation auto-heal dir ([#1788](https://github.com/dryvist/nix-darwin/issues/1788)) ([37c8566](https://github.com/dryvist/nix-darwin/commit/37c8566c79e5ca2b683fe5a589dc1921c4d59854))
+
+
+### Bug Fixes
+
+* **ci:** pass OPENAI_API_KEY through to the shared AI workflows ([#1797](https://github.com/dryvist/nix-darwin/issues/1797)) ([bb94453](https://github.com/dryvist/nix-darwin/commit/bb9445305cb214eaab6f3540ccef1bbb2196a701))
+* **cluster:** drop local-path generation heal wiring; heal from remote flake ([#1790](https://github.com/dryvist/nix-darwin/issues/1790)) ([6e87a92](https://github.com/dryvist/nix-darwin/commit/6e87a9290e96ac2b3d6df021587f21689e6edda7))
+* **github-auth:** clear osxkeychain helper, explain write-mint denials ([#1789](https://github.com/dryvist/nix-darwin/issues/1789)) ([32085dc](https://github.com/dryvist/nix-darwin/commit/32085dc601962837ed0d5eb56bf2f1db6029db15))
+
 ## [2.9.0](https://github.com/dryvist/nix-darwin/compare/v2.8.0...v2.9.0) (2026-07-20)
 
 
