@@ -50,13 +50,6 @@ let
 
   # caddy-dns/route53 pinned with the FOD hash for this caddy 2.11.4 +
   # plugin v1.6.2 pair; bump both together when either moves.
-  #
-  # This hash also moves when nixpkgs bumps caddy's own module graph, even at an
-  # unchanged caddy version — the vendor tree is what is hashed, not the tag. A
-  # stale value fails only at BUILD time, and CI builds `lib.ci
-  # .hmActivationPackage`, never `darwinConfigurations.*.system`, so nothing here
-  # is exercised before merge. Evaluation cannot catch it: a fixed-output hash is
-  # checked against fetched content, not the expression.
   caddyPkg =
     if cfg.tlsMode == "route53" then
       pkgs.caddy.withPlugins {
