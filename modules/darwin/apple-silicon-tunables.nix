@@ -62,9 +62,15 @@ in
       type = lib.types.ints.unsigned;
       default = 118000;
       description = ''
-        iogpu.wired_limit_mb — wired-memory ceiling for the IOGPU subsystem.
-        0 = OS default (~75% of RAM). Default 118000 = ~92% of a 128 GB host.
-        Volatile: re-applied at every boot via a one-shot launchd daemon.
+        iogpu.wired_limit_mb — wired-memory ceiling in MiB. Volatile:
+        re-applied at every boot via a one-shot launchd daemon.
+
+        Units are exact: max_recommended_working_set_size = wiredLimitMb * 1024^2.
+        0 = OS default, ~84% of RAM (not the ~75% often assumed).
+
+        Pairs with programs.mlx.gpuMemoryUtilization; change both together.
+        Mechanism and the sizing invariant:
+        https://docs.jacobpevans.com/local-llm/memory-ceilings
       '';
     };
 

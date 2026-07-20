@@ -34,7 +34,7 @@ for the corrected mechanism.
     separately confirmed.
 
 - [ ] **Link-down restore.** Confirm the link-down path returns each host to
-  its day wired value.
+  its standalone wired value.
   - _Result:_ **(verify)** — not directly confirmed in this session's record.
 
 - [x] **Readiness probe.** Confirm the coordinator watcher logs `rank ready`.
@@ -45,7 +45,7 @@ for the corrected mechanism.
     first-plug blocker but a known operational gap going forward.
 
 - [ ] **Unplug test.** Yank the cable mid-generation: router falls back, ranks
-  stop, day serving re-warms, worker agents restore.
+  stop, standalone serving re-warms, worker agents restore.
   - _Result:_ **(verify)** — not directly confirmed in this session's record.
 
 - [ ] **Second cable.** Test whether JACCL uses a second link between the same
@@ -60,7 +60,7 @@ for the corrected mechanism.
     (2026-07-16).
 
 - [ ] **Reboot-with-cable-in.** Verify the quiesce-on-kickstart fix
-  (nix-ai#1245) unloads day serving before the rank starts.
+  (nix-ai#1245) unloads standalone serving before the rank starts.
   - _Result:_ **(verify)** — not directly confirmed in this session's record.
 
 ## Sign-off

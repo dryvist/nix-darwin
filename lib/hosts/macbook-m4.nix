@@ -26,6 +26,16 @@
     cacheMemoryMb = 16384;
     prefillBatchSize = 2048;
 
+    # Paired with appleSiliconTunables.wiredLimitMb = 84000 (88.08 GB ceiling)
+    # in hosts/macbook-m4/default.nix — one decision, not two knobs. Overridden
+    # DOWN from the 0.8 module default because a workstation must leave desktop
+    # headroom. https://docs.jacobpevans.com/local-llm/memory-ceilings
+    gpuMemoryUtilization = 0.55;
+
+    # MLX retained free-buffer pool. Trimmed from the 12 GB module default to
+    # keep the resident footprint under allocation_limit.
+    bufferCacheLimitGb = 8;
+
     # Same batch-uniformity guard as the serving host: a repetition penalty is
     # a logits processor, and mlx_lm's batch generator dies on a batch mixing
     # requests that carry one with requests that do not (nix-ai#1234). This dev
@@ -36,13 +46,12 @@
     # Clustered mode: this Mac is rank 1 (worker) of the two-Mac JACCL cluster
     # when the Thunderbolt cable is in. The worker-side quiesce/restore hooks
     # (GUI quit + agent bootout allowlist sweep) are wired by
-    # hosts/common/cluster-quiesce.nix. Day config above is untouched.
+    # hosts/common/cluster-quiesce.nix. Standalone config above is untouched.
     clusterMode = {
-      # RE-ENABLED 2026-07-18 in the supervised session the 2026-07-12
-      # disable note called for (the boot-time watcher had auto-started a
-      # rank whose ~99 GB wired shard starved WindowServer into a watchdog
-      # kernel panic on both hosts; clusterLinkPrep.clusterWiredLimitMb now
-      # bounds the wired load, and the REAP-50 build halves the shard).
+      # Clustered ranks run under their own wired ceiling, applied by
+      # clusterLinkPrep.clusterWiredLimitMb before any shard loads and
+      # restored to the standalone value at link-down. The REAP-50 build
+      # halves the per-rank shard. Background: Zammad AI/LLM Serving #17126.
       # Enabled together with the coordinator (lib/hosts/mac-studio.nix).
       enable = true;
       role = "worker";
