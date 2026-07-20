@@ -14,10 +14,20 @@
   config,
   hostConfig,
   lib,
+  pkgs,
   ...
 }:
 
 let
+  # Post-rebuild check that serving actually answers a real completion.
+  # See the script header for why a status-code check is not sufficient and why
+  # this does not touch Hermes.
+  servingGate = pkgs.writeShellApplication {
+    name = "serving-gate";
+    runtimeInputs = [ pkgs.jq ];
+    text = builtins.readFile ./scripts/serving-gate.sh;
+  };
+
   userConfig = import ../../lib/user-config.nix;
   promptBody =
     path:
@@ -200,7 +210,14 @@ in
 
   # nix-prebuild writes to its own log dir; create it with user ownership so the
   # user agent can write (claude-scheduled-jobs creates its own dir separately).
-  system.activationScripts.postActivation.text = ''
+  #
+  # The serving gate runs last: a rebuild bounces dev.vllm-mlx.server, and this
+  # host can come back with an orphaned worker or a wedged scheduler, neither of
+  # which a status-code check detects. It warns rather than failing — activation
+  # is already done by this point, so a non-zero exit would report a half-applied
+  # system without fixing anything.
+  system.activationScripts.postActivation.text = lib.mkAfter ''
     /usr/bin/install -d -o ${userConfig.user.name} -g staff "${userConfig.user.homeDir}/Library/Logs/nix-prebuild"
+    ${lib.getExe servingGate} || true
   '';
 }
