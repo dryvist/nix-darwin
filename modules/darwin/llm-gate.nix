@@ -74,87 +74,62 @@ let
     else
       "tls internal";
 
-  # The API site answers for the host FQDN plus any service-alias hostnames.
-  # Caddy takes a space-separated address list for a single site and obtains
-  # one certificate covering every listed hostname. lib.unique guards against a
-  # duplicate site address (and duplicate cert request) if a consumer lists
-  # `domain` again in `extraHostnames`.
-  apiSiteAddresses = lib.concatMapStringsSep " " (host: "https://${host}:${toString cfg.apiPort}") (
-    lib.unique ([ cfg.domain ] ++ cfg.extraHostnames)
-  );
-
-  # Optional second gated site for the cluster-mode endpoint (same bearer
-  # token, same cert, own port + access log). Rendered only when a cluster
-  # upstream is configured.
-  clusterSite = lib.optionalString (cfg.clusterUpstreamPort != null) ''
-    ${
-      lib.concatMapStringsSep " " (host: "https://${host}:${toString cfg.clusterPort}") (
-        lib.unique ([ cfg.domain ] ++ cfg.extraHostnames)
-      )
-    } {
-      ${tlsDirective}
-      log {
-        output file ${cfg.logDir}/cluster-access.json
-        format json
+  # One gated reverse-proxy site: TLS + bearer-token check in front of a
+  # loopback upstream, with its own external port and JSON access log. Every
+  # gate site shares this shape. lib.unique dedupes the cert's hostname list.
+  gatedSite =
+    {
+      extPort,
+      upstreamPort,
+      logFile,
+    }:
+    ''
+      ${
+        lib.concatMapStringsSep " " (host: "https://${host}:${toString extPort}") (
+          lib.unique ([ cfg.domain ] ++ cfg.extraHostnames)
+        )
+      } {
+        ${tlsDirective}
+        log {
+          output file ${cfg.logDir}/${logFile}
+          format json
+        }
+        @unauthorized not header Authorization "Bearer {env.LLM_LARGE_BEARER_TOKEN}"
+        respond @unauthorized 401
+        reverse_proxy 127.0.0.1:${toString upstreamPort}
       }
-      @unauthorized not header Authorization "Bearer {env.LLM_LARGE_BEARER_TOKEN}"
-      respond @unauthorized 401
-      reverse_proxy 127.0.0.1:${toString cfg.clusterUpstreamPort}
-    }
-  '';
+    '';
 
-  # Optional third gated site: a DIRECT route to the resident brain backend on
-  # its fixed loopback port, bypassing the llama-swap proxy. Exists because the
-  # proxy's in-flight slot accounting leaks under client-side aborts (a
-  # saturation wave leaves it hard-429ing an idle backend until restarted —
-  # INC-17097, 2×2026-07-20), which took the Hermes cron fleet down with it.
-  # The production brain is a fixed resident model that needs no swap logic, so
-  # its SLO path should not traverse the swap proxy at all. Same bearer token,
-  # same cert, own port + access log, mirrored external:loopback convention.
-  brainSite = lib.optionalString (cfg.brainUpstreamPort != null) ''
-    ${
-      lib.concatMapStringsSep " " (host: "https://${host}:${toString cfg.brainUpstreamPort}") (
-        lib.unique ([ cfg.domain ] ++ cfg.extraHostnames)
-      )
-    } {
-      ${tlsDirective}
-      log {
-        output file ${cfg.logDir}/brain-access.json
-        format json
-      }
-      @unauthorized not header Authorization "Bearer {env.LLM_LARGE_BEARER_TOKEN}"
-      respond @unauthorized 401
-      reverse_proxy 127.0.0.1:${toString cfg.brainUpstreamPort}
-    }
-  '';
+  # Second gated site: the cluster-mode endpoint (mlx-lm rank 0), when configured.
+  clusterSite = lib.optionalString (cfg.clusterUpstreamPort != null) (gatedSite {
+    extPort = cfg.clusterPort;
+    upstreamPort = cfg.clusterUpstreamPort;
+    logFile = "cluster-access.json";
+  });
 
-  # The whole Caddyfile is a plain, secret-free nix store file: every sensitive
-  # value is an {env.VAR} placeholder resolved by Caddy at parse time from the
-  # openbao-run-injected environment. Safe to be world-readable — it contains no
-  # secrets, only the (already public) hostnames.
+  # Third gated site: a DIRECT route to the resident brain backend, bypassing
+  # the llama-swap proxy whose in-flight accounting leaks under client aborts
+  # and hard-429s an idle backend until restarted (INC-17097). The brain is a
+  # fixed resident model needing no swap logic, so its SLO path skips the proxy.
+  brainSite = lib.optionalString (cfg.brainUpstreamPort != null) (gatedSite {
+    extPort = cfg.brainPort;
+    upstreamPort = cfg.brainUpstreamPort;
+    logFile = "brain-access.json";
+  });
+
+  # Secret-free nix store file: every sensitive value is an {env.VAR}
+  # placeholder Caddy resolves at parse time from the openbao-run environment.
   caddyfile = pkgs.writeText "llm-gate.Caddyfile" ''
     {
       admin off
       auto_https disable_redirects
     }
 
-    ${apiSiteAddresses} {
-      ${tlsDirective}
-      # JSON access log — the only place API-consumer traffic is visible (the
-      # model server on loopback only ever sees the proxy). Written into the
-      # gate's log dir (0755, outside the 0700 dataDir so a non-root Cribl
-      # Edge can traverse it; ~/Library/Logs per macOS convention) and tailed
-      # by the Cribl Edge in_gate_access file input (hosts/common). Caddy's
-      # default rolling applies (100 MiB rolls, keep 10, 90 days), so no
-      # newsyslog entry is needed.
-      log {
-        output file ${cfg.logDir}/access.json
-        format json
-      }
-      @unauthorized not header Authorization "Bearer {env.LLM_LARGE_BEARER_TOKEN}"
-      respond @unauthorized 401
-      reverse_proxy 127.0.0.1:${toString cfg.apiUpstreamPort}
-    }
+    ${gatedSite {
+      extPort = cfg.apiPort;
+      upstreamPort = cfg.apiUpstreamPort;
+      logFile = "access.json";
+    }}
 
     ${clusterSite}
 
@@ -218,10 +193,16 @@ in
       description = "Loopback cluster-mode (mlx-lm rank 0) port to gate; null renders no cluster site.";
     };
 
+    brainPort = lib.mkOption {
+      type = lib.types.port;
+      default = 11437;
+      description = "Gated resident-brain API port on the LAN bind address (same convention as apiPort).";
+    };
+
     brainUpstreamPort = lib.mkOption {
       type = lib.types.nullOr lib.types.port;
       default = null;
-      description = "Loopback resident-brain backend port to gate DIRECTLY, bypassing the swap proxy (mirrored external:loopback, same convention as clusterUpstreamPort); null renders no brain site. Exists so the production SLO path avoids the proxy's abort-leak failure mode (INC-17097).";
+      description = "Loopback resident-brain backend port to gate directly, bypassing the swap proxy; null renders no brain site (INC-17097).";
     };
 
     user = lib.mkOption {
