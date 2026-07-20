@@ -103,6 +103,31 @@ let
     }
   '';
 
+  # Optional third gated site: a DIRECT route to the resident brain backend on
+  # its fixed loopback port, bypassing the llama-swap proxy. Exists because the
+  # proxy's in-flight slot accounting leaks under client-side aborts (a
+  # saturation wave leaves it hard-429ing an idle backend until restarted —
+  # INC-17097, 2×2026-07-20), which took the Hermes cron fleet down with it.
+  # The production brain is a fixed resident model that needs no swap logic, so
+  # its SLO path should not traverse the swap proxy at all. Same bearer token,
+  # same cert, own port + access log, mirrored external:loopback convention.
+  brainSite = lib.optionalString (cfg.brainUpstreamPort != null) ''
+    ${
+      lib.concatMapStringsSep " " (host: "https://${host}:${toString cfg.brainUpstreamPort}") (
+        lib.unique ([ cfg.domain ] ++ cfg.extraHostnames)
+      )
+    } {
+      ${tlsDirective}
+      log {
+        output file ${cfg.logDir}/brain-access.json
+        format json
+      }
+      @unauthorized not header Authorization "Bearer {env.LLM_LARGE_BEARER_TOKEN}"
+      respond @unauthorized 401
+      reverse_proxy 127.0.0.1:${toString cfg.brainUpstreamPort}
+    }
+  '';
+
   # The whole Caddyfile is a plain, secret-free nix store file: every sensitive
   # value is an {env.VAR} placeholder resolved by Caddy at parse time from the
   # openbao-run-injected environment. Safe to be world-readable — it contains no
@@ -132,6 +157,8 @@ let
     }
 
     ${clusterSite}
+
+    ${brainSite}
   '';
 in
 {
@@ -189,6 +216,12 @@ in
       type = lib.types.nullOr lib.types.port;
       default = null;
       description = "Loopback cluster-mode (mlx-lm rank 0) port to gate; null renders no cluster site.";
+    };
+
+    brainUpstreamPort = lib.mkOption {
+      type = lib.types.nullOr lib.types.port;
+      default = null;
+      description = "Loopback resident-brain backend port to gate DIRECTLY, bypassing the swap proxy (mirrored external:loopback, same convention as clusterUpstreamPort); null renders no brain site. Exists so the production SLO path avoids the proxy's abort-leak failure mode (INC-17097).";
     };
 
     user = lib.mkOption {

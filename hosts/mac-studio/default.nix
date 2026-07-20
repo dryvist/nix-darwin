@@ -93,6 +93,13 @@ in
       # lib/hosts/mac-studio.nix clusterMode): second gated site, same
       # bearer token and cert, mirrored external:loopback port convention.
       clusterUpstreamPort = 11440;
+      # Direct gated route to the resident 80B fleet brain (vllm-mlx on
+      # loopback :11437), bypassing llama-swap: the swap proxy's in-flight
+      # accounting leaks under client aborts and hard-429s an idle backend
+      # until restarted (INC-17097), which pauses the Hermes cron fleet. The
+      # brain is a fixed resident model — its production path needs no swap
+      # logic. The router's 80B-Instruct api_base moves to this port.
+      brainUpstreamPort = 11437;
     };
 
     # ========================================================================
