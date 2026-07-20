@@ -67,14 +67,6 @@ let
       greedy = true;
     }
 
-    # --- Communication ---
-    # Moved off nixpkgs: that build unpacks to 8.9 GB (8.3 GB of it Windows
-    # `.ico` badge assets macOS never reads) and dominated the CI closure.
-    {
-      name = "discord";
-      greedy = true;
-    }
-
     # --- Anthropic ---
     {
       name = "claude";
