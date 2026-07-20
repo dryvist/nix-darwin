@@ -10,8 +10,8 @@
 #   - Manual installs: /Applications/
 #   - User apps: ~/Applications/
 #
-# NOTE: TCC-sensitive apps (Ghostty, VS Code, Discord) use copyApps (migrated
-# from mac-app-util trampolines) for stable paths that persist macOS TCC
+# NOTE: TCC-sensitive apps (Ghostty, VS Code) use copyApps (migrated from
+# mac-app-util trampolines) for stable paths that persist macOS TCC
 # permissions across darwin-rebuild.
 
 _:
@@ -45,7 +45,6 @@ in
       "/Applications/Microsoft Teams.app"
       "/Applications/Slack.app"
       "/Applications/zoom.us.app" # Manual install - now at system level
-      "${homeDir}/Applications/Home Manager Apps/Discord.app" # nixpkgs, copyApps for TCC stability
       "/System/Applications/Messages.app"
 
       # AI Assistants
