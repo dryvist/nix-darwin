@@ -1456,7 +1456,7 @@
 * update flake inputs after nix-ai and nix-home cleanup PRs ([#882](https://github.com/JacobPEvans/nix-darwin/issues/882)) ([0a05872](https://github.com/JacobPEvans/nix-darwin/commit/0a058724ace7d6f192702aa90d99c26bb1f44832))
 * update issue pipeline to ai-workflows v0.2.1 ([#665](https://github.com/JacobPEvans/nix-darwin/issues/665)) ([ad8fbab](https://github.com/JacobPEvans/nix-darwin/commit/ad8fbab5d25091c4c951e22e4c96a125de23a8ba))
 * update issue pipeline to ai-workflows v0.2.2 ([#666](https://github.com/JacobPEvans/nix-darwin/issues/666)) ([98b2c75](https://github.com/JacobPEvans/nix-darwin/commit/98b2c7541330451f5e6b7c2612eda5a1187a56b6))
-* update nix-ai (MLX port 11435→11436, screenpipe conflict) ([#869](https://github.com/JacobPEvans/nix-darwin/issues/869)) ([d399876](https://github.com/JacobPEvans/nix-darwin/commit/d39987629c25af1c7f02425e3aa56d13b6564f75))
+* update nix-ai (MLX port 11435→11436, port conflict) ([#869](https://github.com/JacobPEvans/nix-darwin/issues/869)) ([d399876](https://github.com/JacobPEvans/nix-darwin/commit/d39987629c25af1c7f02425e3aa56d13b6564f75))
 * update nix-ai flake input to latest ([#860](https://github.com/JacobPEvans/nix-darwin/issues/860)) ([10c6032](https://github.com/JacobPEvans/nix-darwin/commit/10c6032b08cfa47d4dd3f926e173f2df38013b65))
 * update nix-ai input (v0.2.6 CLI flags + checks split) ([#885](https://github.com/JacobPEvans/nix-darwin/issues/885)) ([7e19da6](https://github.com/JacobPEvans/nix-darwin/commit/7e19da6d768fe680957c5ba15940a82e98c0081a))
 * use full path /opt/homebrew/bin/brew, fall back to stat -f '%Su' /dev/console for user detection. ([9256aa3](https://github.com/JacobPEvans/nix-darwin/commit/9256aa3a72adfa4a7b22e278ba86afa69ffc37ee))
@@ -1750,7 +1750,7 @@
 * update flake inputs after nix-ai and nix-home cleanup PRs ([#882](https://github.com/JacobPEvans/nix-darwin/issues/882)) ([0a05872](https://github.com/JacobPEvans/nix-darwin/commit/0a058724ace7d6f192702aa90d99c26bb1f44832))
 * update issue pipeline to ai-workflows v0.2.1 ([#665](https://github.com/JacobPEvans/nix-darwin/issues/665)) ([ad8fbab](https://github.com/JacobPEvans/nix-darwin/commit/ad8fbab5d25091c4c951e22e4c96a125de23a8ba))
 * update issue pipeline to ai-workflows v0.2.2 ([#666](https://github.com/JacobPEvans/nix-darwin/issues/666)) ([98b2c75](https://github.com/JacobPEvans/nix-darwin/commit/98b2c7541330451f5e6b7c2612eda5a1187a56b6))
-* update nix-ai (MLX port 11435→11436, screenpipe conflict) ([#869](https://github.com/JacobPEvans/nix-darwin/issues/869)) ([d399876](https://github.com/JacobPEvans/nix-darwin/commit/d39987629c25af1c7f02425e3aa56d13b6564f75))
+* update nix-ai (MLX port 11435→11436, port conflict) ([#869](https://github.com/JacobPEvans/nix-darwin/issues/869)) ([d399876](https://github.com/JacobPEvans/nix-darwin/commit/d39987629c25af1c7f02425e3aa56d13b6564f75))
 * update nix-ai flake input to latest ([#860](https://github.com/JacobPEvans/nix-darwin/issues/860)) ([10c6032](https://github.com/JacobPEvans/nix-darwin/commit/10c6032b08cfa47d4dd3f926e173f2df38013b65))
 * update nix-ai input (v0.2.6 CLI flags + checks split) ([#885](https://github.com/JacobPEvans/nix-darwin/issues/885)) ([7e19da6](https://github.com/JacobPEvans/nix-darwin/commit/7e19da6d768fe680957c5ba15940a82e98c0081a))
 * use array expansion for safe flake inputs handling ([e414ede](https://github.com/JacobPEvans/nix-darwin/commit/e414edee4be9bb94b63bf7c2d2f54956e8415e6f))
@@ -2146,7 +2146,7 @@
 * update flake inputs after nix-ai and nix-home cleanup PRs ([#882](https://github.com/JacobPEvans/nix-darwin/issues/882)) ([0a05872](https://github.com/JacobPEvans/nix-darwin/commit/0a058724ace7d6f192702aa90d99c26bb1f44832))
 * update issue pipeline to ai-workflows v0.2.1 ([#665](https://github.com/JacobPEvans/nix-darwin/issues/665)) ([ad8fbab](https://github.com/JacobPEvans/nix-darwin/commit/ad8fbab5d25091c4c951e22e4c96a125de23a8ba))
 * update issue pipeline to ai-workflows v0.2.2 ([#666](https://github.com/JacobPEvans/nix-darwin/issues/666)) ([98b2c75](https://github.com/JacobPEvans/nix-darwin/commit/98b2c7541330451f5e6b7c2612eda5a1187a56b6))
-* update nix-ai (MLX port 11435→11436, screenpipe conflict) ([#869](https://github.com/JacobPEvans/nix-darwin/issues/869)) ([d399876](https://github.com/JacobPEvans/nix-darwin/commit/d39987629c25af1c7f02425e3aa56d13b6564f75))
+* update nix-ai (MLX port 11435→11436, port conflict) ([#869](https://github.com/JacobPEvans/nix-darwin/issues/869)) ([d399876](https://github.com/JacobPEvans/nix-darwin/commit/d39987629c25af1c7f02425e3aa56d13b6564f75))
 * update nix-ai flake input to latest ([#860](https://github.com/JacobPEvans/nix-darwin/issues/860)) ([10c6032](https://github.com/JacobPEvans/nix-darwin/commit/10c6032b08cfa47d4dd3f926e173f2df38013b65))
 * update nix-ai input (v0.2.6 CLI flags + checks split) ([#885](https://github.com/JacobPEvans/nix-darwin/issues/885)) ([7e19da6](https://github.com/JacobPEvans/nix-darwin/commit/7e19da6d768fe680957c5ba15940a82e98c0081a))
 * use array expansion for safe flake inputs handling ([e414ede](https://github.com/JacobPEvans/nix-darwin/commit/e414edee4be9bb94b63bf7c2d2f54956e8415e6f))
@@ -2234,7 +2234,7 @@
 
 ### Bug Fixes
 
-* update nix-ai (MLX port 11435→11436, screenpipe conflict) ([#869](https://github.com/JacobPEvans/nix-darwin/issues/869)) ([d399876](https://github.com/JacobPEvans/nix-darwin/commit/d39987629c25af1c7f02425e3aa56d13b6564f75))
+* update nix-ai (MLX port 11435→11436, port conflict) ([#869](https://github.com/JacobPEvans/nix-darwin/issues/869)) ([d399876](https://github.com/JacobPEvans/nix-darwin/commit/d39987629c25af1c7f02425e3aa56d13b6564f75))
 
 ## [1.12.1](https://github.com/JacobPEvans/nix-darwin/compare/v1.12.0...v1.12.1) (2026-03-19)
 
