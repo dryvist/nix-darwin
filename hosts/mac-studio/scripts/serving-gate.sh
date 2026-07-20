@@ -35,12 +35,16 @@ set -u
 
 PORT="${SERVING_GATE_PORT:-11434}"
 BASE="http://127.0.0.1:${PORT}"
-ATTEMPTS="${SERVING_GATE_ATTEMPTS:-6}"
-SLEEP="${SERVING_GATE_SLEEP:-20}"
+SLEEP="${SERVING_GATE_SLEEP:-15}"
 # Measured, not guessed: a cold llama-swap model swap on this host exceeded 90s
-# and completed under 120s. 180 leaves headroom for the larger resident model
-# without letting a genuinely wedged engine stall activation indefinitely.
+# and completed under 120s. 180 leaves headroom for the larger resident model.
 TIMEOUT="${SERVING_GATE_TIMEOUT:-180}"
+# HARD total budget. This runs inside activation, so an unbounded retry loop
+# would hang a rebuild — naive attempt-counting with this timeout could block
+# for ~20 minutes. The deadline is what actually bounds the work; attempts just
+# stop early once it passes. 360s fits two full cold-swap attempts with room to
+# spare, and a wedged engine is not going to un-wedge itself in minute nineteen.
+DEADLINE_SECS="${SERVING_GATE_DEADLINE:-360}"
 
 # /usr/bin/curl, not a nixpkgs curl: macOS Local Network privacy denies
 # non-platform binaries LAN access in some launchd contexts. Loopback is exempt
@@ -55,7 +59,10 @@ if [ -z "${model}" ]; then
   exit 0
 fi
 
-for i in $(seq 1 "${ATTEMPTS}"); do
+started="$(date +%s)"
+attempt=0
+while :; do
+  attempt=$((attempt + 1))
   toks="$("$CURL" -sS --max-time "${TIMEOUT}" \
     -H 'Content-Type: application/json' \
     -d "{\"model\":\"${model}\",\"messages\":[{\"role\":\"user\",\"content\":\"ok\"}],\"max_tokens\":1,\"repetition_penalty\":1.05}" \
@@ -63,14 +70,21 @@ for i in $(seq 1 "${ATTEMPTS}"); do
     jq -r '.usage.completion_tokens // 0' 2>/dev/null)"
 
   if [ "${toks:-0}" -ge 1 ]; then
-    echo "[serving-gate] OK: ${model} returned ${toks} token(s) after ${i} attempt(s)"
+    echo "[serving-gate] OK: ${model} returned ${toks} token(s) after ${attempt} attempt(s), $(( $(date +%s) - started ))s"
     exit 0
   fi
+
+  elapsed=$(( $(date +%s) - started ))
+  # Check the deadline against elapsed + the next attempt's worst case, so we
+  # never start a request that would blow past it.
+  if [ "$(( elapsed + SLEEP + TIMEOUT ))" -gt "${DEADLINE_SECS}" ]; then
+    break
+  fi
   # A cold engine legitimately takes time to load weights; retry before judging.
-  [ "${i}" -lt "${ATTEMPTS}" ] && sleep "${SLEEP}"
+  sleep "${SLEEP}"
 done
 
-echo "[serving-gate] WARN: ${model} never returned a token after ${ATTEMPTS} attempts." >&2
+echo "[serving-gate] WARN: ${model} never returned a token (${attempt} attempts, $(( $(date +%s) - started ))s)." >&2
 echo "[serving-gate]       Orphaned worker or wedged scheduler. Diagnose with:" >&2
 echo "[serving-gate]         lsof -nP -iTCP:${PORT} -sTCP:LISTEN" >&2
 echo "[serving-gate]         ps -eo pid,ppid,command | grep 'vllm-mlx serve'" >&2
