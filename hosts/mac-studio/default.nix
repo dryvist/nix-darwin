@@ -9,10 +9,19 @@
 # This file adds the host-unique bits: ComputerName, headless inference/power
 # tuning, the llm-large serving gate, and the ephemeral GitHub Actions runner.
 
-{ config, hostConfig, ... }:
+{
+  ai-llm-prompts,
+  config,
+  hostConfig,
+  lib,
+  ...
+}:
 
 let
   userConfig = import ../../lib/user-config.nix;
+  promptBody =
+    path:
+    lib.concatStringsSep "\n---\n" (lib.drop 1 (lib.splitString "\n---\n" (builtins.readFile path)));
 in
 {
   imports = [ ../common/default.nix ];
@@ -133,14 +142,9 @@ in
           hour = 3;
           minute = 30;
         };
-        prompt = ''
-          You are running unattended on ${hostConfig.hostName}. For each git
-          repository under ~/git (each <repo>/main checkout): run git fetch
-          --all --prune; delete local branches whose upstream is gone and remove
-          their worktrees; NEVER touch a branch or worktree with uncommitted
-          changes or unpushed commits; skip anything ambiguous; print a one-line
-          summary per repo; make no other changes; open no PRs.
-        '';
+        prompt = lib.replaceStrings [ "\${hostConfig.hostName}" ] [ hostConfig.hostName ] (
+          promptBody "${ai-llm-prompts}/developer-tools/nix-darwin-studio-hygiene.md"
+        );
       };
     };
 
@@ -149,6 +153,13 @@ in
     # Secret-zero (VAULT_ADDR + the terraform AppRole) is supplied ambiently by
     # `doppler run`, not a local keychain. See modules/darwin/apps/openbao-aws-creds.nix.
     openbao-aws-creds.enable = true;
+
+    # --- OpenBao-backed GitHub token provider ---
+    # Same wrapper the laptop ships (hosts/macbook-m4): ambient READ tokens,
+    # per-repo WRITE behind a claim/lease, keychain-free. The git credential
+    # wiring lives in hosts/common/home.nix, so enabling this module is all a
+    # host needs for the OpenBao GitHub path.
+    openbao-github-creds.enable = true;
 
     # --- Reboot-continuity auto-resume ---
     # Same login-time armed-mission resume as the laptop; no-op unless armed

@@ -16,11 +16,7 @@ repos:
     hooks:
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
-        # gh-aw generated artifacts are regenerated verbatim; hand-fixing
-        # whitespace in them just churns against the generator
-        exclude: ^\.github/(workflows/.*\.lock\.yml|aw/imports/)
       - id: end-of-file-fixer
-        exclude: ^\.github/(workflows/.*\.lock\.yml|aw/imports/)
       - id: check-yaml
       - id: check-json
       - id: check-added-large-files

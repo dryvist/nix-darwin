@@ -16,6 +16,27 @@
         "type": "github"
       }
     },
+    "ai-llm-prompts": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1784408116,
+        "narHash": "sha256-8vrPVYjaT3quAKA5lgXIkRtmfN1ulDJwugs9QB8KkO0=",
+        "owner": "dryvist",
+        "repo": "ai-llm-prompts",
+        "rev": "0431be6994d51169b9f705ddeba958eb8a4d0fc4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "dryvist",
+        "repo": "ai-llm-prompts",
+        "rev": "0431be6994d51169b9f705ddeba958eb8a4d0fc4",
+        "type": "github"
+      }
+    },
     "anthropic-agent-skills": {
       "flake": false,
       "locked": {
@@ -894,6 +915,9 @@
         "ai-assistant-instructions": [
           "ai-assistant-instructions"
         ],
+        "ai-llm-prompts": [
+          "ai-llm-prompts"
+        ],
         "autoresearch": "autoresearch",
         "claude-code-plugins": [
           "claude-code-plugins"
@@ -916,11 +940,11 @@
         "ponytail": "ponytail"
       },
       "locked": {
-        "lastModified": 1784407629,
-        "narHash": "sha256-vGjw1rMD9yYt2gWs+2bT4/ZTZyuCcSsGx3CFZPPtkfw=",
+        "lastModified": 1784493224,
+        "narHash": "sha256-ysaEnLily9ZtwyjjRvfehxdppIw2B5MypmLlHt2bArw=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "6791b6859915a1605568312d4afe5ffdcc751895",
+        "rev": "b7f34841f447dffb2c7fce2caafa4555c1168423",
         "type": "github"
       },
       "original": {
@@ -1263,6 +1287,7 @@
     "root": {
       "inputs": {
         "ai-assistant-instructions": "ai-assistant-instructions",
+        "ai-llm-prompts": "ai-llm-prompts",
         "claude-code-plugins": "claude-code-plugins",
         "darwin": "darwin",
         "determinate": "determinate",

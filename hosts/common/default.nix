@@ -8,6 +8,7 @@
 # appleSiliconTunables values — stays in hosts/<label>/default.nix.
 
 {
+  config,
   lib,
   pkgs,
   hostConfig,
@@ -129,13 +130,33 @@ in
     clusterLinkPrep = {
       enable = true;
       role = if hostConfig.isServer then "coordinator" else "worker";
-      # Shard-sized cluster wired ceilings, applied around rank start/stop by
-      # the cluster watcher (day value restored at link-down). This is the
-      # wired-headroom mitigation the 2026-07-12 panic gated clusterMode
-      # re-enable on: the laptop keeps a larger unwirable share to protect
-      # its ~25 GB GUI working set. UNVALIDATED until the first supervised
-      # plug session.
-      clusterWiredLimitMb = if hostConfig.isServer then 90000 else 80000;
+      # Cluster wired ceilings, applied around rank start/stop by the cluster
+      # watcher (day value restored at link-down). Raised 2026-07-19 per user
+      # decision: the old 90000/80000 caps were low enough to force swap
+      # thrash under the per-rank shard, and swap saturation kills the whole
+      # cluster just as surely as a wired-out WindowServer — so an ultra-low
+      # cap bought nothing. Headroom over conservatism; the operative guard
+      # against thrash is now the detach exit-3 stale-swap gate + reboot-first
+      # doctrine (INC-17075), not a tiny wired ceiling.
+      clusterWiredLimitMb =
+        if hostConfig.isServer then
+          # Headless server: no GUI/WindowServer working set, so the cluster
+          # ceiling matches the day ceiling (118000 ≈ 92% of 128 GB, ~10 GB
+          # reserve). Derived from the day value so the two never drift.
+          config.system.appleSiliconTunables.wiredLimitMb
+        else
+          # Workstation worker: 128 GB physical − ~28 GB reserve = 100000. The
+          # reserve protects WindowServer + macOS system during CLUSTER mode,
+          # where cluster-quiesce has quit the GUI apps and booted out agents
+          # (working set far below the ~25 GB day-serving GUI set). It is kept
+          # deliberately larger than the headless Studio's ~10 GB because
+          # INC-17076 was a WindowServer watchdog panic on THIS machine — the
+          # laptop earns the extra reserve. Note the day ceiling here stays 0
+          # (appleSiliconTunables.wiredLimitMb): a raised DAY cap saturated
+          # swap with the GUI active (see hosts/macbook-m4/default.nix), but
+          # the quiesced cluster profile is different, so a higher CLUSTER cap
+          # is safe where a higher DAY cap was not.
+          100000;
     };
     energy.wakeOnMagicPacket = lib.mkIf hostConfig.isServer (lib.mkDefault true); # Wake-on-LAN for a headless box
     networkTuning.enable = lib.mkIf hostConfig.isServer (lib.mkDefault true); # socket buffers for LAN serving

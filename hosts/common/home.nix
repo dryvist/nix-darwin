@@ -8,7 +8,6 @@
 {
   config,
   lib,
-  userConfig,
   osConfig,
   hostConfig,
   ...
@@ -27,8 +26,14 @@
     ./git-global-excludes.nix
     # Ghostty terminfo (package + ~/.terminfo) — split out for the byte cap.
     ./ghostty-terminfo.nix
+    # macOS-specific zsh init (keychain reads, gh-token switching, launchers) —
+    # split out for the byte cap; merges into programs.zsh.
+    ./zsh-macos.nix
     # Worker-side cluster-mode quiesce/restore hooks (byte cap split).
     ./cluster-quiesce.nix
+    # Feeds the system-level clusterLinkPrep wired ceilings into nix-ai's
+    # programs.mlx.clusterMode so the watcher/lifecycle env carries them.
+    ./cluster-wired-limit.nix
   ];
 
   # Share system-level Homebrew taps with nix-ai's trust.json.
@@ -87,6 +92,27 @@
   };
 
   programs = {
+    # --- GitHub credentials for git: OpenBao-minted, never keychain ---
+    # git resolves GitHub HTTPS credentials through the OpenBao-backed wrapper
+    # (modules/darwin/apps/openbao-github-creds.nix): ambient READ tokens per
+    # owner, write only behind `openbao-github-creds claim`. `doppler run`
+    # supplies the wrapper's secret-zero ambiently; useHttpPath makes git send
+    # path=<owner>/<repo> so the wrapper picks the right read set. gh's own
+    # git credential helper is disabled so the wrapper is the ONLY GitHub
+    # credential path for git — a push without a claim fails loud at GitHub
+    # (read token, 403) instead of silently riding a broader credential.
+    gh.gitCredentialHelper.enable = false;
+    git.settings.credential = {
+      "https://github.com" = {
+        helper = "!doppler run -- openbao-github-creds";
+        useHttpPath = true;
+      };
+      "https://gist.github.com" = {
+        helper = "!doppler run -- openbao-github-creds";
+        useHttpPath = true;
+      };
+    };
+
     # Claude Code config (plugin disables, MCP server overrides) moved to
     # nix-ai/modules/claude-config.nix in dryvist/nix-ai#853 — Claude config
     # doesn't belong in nix-darwin (host-specific opinion lives in nix-ai).
@@ -106,100 +132,9 @@
     # (no MLX server) rather than crashing on a missing attr.
     mlx = lib.mkIf (hostConfig ? mlx) ({ enable = true; } // hostConfig.mlx);
 
-    # macOS-specific zsh overrides
-    # Base zsh config provided by nix-home (sharedModule).
-    # These additions are macOS-specific and merge via NixOS module system.
-    zsh = {
-      oh-my-zsh.plugins = [
-        "macos" # macOS utilities (ofd, cdf, etc.)
-      ];
-
-      # macOS-specific shell init (appended after cross-platform initContent from nix-home)
-      initContent = lib.mkAfter ''
-        # --- Keychain helper (persists for runtime token switching) ---
-
-        _get_keychain_secret() {
-          # Fetch a secret from the macOS Keychain by service name.
-          # Usage: _get_keychain_secret <service> <account> [keychain-db]
-          # keychain-db: optional path, e.g. automation.keychain-db
-          security find-generic-password -s "$1" -a "$2" -w ''${3:+"$3"} 2>/dev/null || echo ""
-        }
-
-        # Keychain identity constants — resolved from userConfig at build time.
-        # Human account: personal secrets in the login keychain.
-        # AI account: automation secrets in a dedicated keychain (see lib/user-config.nix).
-        _KC_USER='${userConfig.user.name}'
-        _KC_AI_ACCOUNT='${userConfig.keychain.aiAccount}'
-        _KC_AI_DB='${userConfig.keychain.aiDb}'
-
-        # --- API Keys (from macOS Keychain) ---
-
-        # GitHub - for github@claude-plugins-official MCP server
-        export GITHUB_PERSONAL_ACCESS_TOKEN=''${GITHUB_PERSONAL_ACCESS_TOKEN:-"$(_get_keychain_secret 'github-pat' "$_KC_USER")"}
-
-        # Context7 - for context7@claude-plugins-official MCP server
-        export CONTEXT7_API_KEY=''${CONTEXT7_API_KEY:-"$(_get_keychain_secret 'CONTEXT7_API_KEY' "$_KC_USER")"}
-
-        # HuggingFace - for huggingface MCP server and hf CLI (model downloads)
-        ${
-          # Server-class hosts are keychain-free for real secrets: HF_TOKEN
-          # comes from the sops-rendered per-machine secret instead (portable
-          # across machines via the committed encrypted file + on-device age
-          # key). Workstations keep the keychain read, byte-identical.
-          if hostConfig.isServer then
-            ''export HF_TOKEN=''${HF_TOKEN:-"$(cat /run/secrets/HF_TOKEN 2>/dev/null || echo "")"}''
-          else
-            ''export HF_TOKEN=''${HF_TOKEN:-"$(_get_keychain_secret 'HF_TOKEN' "$_KC_AI_ACCOUNT" "$_KC_AI_DB")"}''
-        }
-
-        # openHarness local-LLM bearer (workstation only; no server sops fallback).
-        ${lib.optionalString (!hostConfig.isServer) ''
-          export OPENAI_API_KEY=''${OPENAI_API_KEY:-"$(_get_keychain_secret 'OPENAI_API_KEY' "$_KC_AI_ACCOUNT" "$_KC_AI_DB")"}
-        ''}
-
-        unset -f _get_keychain_secret  # No longer needed after init
-        unset _KC_USER _KC_AI_DB  # _KC_AI_ACCOUNT persists for runtime gh-token switching
-
-        # --- GitHub Token Context Switching (workstation only) ---
-        # Server-class hosts are keychain-free (matching HF_TOKEN above): their
-        # only GitHub need is the Actions runner, which authenticates via the
-        # sops-rendered GH_RUNNER_PAT, not this interactive tiered-PAT flow. On a
-        # server the whole block is omitted, so `gh-dryvist` never runs against a
-        # non-existent automation.keychain-db (which otherwise errors on login).
-        ${lib.optionalString (!hostConfig.isServer) ''
-          _GH_SVC_RESTRICTED='${userConfig.github.tokens.restricted.service}'
-          _GH_DB_RESTRICTED='${userConfig.github.tokens.restricted.keychain}'
-          _GH_SVC_PRIVATE='${userConfig.github.tokens.private.service}'
-          _GH_DB_PRIVATE='${userConfig.github.tokens.private.keychain}'
-          _GH_SVC_DRYVIST='${userConfig.github.tokens.dryvist.service}'
-          _GH_DB_DRYVIST='${userConfig.github.tokens.dryvist.keychain}'
-          _GH_SVC_ADMIN='${userConfig.github.tokens.admin.service}'
-          _GH_DB_ADMIN='${userConfig.github.tokens.admin.keychain}'
-          _GH_SVC_ORG_ADMIN='${userConfig.github.tokens.orgAdmin.service}'
-          _GH_DB_ORG_ADMIN='${userConfig.github.tokens.orgAdmin.keychain}'
-
-          source ${./gh-token-switching.zsh}
-
-          # Default to the dryvist tier on every new shell. dryvist's token lives
-          # in the auto-readable automation keychain, so this loads with no password
-          # prompt. This is NOT least-privilege — every shell + AI session defaults
-          # to dryvist write access — a deliberate popups-vs-privilege tradeoff
-          # (2026-05-28). Use gh-private / gh-admin / gh-org-admin to elevate further.
-          unset GITHUB_TOKEN
-          gh-dryvist
-        ''}
-
-        # --- Custom-auth launcher for `claude` ---
-        # Defines av-claude <profile> (aws-vault exec <profile> -- claude). The
-        # gh-claude-* GitHub-token relaunch wrappers were removed as unused; to
-        # run claude under a non-default tier, switch the parent shell with the
-        # gh-* functions sourced above first.
-        source ${./claude-launchers.zsh}
-
-        # --- macOS setup ---
-        source ${./macos-setup.zsh}
-      '';
-    };
+    # macOS-specific zsh overrides (keychain API keys, GitHub tiered-token
+    # switching, custom launchers) live in ./zsh-macos.nix — split out for the
+    # per-file byte cap. They merge into programs.zsh via the module system.
   };
 
   # ==========================================================================
