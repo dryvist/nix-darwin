@@ -168,7 +168,7 @@ b64url() { openssl base64 -A | tr '+/' '-_' | tr -d '='; }
 # never take the installation default). $2 is a JSON permissions object; $3 is a
 # comma-repo list ("" = every repo in the installation, for read).
 mint_break_glass() {
-  local owner="$1" scope_json="$2" repos="$3" iid now hdr pl unsigned sig jwt keyf body resp gh_tok
+  local owner="$1" scope_json="$2" repos="$3" iid now hdr pl unsigned sig jwt body resp gh_tok
   [ -n "${OPENBAO_GITHUB_APP_ID:-}" ] \
     || die "break-glass needs OPENBAO_GITHUB_APP_ID (run under 'doppler run')"
   [ -n "${OPENBAO_GITHUB_APP_PRIVATE_KEY:-}" ] \
@@ -181,11 +181,11 @@ mint_break_glass() {
   pl="$(printf '{"iat":%d,"exp":%d,"iss":"%s"}' \
         "$((now - 60))" "$((now + 540))" "${OPENBAO_GITHUB_APP_ID}" | b64url)"
   unsigned="${hdr}.${pl}"
-  keyf="$(mktemp)"
-  # shellcheck disable=SC2064  # expand keyf now so the trap fires on the real path
-  trap "rm -f '${keyf}'" RETURN
-  printf '%s\n' "${OPENBAO_GITHUB_APP_PRIVATE_KEY}" > "${keyf}"
-  sig="$(printf '%s' "${unsigned}" | openssl dgst -sha256 -sign "${keyf}" | b64url)"
+  # Sign with the key piped in via process substitution — the private key never
+  # touches disk (no temp file to leak or leave behind).
+  sig="$(printf '%s' "${unsigned}" \
+    | openssl dgst -sha256 -sign <(printf '%s\n' "${OPENBAO_GITHUB_APP_PRIVATE_KEY}") \
+    | b64url)"
   jwt="${unsigned}.${sig}"
   if [ -n "${repos}" ]; then
     body="$(jq -cn --argjson p "${scope_json}" --arg r "${repos}" \
