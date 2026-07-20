@@ -6,6 +6,9 @@
     # Using stable nixpkgs-26.05 for reliability
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
 
+    # Single unstable axis — two revs would duplicate stdenv (~1 GB).
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+
     # Consolidated systems input for darwin-only configuration
     # All transitive dependencies should follow this to avoid duplicate systems entries
     systems.url = "github:nix-systems/default-darwin";
@@ -40,24 +43,22 @@
       url = "github:anthropics/claude-code";
       flake = false;
     };
-    # dryvist org-wide config hub. Source of the org-default .gitignore
-    # (configs/gitignore) that seeds the global git excludes file. Tracks
-    # main; `nix flake update dotgithub` pulls the latest. The git module
-    # tolerates the file being absent (pre-merge) and activates once present.
+    # Org-wide config hub. Source of the org-default .gitignore
+    # (configs/gitignore) seeding the global git excludes file. Tracks main;
+    # the git module tolerates the file being absent and activates once present.
     dotgithub = {
       url = "github:dryvist/.github";
       flake = false;
     };
 
-    # AI CLI ecosystem (Claude, Gemini, Copilot, MCP, marketplace).
-    # Only AI flake nix-darwin imports — Claude/Gemini/Codex/MCP config
-    # all flow through nix-ai. nix-claude-code is consumed transitively
-    # via nix-ai (kept off nix-darwin's top-level inputs to avoid pulling
-    # 24 marketplace inputs + nix-devenv dev-tooling into our lock).
+    # AI CLI ecosystem (Claude, Gemini, Copilot, MCP, marketplace) — the only
+    # AI flake imported here; all such config flows through it. nix-claude-code
+    # is consumed transitively, keeping 24 marketplace inputs out of our lock.
     nix-ai = {
       url = "github:dryvist/nix-ai";
       inputs = {
         nixpkgs.follows = "nixpkgs";
+        nixpkgs-unstable.follows = "nixpkgs-unstable";
         home-manager.follows = "home-manager";
         ai-assistant-instructions.follows = "ai-assistant-instructions";
         ai-llm-prompts.follows = "ai-llm-prompts";
@@ -79,8 +80,11 @@
     # Cross-platform home-manager modules (git, zsh, vscode, monitoring, shells)
     nix-home = {
       url = "github:dryvist/nix-home";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.home-manager.follows = "home-manager";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        nixpkgs-unstable.follows = "nixpkgs-unstable";
+        home-manager.follows = "home-manager";
+      };
     };
 
     # Official Determinate Nix module for nix-darwin
