@@ -44,6 +44,21 @@
 #        export GITHUB_TOKEN="$(openbao-github-creds token read <owner>)"
 #        export GITHUB_TOKEN="$(openbao-github-creds token write <owner>/<repo>)"  # takes no lease
 #
+#   4. break-glass (OpenBao is unreachable): mint straight from the GitHub App
+#      key, bypassing OpenBao's mint path entirely. Same security posture as the
+#      normal path — ephemeral (~1h) installation token, minimally scoped — but a
+#      DIFFERENT failure domain (needs only api.github.com + the App key, not the
+#      OpenBao guest's DNS/egress). Use ONLY when tiers 1-3 are down; it does not
+#      take a write lease, so coordinate manually.
+#        export GITHUB_TOKEN="$(openbao-github-creds break-glass read <owner>)"
+#        export GITHUB_TOKEN="$(openbao-github-creds break-glass write <owner>/<repo>)"
+#      The default read scope is contents/issues/PRs/checks/actions/statuses read;
+#      write adds contents/PRs/issues write, scoped to the one named repo. The App
+#      key (OPENBAO_GITHUB_APP_ID / OPENBAO_GITHUB_APP_PRIVATE_KEY) rides the same
+#      ambient doppler env; it is the App's FULL ceiling, so break-glass always
+#      pins an explicit minimal permissions scope on the mint request rather than
+#      taking the installation default.
+#
 # SECRET-ZERO is AMBIENT (no local keychain), identical to openbao-aws-creds.sh
 # after dryvist/nix-darwin#1686: VAULT_ADDR + the github-read / github-write
 # AppRole role_id/secret_id, injected by running under `doppler run`. Write and
@@ -142,6 +157,68 @@ mint_write() {
   gh_tok="$(jq -r '.data.token // empty' <<<"${resp}")"
   [ -n "${gh_tok}" ] || die "no token in write mint response for ${owner}/${repo}"
   printf '%s' "${gh_tok}"
+}
+
+# --- break-glass: mint direct from the App key, bypassing OpenBao -------------
+# base64url without padding (RFC 7515) — for the JWT header/payload/signature.
+b64url() { openssl base64 -A | tr '+/' '-_' | tr -d '='; }
+
+# Mint an ephemeral installation token straight from the GitHub App key, pinning
+# an explicit minimal permissions scope (the App key is the full ceiling, so we
+# never take the installation default). $2 is a JSON permissions object; $3 is a
+# comma-repo list ("" = every repo in the installation, for read).
+mint_break_glass() {
+  local owner="$1" scope_json="$2" repos="$3" iid now hdr pl unsigned sig jwt keyf body resp gh_tok
+  [ -n "${OPENBAO_GITHUB_APP_ID:-}" ] \
+    || die "break-glass needs OPENBAO_GITHUB_APP_ID (run under 'doppler run')"
+  [ -n "${OPENBAO_GITHUB_APP_PRIVATE_KEY:-}" ] \
+    || die "break-glass needs OPENBAO_GITHUB_APP_PRIVATE_KEY (run under 'doppler run')"
+  iid="$(installation_id_for "${owner}")"
+  [ -n "${iid}" ] || die "no installation id for owner '${owner}'"
+  now="$(date +%s)"
+  hdr="$(printf '{"alg":"RS256","typ":"JWT"}' | b64url)"
+  # App JWT: 9-min life, iat backdated 60s for clock skew (GitHub's own guidance).
+  pl="$(printf '{"iat":%d,"exp":%d,"iss":"%s"}' \
+        "$((now - 60))" "$((now + 540))" "${OPENBAO_GITHUB_APP_ID}" | b64url)"
+  unsigned="${hdr}.${pl}"
+  keyf="$(mktemp)"
+  # shellcheck disable=SC2064  # expand keyf now so the trap fires on the real path
+  trap "rm -f '${keyf}'" RETURN
+  printf '%s\n' "${OPENBAO_GITHUB_APP_PRIVATE_KEY}" > "${keyf}"
+  sig="$(printf '%s' "${unsigned}" | openssl dgst -sha256 -sign "${keyf}" | b64url)"
+  jwt="${unsigned}.${sig}"
+  if [ -n "${repos}" ]; then
+    body="$(jq -cn --argjson p "${scope_json}" --arg r "${repos}" \
+      '{permissions: $p, repositories: ($r | split(","))}')"
+  else
+    body="$(jq -cn --argjson p "${scope_json}" '{permissions: $p}')"
+  fi
+  resp="$(curl -sf --max-time 15 -X POST \
+    -H "Authorization: Bearer ${jwt}" -H "Accept: application/vnd.github+json" \
+    -d "${body}" "https://api.github.com/app/installations/${iid}/access_tokens")" \
+    || die "break-glass mint failed for ${owner} (App key valid? api.github.com reachable?)"
+  gh_tok="$(jq -r '.token // empty' <<<"${resp}")"
+  [ -n "${gh_tok}" ] || die "no token in break-glass response for ${owner}"
+  printf '%s' "${gh_tok}"
+}
+
+# Minimal everyday-task scopes. Read: pull/inspect PRs, issues, checks, CI.
+# Write: push + PR/issue authoring, scoped to ONE repo; checks/actions stay read.
+bg_read_scope='{"contents":"read","metadata":"read","issues":"read","pull_requests":"read","checks":"read","actions":"read","statuses":"read"}'
+bg_write_scope='{"contents":"write","pull_requests":"write","issues":"write","metadata":"read","checks":"read","actions":"read","statuses":"read"}'
+
+cmd_break_glass() {
+  case "${1:-read}" in
+    read)
+      mint_break_glass "${2:-${default_owner}}" "${bg_read_scope}" ""; echo ;;
+    write)
+      [ -n "${2:-}" ] || die "usage: openbao-github-creds break-glass write <owner>/<repo>"
+      split_repo "$2"
+      mint_break_glass "${owner}" "${bg_write_scope}" "${repo}"; echo ;;
+    */*|*)
+      # `break-glass <owner>` shorthand for read
+      mint_break_glass "${1}" "${bg_read_scope}" ""; echo ;;
+  esac
 }
 
 lock_path() { echo "github/token"; }  # documented anchor; real path built inline
@@ -264,6 +341,19 @@ self_check() {
   [ "$(read_set_for dryvist)" = "read-dryvist-all" ] \
     && [ "$(read_set_for JacobPEvans-personal)" = "read-personal-all" ] \
     || { echo "self-check FAIL: read_set mapping"; return 1; }
+  # break-glass scopes must be valid JSON objects, minimal, and never grant admin.
+  if ! jq -e . >/dev/null 2>&1 <<<"${bg_read_scope}"; then
+    echo "self-check FAIL: break-glass read scope not valid JSON"; return 1
+  fi
+  if ! jq -e . >/dev/null 2>&1 <<<"${bg_write_scope}"; then
+    echo "self-check FAIL: break-glass write scope not valid JSON"; return 1
+  fi
+  if [ "$(jq -r '.pull_requests' <<<"${bg_write_scope}")" != "write" ]; then
+    echo "self-check FAIL: break-glass write scope lacks pull_requests:write"; return 1
+  fi
+  if [ "$(jq -r 'has("administration")' <<<"${bg_write_scope}")" != "false" ]; then
+    echo "self-check FAIL: break-glass write scope must never grant administration"; return 1
+  fi
   echo "self-check OK"
 }
 
@@ -273,6 +363,7 @@ case "${1:-}" in
   claim)        cmd_claim "${2:-}" ;;
   release)      cmd_release "${2:-}" ;;
   token)        shift; cmd_token "$@" ;;
+  break-glass)  shift; cmd_break_glass "$@" ;;
   --self-check) self_check ;;
-  *) die "usage: openbao-github-creds {get|store|erase|claim <owner>/<repo>|release [<owner>/<repo>]|token [read|write] [<owner>[/<repo>]]|--self-check}" ;;
+  *) die "usage: openbao-github-creds {get|store|erase|claim <owner>/<repo>|release [<owner>/<repo>]|token [read|write] [<owner>[/<repo>]]|break-glass [read|write] [<owner>[/<repo>]]|--self-check}" ;;
 esac
