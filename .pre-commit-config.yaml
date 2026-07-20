@@ -44,7 +44,7 @@ repos:
   # Config: .github/zizmor.yml for rule customization
   # See: https://docs.zizmor.sh/audits/
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.26.1
+    rev: v1.27.0
     hooks:
       - id: zizmor
         args: ['--persona=regular', '--min-severity=medium', '--min-confidence=medium']
@@ -54,7 +54,7 @@ repos:
   # Runs security-audit rules on all supported languages
   # See: https://semgrep.dev/docs/extensions/pre-commit
   - repo: https://github.com/semgrep/pre-commit
-    rev: v1.169.0
+    rev: v1.170.0
     hooks:
       - id: semgrep
         args: ['--config', 'p/security-audit', '--skip-unknown-extensions']

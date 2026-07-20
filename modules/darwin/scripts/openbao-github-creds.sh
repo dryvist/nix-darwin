@@ -153,7 +153,16 @@ mint_write() {
   body="$(write_token_body "${iid}" "${repo}")"
   resp="$(curl -sf --max-time 10 -X POST -H "X-Vault-Token: ${bao_tok}" \
     -d "${body}" "${VAULT_ADDR}/v1/github/token")" \
-    || die "mint write token for ${owner}/${repo} failed (repo not on the allowlist?)"
+    || die "mint write token for ${owner}/${repo} failed.
+Most likely ${repo} is not on the server-side github-write allowlist. That is a
+deny, not a bug, and there is no client-side workaround — do NOT fall back to a
+personal access token or any other standing credential to complete the write.
+
+To grant it: add the repository name to OPENBAO_GITHUB_WRITE_REPOS in the iac
+secret store (comma-separated; the ansible-proxmox-apps openbao role reads it
+into openbao_github_write_repo_allowlist), then converge the openbao role so the
+github-write policy is rewritten. The change is not live until that converge
+runs. If ${repo} is already listed, re-check that the converge actually ran."
   gh_tok="$(jq -r '.data.token // empty' <<<"${resp}")"
   [ -n "${gh_tok}" ] || die "no token in write mint response for ${owner}/${repo}"
   printf '%s' "${gh_tok}"
