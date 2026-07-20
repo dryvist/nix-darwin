@@ -56,5 +56,57 @@ gh-read() {
   print -u2 "[gh-auth] read token active for $owner (this shell only)"
 }
 
+# --- gh itself -------------------------------------------------------------
+# gh does NOT consult git's credential helper, so the git-side OpenBao cutover
+# never covered it. Left alone, gh authenticates from whatever it has stored —
+# which is how a standing PAT silently satisfied a `gh pr create` on a repo
+# whose write claim OpenBao had just REFUSED. Requiring an explicit `gh-read`
+# first would work, but "forgot to run it" is exactly the failure above, so the
+# secure path has to be the default path.
+#
+# This wrapper mints a READ token on demand when the shell has no token yet.
+# Writes are deliberately NOT auto-minted: a mutating gh call under a read token
+# fails closed with 403, which is the signal to run `gh-claim` and take a lease
+# for the one repo. Never silently widen a read into a write.
+#
+# The token is cached in a shell variable, never on disk (a disk cache is a
+# stored credential), and re-minted well inside its lifetime.
+zmodload -F zsh/datetime +p:EPOCHSECONDS 2>/dev/null
+typeset -g _GH_TOK= _GH_TOK_OWNER= _GH_TOK_EXP=0
+
+# Leaves the token in $_GH_TOK rather than printing it. Printing would force
+# the caller into $( ... ), and a command substitution runs this in a subshell —
+# where the cache it just populated dies on return, so every call would re-mint.
+_gh_read_cached() {
+  local owner="$1" now="${EPOCHSECONDS:-$(date +%s)}" token
+  if [[ -n "$_GH_TOK" && "$owner" == "$_GH_TOK_OWNER" && "$now" -lt "$_GH_TOK_EXP" ]]; then
+    return 0
+  fi
+  token="$(_gh token read "$owner")" || return 1
+  [[ -n "$token" ]] || return 1
+  _GH_TOK="$token"
+  _GH_TOK_OWNER="$owner"
+  # Server TTL is an hour; refresh at half that so a long-running command never
+  # starts with a token that expires mid-flight.
+  _GH_TOK_EXP=$(( now + 1800 ))
+}
+
+gh() {
+  # An explicit token — gh-read, gh-claim, or a caller-supplied one — always wins.
+  if [[ -n "$GITHUB_TOKEN" || -n "$GH_TOKEN" ]]; then
+    command gh "$@"
+    return
+  fi
+  local owner
+  # Outside a repo there is no owner to infer; gh subcommands that need auth
+  # will say so themselves rather than us guessing an installation.
+  owner="$(_gh_target owner 2>/dev/null)" || { command gh "$@"; return; }
+  if ! _gh_read_cached "$owner"; then
+    print -u2 "[gh-auth] ERROR could not mint a read token for '$owner' — not falling back to a stored credential"
+    return 1
+  fi
+  GITHUB_TOKEN="$_GH_TOK" command gh "$@"
+}
+
 alias gh-claim='eval "$(_gh claim "$(_gh_target nwo)")"'
 alias gh-release='eval "$(_gh release)"'
