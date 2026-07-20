@@ -17,6 +17,7 @@
 # cluster-quiesce.nix. Deriving from osConfig (never re-declaring the numbers)
 # makes drift between the sudoers grant and the watcher restore impossible.
 {
+  config,
   lib,
   osConfig,
   hostConfig,
@@ -54,6 +55,10 @@ in
     programs.mlx.clusterMode = {
       wiredLimitMb = linkPrep.clusterWiredLimitMb;
       inherit (linkPrep) dayWiredLimitMb;
+
+      # Auto-heal source for the cluster-join generation-parity preflight:
+      # drift from the deploy branch HEAD ff-pulls this checkout and rebuilds.
+      generationFlakeDir = "${config.home.homeDirectory}/git/public/nix/nix-darwin/main";
 
       # EXPERIMENT (INC-17070, remove once resolved): disables the prompt cache
       # on both cluster ranks to isolate a multi-request pipeline hang. The only

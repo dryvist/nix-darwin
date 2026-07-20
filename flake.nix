@@ -103,6 +103,7 @@
 
   outputs =
     {
+      self,
       nixpkgs,
       darwin,
       home-manager,
@@ -172,6 +173,13 @@
           };
           modules = [
             ./hosts/${label}/default.nix
+
+            # Stamp every generation with the source commit so cross-host
+            # generation parity is checkable (cluster-join step-0 preflight
+            # compares darwin-version's configurationRevision to the deploy
+            # branch HEAD). Dirty builds stamp null and fail that preflight
+            # closed by design.
+            { system.configurationRevision = self.rev or null; }
 
             # Determinate Nix: official module for nix.conf, GC, and determinate-nixd config
             determinate.darwinModules.default
