@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.11.0](https://github.com/dryvist/nix-darwin/compare/v2.10.0...v2.11.0) (2026-07-21)
+
+
+### Features
+
+* **cribl:** ship codex + gemini transcripts through the cc-edge pack pipelines ([#1814](https://github.com/dryvist/nix-darwin/issues/1814)) ([ada1c60](https://github.com/dryvist/nix-darwin/commit/ada1c60780e3ca54c99663dcf9285b376235048f))
+* **github-auth:** gh-read / gh-claim shell helpers over OpenBao ([#1787](https://github.com/dryvist/nix-darwin/issues/1787)) ([d8089a8](https://github.com/dryvist/nix-darwin/commit/d8089a8beed53679f3a88092a3deee89150b863f))
+* **macbook:** raise the standalone LLM ceiling to ~105 GB (util 0.68) ([e4395b6](https://github.com/dryvist/nix-darwin/commit/e4395b67b4e0cd8cb7c2376e00786a5ebd3b79ef))
+* **macbook:** raise the standalone LLM ceiling to ~105 GB, util 0.68 ([6dea146](https://github.com/dryvist/nix-darwin/commit/6dea146a21ff15c8d62b0e4967d5b5998804f31b))
+
+
+### Bug Fixes
+
+* **ci:** repair unreadable cache scope and halve the build closure ([#1800](https://github.com/dryvist/nix-darwin/issues/1800)) ([d555f92](https://github.com/dryvist/nix-darwin/commit/d555f924147629d5f49cf9fce80eea12f2abe507))
+* **ci:** stop cancelling the runs that save the Nix cache ([#1811](https://github.com/dryvist/nix-darwin/issues/1811)) ([f28b581](https://github.com/dryvist/nix-darwin/commit/f28b581dfa4fb22b5fffe88617f797859160b65f))
+* **github-auth:** repair permanent write-lease deadlock after deadman expiry ([#1801](https://github.com/dryvist/nix-darwin/issues/1801)) ([dfa6318](https://github.com/dryvist/nix-darwin/commit/dfa6318bbb6a8771b1ae3a2c502b465b0b45fd80))
+* **llm-gate:** update caddy plugin FOD hash after the nixpkgs realign ([#1808](https://github.com/dryvist/nix-darwin/issues/1808)) ([9b31b37](https://github.com/dryvist/nix-darwin/commit/9b31b376d42d20723a2343fd4cd8b151d59f4336))
+* **macbook:** bound the standalone MLX wired ceiling with a paired utilization ([#1809](https://github.com/dryvist/nix-darwin/issues/1809)) ([9bbcfd6](https://github.com/dryvist/nix-darwin/commit/9bbcfd67fdd79873cc52c3d4998bce41c3854573))
+
 ## [2.10.0](https://github.com/dryvist/nix-darwin/compare/v2.9.0...v2.10.0) (2026-07-20)
 
 
