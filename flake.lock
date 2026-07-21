@@ -940,11 +940,11 @@
         "ponytail": "ponytail"
       },
       "locked": {
-        "lastModified": 1784599839,
-        "narHash": "sha256-Hg4TW/KP2tQe+FP2gN1WyML0ecDHD+O1xJD9Uk0Wy6c=",
+        "lastModified": 1784659137,
+        "narHash": "sha256-/KutIOl2M1lK3Bz3N/CDpUfOOQbD6+izJIl+0hB17p8=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "a79ff67ecb6d1244b917a896077a280cf796c8d0",
+        "rev": "db813c31abc87833ee3471cd660446ff80b83923",
         "type": "github"
       },
       "original": {
