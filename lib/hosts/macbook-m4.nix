@@ -26,11 +26,15 @@
     cacheMemoryMb = 16384;
     prefillBatchSize = 2048;
 
-    # Paired with appleSiliconTunables.wiredLimitMb = 84000 (88.08 GB ceiling)
-    # in hosts/macbook-m4/default.nix — one decision, not two knobs. Overridden
-    # DOWN from the 0.8 module default because a workstation must leave desktop
-    # headroom. https://docs.jacobpevans.com/local-llm/memory-ceilings
-    gpuMemoryUtilization = 0.55;
+    # Paired with appleSiliconTunables.wiredLimitMb = 100000 (104.86 GB ceiling)
+    # in hosts/macbook-m4/default.nix — one decision, not two knobs. This is the
+    # operational cap that matters: it sets the emergency KV-clear trip at
+    # (util + 0.05) * 137.44 = 100.3 GB, below the 104.86 GB wired ceiling
+    # (4.5 GB margin), so the worker sheds cache and stays fully wired before it
+    # could ever spill to swap. Raising the ceiling without raising util does
+    # nothing — the trip, not the ceiling, is what caps usable memory.
+    # https://docs.jacobpevans.com/local-llm/memory-ceilings
+    gpuMemoryUtilization = 0.68;
 
     # MLX retained free-buffer pool. Trimmed from the 12 GB module default to
     # keep the resident footprint under allocation_limit.
