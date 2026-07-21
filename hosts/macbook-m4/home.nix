@@ -26,8 +26,9 @@
 
     # Vikunja task-management MCP: the nix-ai catalog ships it disabled; this
     # workstation opts in. Its VIKUNJA_URL + VIKUNJA_API_TOKEN come from the
-    # d-claude Doppler session (ai-ci-automation/prd); a bare `claude` lacks them
-    # and the server logs a harmless startup error.
+    # shared Doppler wrapper. Each MCP client forwards
+    # only the non-secret Doppler selectors; the wrapper injects the service
+    # credentials into the Vikunja child process.
     aiMcp.servers.vikunja.disabled = lib.mkForce false;
 
     # Recreates the tmux "cc" session at every login — a reboot always kills
