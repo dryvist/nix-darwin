@@ -68,8 +68,8 @@ in
     openbao-aws-creds.enable = true;
 
     # --- OpenBao-backed GitHub token provider ---
-    # Runtime behavior and operator commands are canonical in docs-starlight's
-    # d/runbooks/github-token-openbao-migration (`gh-claim` / `gh-release`).
+    # Runtime behavior and operator commands are canonical at
+    # https://docs.dryvist.com/d/runbooks/github-token-openbao-migration/.
     # This host only installs the provider; it holds no GitHub credential.
     openbao-github-creds.enable = true;
 

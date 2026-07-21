@@ -2,8 +2,9 @@
 #
 # Installs `openbao-github-creds`, the OpenBao GitHub App token provider used by
 # git and the interactive `gh-*` helpers. The canonical operational contract,
-# including `gh-claim` / `gh-release`, is docs-starlight's
-# `d/runbooks/github-token-openbao-migration`; do not duplicate it here.
+# including `gh-claim` / `gh-release`, is
+# https://docs.dryvist.com/d/runbooks/github-token-openbao-migration/; do not
+# duplicate it here.
 #
 # The helper consumes ambient OpenBao secret-zero (`BAO_ADDR`, with legacy
 # `VAULT_ADDR` accepted) only at invocation time. It stores no GitHub token or
