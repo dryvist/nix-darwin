@@ -39,6 +39,22 @@
 let
   cfg = config.programs.cribl-edge;
 
+  # userConfig is not a specialArg for darwin modules (only threaded to
+  # home-manager), so import it directly like hosts/common/cribl.nix does —
+  # used below to resolve the codex/gemini pack file-input home paths.
+  userConfig = import ../../../lib/user-config.nix;
+
+  # Change-detection hash over everything that must reach the running daemon:
+  # declarative config files AND deployed packs. Used to gate the postActivation
+  # restart below and (for continuity) the plist env marker. The plist sha alone
+  # hashed only configFiles, so a pack-only change would go undetected.
+  declaredConfigSha = builtins.hashString "sha256" (
+    builtins.toJSON {
+      files = cfg.standalone.configFiles;
+      packs = lib.mapAttrs (_: toString) cfg.packs;
+    }
+  );
+
   deployPackScript = pkgs.writeShellApplication {
     name = "cribl-deploy-pack";
     runtimeInputs = [ pkgs.jq ];
@@ -223,9 +239,11 @@ in
         # restart the daemon exactly when config content changes — the env
         # var itself is inert to Cribl.
         EnvironmentVariables = {
-          CRIBL_DECLARED_CONFIG_SHA256 = builtins.hashString "sha256" (
-            builtins.toJSON cfg.standalone.configFiles
-          );
+          CRIBL_DECLARED_CONFIG_SHA256 = declaredConfigSha;
+          # Let the codex/gemini pack file inputs resolve their
+          # $CODEX_HOME/$GEMINI_HOME transcript paths from the Edge process env.
+          CODEX_HOME = "${userConfig.user.homeDir}/.codex";
+          GEMINI_HOME = userConfig.user.homeDir;
         };
       };
     };
@@ -235,5 +253,16 @@ in
     # and ingestion goes dark silently. Self-heal it after every activation.
     # See modules/darwin/launchd-self-heal.nix + docs/LAUNCHD-SELF-HEAL.md.
     services.launchdSelfHeal.labels = [ "com.nix-darwin.cribl-edge" ];
+
+    # Force the running daemon onto the just-installed config. extraActivation
+    # writes local/edge/*.yml before the launchd phase, but the launchd phase
+    # does not reliably restart Edge on the plist sha change, and a running Edge
+    # autosaves stale in-memory config over local/edge/ — so config changes
+    # never reached the daemon. This runs AFTER the launchd phase (current-gen
+    # plist loaded) and restarts only when the declared config/packs actually
+    # changed. See the script header for the full rationale.
+    system.activationScripts.postActivation.text = ''
+      ${./scripts/cribl-edge-restart-on-change.sh} "${cfg.dataDir}" "${declaredConfigSha}" "com.nix-darwin.cribl-edge" "${cfg.serviceUser}:${cfg.serviceGroup}"
+    '';
   };
 }

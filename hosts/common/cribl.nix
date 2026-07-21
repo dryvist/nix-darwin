@@ -16,6 +16,23 @@
 
 let
   userConfig = import ../../lib/user-config.nix;
+
+  # AI-CLI transcript packs, hoisted so the same derivation both deploys as a
+  # pack (provenance/UI) AND supplies its pipeline confs verbatim to the
+  # worker-level pipelines below — the released .crbl stays the single source,
+  # nothing is copy-pasted.
+  codexPack = pkgs.fetchzip {
+    url = "https://github.com/dryvist/cc-edge-codex-io/releases/download/v0.1.1/cc-edge-codex-io-v0.1.1.crbl";
+    extension = "tar.gz";
+    hash = "sha256-EgPHvubxZ+ey1alAtPXIueInzMpMB5gdt8E8aGkUlF0=";
+    stripRoot = false;
+  };
+  geminiPack = pkgs.fetchzip {
+    url = "https://github.com/JacobPEvans-personal/cc-edge-gemini-antigravity-io/releases/download/v0.4.0/cc-edge-gemini-antigravity-io-v0.4.0.crbl";
+    extension = "tar.gz";
+    hash = "sha256-CIySu8g1mc/ZbkvafQps6krfFSY9OV3o93giU9hwTng=";
+    stripRoot = false;
+  };
 in
 {
   programs = {
@@ -124,28 +141,114 @@ in
             # local pipeline — index/sourcetype stamping is Stream-side.
             # `*.log` matches the wrapper typescript plus anything a CLI's
             # own config drops into its directory.
-            in_codex_logs:
+            # codex + gemini transcripts now ship via their cc-edge packs (see
+            # the packs block below), not banner-log file inputs — the old
+            # in_codex_logs/in_agy_logs inputs tailed ~/Library/Logs/{codex,agy}
+            # and were removed. copilot + vscode below still use the banner path.
+            #
+            # Pack-feeder inputs: this standalone Edge never instantiates a
+            # pack's own default/inputs.yml Sources (live-verified — the worker
+            # only initializes worker-level inputs), and QuickConnecting into
+            # `pack:<id>` ships events UNPROCESSED (the pack-internal routing
+            # layer never loads here; the live API serves every pack a
+            # fallback filter:true -> pipeline:main route). So the pack file
+            # inputs are declared HERE and QuickConnected straight into the
+            # pack pipelines, which are installed as worker-level pipelines
+            # from the released pack derivations (see the pipelines/*
+            # configFiles below).
+            in_codex_sessions:
               type: file
               disabled: false
               mode: manual
-              interval: 10
-              path: ${userConfig.user.homeDir}/Library/Logs/codex/
+              interval: 30
+              path: ${userConfig.user.homeDir}/.codex/sessions
               filenames:
-                - "*.log"
+                - "*/rollout-*.jsonl"
+              recurse: true
               tailOnly: false
               sendToRoutes: false
+              breakerRulesets:
+                - AI CLI JSONL
+              metadata:
+                - name: datatype
+                  value: "'codex-cli-session'"
               connections:
-                - output: cribl_codex
-            in_agy_logs:
+                - pipeline: codex_sessions
+                  output: cribl_codex
+            in_codex_history:
               type: file
               disabled: false
               mode: manual
-              interval: 10
-              path: ${userConfig.user.homeDir}/Library/Logs/agy/
+              interval: 30
+              path: ${userConfig.user.homeDir}/.codex
               filenames:
-                - "*.log"
+                - "*/history.jsonl"
+              recurse: false
               tailOnly: false
               sendToRoutes: false
+              breakerRulesets:
+                - AI CLI JSONL
+              metadata:
+                - name: datatype
+                  value: "'codex-cli-history'"
+              connections:
+                - pipeline: codex_history
+                  output: cribl_codex
+            in_gemini_sessions:
+              type: file
+              disabled: false
+              mode: manual
+              interval: 30
+              path: ${userConfig.user.homeDir}/.gemini/tmp
+              filenames:
+                - "*session-*.json"
+                - "*session-*.jsonl"
+              recurse: true
+              tailOnly: true
+              sendToRoutes: false
+              breakerRulesets:
+                - AI CLI JSONL
+              metadata:
+                - name: datatype
+                  value: "'gemini-cli-session'"
+              connections:
+                - pipeline: llm_normalize
+                  output: cribl_agy
+            in_antigravity_transcripts:
+              type: file
+              disabled: false
+              mode: manual
+              interval: 60
+              path: ${userConfig.user.homeDir}/.gemini/antigravity-cli/brain
+              filenames:
+                - "*/transcript_full.jsonl"
+              recurse: true
+              tailOnly: false
+              sendToRoutes: false
+              breakerRulesets:
+                - AI CLI JSONL
+              metadata:
+                - name: datatype
+                  value: "'antigravity-cli-transcript'"
+              connections:
+                - pipeline: llm_normalize
+                  output: cribl_agy
+            in_antigravity_history:
+              type: file
+              disabled: false
+              mode: manual
+              interval: 30
+              path: ${userConfig.user.homeDir}/.gemini/antigravity-cli
+              filenames:
+                - "*history.jsonl"
+              recurse: false
+              tailOnly: true
+              sendToRoutes: false
+              breakerRulesets:
+                - AI CLI JSONL
+              metadata:
+                - name: datatype
+                  value: "'antigravity-cli-history'"
               connections:
                 - output: cribl_agy
             in_copilot_logs:
@@ -338,11 +441,56 @@ in
                   - name: sourcetype
                     value: "'macos:firewall'"
         '';
+        # AI-CLI transcript pipelines, taken VERBATIM from the released pack
+        # derivations (see the let block at the top) and installed as
+        # worker-level pipelines. Why not run them inside the packs: on this
+        # standalone Edge the pack-internal routing layer never loads — the
+        # live API serves every pack a fallback `filter:true -> pipeline:main`
+        # route (a pipeline none of the packs define), so events QuickConnected
+        # into `pack:<id>` pass through UNPROCESSED (verified in Splunk:
+        # port-stamped sourcetype, no llm.* fields). Worker-level pipelines +
+        # QuickConnect are the proven path (llm_logs/firewall_logs above).
+        "pipelines/codex_sessions/conf.yml" =
+          builtins.readFile "${codexPack}/default/pipelines/codex_sessions/conf.yml";
+        "pipelines/codex_history/conf.yml" =
+          builtins.readFile "${codexPack}/default/pipelines/codex_history/conf.yml";
+        "pipelines/llm_normalize/conf.yml" =
+          builtins.readFile "${geminiPack}/default/pipelines/llm_normalize/conf.yml";
+        # Transcript JSONL lines regularly exceed the stock 51200-byte
+        # maxEventBytes (codex rollouts observed >110 KB), which silently
+        # splits one JSON line into unparseable fragments. Dedicated newline
+        # breaker with a 1 MiB ceiling, attached to the transcript file inputs.
+        "breakers.yml" = ''
+          AI CLI JSONL:
+            lib: custom
+            description: Newline-delimited AI-CLI transcript JSON; single lines can far exceed the 51200-byte default maxEventBytes (codex lines >1 MiB observed)
+            rules:
+              - condition: "true"
+                type: regex
+                timestampAnchorRegex: /^/
+                timestamp:
+                  type: auto
+                  length: 150
+                timestampTimezone: local
+                timestampEarliest: -420weeks
+                timestampLatest: +1week
+                maxEventBytes: 4194304
+                disabled: false
+                eventBreakerRegex: /[\n\r]+/
+                name: jsonl
+            tags: ai
+        '';
       };
       # Claude Code transcripts ship via the native in_claude_logs input ->
       # cribl_claude (:10311) above; the cc-edge-claude-code pack is not
       # deployed by this module (its /home/$CLAUDE_USER path never matched
       # a macOS home).
+      # codex + gemini transcripts ship via their cc-edge packs below instead
+      # of banner-log inputs: each pack tails the real transcript path (codex
+      # under $CODEX_HOME, gemini under $GEMINI_HOME/.gemini — env vars set on
+      # the Edge process in modules/darwin/apps/cribl-edge.nix), normalizes to
+      # OTel-AI llm.* fields, stamps index/sourcetype, and routes to the
+      # default output.
       packs = {
         cc-edge-the-mac-pack-io = pkgs.fetchzip {
           url = "https://github.com/JacobPEvans/cc-edge-the-mac-pack-io/releases/download/v0.3.0/cc-edge-the-mac-pack-io-v0.3.0.crbl";
@@ -350,6 +498,8 @@ in
           hash = "sha256-rPPAkedltxT8RWgP2xXil1o6x13HQK+SRgihuheJAks=";
           stripRoot = false;
         };
+        cc-edge-codex-io = codexPack;
+        cc-edge-gemini-antigravity-io = geminiPack;
       };
     };
 
