@@ -13,8 +13,8 @@
 # This module is purely additive: it ships the wrapper on PATH but changes no
 # git/gh config. The interactive cutover (pointing git's credential helper +
 # useHttpPath at this wrapper, then deleting the GH_PAT_* keychain services) is
-# an operator step — see docs-starlight's github-token-openbao-migration
-# runbook — so enabling this module cannot break the keychain-backed path.
+# an operator step — see https://docs.dryvist.com/d/runbooks/github-token-openbao-migration/
+# — so enabling this module cannot break the keychain-backed path.
 
 {
   lib,
