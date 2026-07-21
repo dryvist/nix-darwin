@@ -1,20 +1,13 @@
 # Apple Silicon System Tunables
 #
-# Boot-time and runtime knobs for Apple Silicon (M-series) hosts that run
-# heavy local AI inference + capture workloads (vllm-mlx, etc.).
-# All knobs target native macOS surfaces (sysctl, pmset, mdutil, tmutil,
-# user defaults, launchctl) — there is no first-class nix-darwin option for
-# any of them.
+# Native macOS knobs (sysctl, pmset, mdutil, tmutil, defaults, launchctl) for
+# M-series hosts running heavy local AI inference; no first-class nix-darwin
+# option exists. This module owns inference-perf knobs; sleep/wake timer policy
+# lives in energy.nix (both drive pmset).
 #
-# Module boundary: this module owns inference-performance knobs. Sleep/wake
-# *timer policy* (sleep, displaysleep, disksleep, womp, autorestart) lives in
-# energy.nix; both modules legitimately drive pmset.
-#
-# Persistence: the iogpu/vm sysctls are VOLATILE (reset on reboot), so they
-# live in scripts/apple-silicon-sysctls.sh and re-apply via a RunAtLoad
-# launchd daemon AND at activation. The pmset/mdutil/tmutil/defaults/launchctl
-# knobs persist or are verify-only and run at activation via
-# scripts/apple-silicon-tunables.sh.
+# The iogpu/vm sysctls are VOLATILE (reset on reboot): scripts/apple-silicon-
+# sysctls.sh, re-applied via a RunAtLoad launchd daemon and at activation.
+# Persistent/verify-only knobs run at activation via apple-silicon-tunables.sh.
 
 {
   lib,
@@ -55,16 +48,15 @@ let
 in
 {
   options.system.appleSiliconTunables = {
-    enable = lib.mkEnableOption "Apple Silicon system tunables for AI workloads";
+    enable = lib.mkEnableOption "Apple Silicon system tunables for AI";
 
-    # --- Category 1: unified memory / GPU ---------------------------------
+    # Category 1: unified memory / GPU
     physicalRamGb = lib.mkOption {
       type = lib.types.ints.positive;
       default = 128;
       description = ''
-        Installed physical RAM in GiB — a hardware constant (both Macs are
-        M4 Max / 128 GB); moves only with new hardware. Denominator of the
-        osReserveGb derivation and the maxLocalLlmGb sanity assert.
+        Installed physical RAM in GiB — a hardware constant. Denominator of the
+        osReserveGb derivation and the maxLocalLlmGb assert.
       '';
     };
 
@@ -73,14 +65,11 @@ in
       default = null;
       example = 96;
       description = ''
-        The single hand-set memory knob: GiB of wired memory handed to the
-        local LLM subsystem. When set, it DERIVES wiredLimitMb (this times
-        1024) and osReserveGb (physicalRamGb minus this). Set THIS, not
-        wiredLimitMb, so the ceiling and the reserve stay one decision.
-        null leaves wiredLimitMb on its own default (a host not yet converted
-        to this input). Changing it is serving-affecting (moves the wired
-        ceiling) — deploy in a maintenance window.
-        https://docs.jacobpevans.com/local-llm/memory-ceilings
+        The single hand-set memory knob: GiB of wired memory for the local LLM
+        subsystem. When set, DERIVES wiredLimitMb (this times 1024) and
+        osReserveGb (physicalRamGb minus this) — set THIS, not wiredLimitMb, so
+        ceiling and reserve stay one decision. null leaves wiredLimitMb on its
+        own default. Serving-affecting; deploy in a maintenance window.
       '';
     };
 
@@ -90,30 +79,23 @@ in
       default = if cfg.maxLocalLlmGb == null then null else cfg.physicalRamGb - cfg.maxLocalLlmGb;
       defaultText = lib.literalExpression "physicalRamGb minus maxLocalLlmGb (null when maxLocalLlmGb is unset)";
       description = ''
-        Computed GiB left unwired as desktop/OS headroom when maxLocalLlmGb is
-        set (physicalRamGb minus maxLocalLlmGb). Read-only; the assert below
-        keeps it above a hard floor so the LLM budget can never starve macOS.
+        Computed GiB left unwired as OS headroom (physicalRamGb minus
+        maxLocalLlmGb). Read-only; the assert below floors it so the LLM budget
+        can never starve macOS.
       '';
     };
 
     wiredLimitMb = lib.mkOption {
       type = lib.types.ints.unsigned;
-      # maxLocalLlmGb, times 1024, is the derived ceiling; the bare 118000
-      # default applies to a host not yet on the maxLocalLlmGb input.
+      # Derived: maxLocalLlmGb * 1024; bare 118000 for a host not on that input.
       default = if cfg.maxLocalLlmGb == null then 118000 else cfg.maxLocalLlmGb * 1024;
       defaultText = lib.literalExpression "maxLocalLlmGb times 1024 when set, 118000 when unset";
       description = ''
-        iogpu.wired_limit_mb — wired-memory ceiling in MiB. Volatile:
-        re-applied at every boot via a one-shot launchd daemon.
-
-        Prefer setting maxLocalLlmGb; this derives from it. A host not yet
-        converted to that input sets this directly.
-
-        Units are exact: max_recommended_working_set_size = wiredLimitMb * 1024^2.
-        0 = OS default, ~84% of RAM (not the ~75% often assumed).
-
-        Pairs with programs.mlx.gpuMemoryUtilization; change both together.
-        Mechanism and the sizing invariant:
+        iogpu.wired_limit_mb — wired-memory ceiling in MiB. Volatile: re-applied
+        every boot via a one-shot launchd daemon. Prefer maxLocalLlmGb (this
+        derives from it); a host not on that input sets it directly.
+        max_recommended_working_set_size = wiredLimitMb * 1024^2. 0 = OS default
+        (~84% of RAM). Pairs with programs.mlx.gpuMemoryUtilization; change both.
         https://docs.jacobpevans.com/local-llm/memory-ceilings
       '';
     };
@@ -122,9 +104,9 @@ in
       type = lib.types.nullOr lib.types.ints.positive;
       default = null;
       description = ''
-        iogpu.wired_lwm_mb — low-water-mark companion to wiredLimitMb. No
-        authoritative source recommends changing it for inference; exposed for
-        completeness. null = leave the macOS default untouched (recommended).
+        iogpu.wired_lwm_mb — low-water-mark companion to wiredLimitMb. Exposed
+        for completeness; no source recommends changing it for inference.
+        null = macOS default (recommended).
       '';
     };
 
@@ -139,32 +121,29 @@ in
       );
       default = null;
       description = ''
-        vm.compressor_mode — 1 = no compression/no swap, 2 = compression/no
-        swap, 3 = no compression/swap, 4 = compression + swap (macOS default).
-        Mode 2 risks a hard allocation failure instead of swapping when a model
-        exceeds RAM; exposed but left at the macOS default. Generally needs a
-        reboot to fully take effect. null = do not touch (recommended).
+        vm.compressor_mode — 1 = no compress/no swap, 2 = compress/no swap,
+        3 = no compress/swap, 4 = compress + swap (macOS default). Mode 2 risks a
+        hard allocation failure instead of swapping; left at the default. Needs a
+        reboot. null = do not touch.
       '';
     };
 
-    # --- Category 2: power / pmset (inference-perf knobs) -----------------
+    # Category 2: power / pmset (inference-perf knobs)
     pmset = {
       lowPowerMode = lib.mkOption {
         type = lib.types.nullOr lib.types.bool;
         default = false;
         description = ''
-          pmset -a lowpowermode. Low Power Mode throttles the SoC for battery
-          life and badly stalls inference, so the default is false (off) on all
-          power sources. null = leave the macOS default untouched.
+          pmset -a lowpowermode. Throttles the SoC and stalls inference, so
+          default false (off) on all power sources. null = macOS default.
         '';
       };
       powerNap = lib.mkOption {
         type = lib.types.nullOr lib.types.bool;
         default = false;
         description = ''
-          pmset -a powernap. Power Nap wakes the machine for background iCloud/
-          mail work; false avoids spurious wakes during long inference (safe
-          win). null = leave the macOS default untouched.
+          pmset -a powernap. Wakes the machine for background iCloud/mail work;
+          false avoids spurious wakes during long inference. null = macOS default.
         '';
       };
       proximityWake = lib.mkOption {
@@ -172,25 +151,23 @@ in
         default = false;
         description = ''
           pmset -a proximitywake. Wake when a nearby Apple device wakes; false
-          reduces spurious wakes (safe win). null = leave the macOS default.
+          reduces spurious wakes. null = macOS default.
         '';
       };
       disableSleep = lib.mkOption {
         type = lib.types.nullOr lib.types.bool;
         default = null;
         description = ''
-          pmset -a disablesleep. Hard-disables idle sleep entirely
-          (sledgehammer). Left null because system.energy.sleep.ac = 0 already
-          prevents AC idle sleep; prefer that. null = leave the macOS default.
+          pmset -a disablesleep. Hard-disables idle sleep entirely. Left null
+          because system.energy.sleep.ac = 0 already prevents AC idle sleep.
         '';
       };
       tcpKeepAlive = lib.mkOption {
         type = lib.types.nullOr lib.types.bool;
         default = null;
         description = ''
-          pmset -a tcpkeepalive. Keeps TCP alive while the system is in standby
-          — only relevant when serving models over the network during sleep.
-          null = leave the macOS default untouched.
+          pmset -a tcpkeepalive. Keeps TCP alive in standby — only relevant when
+          serving models over the network during sleep. null = macOS default.
         '';
       };
     };
@@ -204,32 +181,29 @@ in
       ];
       default = "high";
       description = ''
-        Desired macOS Energy Mode (System Settings → Battery → Energy Mode).
-        High Power Mode is the single biggest sustained-throughput lever on an
-        M4 Max laptop (raises the fan ceiling, defers thermal throttling) but
-        CANNOT be set programmatically — there is no sysctl/pmset/defaults key.
-        Set it once in System Settings (or via an MDM Energy Saver profile).
+        Desired macOS Energy Mode (System Settings → Battery). High Power Mode
+        is the biggest sustained-throughput lever on an M4 Max laptop but CANNOT
+        be set programmatically — set it once in System Settings or via MDM.
         Activation reads `pmset -g custom`, parses the AC-block powermode, and
-        logs a WARN on drift. "unmanaged" skips the check. Verify/nudge only —
-        never enforced.
+        WARNs on drift. "unmanaged" skips the check. Verify/nudge only.
       '';
     };
 
-    # --- Category 4: App Nap ----------------------------------------------
+    # Category 4: App Nap
     appNapDisabledFor = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [ "dev.vllm-mlx.server" ];
       description = ''
-        User-defaults bundle IDs to mark NSAppSleepDisabled=YES for, so macOS
-        does not throttle long-lived inference daemons via App Nap.
+        User-defaults bundle IDs to mark NSAppSleepDisabled=YES, so macOS does
+        not throttle long-lived inference daemons via App Nap.
       '';
     };
 
-    # --- Category 7: background contention --------------------------------
+    # Category 7: background contention
     huggingfaceVolume = lib.mkOption {
       type = lib.types.str;
       default = "/Volumes/HuggingFace";
-      description = "Path to the HuggingFace cache volume; Spotlight indexing is disabled here.";
+      description = "HuggingFace cache volume path; Spotlight indexing disabled here.";
     };
 
     timeMachineExcludes = lib.mkOption {
@@ -246,12 +220,12 @@ in
       '';
       description = ''
         Absolute paths to add to the Time Machine exclusion list. The
-        HuggingFace volume default is sourced from huggingfaceVolume so
-        overriding that option keeps the exclusion in sync.
+        HuggingFace volume default sources from huggingfaceVolume so overriding
+        that option keeps the exclusion in sync.
       '';
     };
 
-    # --- Category 8: Metal debug env --------------------------------------
+    # Category 8: Metal debug env
     metalDebugEnvToUnset = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [
@@ -264,9 +238,8 @@ in
       description = ''
         Metal debug/validation env vars to clear from the launchd user context
         via `launchctl unsetenv`. Any one set silently taxes every inference.
-        Best-effort guard with verification; the canonical fix is for the
-        inference LaunchAgent (nix-ai programs.mlx) to never export them. Empty
-        list disables the guard.
+        Canonical fix is the inference LaunchAgent (nix-ai programs.mlx) never
+        exporting them. Empty list disables the guard.
       '';
     };
   };
@@ -282,25 +255,21 @@ in
         message = "system.appleSiliconTunables.wiredLwmMb (low-water mark) must be below wiredLimitMb.";
       }
       {
-        # Single-input sanity: the LLM budget cannot exceed installed RAM.
+        # LLM budget cannot exceed installed RAM.
         assertion = cfg.maxLocalLlmGb == null || cfg.maxLocalLlmGb <= cfg.physicalRamGb;
         message = "system.appleSiliconTunables.maxLocalLlmGb (${toString cfg.maxLocalLlmGb} GiB) cannot exceed physicalRamGb (${toString cfg.physicalRamGb} GiB).";
       }
       {
-        # Hard floor: the derived reserve must leave macOS enough unwired RAM.
+        # Derived reserve must leave macOS enough unwired RAM.
         assertion = cfg.osReserveGb == null || cfg.osReserveGb >= 8;
         message = "system.appleSiliconTunables: osReserveGb (physicalRamGb minus maxLocalLlmGb) must leave macOS at least 8 GiB unwired; got ${toString cfg.osReserveGb} GiB. Lower maxLocalLlmGb.";
       }
     ];
 
-    # Boot-time: re-apply the VOLATILE iogpu/vm sysctls on every restart. The
-    # sysctls reset to default on reboot, so we rely on launchd RunAtLoad
-    # rather than an /etc/sysctl.conf-style mechanism. Label/log path are kept
-    # stable (was set-iogpu-wired-limit) to avoid orphaning the old plist; it
-    # now runs the shared volatile-sysctl script (wired limit + optional lwm +
-    # optional compressor mode). The script retries the wired-limit write until
-    # the IOGPU sysctl node registers, so an early-boot race no longer leaves
-    # the ceiling at the OS default until the next darwin-rebuild.
+    # Boot-time: re-apply the VOLATILE iogpu/vm sysctls on every restart via
+    # launchd RunAtLoad. Label/log path kept stable to avoid orphaning the old
+    # plist. The shared script retries the wired-limit write until the IOGPU
+    # sysctl node registers, so an early-boot race no longer strands the ceiling.
     launchd.daemons.set-iogpu-wired-limit = {
       serviceConfig = {
         Label = "dev.local.set-iogpu-wired-limit";
@@ -313,9 +282,9 @@ in
       };
     };
 
-    # darwin-rebuild switch: apply everything. Volatile sysctls first (so a
-    # rebuild takes effect immediately, not just next boot), then the
-    # persistent / verify-only knobs. All values escaped via lib.escapeShellArg.
+    # darwin-rebuild switch: volatile sysctls first (so a rebuild takes effect
+    # immediately, not just next boot), then persistent/verify-only knobs.
+    # All values escaped via lib.escapeShellArg.
     system.activationScripts.appleSiliconTunables.text = ''
       WIRED_LIMIT_MB=${lib.escapeShellArg sysctlsEnv.WIRED_LIMIT_MB} \
       WIRED_LWM_MB=${lib.escapeShellArg sysctlsEnv.WIRED_LWM_MB} \
