@@ -118,12 +118,105 @@ in
               connections:
                 - pipeline: bench_events
                   output: cribl_stream
+            # Whole-machine + per-process OS metrics (native system_metrics
+            # Source, Edge 4.18 — collects host CPU/mem/disk/net plus process
+            # metrics; no exec scrapes needed). These are metric-typed events;
+            # the os_metrics pipeline stamps the os_metrics METRIC index so
+            # Splunk stores them as metrics (mstats-queryable), keyed by host
+            # alongside pve1/2/3 in host_metrics's sibling. 10s poll ≈ an
+            # always-on Activity Monitor. Previously misrouted to index=llm
+            # (event index) via the old llm_metrics pipeline.
             in_system_metrics:
               type: system_metrics
               disabled: false
+              pollingInterval: 10
               sendToRoutes: false
               connections:
-                - pipeline: llm_metrics
+                - pipeline: os_metrics
+                  output: cribl_stream
+            # Critical macOS logs + power/thermal telemetry -> index=os (event),
+            # sourcetype macos:* (the os_events pipeline derives sourcetype from
+            # __inputId). Native Sources where Edge 4.18 has them; the three exec
+            # sources below (powermetrics, pmset thermal, ioreg battery) have no
+            # native 4.18 equivalent. Commands taken verbatim from the
+            # cc-edge-the-mac-pack-io pack. Edge runs as root here, so
+            # powermetrics/ioreg/DiagnosticReports reads succeed.
+            #
+            # Unified Logging Subsystem, native Source. TIGHT predicate: only
+            # memory-pressure/jetsam/watchdog/thermal/panic signals, not the
+            # firehose. readMode lastEntry = only new entries after (re)start.
+            in_macos_unified_logs:
+              type: apple_unified_logs
+              disabled: false
+              readMode: lastEntry
+              predicate: 'eventMessage CONTAINS[c] "jetsam" OR eventMessage CONTAINS[c] "memory pressure" OR eventMessage CONTAINS[c] "memorystatus" OR eventMessage CONTAINS[c] "watchdog" OR eventMessage CONTAINS[c] "thermal" OR eventMessage CONTAINS[c] "panic" OR eventMessage CONTAINS[c] "low swap"'
+              sendToRoutes: false
+              connections:
+                - pipeline: os_events
+                  output: cribl_stream
+            # powermetrics: the only path to per-process energy + CPU/GPU/ANE
+            # power. Exec, 300s (expensive sampler). One JSON doc per sample.
+            in_macos_powermetrics:
+              type: exec
+              disabled: false
+              interval: 300
+              command: "powermetrics --samplers tasks,battery,cpu_power,gpu_power,ane_power,thermal --show-process-energy -f plist -n 1 -i 5000 | /usr/bin/plutil -convert json -o - -"
+              sendToRoutes: false
+              connections:
+                - pipeline: os_events
+                  output: cribl_stream
+            # Thermal/perf pressure levels (pmset -g therm) — not in the native
+            # System Metrics Source on macOS. Exec, 60s.
+            in_macos_thermal:
+              type: exec
+              disabled: false
+              interval: 60
+              command: "pmset -g therm"
+              sendToRoutes: false
+              connections:
+                - pipeline: os_events
+                  output: cribl_stream
+            # ponytail: standalone battery-health exec (pmset+ioreg) dropped —
+            # its deeply-nested quoting is fragile and a mis-escape fails the
+            # whole Edge config load; powermetrics' `battery` sampler above
+            # already carries the basics. Re-add by wiring the pack's verbatim
+            # command (not re-transcribing) if cycle-count/capacity detail is
+            # wanted.
+            # Crash/panic reports. File Source (manual mode: path + "*/"-led glob,
+            # per the #1623 lesson). System + user DiagnosticReports dirs.
+            in_macos_crashreports_sys:
+              type: file
+              disabled: false
+              mode: manual
+              interval: 60
+              path: /Library/Logs/DiagnosticReports/
+              filenames:
+                - "*/*.ips"
+                - "*/*.panic"
+                - "*/*.crash"
+                - "*/*.diag"
+                - "*/*.hang"
+              tailOnly: false
+              sendToRoutes: false
+              connections:
+                - pipeline: os_events
+                  output: cribl_stream
+            in_macos_crashreports_user:
+              type: file
+              disabled: false
+              mode: manual
+              interval: 60
+              path: ${userConfig.user.homeDir}/Library/Logs/DiagnosticReports/
+              filenames:
+                - "*/*.ips"
+                - "*/*.panic"
+                - "*/*.crash"
+                - "*/*.diag"
+                - "*/*.hang"
+              tailOnly: false
+              sendToRoutes: false
+              connections:
+                - pipeline: os_events
                   output: cribl_stream
             # NO prometheus scrape input here: the Cribl prometheus scraper
             # source is not allowed on a standalone Edge ("Source is not
@@ -420,7 +513,11 @@ in
                   - name: sourcetype
                     value: "'mlx:bench'"
         '';
-        "pipelines/llm_metrics/conf.yml" = ''
+        # Native system_metrics -> os_metrics METRIC index (was llm_metrics ->
+        # index=llm, an event index — the misroute this fixes). Metric-typed
+        # events keep their datatype; a metric-datatype index makes Splunk store
+        # them as metrics (mstats), same Stream path as host/netmon/unifi_metrics.
+        "pipelines/os_metrics/conf.yml" = ''
           output: default
           functions:
             - id: eval
@@ -428,9 +525,24 @@ in
               conf:
                 add:
                   - name: index
-                    value: "'llm'"
+                    value: "'os_metrics'"
                   - name: sourcetype
-                    value: "'mlx:metrics'"
+                    value: "'macos:system:metrics'"
+        '';
+        # Critical macOS logs + power/thermal/crash telemetry -> index=os
+        # (event). One pipeline for every macos:* event Source; sourcetype is
+        # derived from __inputId so each Source lands its own sourcetype.
+        "pipelines/os_events/conf.yml" = ''
+          output: default
+          functions:
+            - id: eval
+              filter: "true"
+              conf:
+                add:
+                  - name: index
+                    value: "'os'"
+                  - name: sourcetype
+                    value: "String(__inputId).includes('powermetrics') ? 'macos:powermetrics' : String(__inputId).includes('thermal') ? 'macos:thermal' : String(__inputId).includes('crashreports') ? 'macos:crashreport' : 'macos:unifiedlog'"
         '';
         "pipelines/firewall_logs/conf.yml" = ''
           output: default
