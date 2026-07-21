@@ -73,7 +73,7 @@ in
     # keychain tiers have been retired (see terraform-proxmox
     # docs/github-token-openbao-migration runbook). Tokens are ephemeral GitHub
     # App installation tokens, with a break-glass App-JWT mint fallback (#1776).
-    # Secret-zero (VAULT_ADDR + the GitHub AppRole) is supplied ambiently by
+    # Secret-zero (BAO_ADDR or legacy VAULT_ADDR + the GitHub AppRole) is supplied ambiently by
     # `doppler run`.
     openbao-github-creds.enable = true;
 

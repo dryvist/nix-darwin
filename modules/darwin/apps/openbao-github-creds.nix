@@ -7,7 +7,7 @@
 # WRITE behind a `claim` (which also takes a cross-agent lease), and inert
 # human-gated admin — see the script header for the full contract.
 #
-# Secret-zero — VAULT_ADDR + the github-read / github-write AppRole
+# Secret-zero — BAO_ADDR (or legacy VAULT_ADDR) + the github-read / github-write AppRole
 # role_id/secret_id (and the two installation IDs for write) — is supplied
 # AMBIENTLY by the environment, in practice by running under `doppler run` (the
 # iac secret store injects them by name). There is deliberately NO local
