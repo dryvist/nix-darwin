@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.12.0](https://github.com/dryvist/nix-darwin/compare/v2.11.1...v2.12.0) (2026-07-21)
+
+
+### Features
+
+* **cribl:** route Mac OS metrics to os_metrics + capture critical macOS logs ([#1824](https://github.com/dryvist/nix-darwin/issues/1824)) ([e7257fe](https://github.com/dryvist/nix-darwin/commit/e7257fedf91086b22bf9fb34f89b9220116f15a7))
+
 ## [2.11.1](https://github.com/dryvist/nix-darwin/compare/v2.11.0...v2.11.1) (2026-07-21)
 
 
