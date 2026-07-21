@@ -119,20 +119,23 @@ in
                 - pipeline: bench_events
                   output: cribl_stream
             # Whole-machine + per-process OS metrics (native system_metrics
-            # Source, Edge 4.18 — collects host CPU/mem/disk/net plus process
-            # metrics; no exec scrapes needed). These are metric-typed events;
-            # the os_metrics pipeline stamps the os_metrics METRIC index so
-            # Splunk stores them as metrics (mstats-queryable), keyed by host
-            # alongside pve1/2/3 in host_metrics's sibling. 10s poll ≈ an
-            # always-on Activity Monitor. Previously misrouted to index=llm
-            # (event index) via the old llm_metrics pipeline.
+            # Source, Edge 4.18 — host CPU/mem/disk/net plus process metrics),
+            # 10s poll ≈ an always-on Activity Monitor.
+            # INTERIM: routed to the llm_metrics pipeline (index=llm, EVENT) —
+            # the prior behavior. Stamping the os_metrics METRIC index was tried
+            # (nix-darwin#1824) but Splunk rejects it: this Edge->S2S->Stream
+            # path delivers EVENT-format JSON on the legacy token, and a metric
+            # index refuses event data (invalid_index). True os_metrics-as-metrics
+            # needs a Stream-side metric route (ansible-proxmox-apps cribl_stream:
+            # metric formatting + a per-index os_metrics token, like host_metrics).
+            # Until that lands, keep the data flowing as events here.
             in_system_metrics:
               type: system_metrics
               disabled: false
               pollingInterval: 10
               sendToRoutes: false
               connections:
-                - pipeline: os_metrics
+                - pipeline: llm_metrics
                   output: cribl_stream
             # Critical macOS logs + power/thermal telemetry -> index=os (event),
             # sourcetype macos:* (the os_events pipeline derives sourcetype from
@@ -184,6 +187,8 @@ in
             # wanted.
             # Crash/panic reports. File Source (manual mode: path + "*/"-led glob,
             # per the #1623 lesson). System + user DiagnosticReports dirs.
+            # tailOnly: true — only NEW reports after Edge start. false backfilled
+            # the entire DiagnosticReports history (~283k fragmented events).
             in_macos_crashreports_sys:
               type: file
               disabled: false
@@ -196,7 +201,7 @@ in
                 - "*/*.crash"
                 - "*/*.diag"
                 - "*/*.hang"
-              tailOnly: false
+              tailOnly: true
               sendToRoutes: false
               connections:
                 - pipeline: os_events
@@ -213,7 +218,7 @@ in
                 - "*/*.crash"
                 - "*/*.diag"
                 - "*/*.hang"
-              tailOnly: false
+              tailOnly: true
               sendToRoutes: false
               connections:
                 - pipeline: os_events
@@ -513,11 +518,12 @@ in
                   - name: sourcetype
                     value: "'mlx:bench'"
         '';
-        # Native system_metrics -> os_metrics METRIC index (was llm_metrics ->
-        # index=llm, an event index — the misroute this fixes). Metric-typed
-        # events keep their datatype; a metric-datatype index makes Splunk store
-        # them as metrics (mstats), same Stream path as host/netmon/unifi_metrics.
-        "pipelines/os_metrics/conf.yml" = ''
+        # system_metrics -> index=llm (EVENT), sourcetype mlx:metrics. INTERIM
+        # (see in_system_metrics above): the os_metrics METRIC-index route was
+        # reverted because this S2S path ships event-format data that a metric
+        # index rejects. Restore os_metrics here once the Stream side formats
+        # these as Splunk metrics via a per-index os_metrics token.
+        "pipelines/llm_metrics/conf.yml" = ''
           output: default
           functions:
             - id: eval
@@ -525,9 +531,9 @@ in
               conf:
                 add:
                   - name: index
-                    value: "'os_metrics'"
+                    value: "'llm'"
                   - name: sourcetype
-                    value: "'macos:system:metrics'"
+                    value: "'mlx:metrics'"
         '';
         # Critical macOS logs + power/thermal/crash telemetry -> index=os
         # (event). One pipeline for every macos:* event Source; sourcetype is
