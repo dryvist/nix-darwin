@@ -99,6 +99,14 @@ in
       # the public zone issues cleanly, same as the host FQDN. (A future
       # public-facing capability name is tracked separately.)
       extraHostnames = [ "llm-large.${userConfig.baseDomain}" ];
+      # Bind the gate's listeners to this host's LAN address only — never the
+      # wildcard/loopback socket. apiPort/clusterPort mirror the loopback
+      # llama-swap ports, so a wildcard bind lets Caddy capture 127.0.0.1
+      # whenever llama-swap restarts and proxy loopback callers into its own
+      # TLS listener (INC-17114). Caddy's `bind` needs a socket address, not a
+      # DNS name, so the host's fixed-reservation LAN address is set here (it
+      # tracks the jevans-ms A record; move it if the reservation moves).
+      bindAddresses = [ "10.0.50.10" ];
       # Clustered-mode endpoint (mlx-lm rank 0 on loopback :11440, see
       # lib/hosts/mac-studio.nix clusterMode): second gated site, same
       # bearer token and cert, mirrored external:loopback port convention.
