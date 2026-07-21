@@ -112,14 +112,20 @@ in
       # pmset perf flags (lowPowerMode / powerNap / proximityWake off) and the
       # Metal debug-env guard use the module's safe-win defaults.
       #
-      # Standalone-mode wired ceiling: 100000 MiB = 104.86 GB, leaving 32.6 GB
-      # unwirable as desktop headroom. Paired with gpuMemoryUtilization = 0.68
-      # in lib/hosts/macbook-m4.nix — change both together, never one alone.
-      # The trip (100.3 GB) sits 4.5 GB below this ceiling: the worker sheds KV
-      # cache and stays fully wired before it could spill to swap. This box is
-      # used interactively but prioritizes the LLM.
+      # Standalone-mode LLM budget — the single knob; everything downstream
+      # derives (see modules/darwin/apple-silicon-tunables.nix):
+      #   maxLocalLlmGb 96 GiB  ->  wiredLimitMb 98304 MiB (96 * 1024)
+      #                         ->  osReserveGb 32 GiB unwired desktop headroom
+      # The MLX ceiling is exact: 98304 * 1024^2 = 96 GiB (103.08 GB decimal).
+      # Paired with gpuMemoryUtilization = 0.68 in lib/hosts/macbook-m4.nix —
+      # change the pair together, never one alone. Re-derivation check at the
+      # new ceiling stays inside the band (footprint/ceiling < util <
+      # ceiling/RAM - 0.05 = 96/128 - 0.05 = 0.70; single-resident footprint
+      # ~0.4), so util is unchanged. The trip (0.68+0.05)*137.44 = 100.3 GB
+      # sits 2.8 GB under the 103.08 GB ceiling: the worker sheds KV cache and
+      # stays fully wired ahead of any swap spill. Interactive box, LLM-first.
       # https://docs.jacobpevans.com/local-llm/memory-ceilings
-      wiredLimitMb = 100000;
+      maxLocalLlmGb = 96;
       # Set explicitly rather than relying on the module default: a list option
       # drops its default once any config value is set, so the generic excludes
       # must be a config def here for a private host layer to append to via merge.

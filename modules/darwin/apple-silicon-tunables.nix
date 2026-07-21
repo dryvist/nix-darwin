@@ -58,12 +58,56 @@ in
     enable = lib.mkEnableOption "Apple Silicon system tunables for AI workloads";
 
     # --- Category 1: unified memory / GPU ---------------------------------
+    physicalRamGb = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 128;
+      description = ''
+        Installed physical RAM in GiB — a hardware constant (both Macs are
+        M4 Max / 128 GB); moves only with new hardware. Denominator of the
+        osReserveGb derivation and the maxLocalLlmGb sanity assert.
+      '';
+    };
+
+    maxLocalLlmGb = lib.mkOption {
+      type = lib.types.nullOr lib.types.ints.positive;
+      default = null;
+      example = 96;
+      description = ''
+        The single hand-set memory knob: GiB of wired memory handed to the
+        local LLM subsystem. When set, it DERIVES wiredLimitMb (this times
+        1024) and osReserveGb (physicalRamGb minus this). Set THIS, not
+        wiredLimitMb, so the ceiling and the reserve stay one decision.
+        null leaves wiredLimitMb on its own default (a host not yet converted
+        to this input). Changing it is serving-affecting (moves the wired
+        ceiling) — deploy in a maintenance window.
+        https://docs.jacobpevans.com/local-llm/memory-ceilings
+      '';
+    };
+
+    osReserveGb = lib.mkOption {
+      type = lib.types.nullOr lib.types.int;
+      readOnly = true;
+      default = if cfg.maxLocalLlmGb == null then null else cfg.physicalRamGb - cfg.maxLocalLlmGb;
+      defaultText = lib.literalExpression "physicalRamGb minus maxLocalLlmGb (null when maxLocalLlmGb is unset)";
+      description = ''
+        Computed GiB left unwired as desktop/OS headroom when maxLocalLlmGb is
+        set (physicalRamGb minus maxLocalLlmGb). Read-only; the assert below
+        keeps it above a hard floor so the LLM budget can never starve macOS.
+      '';
+    };
+
     wiredLimitMb = lib.mkOption {
       type = lib.types.ints.unsigned;
-      default = 118000;
+      # maxLocalLlmGb, times 1024, is the derived ceiling; the bare 118000
+      # default applies to a host not yet on the maxLocalLlmGb input.
+      default = if cfg.maxLocalLlmGb == null then 118000 else cfg.maxLocalLlmGb * 1024;
+      defaultText = lib.literalExpression "maxLocalLlmGb times 1024 when set, 118000 when unset";
       description = ''
         iogpu.wired_limit_mb — wired-memory ceiling in MiB. Volatile:
         re-applied at every boot via a one-shot launchd daemon.
+
+        Prefer setting maxLocalLlmGb; this derives from it. A host not yet
+        converted to that input sets this directly.
 
         Units are exact: max_recommended_working_set_size = wiredLimitMb * 1024^2.
         0 = OS default, ~84% of RAM (not the ~75% often assumed).
@@ -236,6 +280,16 @@ in
       {
         assertion = cfg.wiredLwmMb == null || cfg.wiredLwmMb < cfg.wiredLimitMb;
         message = "system.appleSiliconTunables.wiredLwmMb (low-water mark) must be below wiredLimitMb.";
+      }
+      {
+        # Single-input sanity: the LLM budget cannot exceed installed RAM.
+        assertion = cfg.maxLocalLlmGb == null || cfg.maxLocalLlmGb <= cfg.physicalRamGb;
+        message = "system.appleSiliconTunables.maxLocalLlmGb (${toString cfg.maxLocalLlmGb} GiB) cannot exceed physicalRamGb (${toString cfg.physicalRamGb} GiB).";
+      }
+      {
+        # Hard floor: the derived reserve must leave macOS enough unwired RAM.
+        assertion = cfg.osReserveGb == null || cfg.osReserveGb >= 8;
+        message = "system.appleSiliconTunables: osReserveGb (physicalRamGb minus maxLocalLlmGb) must leave macOS at least 8 GiB unwired; got ${toString cfg.osReserveGb} GiB. Lower maxLocalLlmGb.";
       }
     ];
 
