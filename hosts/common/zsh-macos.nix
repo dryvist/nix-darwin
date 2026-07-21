@@ -73,6 +73,13 @@
       # installation tokens) through the openbao-github-creds git credential
       # helper, wired in hosts/macbook-m4. The former keychain GH_PAT tier
       # switching (gh-restricted / gh-dryvist / gh-admin / ...) has been retired.
+      #
+      # `git` needs nothing further. gh-auth.zsh adds gh-read / gh-claim /
+      # gh-release for `gh` and anything else that reads GITHUB_TOKEN from the
+      # environment — mint-at-call-time, never at shell init and never on disk.
+      ${lib.optionalString (!hostConfig.isServer) ''
+        source ${./gh-auth.zsh}
+      ''}
 
       # --- Custom-auth launcher for `claude` ---
       # Defines av-claude <profile> (aws-vault exec <profile> -- claude).

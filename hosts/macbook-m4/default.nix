@@ -111,14 +111,15 @@ in
       energyMode = "high";
       # pmset perf flags (lowPowerMode / powerNap / proximityWake off) and the
       # Metal debug-env guard use the module's safe-win defaults.
-      # 0 = OS default (~96 GB on 128 GB). The desktop working set alone
-      # exceeds 25 GB, so this workstation needs guaranteed unwirable headroom:
-      # a raised ceiling (118000, and later 104000) pushed the host into
-      # compressor + swap saturation under a large resident MLX model
-      # (nix-mac-performance RC14; 2026-06-10 snapshot: swap 94 % with a single
-      # healthy 53 GB worker). The OS default keeps ~32 GB unwirable and still
-      # fits the largest model in use (~75 GB resident).
-      wiredLimitMb = 0;
+      #
+      # Standalone-mode wired ceiling: 100000 MiB = 104.86 GB, leaving 32.6 GB
+      # unwirable as desktop headroom. Paired with gpuMemoryUtilization = 0.68
+      # in lib/hosts/macbook-m4.nix — change both together, never one alone.
+      # The trip (100.3 GB) sits 4.5 GB below this ceiling: the worker sheds KV
+      # cache and stays fully wired before it could spill to swap. This box is
+      # used interactively but prioritizes the LLM.
+      # https://docs.jacobpevans.com/local-llm/memory-ceilings
+      wiredLimitMb = 100000;
       # Set explicitly rather than relying on the module default: a list option
       # drops its default once any config value is set, so the generic excludes
       # must be a config def here for a private host layer to append to via merge.

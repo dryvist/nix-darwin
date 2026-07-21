@@ -18,11 +18,11 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       # Performance: Install Nix with CI-optimized settings
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
+        uses: DeterminateSystems/determinate-nix-action@2a0be2498974c2b6327e19780488744384637d88 # v3
         with:
           extra-conf: |
             max-jobs = auto
@@ -37,15 +37,31 @@ jobs:
             auto-optimise-store = false
             warn-dirty = false
 
-      # Restore-only on PRs; saves on main. See .claude/rules/ci-workflows.md.
+      # Restore-only on PRs; saves on the DEFAULT branch. See .claude/rules/ci-workflows.md.
+      #
+      # `save:` MUST name the repository's default branch (`develop` under
+      # git-flow), not `main`. GitHub scopes an Actions cache to the branch that
+      # created it plus the default branch — nothing else. Saving only on `main`
+      # (not the default here) put every cache in a scope no pull request could
+      # read, so each PR restored nothing and cold-built the full closure. The
+      # symptom is a "Cache Nix Store" step that completes in ~2s while three
+      # multi-GB caches sit unused in the repo's cache list.
       - name: Cache Nix Store
         uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7
         with:
           primary-key: nix-${{ runner.os }}-${{ hashFiles('flake.lock') }}
           restore-prefixes-first-match: |
             nix-${{ runner.os }}-
-          gc-max-store-size-macos: 5G
-          save: ${{ github.ref == 'refs/heads/main' }}
+          # The activation closure exceeds this cap, so the cache is partial by
+          # design; a partial warm store still beats substituting everything.
+          # GitHub evicts at a 10G per-repo quota, so raising this trades cache
+          # completeness against evicting the other caches in the repo.
+          gc-max-store-size-macos: 8G
+          # Literal, not `github.event.repository.default_branch`: that context is
+          # empty on some triggers, which would silently evaluate to a ref that
+          # never matches and reintroduce this exact bug with no signal. If the
+          # default branch ever changes, change this line with it.
+          save: ${{ github.ref == 'refs/heads/develop' }}
 
       # Warn if nixpkgs is not at the Hydra-evaluated channel HEAD — cold builds are slow.
       # Not a hard failure: channel service may lag briefly; warning is sufficient signal.

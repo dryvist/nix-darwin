@@ -130,9 +130,9 @@ in
     clusterLinkPrep = {
       enable = true;
       role = if hostConfig.isServer then "coordinator" else "worker";
-      # Cluster wired ceilings, applied around rank start/stop by the cluster
-      # watcher (day value restored at link-down). Raised 2026-07-19 per user
-      # decision: the old 90000/80000 caps were low enough to force swap
+      # Clustered wired ceilings, applied around rank start/stop by the cluster
+      # watcher (standalone value restored at link-down). Raised 2026-07-19 per
+      # user decision: the old 90000/80000 caps were low enough to force swap
       # thrash under the per-rank shard, and swap saturation kills the whole
       # cluster just as surely as a wired-out WindowServer — so an ultra-low
       # cap bought nothing. Headroom over conservatism; the operative guard
@@ -140,22 +140,20 @@ in
       # doctrine (INC-17075), not a tiny wired ceiling.
       clusterWiredLimitMb =
         if hostConfig.isServer then
-          # Headless server: no GUI/WindowServer working set, so the cluster
-          # ceiling matches the day ceiling (118000 ≈ 92% of 128 GB, ~10 GB
-          # reserve). Derived from the day value so the two never drift.
+          # Headless server: no GUI/WindowServer working set, so the clustered
+          # ceiling matches the standalone ceiling (118000 MiB = 123.73 GB,
+          # ~14 GB reserve). Derived from it so the two never drift.
           config.system.appleSiliconTunables.wiredLimitMb
         else
-          # Workstation worker: 128 GB physical − ~28 GB reserve = 100000. The
-          # reserve protects WindowServer + macOS system during CLUSTER mode,
-          # where cluster-quiesce has quit the GUI apps and booted out agents
-          # (working set far below the ~25 GB day-serving GUI set). It is kept
-          # deliberately larger than the headless Studio's ~10 GB because
-          # INC-17076 was a WindowServer watchdog panic on THIS machine — the
-          # laptop earns the extra reserve. Note the day ceiling here stays 0
-          # (appleSiliconTunables.wiredLimitMb): a raised DAY cap saturated
-          # swap with the GUI active (see hosts/macbook-m4/default.nix), but
-          # the quiesced cluster profile is different, so a higher CLUSTER cap
-          # is safe where a higher DAY cap was not.
+          # Workstation worker: 100000 MiB = 104.86 GB, ~32 GB reserve. That
+          # reserve protects WindowServer + macOS during CLUSTERED mode, where
+          # cluster-quiesce has quit the GUI apps and booted out agents, so the
+          # working set is far below the ~25 GB interactive one. Kept larger
+          # than the headless host's — this machine has a GUI to protect
+          # (INC-17076). This is deliberately ABOVE the standalone ceiling
+          # (84000, see hosts/macbook-m4/default.nix): quiesced, the GUI is not
+          # competing, so the clustered profile can wire more than the
+          # interactive one safely.
           100000;
     };
     energy.wakeOnMagicPacket = lib.mkIf hostConfig.isServer (lib.mkDefault true); # Wake-on-LAN for a headless box

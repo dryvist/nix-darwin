@@ -10,7 +10,7 @@
 #
 # KEEP: nix-managed plumbing (com.nix-darwin.* — includes the log shippers),
 # home-manager agents (org.nix-community.*), the cluster rank itself
-# (dev.mlx-cluster.*), day-log rotation (harmless, avoids a restore step),
+# (dev.mlx-cluster.*), standalone log rotation (harmless, avoids a restore step),
 # ssh/gpg agents, and git background maintenance.
 
 uid="$(id -u)"

@@ -217,6 +217,9 @@ bg_read_scope='{"contents":"read","metadata":"read","issues":"read","pull_reques
 bg_write_scope='{"contents":"write","pull_requests":"write","issues":"write","metadata":"read","checks":"read","actions":"read","statuses":"read"}'
 
 cmd_break_glass() {
+  # split_repo assigns owner/repo; scope them here so a break-glass call cannot
+  # leave them set for anything that runs afterwards.
+  local owner repo
   case "${1:-read}" in
     read)
       mint_break_glass "${2:-${default_owner}}" "${bg_read_scope}" ""; echo ;;
@@ -245,9 +248,21 @@ lock_acquire() {
     || true
   cur="$(curl -sf --max-time 10 -H "X-Vault-Token: ${bao_tok}" "${data_url}" 2>/dev/null || echo '{}')"
   holder="$(jq -r '.data.data.holder // empty' <<<"${cur}")"
-  ver="$(jq -r '.data.metadata.version // 0' <<<"${cur}")"
+  ver="$(jq -r '.data.metadata.version // empty' <<<"${cur}")"
   if [ -n "${holder}" ] && [ "${holder}" != "${me}" ]; then
     die "repo ${repo} is write-leased by '${holder}' — release it or wait for the lease to expire"
+  fi
+  # The deadman deletes the version's DATA but leaves the key's METADATA behind,
+  # so an expired lease reads back as a 404 while current_version stays at N.
+  # Defaulting ver to 0 there sends cas=0, which KV-v2 defines as "write only if
+  # this key has never existed" — permanently rejected with HTTP 400 once
+  # metadata exists. The lock then deadlocks forever and reports it as a race
+  # against another agent, which is exactly the wrong thing to go looking for.
+  # On a data 404, read current_version from the metadata instead.
+  if [ -z "${ver}" ]; then
+    ver="$(curl -sf --max-time 10 -H "X-Vault-Token: ${bao_tok}" "${meta_url}" 2>/dev/null \
+             | jq -r '.data.current_version // 0')"
+    ver="${ver:-0}"
   fi
   now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   local acq
@@ -256,7 +271,11 @@ lock_acquire() {
     -d "$(jq -cn --arg h "${me}" --arg t "${now}" --argjson v "${ver}" \
           '{options:{cas:$v}, data:{holder:$h, acquired_at:$t}}')" \
     "${data_url}")"
-  [ "${acq}" = "200" ] || die "could not acquire the write lease for ${repo} (raced another agent; HTTP ${acq})"
+  # A 400 here is a genuine CAS mismatch (someone else wrote between our read and
+  # our write). Name both possibilities rather than only the race — the expired
+  # -lease case above looked identical and cost hours of chasing a phantom agent.
+  [ "${acq}" = "200" ] \
+    || die "could not acquire the write lease for ${repo} (CAS rejected at version ${ver}; HTTP ${acq})"
 }
 
 lock_release() {
@@ -363,7 +382,36 @@ self_check() {
   if [ "$(jq -r 'has("administration")' <<<"${bg_write_scope}")" != "false" ]; then
     echo "self-check FAIL: break-glass write scope must never grant administration"; return 1
   fi
+  self_check_lock_reacquire || return 1
   echo "self-check OK"
+}
+
+# A lease whose deadman fired must still be re-acquirable. The failure this
+# guards against is silent and total: the key's metadata outlives the deleted
+# version, so a cas derived from the (404) data read deadlocks the repo forever
+# while reporting a race against another agent. Exercised on a throwaway key.
+self_check_lock_reacquire() {
+  local bao_tok base d m code ver
+  bao_tok="$(bao_login GITHUB_WRITE)" || { echo "self-check SKIP: no GITHUB_WRITE login"; return 0; }
+  base="${VAULT_ADDR}/v1/secret"
+  d="${base}/data/locks/github-write/147266792/zz-self-check"
+  m="${base}/metadata/locks/github-write/147266792/zz-self-check"
+
+  curl -s -o /dev/null --max-time 10 -X DELETE -H "X-Vault-Token: ${bao_tok}" "${m}"
+  curl -s -o /dev/null --max-time 10 -X POST -H "X-Vault-Token: ${bao_tok}" \
+    -d '{"options":{"cas":0},"data":{"holder":"self-check"}}' "${d}"
+  # Delete the version's data but leave metadata: exactly what the deadman does.
+  curl -s -o /dev/null --max-time 10 -X DELETE -H "X-Vault-Token: ${bao_tok}" "${d}"
+
+  ver="$(curl -sf --max-time 10 -H "X-Vault-Token: ${bao_tok}" "${m}" 2>/dev/null \
+           | jq -r '.data.current_version // 0')"
+  code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 -X POST \
+    -H "X-Vault-Token: ${bao_tok}" \
+    -d "$(jq -cn --argjson v "${ver:-0}" '{options:{cas:$v}, data:{holder:"self-check-2"}}')" "${d}")"
+  curl -s -o /dev/null --max-time 10 -X DELETE -H "X-Vault-Token: ${bao_tok}" "${m}"
+
+  [ "${code}" = "200" ] \
+    || { echo "self-check FAIL: expired lease not re-acquirable (cas=${ver} -> HTTP ${code})"; return 1; }
 }
 
 case "${1:-}" in

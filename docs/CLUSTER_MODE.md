@@ -30,7 +30,7 @@ Component map (all IaC):
 | Static link config (bridge off, role IPv4) + wired-ceiling grants | `modules/darwin/cluster-link-prep.nix` (`system.clusterLinkPrep`) |
 | Worker quiesce/restore (GUI quit + agent allowlist sweep) | `hosts/common/cluster-quiesce.nix` + `scripts/cluster-{quiesce,restore}.sh` |
 | Gated cluster endpoint (`:11440`, same bearer token) | `modules/darwin/llm-gate.nix` `clusterUpstreamPort` / `clusterPort` |
-| Router: cluster brain in the large phase + solo fallback | ansible-proxmox-apps `roles/llm_router` (`ai_night_brain_enabled`) |
+| Router: cluster brain in the large phase + solo fallback | ansible-proxmox-apps `roles/llm_router` (`ai_night_brain_enabled`, pending rename) |
 | Log shipping (`in_cluster_logs`, gate `cluster-access.json`) | `hosts/common/cribl.nix` |
 
 Serving stack: first-party **mlx-lm** — `mlx_lm.server --pipeline` on both
@@ -108,7 +108,7 @@ The supervised first-plug session ran 2026-07-17/18 and is recorded in
    (or watch the two rank logs — the watcher will have started the ranks
    as soon as the peer ping succeeded).
 4. Watch the seam: `cluster-watcher.log` on both Macs shows
-   `down -> up` → day models unload (coordinator) / quiesce sweep (worker) →
+   `down -> up` → standalone models unload (coordinator) / quiesce sweep (worker) →
    rank kickstart. First token can take minutes (198 GB load).
 5. Smoke the endpoint through the gate:
    `curl -H "Authorization: Bearer $TOKEN" https://<serving-host>:11440/v1/models`.
@@ -122,21 +122,21 @@ The supervised first-plug session ran 2026-07-17/18 and is recorded in
    run on it.
 8. **Unplug test before ending the session is optional but recommended**:
    yank the cable — in-flight generations abort, LiteLLM falls back to the
-   solo brain, the watcher stops the rank and re-warms day serving.
+   solo brain, the watcher stops the rank and re-warms standalone serving.
    Surprise-yank and graceful shutdown converge on the same code path; there
    is no hardware or filesystem risk (each Mac's memory is its own).
 
 > **Reboot-with-cable-in caveat:** the watcher's link-state file survives a
 > reboot. A host that reboots with the cable still in comes up seeing
-> `up -> up`, so the down→up quiesce (day-model unload / worker sweep) is
-> skipped while the rank is kickstarted — day serving and the rank then
+> `up -> up`, so the down→up quiesce (standalone-model unload / worker sweep) is
+> skipped while the rank is kickstarted — standalone serving and the rank then
 > contend for wired memory. Until the watcher re-quiesces on kickstart, pull
 > the cable before any reboot.
 
 ## Unplug
 
 Pull the cable (glance that no generation is mid-stream if you care about
-it finishing). Everything reverses unattended: ranks exit, day workers
+it finishing). Everything reverses unattended: ranks exit, standalone workers
 restart and re-warm, the worker's booted-out agents bootstrap back, the
 12:00 UTC flip proceeds as always. GUI apps stay closed.
 

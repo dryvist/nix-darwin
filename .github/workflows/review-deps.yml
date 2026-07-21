@@ -25,12 +25,12 @@ jobs:
       id-token: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0 # Full history for diff analysis
 
       - name: Checkout prompt catalog
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: dryvist/ai-llm-prompts
           ref: 0431be6994d51169b9f705ddeba958eb8a4d0fc4
@@ -39,7 +39,7 @@ jobs:
           sparse-checkout-cone-mode: false
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
+        uses: DeterminateSystems/determinate-nix-action@2a0be2498974c2b6327e19780488744384637d88 # v3
 
       - name: Generate flake.lock diff
         id: diff
@@ -66,7 +66,7 @@ jobs:
 
       - name: Run Claude Code Review
         id: claude-review
-        uses: anthropics/claude-code-action@e90deca47693f9457b72f2b53c17d7c445a87342 # v1
+        uses: anthropics/claude-code-action@b76a0776ae74036e77cd11018083743453d7ad35 # v1
         env:
           ANTHROPIC_BASE_URL: ${{ secrets.OPENROUTER_BASE_URL }}
         with:
