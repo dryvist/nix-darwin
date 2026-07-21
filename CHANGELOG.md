@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.12.1](https://github.com/dryvist/nix-darwin/compare/v2.12.0...v2.12.1) (2026-07-21)
+
+
+### Bug Fixes
+
+* **cribl:** revert os_metrics stamp to event path; crashreport tailOnly ([08fac45](https://github.com/dryvist/nix-darwin/commit/08fac453f2146cce14c7a5c3fa49655fcff56f7e))
+
 ## [2.12.0](https://github.com/dryvist/nix-darwin/compare/v2.11.1...v2.12.0) (2026-07-21)
 
 
