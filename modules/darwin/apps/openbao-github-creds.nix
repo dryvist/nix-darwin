@@ -1,20 +1,13 @@
 # OpenBao-backed GitHub token provider
 #
-# Installs `openbao-github-creds` system-wide so `git` (as a credential helper)
-# and `gh`/shell functions can resolve GitHub App installation tokens from
-# OpenBao's GitHub secrets engine on demand. Retires the local tiered-PAT
-# keychain services (GH_PAT_*). Three tiers: ambient all-repo READ, per-repo
-# WRITE behind a `claim` (which also takes a cross-agent lease), and inert
-# human-gated admin — see the script header for the full contract.
+# Installs `openbao-github-creds`, the OpenBao GitHub App token provider used by
+# git and the interactive `gh-*` helpers. The canonical operational contract,
+# including `gh-claim` / `gh-release`, is docs-starlight's
+# `d/runbooks/github-token-openbao-migration`; do not duplicate it here.
 #
-# Secret-zero — BAO_ADDR (or legacy VAULT_ADDR) + the github-read / github-write AppRole
-# role_id/secret_id (and the two installation IDs for write) — is supplied
-# AMBIENTLY by the environment, in practice by running under `doppler run` (the
-# iac secret store injects them by name). There is deliberately NO local
-# keychain in this path, identical to openbao-aws-creds.nix after #1686: Doppler
-# holds the OpenBao bootstrap, OpenBao serves the GitHub tokens. `security` etc.
-# are not used here; jq + curl come from runtimeInputs, and date/id/scutil are
-# resolved from the system PATH (macOS-only host).
+# The helper consumes ambient OpenBao secret-zero (`BAO_ADDR`, with legacy
+# `VAULT_ADDR` accepted) only at invocation time. It stores no GitHub token or
+# bootstrap material locally; jq and curl are its only runtime dependencies.
 #
 # This module is purely additive: it ships the wrapper on PATH but changes no
 # git/gh config. The interactive cutover (pointing git's credential helper +

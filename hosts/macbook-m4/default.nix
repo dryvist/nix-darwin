@@ -68,13 +68,9 @@ in
     openbao-aws-creds.enable = true;
 
     # --- OpenBao-backed GitHub token provider ---
-    # Ships the `openbao-github-creds` wrapper (git credential helper + gh env
-    # source) that is now the ONLY GitHub token path — the local GH_PAT_*
-    # keychain tiers have been retired (see terraform-proxmox
-    # docs/github-token-openbao-migration runbook). Tokens are ephemeral GitHub
-    # App installation tokens, with a break-glass App-JWT mint fallback (#1776).
-    # Secret-zero (BAO_ADDR or legacy VAULT_ADDR + the GitHub AppRole) is supplied ambiently by
-    # `doppler run`.
+    # Runtime behavior and operator commands are canonical in docs-starlight's
+    # d/runbooks/github-token-openbao-migration (`gh-claim` / `gh-release`).
+    # This host only installs the provider; it holds no GitHub credential.
     openbao-github-creds.enable = true;
 
     # --- Reboot-continuity auto-resume ---
