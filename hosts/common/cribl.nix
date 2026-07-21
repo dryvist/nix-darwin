@@ -28,9 +28,9 @@ let
     stripRoot = false;
   };
   geminiPack = pkgs.fetchzip {
-    url = "https://github.com/JacobPEvans-personal/cc-edge-gemini-antigravity-io/releases/download/v0.4.0/cc-edge-gemini-antigravity-io-v0.4.0.crbl";
+    url = "https://github.com/JacobPEvans-personal/cc-edge-gemini-antigravity-io/releases/download/v0.4.1/cc-edge-gemini-antigravity-io-v0.4.1.crbl";
     extension = "tar.gz";
-    hash = "sha256-CIySu8g1mc/ZbkvafQps6krfFSY9OV3o93giU9hwTng=";
+    hash = "sha256-VzRPBode10yLdDqmcaOhwWnTpUVmF10OwVkXZtyjGJ4=";
     stripRoot = false;
   };
 in
@@ -249,8 +249,11 @@ in
               metadata:
                 - name: datatype
                   value: "'antigravity-cli-history'"
+              # v0.4.1 llm_normalize stamps history's sourcetype/index too (its
+              # llm.* evals gate on fields history lacks, so they skip it).
               connections:
-                - output: cribl_agy
+                - pipeline: llm_normalize
+                  output: cribl_agy
             in_copilot_logs:
               type: file
               disabled: false
