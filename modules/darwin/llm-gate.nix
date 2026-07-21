@@ -83,6 +83,21 @@ let
     lib.unique ([ cfg.domain ] ++ cfg.extraHostnames)
   );
 
+  # Pin every site's listener to the host's LAN address(es) so Caddy never
+  # binds the wildcard (all-interfaces) socket. This is load-bearing: apiPort
+  # and clusterPort mirror their loopback upstream ports (apiPort ==
+  # apiUpstreamPort), so a wildcard listener also owns 127.0.0.1:PORT. While
+  # llama-swap holds its specific loopback bind the more-specific socket wins,
+  # but the moment llama-swap dies/restarts Caddy's wildcard captures loopback
+  # traffic and proxies those callers into its OWN TLS listener — clients then
+  # get "Client sent an HTTP request to an HTTPS server" (INC-17114). Binding
+  # only the LAN address guarantees 127.0.0.1:PORT is answered by llama-swap or
+  # refused, never by the gate. Empty list = Caddy default (all interfaces),
+  # preserved for hosts whose gate port does not shadow a loopback service.
+  bindDirective = lib.optionalString (cfg.bindAddresses != [ ]) (
+    "bind " + lib.concatStringsSep " " cfg.bindAddresses
+  );
+
   # Optional second gated site for the cluster-mode endpoint (same bearer
   # token, same cert, own port + access log). Rendered only when a cluster
   # upstream is configured.
@@ -92,6 +107,7 @@ let
         lib.unique ([ cfg.domain ] ++ cfg.extraHostnames)
       )
     } {
+      ${bindDirective}
       ${tlsDirective}
       log {
         output file ${cfg.logDir}/cluster-access.json
@@ -114,6 +130,7 @@ let
     }
 
     ${apiSiteAddresses} {
+      ${bindDirective}
       ${tlsDirective}
       # JSON access log — the only place API-consumer traffic is visible (the
       # model server on loopback only ever sees the proxy). Written into the
@@ -155,6 +172,30 @@ in
         this, an alias hitting the gate fails TLS because the cert only covers
         `domain`. In route53 mode the DNS-01 challenge is solved for every site
         hostname automatically, so no per-name tls entry is needed.
+      '';
+    };
+
+    bindAddresses = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      example = [ "10.0.0.2" ];
+      description = ''
+        LAN-facing IP address(es) each gate site binds its listener to. When
+        non-empty a `bind` directive restricts every site to exactly these
+        addresses, so Caddy never binds the wildcard/all-interfaces socket.
+
+        This is required whenever a gate port mirrors its loopback upstream
+        (the default apiPort == apiUpstreamPort, and likewise for the cluster
+        port): a wildcard bind also owns 127.0.0.1:PORT, and the moment the
+        loopback upstream (llama-swap) drops its specific bind, Caddy captures
+        loopback traffic and proxies it into its own TLS listener — clients
+        then see "Client sent an HTTP request to an HTTPS server". Binding only
+        the LAN address guarantees loopback:PORT is answered by the upstream or
+        refused, never by the gate.
+
+        A literal address is required — Caddy's `bind` takes socket addresses,
+        not DNS names — so set it per host to the host's fixed LAN address.
+        Empty keeps Caddy's default (all interfaces).
       '';
     };
 
