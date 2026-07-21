@@ -33,7 +33,7 @@
       flake = false;
     };
     ai-llm-prompts = {
-      url = "github:dryvist/ai-llm-prompts/0431be6994d51169b9f705ddeba958eb8a4d0fc4";
+      url = "github:dryvist/ai-llm-prompts/f8b433955d9a69bd197c99be63b2e21a4b2e95b0";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     claude-code-plugins = {
