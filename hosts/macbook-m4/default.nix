@@ -112,11 +112,14 @@ in
       # pmset perf flags (lowPowerMode / powerNap / proximityWake off) and the
       # Metal debug-env guard use the module's safe-win defaults.
       #
-      # Standalone-mode wired ceiling: 84000 MiB = 88.08 GB, leaving 46.0 GiB
-      # unwirable as desktop headroom. Paired with gpuMemoryUtilization = 0.55
+      # Standalone-mode wired ceiling: 100000 MiB = 104.86 GB, leaving 32.6 GB
+      # unwirable as desktop headroom. Paired with gpuMemoryUtilization = 0.68
       # in lib/hosts/macbook-m4.nix — change both together, never one alone.
+      # The trip (100.3 GB) sits 4.5 GB below this ceiling: the worker sheds KV
+      # cache and stays fully wired before it could spill to swap. This box is
+      # used interactively but prioritizes the LLM.
       # https://docs.jacobpevans.com/local-llm/memory-ceilings
-      wiredLimitMb = 84000;
+      wiredLimitMb = 100000;
       # Set explicitly rather than relying on the module default: a list option
       # drops its default once any config value is set, so the generic excludes
       # must be a config def here for a private host layer to append to via merge.
