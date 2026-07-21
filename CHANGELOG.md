@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.11.1](https://github.com/dryvist/nix-darwin/compare/v2.11.0...v2.11.1) (2026-07-21)
+
+
+### Bug Fixes
+
+* **llm-gate:** bind gate sites to LAN address only — never capture loopback ([#1816](https://github.com/dryvist/nix-darwin/issues/1816)) ([d71ce39](https://github.com/dryvist/nix-darwin/commit/d71ce39cf3efa194fb5d9254b66db62e78152bb2))
+
 ## [2.11.0](https://github.com/dryvist/nix-darwin/compare/v2.10.0...v2.11.0) (2026-07-21)
 
 
