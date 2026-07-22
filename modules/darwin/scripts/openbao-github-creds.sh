@@ -60,7 +60,7 @@
 #      taking the installation default.
 #
 # SECRET-ZERO is AMBIENT (no local keychain), identical to openbao-aws-creds.sh
-# after dryvist/nix-darwin#1686: VAULT_ADDR + the github-read / github-write
+# after dryvist/nix-darwin#1686: BAO_ADDR (or legacy VAULT_ADDR) + the github-read / github-write
 # AppRole role_id/secret_id, injected by running under `doppler run`. Write and
 # claim additionally need the installation IDs (OPENBAO_GITHUB_DRYVIST_INSTALLATION_ID
 # / OPENBAO_GITHUB_PERSONAL_INSTALLATION_ID) so a repo name can be pinned to its
@@ -100,8 +100,10 @@ lock_holder() {
   echo "${OPENBAO_GH_SESSION:-$(id -un)@$(scutil --get ComputerName 2>/dev/null || hostname -s)}"
 }
 
+bao_addr="${BAO_ADDR:-${VAULT_ADDR:-}}"
+
 require_env() {
-  [ -n "${VAULT_ADDR:-}" ] || die "VAULT_ADDR not set — run under 'doppler run'"
+  [ -n "${bao_addr}" ] || die "BAO_ADDR not set — run under 'doppler run'"
 }
 
 # AppRole login for the given env prefix (GITHUB_READ / GITHUB_WRITE); prints the
@@ -116,7 +118,7 @@ bao_login() {
     die "${role_id_var} / ${secret_id_var} not in environment — run under 'doppler run'"
   resp="$(curl -sf --max-time 10 -X POST \
     -d "{\"role_id\":\"${role_id}\",\"secret_id\":\"${secret_id}\"}" \
-    "${VAULT_ADDR}/v1/auth/approle/login")" || die "AppRole login (${approle_prefix}) failed"
+    "${bao_addr}/v1/auth/approle/login")" || die "AppRole login (${approle_prefix}) failed"
   token="$(jq -r '.auth.client_token // empty' <<<"${resp}")"
   [ -n "${token}" ] || die "AppRole login (${approle_prefix}) returned no client_token"
   printf '%s' "${token}"
@@ -127,7 +129,7 @@ mint_read() {
   set_name="$(read_set_for "${owner}")"
   bao_tok="$(bao_login GITHUB_READ)"
   resp="$(curl -sf --max-time 10 -X POST -H "X-Vault-Token: ${bao_tok}" \
-    "${VAULT_ADDR}/v1/github/token/${set_name}")" || die "mint read token (${set_name}) failed"
+    "${bao_addr}/v1/github/token/${set_name}")" || die "mint read token (${set_name}) failed"
   gh_tok="$(jq -r '.data.token // empty' <<<"${resp}")"
   [ -n "${gh_tok}" ] || die "no token in read mint response (${set_name})"
   printf '%s' "${gh_tok}"
@@ -152,7 +154,7 @@ mint_write() {
   bao_tok="$(bao_login GITHUB_WRITE)"
   body="$(write_token_body "${iid}" "${repo}")"
   resp="$(curl -sf --max-time 10 -X POST -H "X-Vault-Token: ${bao_tok}" \
-    -d "${body}" "${VAULT_ADDR}/v1/github/token")" \
+    -d "${body}" "${bao_addr}/v1/github/token")" \
     || die "mint write token for ${owner}/${repo} failed.
 Most likely ${repo} is not on the server-side github-write allowlist. That is a
 deny, not a bug, and there is no client-side workaround — do NOT fall back to a
@@ -240,8 +242,8 @@ lock_acquire() {
   local iid="$1" repo="$2" bao_tok data_url meta_url cur ver holder me now
   me="$(lock_holder)"
   bao_tok="$(bao_login GITHUB_WRITE)"
-  data_url="${VAULT_ADDR}/v1/secret/data/locks/github-write/${iid}/${repo}"
-  meta_url="${VAULT_ADDR}/v1/secret/metadata/locks/github-write/${iid}/${repo}"
+  data_url="${bao_addr}/v1/secret/data/locks/github-write/${iid}/${repo}"
+  meta_url="${bao_addr}/v1/secret/metadata/locks/github-write/${iid}/${repo}"
   # Server-side deadman: each lock version self-deletes, freeing a crashed holder.
   curl -sf --max-time 10 -X POST -H "X-Vault-Token: ${bao_tok}" \
     -d "{\"delete_version_after\":\"${OPENBAO_GH_LOCK_TTL:-15m}\"}" "${meta_url}" >/dev/null \
@@ -281,7 +283,7 @@ lock_acquire() {
 lock_release() {
   local iid="$1" repo="$2" bao_tok meta_url
   bao_tok="$(bao_login GITHUB_WRITE)"
-  meta_url="${VAULT_ADDR}/v1/secret/metadata/locks/github-write/${iid}/${repo}"
+  meta_url="${bao_addr}/v1/secret/metadata/locks/github-write/${iid}/${repo}"
   curl -sf --max-time 10 -X DELETE -H "X-Vault-Token: ${bao_tok}" "${meta_url}" >/dev/null \
     || echo "$prefix warning: could not release lease for ${repo} (it will expire on its own)" >&2
 }
@@ -393,7 +395,7 @@ self_check() {
 self_check_lock_reacquire() {
   local bao_tok base d m code ver
   bao_tok="$(bao_login GITHUB_WRITE)" || { echo "self-check SKIP: no GITHUB_WRITE login"; return 0; }
-  base="${VAULT_ADDR}/v1/secret"
+  base="${bao_addr}/v1/secret"
   d="${base}/data/locks/github-write/147266792/zz-self-check"
   m="${base}/metadata/locks/github-write/147266792/zz-self-check"
 

@@ -148,12 +148,13 @@ in
           # Workstation worker: 100000 MiB = 104.86 GB, ~32 GB reserve. That
           # reserve protects WindowServer + macOS during CLUSTERED mode, where
           # cluster-quiesce has quit the GUI apps and booted out agents, so the
-          # working set is far below the ~25 GB interactive one. Kept larger
-          # than the headless host's — this machine has a GUI to protect
-          # (INC-17076). This is deliberately ABOVE the standalone ceiling
-          # (84000, see hosts/macbook-m4/default.nix): quiesced, the GUI is not
-          # competing, so the clustered profile can wire more than the
-          # interactive one safely.
+          # working set is far below the ~25 GB interactive one. Lower than the
+          # headless coordinator's clustered ceiling (118000) — this machine
+          # still has a GUI to protect should quiesce be incomplete (INC-17076).
+          # Sits just above this host's standalone ceiling (98304 MiB, derived
+          # from maxLocalLlmGb = 96 in hosts/macbook-m4/default.nix): quiesced,
+          # the GUI is not competing, so the clustered profile can wire
+          # marginally more than the interactive one.
           100000;
     };
     energy.wakeOnMagicPacket = lib.mkIf hostConfig.isServer (lib.mkDefault true); # Wake-on-LAN for a headless box
