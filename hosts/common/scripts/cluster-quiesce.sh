@@ -57,7 +57,7 @@ EOF
 # 2. Boot out every user agent not on the KEEP allowlist, recording each
 #    label for restore. Only agents with a plist under ~/Library/LaunchAgents
 #    are swept — those are the ones cluster-restore.sh can bootstrap back.
-keep='^(com\.apple\.|org\.nix-community\.|com\.nix-darwin\.|dev\.mlx-cluster\.|org\.git-scm\.|com\.openssh\.)|^dev\.vllm-mlx\.logrotate$'
+keep='^(com\.apple\.|org\.nix-community\.|com\.nix-darwin\.|dev\.mlx-cluster\.|org\.git-scm\.|com\.openssh\.)|^dev\.mlx-model-server\.logrotate$'
 for plist in "$HOME/Library/LaunchAgents/"*.plist; do
   [ -f "$plist" ] || continue
   label="$(basename "$plist" .plist)"

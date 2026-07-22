@@ -2,7 +2,7 @@
 #
 # Imported by every host's default.nix. Holds host-agnostic system config and
 # consumes registry parameters (networking.hostName, OrbStack). Inference hosts
-# (those that declare `mlx` in the registry) also get the shared vllm-mlx Cribl
+# (those that declare `mlx` in the registry) also get the shared MLX model-server Cribl
 # log-shipping pipeline (./cribl.nix) — it is identical across machines.
 # Host-specific system config — streamline-login lists, energy /
 # appleSiliconTunables values — stays in hosts/<label>/default.nix.

@@ -4,7 +4,7 @@
 # inference / batch server (`class = server`).
 #
 # Shared system config — module imports, networking.hostName, OrbStack, the
-# vllm-mlx Cribl log-shipping pipeline, and server-class macOS defaults
+# MLX model-server Cribl log-shipping pipeline, and server-class macOS defaults
 # (Wake-on-LAN, network tuning, energyMode) — lives in ../common/default.nix.
 # This file adds the host-unique bits: ComputerName, headless inference/power
 # tuning, the llm-large serving gate, and the ephemeral GitHub Actions runner.
@@ -219,7 +219,7 @@ in
   # nix-prebuild writes to its own log dir; create it with user ownership so the
   # user agent can write (claude-scheduled-jobs creates its own dir separately).
   #
-  # The serving gate runs last: a rebuild bounces dev.vllm-mlx.server, and this
+  # The serving gate runs last: a rebuild bounces dev.mlx-model-server, and this
   # host can come back with an orphaned worker or a wedged scheduler, neither of
   # which a status-code check detects. It warns rather than failing — activation
   # is already done by this point, so a non-zero exit would report a half-applied
