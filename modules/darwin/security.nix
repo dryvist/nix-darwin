@@ -64,8 +64,8 @@ let
   # ==========================================================================
   # MLX model-server serving-restore ladder (INC-17083 / INC-17062)
   # ==========================================================================
-  # Exact target of the standalone-serving recovery ladder. The label is the single
-  # source in nix-ai (programs.mlx launchAgentLabel = "dev.mlx-model-server");
+  # Exact standalone-serving recovery target. nix-ai owns the label
+  # (programs.mlx launchAgentLabel = "dev.mlx-model-server");
   # nix-ai itself addresses this plist as
   # ~/Library/LaunchAgents/<label>.plist (cluster-mode.nix CLUSTER_SERVER_PLIST),
   # so the path is derived from the home dir + label here, never a hardcoded
@@ -167,8 +167,8 @@ in
     # ==========================================================================
     # Passwordless sudo: MLX model-server serving-restore ladder
     # ==========================================================================
-    # Purpose: the standalone-serving recovery ladder — bootout -> bootstrap -> kickstart
-    # of the MLX model-server agent — must never stall on a password prompt in an
+    # The standalone recovery ladder — bootout -> bootstrap -> kickstart — must
+    # never stall on a password prompt in an
     # automation context (INC-17083 restore stalled exactly here; the same ladder
     # is the tail of the INC-17062 cluster-detach standalone-serving restore).
     #
