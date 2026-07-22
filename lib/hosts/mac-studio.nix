@@ -34,17 +34,20 @@
 
   mlx = {
     # Validated catalog selections (profiles in nix-ai catalog-data.nix).
-    # Residents ≈ 58.6 GB with caches, far under the ~109 GB cache-clear trip
+    # Residents ≈ 68.8 GB of weights plus caches, under the ~109 GB cache-clear trip
     # (gpuMemoryUtilization 0.80 on 128 GB); an on-demand gpt-oss swap-in
     # transiently exceeds the trip — pre-existing; it idle-unloads.
     catalog = {
       # Qwen3-Next-80B Instruct is the resident fleet brain (2026-07-17
       # agentic bench; >=75B mandate) and doubles as the >=64K compression
-      # model. Residents = 80B (42 GB) + coder-30B (17.1 GB) ≈ 59 GB weights
-      # + 16 GB brain KV — under the ~102 GB trip with margin, but no room
-      # for a third resident: stock 35B and OptiQ both drop to swap.
+      # model. The 9B judge fits beside the 80B (42 GB) and coder (17.1 GB)
+      # at about 69 GB total weights; the 35B variants remain swap-only.
       qwen3-next-80b-instruct.class = "resident";
       qwen3-coder-30b.class = "resident";
+      qwen35-9b-optiq = {
+        class = "resident";
+        roles = [ "goal-judge" ];
+      };
       qwen36-35b.class = "swap";
       qwen36-optiq.class = "swap";
       gpt-oss-120b.class = "swap";
@@ -76,10 +79,11 @@
     # the point, not the number. Router-side injection can now be dropped.
     defaultRepetitionPenalty = 1.05;
 
-    # Resident brains warmed at boot: coder (coding) + the 80B Instruct
-    # fleet brain (tool-calling). Everything else is swap-class above.
+    # Resident brains warmed at boot: coder (coding), the 80B Instruct fleet
+    # brain (tool-calling), and the catalog-selected lightweight goal judge.
     preload = [
       "coding"
+      "goal-judge"
       "tool-calling"
     ];
     # Global parser off; every backend's parser comes from its catalog entry.
