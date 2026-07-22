@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.12.2](https://github.com/dryvist/nix-darwin/compare/v2.12.1...v2.12.2) (2026-07-22)
+
+
+### Bug Fixes
+
+* deploy Hermes stability fixes to Studio ([2e5c9bf](https://github.com/dryvist/nix-darwin/commit/2e5c9bf9704cac257f561aead2ab7a1f3db23768))
+* deploy Hermes stability fixes to Studio ([c67e8ba](https://github.com/dryvist/nix-darwin/commit/c67e8ba42d7e46029594a8d60b4ef3f186428a84))
+* include ShellCheck-clean Splunk MCP wrapper ([8bc63d6](https://github.com/dryvist/nix-darwin/commit/8bc63d6a4645fe6a14a0b538505b85b935be6952))
+
 ## [2.12.1](https://github.com/dryvist/nix-darwin/compare/v2.12.0...v2.12.1) (2026-07-21)
 
 
