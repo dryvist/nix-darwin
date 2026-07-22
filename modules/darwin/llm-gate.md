@@ -6,7 +6,7 @@ in its header comment.
 
 ## Role
 
-ADR (https://docs.dryvist.com/d/decisions/llm-large-studio-serving/): the model
+[ADR](https://docs.dryvist.com/d/decisions/llm-large-studio-serving/): the model
 server stays bound to 127.0.0.1; this Caddy front terminates TLS on the host's
 LAN address and enforces a bearer token (the OpenAI `api_key` field, native in
 every consumer). It is the only network path to the model port.
