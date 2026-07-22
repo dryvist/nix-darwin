@@ -34,7 +34,7 @@
 
   mlx = {
     # Validated catalog selections (profiles in nix-ai catalog-data.nix).
-    # Residents ≈ 68.8 GB of weights plus caches, under the ~109 GB cache-clear trip
+    # Residents ≈ 66.8 GB of weights plus caches, under the ~109 GB cache-clear trip
     # (gpuMemoryUtilization 0.80 on 128 GB); an on-demand gpt-oss swap-in
     # transiently exceeds the trip — pre-existing; it idle-unloads.
     catalog = {
