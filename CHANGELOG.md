@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.12.3](https://github.com/dryvist/nix-darwin/compare/v2.12.2...v2.12.3) (2026-07-22)
+
+
+### Bug Fixes
+
+* deploy watchdog progress tracking to Studio ([a806ebd](https://github.com/dryvist/nix-darwin/commit/a806ebd12cc5e982f0bd9e69ff252a355d450408))
+* deploy watchdog progress tracking to Studio ([72e1072](https://github.com/dryvist/nix-darwin/commit/72e10720b3b1f1921dce2f84db19b4502d5aea43))
+
 ## [2.12.2](https://github.com/dryvist/nix-darwin/compare/v2.12.1...v2.12.2) (2026-07-22)
 
 
