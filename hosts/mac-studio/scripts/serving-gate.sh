@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Post-rebuild serving gate for the Studio.
 #
-# A rebuild restarts dev.vllm-mlx.server, dropping any in-flight completion.
+# A rebuild restarts dev.mlx-model-server, dropping any in-flight completion.
 # Hermes (hermes-gateway, in its own LXC — NOT on this host) rides those
 # completions, and its brain-watchdog pauses and auto-resumes the cron fleet on
 # upstream failure, so a clean bounce recovers by itself. What does not recover
@@ -87,7 +87,7 @@ done
 echo "[serving-gate] WARN: ${model} never returned a token (${attempt} attempts, $(( $(date +%s) - started ))s)." >&2
 echo "[serving-gate]       Orphaned worker or wedged scheduler. Diagnose with:" >&2
 echo "[serving-gate]         lsof -nP -iTCP:${PORT} -sTCP:LISTEN" >&2
-echo "[serving-gate]         ps -eo pid,ppid,command | grep 'vllm-mlx serve'" >&2
+echo "[serving-gate]         ps -eo pid,ppid,command | grep 'mlx_lm.server'" >&2
 echo "[serving-gate]       Remedy is pkill of the worker tree — NOT launchctl kickstart -k," >&2
 echo "[serving-gate]       which is what CREATES the orphan." >&2
 exit 0

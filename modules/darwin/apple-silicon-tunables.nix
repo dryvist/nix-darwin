@@ -192,7 +192,7 @@ in
     # Category 4: App Nap
     appNapDisabledFor = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = [ "dev.vllm-mlx.server" ];
+      default = [ "dev.mlx-model-server" ];
       description = ''
         User-defaults bundle IDs to mark NSAppSleepDisabled=YES, so macOS does
         not throttle long-lived inference daemons via App Nap.

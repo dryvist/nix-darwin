@@ -15,12 +15,11 @@
 
 {
   imports = [
-    # services.aiStack.defaultLocalModelId — supplied shared (non-secret model
-    # id) from services-ai-stack.nix, pinned once for every host. Extracted to
-    # keep files under the per-file size cap.
+    # Leaves services.aiStack.defaultLocalModelId empty; MLX hosts populate
+    # every logical role through catalog selections.
     ./services-ai-stack.nix
     # Disables nix-ai's auto-discovery of locally-cached HF models so the
-    # registry stays at the single defaultLocalModelId entry.
+    # registry contains only catalog-declared models and roles.
     ./mlx-no-autodiscover.nix
     # Global git excludes seeded from the dryvist org-default (see module).
     ./git-global-excludes.nix
@@ -132,8 +131,8 @@
     # (modules/default.nix). Re-enable in nix-ai once the dep bound is relaxed.
     cecli.enable = lib.mkForce false;
 
-    # Local MLX inference server (vllm-mlx + llama-swap proxy on :11434).
-    # Brings the existing vllm-mlx LaunchAgent under Nix management — without
+    # Local MLX inference server (mlx_lm + llama-swap proxy on :11434).
+    # Brings the MLX model-server LaunchAgent under Nix management — without
     # this, the registry at services.aiStack.models is materialized to nothing
     # and llama-swap.json drifts from whatever was last activated by hand.
     # Sizing (cacheMemoryMb / prefillBatchSize) is per-host from the registry.

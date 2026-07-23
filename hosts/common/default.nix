@@ -2,7 +2,7 @@
 #
 # Imported by every host's default.nix. Holds host-agnostic system config and
 # consumes registry parameters (networking.hostName, OrbStack). Inference hosts
-# (those that declare `mlx` in the registry) also get the shared vllm-mlx Cribl
+# (those that declare `mlx` in the registry) also get the shared MLX model-server Cribl
 # log-shipping pipeline (./cribl.nix) — it is identical across machines.
 # Host-specific system config — streamline-login lists, energy /
 # appleSiliconTunables values — stays in hosts/<label>/default.nix.
@@ -141,15 +141,15 @@ in
       clusterWiredLimitMb =
         if hostConfig.isServer then
           # Headless server: no GUI/WindowServer working set, so the clustered
-          # ceiling matches the standalone ceiling (118000 MiB = 123.73 GB,
-          # ~14 GB reserve). Derived from it so the two never drift.
+          # ceiling matches the standalone ceiling (104000 MiB = 109.05 GB).
+          # Derived from it so the two never drift.
           config.system.appleSiliconTunables.wiredLimitMb
         else
           # Workstation worker: 100000 MiB = 104.86 GB, ~32 GB reserve. That
           # reserve protects WindowServer + macOS during CLUSTERED mode, where
           # cluster-quiesce has quit the GUI apps and booted out agents, so the
           # working set is far below the ~25 GB interactive one. Lower than the
-          # headless coordinator's clustered ceiling (118000) — this machine
+          # headless coordinator's clustered ceiling (104000) — this machine
           # still has a GUI to protect should quiesce be incomplete (INC-17076).
           # Sits just above this host's standalone ceiling (98304 MiB, derived
           # from maxLocalLlmGb = 96 in hosts/macbook-m4/default.nix): quiesced,

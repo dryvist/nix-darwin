@@ -2,7 +2,7 @@
 
 Exhaustive reference for every macOS / hardware-layer knob that can affect local LLM inference on
 this machine — **Apple Silicon M4 Max MacBook Pro, 128 GB unified memory, macOS Tahoe 26.x**
-(frameworks: MLX / vllm-mlx, llama.cpp, LM Studio).
+(frameworks: MLX / mlx_lm, llama.cpp, LM Studio).
 
 Every parameter is recorded here even when left at its macOS default, so the OS surface is fully
 documented. Knobs that this repo wires declaratively link to their nix option; knobs that cannot be
@@ -93,7 +93,7 @@ E-cores (much slower).
 
 | Parameter | nix option / cmd | Default | This host | Persist | Notes |
 | --- | --- | --- | --- | --- | --- |
-| App Nap disabled for | `appNapDisabledFor` | App Nap on | `[dev.vllm-mlx.server]` | PERSIST | per-app `NSAppSleepDisabled` |
+| App Nap disabled for | `appNapDisabledFor` | App Nap on | `[dev.mlx-model-server]` | PERSIST | per-app `NSAppSleepDisabled` |
 | `taskpolicy -B` | (doc-only) | — | — | SCOPE | cannot reliably promote to P-cores |
 | thread count `-t` | (LLM-software layer) | — | — | — | M4 Max = 12 P + 4 E; `-t 12` common |
 
