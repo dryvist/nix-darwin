@@ -47,10 +47,13 @@ in
     # --- Apple Silicon Tunables ---
     appleSiliconTunables = {
       enable = true;
-      # Headless: no ~25 GB GUI desktop working set, so reclaim the wired-memory
-      # ceiling the laptop deliberately leaves at the OS default (0). 104000
-      # leaves headroom for macOS beside the resident 80B + 27B workers.
-      wiredLimitMb = 104000;
+      # Same single knob and 28 GiB reserve as the workstation:
+      #   maxLocalLlmGb 100 GiB -> wiredLimitMb 102400 MiB -> osReserveGb 28 GiB.
+      # The old "headless needs no reserve" rationale (104000, ~13 GB reserve) is
+      # superseded: WindowServer-starvation incidents show even an auto-login
+      # headless session needs OS headroom, and the resident 80B + 27B workers
+      # (~74 GB) sit well under the 99 GiB L2 cap that sits under this ceiling.
+      maxLocalLlmGb = 100;
       # energyMode comes from the server class default ("unmanaged") in ../common.
       # huggingfaceVolume uses the module default (/Volumes/HuggingFace) — the
       # dedicated APFS volume created by apfs-volumes, identical on every host.
