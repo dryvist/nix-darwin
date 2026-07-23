@@ -30,6 +30,12 @@
         "oss"
       ];
     };
+    # On-demand summarizer for the screenpipe hourly-obsidian pipe, which
+    # requests this physical id directly. Swap-class with no roles compiles to
+    # a llama-swap models.<id> entry keyed by the physical id, so it routes
+    # without evicting the resident 30B.
+    catalog.qwen35-9b-mlx.class = "swap";
+
     cacheMemoryMb = 8192;
     prefillBatchSize = 2048;
 
