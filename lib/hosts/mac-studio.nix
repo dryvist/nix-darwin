@@ -42,6 +42,7 @@
         class = "resident";
         roles = [ "goal-judge" ];
       };
+      qwen35-9b-optiq.class = "swap";
       qwen36-35b.class = "swap";
       qwen36-optiq.class = "swap";
       gpt-oss-120b.class = "swap";

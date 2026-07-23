@@ -493,7 +493,8 @@ in
               pqEnabled: true
         '';
         # Model-server logs: the manager (Go) and its workers (Python) share
-        # the same two files; sourcetype is derived per line.
+        # the same two files. Keep the worker sourcetype backend-neutral so a
+        # selected MLX server change does not require downstream rewrites.
         "pipelines/llm_logs/conf.yml" = ''
           output: default
           functions:
@@ -504,7 +505,7 @@ in
                   - name: index
                     value: "'llm'"
                   - name: sourcetype
-                    value: "_raw.match(/^(INFO|DEBUG|WARNING|ERROR|CRITICAL):/) ? 'vllm:mlx' : 'llamaswap'"
+                    value: "_raw.match(/^(INFO|DEBUG|WARNING|ERROR|CRITICAL):/) ? 'mlx:model-server' : 'llamaswap'"
         '';
         "pipelines/bench_events/conf.yml" = ''
           output: default
