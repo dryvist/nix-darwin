@@ -505,7 +505,7 @@ in
                   - name: index
                     value: "'llm'"
                   - name: sourcetype
-                    value: "_raw.match(/^(INFO|DEBUG|WARNING|ERROR|CRITICAL):/) ? 'mlx:model-server' : 'llamaswap'"
+                    value: "_raw.match(/^(\\[(DEBUG|INFO|WARN|ERROR)\\] |time=[^ ]+ level=(DEBUG|INFO|WARN|ERROR) |[0-9]{4}[/][0-9]{2}[/][0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})/) ? 'llamaswap' : 'mlx:model-server'"
         '';
         "pipelines/bench_events/conf.yml" = ''
           output: default
