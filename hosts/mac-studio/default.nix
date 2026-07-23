@@ -48,9 +48,9 @@ in
     appleSiliconTunables = {
       enable = true;
       # Headless: no ~25 GB GUI desktop working set, so reclaim the wired-memory
-      # ceiling the laptop deliberately leaves at the OS default (0). 118000 ≈
-      # 92 % of 128 GB (the module default). Benchmark on-machine.
-      wiredLimitMb = 118000;
+      # ceiling the laptop deliberately leaves at the OS default (0). 104000
+      # leaves headroom for macOS beside the resident 80B + 27B workers.
+      wiredLimitMb = 104000;
       # energyMode comes from the server class default ("unmanaged") in ../common.
       # huggingfaceVolume uses the module default (/Volumes/HuggingFace) — the
       # dedicated APFS volume created by apfs-volumes, identical on every host.
