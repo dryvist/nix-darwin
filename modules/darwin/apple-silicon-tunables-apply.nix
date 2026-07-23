@@ -74,8 +74,11 @@ in
 
     # darwin-rebuild switch: volatile sysctls first (so a rebuild takes effect
     # immediately, not just next boot), then persistent/verify-only knobs.
-    # All values escaped via lib.escapeShellArg.
-    system.activationScripts.appleSiliconTunables.text = ''
+    # Must hang off postActivation (mkAfter) — nix-darwin only runs its known
+    # activation-script names, so a bare custom name (appleSiliconTunables) was
+    # silently never executed and the ceiling only applied at boot via the
+    # daemon. All values escaped via lib.escapeShellArg.
+    system.activationScripts.postActivation.text = lib.mkAfter ''
       WIRED_LIMIT_MB=${lib.escapeShellArg sysctlsEnv.WIRED_LIMIT_MB} \
       WIRED_LWM_MB=${lib.escapeShellArg sysctlsEnv.WIRED_LWM_MB} \
       VM_COMPRESSOR_MODE=${lib.escapeShellArg sysctlsEnv.VM_COMPRESSOR_MODE} \
