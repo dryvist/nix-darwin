@@ -13,10 +13,8 @@
   # CI hmActivationPackage output. Exactly one host should set this.
   primary = true;
 
-  # Local MLX inference server sizing (programs.mlx). Multi-turn agent clients
-  # re-prefill 5-40K-token contexts; the 8192 MB default left no paged-cache
-  # prefix reuse. Measured 2026-06-10: an identical-prefix re-request dropped
-  # 21.8K -> 63 prefill tokens with these values.
+  # Local official MLX inference server sizing. The prompt cache stays at the
+  # shared 8 GiB resilience cap.
   mlx = {
     # Every logical role resolves through the validated catalog entry; no
     # physical model id is repeated in deployed host configuration.
@@ -32,7 +30,7 @@
         "oss"
       ];
     };
-    cacheMemoryMb = 16384;
+    cacheMemoryMb = 8192;
     prefillBatchSize = 2048;
 
     # MLX retained free-buffer pool. The host wired-memory ceiling is the

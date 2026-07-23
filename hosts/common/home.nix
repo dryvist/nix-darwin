@@ -19,7 +19,7 @@
     # every logical role through catalog selections.
     ./services-ai-stack.nix
     # Disables nix-ai's auto-discovery of locally-cached HF models so the
-    # registry stays at the single defaultLocalModelId entry.
+    # registry contains only catalog-declared models and roles.
     ./mlx-no-autodiscover.nix
     # Global git excludes seeded from the dryvist org-default (see module).
     ./git-global-excludes.nix
