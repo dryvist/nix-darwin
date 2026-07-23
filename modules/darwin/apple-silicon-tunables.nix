@@ -268,6 +268,15 @@ in
       }
     ];
 
+    # Put the volatile-sysctl script on the system PATH so the boot daemon can
+    # reference it by a STABLE /run/current-system path (below) instead of a
+    # bare /nix/store path. A bare store path is orphaned once nix-collect-garbage
+    # removes the old generation, and launchd then fails the job at spawn with
+    # EX_CONFIG (exit 78) before the script ever runs (log untouched) — observed
+    # on the MacBook. /run/current-system/sw/bin/... always resolves to the live
+    # generation and is never GC'd.
+    environment.systemPackages = [ sysctlsScript ];
+
     # Boot-time: re-apply the VOLATILE iogpu/vm sysctls on every restart via
     # launchd RunAtLoad. Label/log path kept stable to avoid orphaning the old
     # plist. The shared script retries the wired-limit write until the IOGPU
@@ -275,10 +284,16 @@ in
     launchd.daemons.set-iogpu-wired-limit = {
       serviceConfig = {
         Label = "dev.local.set-iogpu-wired-limit";
-        ProgramArguments = [ (lib.getExe sysctlsScript) ];
+        ProgramArguments = [ "/run/current-system/sw/bin/${lib.getName sysctlsScript}" ];
         EnvironmentVariables = sysctlsEnv;
         RunAtLoad = true;
-        KeepAlive = false;
+        # Retry on non-zero exit AND on spawn failure (EX_CONFIG), so a transient
+        # exec failure self-recovers instead of stranding the wired ceiling at
+        # the OS default until the next manual converge. The script exits 0 once
+        # the sysctl write lands, so success does not relaunch.
+        KeepAlive = {
+          SuccessfulExit = false;
+        };
         StandardOutPath = "/var/log/set-iogpu-wired-limit.log";
         StandardErrorPath = "/var/log/set-iogpu-wired-limit.log";
       };
