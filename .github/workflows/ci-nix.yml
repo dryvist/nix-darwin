@@ -1,13 +1,16 @@
 # Nix CI - Build workflow (standalone)
 #
-# Runs on push to main for visibility. PRs use ci-gate.yml instead.
+# Runs on push to develop to populate the Nix store cache. PRs use
+# ci-gate.yml instead. main is deliberately NOT a trigger: git-flow promotes
+# the already-built develop tree unchanged, and the cache is only saved on
+# develop (see _nix-build.yml `save:`), so a main rebuild is a pure duplicate.
 # Calls reusable workflow for DRY.
 
 name: Nix Build
 
 on:
   push:
-    branches: [main, develop]
+    branches: [develop]
     paths:
       - '**.nix'
       - 'flake.lock'
@@ -24,12 +27,11 @@ on:
 # that saves the cache is the one that almost never finishes.
 #
 # Superseding is still right for throwaway refs, so this cancels everywhere else
-# and only protects the branches whose completion has a side effect worth
-# keeping.
+# and only protects develop, whose completion saves the cache.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: >-
-    ${{ github.ref != 'refs/heads/develop' && github.ref != 'refs/heads/main' }}
+    ${{ github.ref != 'refs/heads/develop' }}
 
 permissions:
   contents: read
