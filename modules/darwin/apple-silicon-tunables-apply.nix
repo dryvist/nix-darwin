@@ -58,7 +58,10 @@ in
       serviceConfig = {
         Label = "dev.local.set-iogpu-wired-limit";
         ProgramArguments = [ "/run/current-system/sw/bin/${lib.getName sysctlsScript}" ];
-        EnvironmentVariables = sysctlsEnv;
+        # launchd rejects empty-string EnvironmentVariables values and fails the
+        # job at spawn with EX_CONFIG (78) — drop the empty keys (the script
+        # treats unset the same as empty via ${VAR:-}).
+        EnvironmentVariables = lib.filterAttrs (_: v: v != "") sysctlsEnv;
         RunAtLoad = true;
         # Retry on non-zero exit AND on spawn failure (EX_CONFIG), so a transient
         # exec failure self-recovers instead of stranding the wired ceiling at
