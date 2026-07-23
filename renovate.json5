@@ -82,16 +82,16 @@
       "schedule": ["after 7am"]
     },
     {
-      "description": "GitHub Actions updates - weekly at 7am Monday",
+      "description": "GitHub Actions updates - Fri ~15:00 / Mon ~05:00 America/New_York",
       "matchManagers": ["github-actions"],
       "groupName": "github-actions",
-      "schedule": ["after 7am on Monday"]
+      "schedule": ["* 15 * * 5", "* 5 * * 1"]
     },
     {
-      "description": "Cribl Edge version - weekly at 7am Monday",
+      "description": "Cribl Edge version - Fri ~15:00 / Mon ~05:00 America/New_York",
       "matchDatasources": ["custom.cribl-edge"],
       "groupName": "cribl-edge",
-      "schedule": ["after 7am on Monday"],
+      "schedule": ["* 15 * * 5", "* 5 * * 1"],
       "commitMessageTopic": "Cribl Edge",
       "commitMessageExtra": "to {{newVersion}}"
     }

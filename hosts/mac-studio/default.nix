@@ -4,7 +4,7 @@
 # inference / batch server (`class = server`).
 #
 # Shared system config — module imports, networking.hostName, OrbStack, the
-# vllm-mlx Cribl log-shipping pipeline, and server-class macOS defaults
+# MLX model-server Cribl log-shipping pipeline, and server-class macOS defaults
 # (Wake-on-LAN, network tuning, energyMode) — lives in ../common/default.nix.
 # This file adds the host-unique bits: ComputerName, headless inference/power
 # tuning, the llm-large serving gate, and the ephemeral GitHub Actions runner.
@@ -47,10 +47,13 @@ in
     # --- Apple Silicon Tunables ---
     appleSiliconTunables = {
       enable = true;
-      # Headless: no ~25 GB GUI desktop working set, so reclaim the wired-memory
-      # ceiling the laptop deliberately leaves at the OS default (0). 118000 ≈
-      # 92 % of 128 GB (the module default). Benchmark on-machine.
-      wiredLimitMb = 118000;
+      # Same single knob and 28 GiB reserve as the workstation:
+      #   maxLocalLlmGb 100 GiB -> wiredLimitMb 102400 MiB -> osReserveGb 28 GiB.
+      # The old "headless needs no reserve" rationale (104000, ~13 GB reserve) is
+      # superseded: WindowServer-starvation incidents show even an auto-login
+      # headless session needs OS headroom, and the resident 80B + 27B workers
+      # (~74 GB) sit well under the 99 GiB L2 cap that sits under this ceiling.
+      maxLocalLlmGb = 100;
       # energyMode comes from the server class default ("unmanaged") in ../common.
       # huggingfaceVolume uses the module default (/Volumes/HuggingFace) — the
       # dedicated APFS volume created by apfs-volumes, identical on every host.
@@ -219,7 +222,7 @@ in
   # nix-prebuild writes to its own log dir; create it with user ownership so the
   # user agent can write (claude-scheduled-jobs creates its own dir separately).
   #
-  # The serving gate runs last: a rebuild bounces dev.vllm-mlx.server, and this
+  # The serving gate runs last: a rebuild bounces dev.mlx-model-server, and this
   # host can come back with an orphaned worker or a wedged scheduler, neither of
   # which a status-code check detects. It warns rather than failing — activation
   # is already done by this point, so a non-zero exit would report a half-applied

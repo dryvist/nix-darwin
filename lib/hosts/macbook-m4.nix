@@ -13,39 +13,37 @@
   # CI hmActivationPackage output. Exactly one host should set this.
   primary = true;
 
-  # The default local model id is SHARED and pinned in
-  # hosts/common/services-ai-stack.nix — this host deliberately sets no
-  # per-host `defaultLocalModelId`. With no roleModelOverrides here, every role
-  # (incl. the preloaded default) resolves to that shared id.
-
-  # Local MLX inference server sizing (programs.mlx). Multi-turn agent clients
-  # re-prefill 5-40K-token contexts; the 8192 MB default left no paged-cache
-  # prefix reuse. Measured 2026-06-10: an identical-prefix re-request dropped
-  # 21.8K -> 63 prefill tokens with these values.
+  # Local official MLX inference server sizing. The prompt cache stays at the
+  # shared 8 GiB resilience cap.
   mlx = {
-    cacheMemoryMb = 16384;
+    # Every logical role resolves through the validated catalog entry; no
+    # physical model id is repeated in deployed host configuration.
+    catalog.qwen3-coder-30b = {
+      class = "resident";
+      roles = [
+        "default"
+        "quickest"
+        "tool-calling"
+        "coding"
+        "large-context"
+        "most-capable"
+        "oss"
+      ];
+    };
+    # On-demand summarizer for the screenpipe hourly-obsidian pipe, which
+    # requests this physical id directly. Swap-class with no roles compiles to
+    # a llama-swap models.<id> entry keyed by the physical id, so it routes
+    # without evicting the resident 30B.
+    catalog.qwen35-9b-mlx.class = "swap";
+
+    cacheMemoryMb = 8192;
     prefillBatchSize = 2048;
 
-    # Paired with appleSiliconTunables.wiredLimitMb = 100000 (104.86 GB ceiling)
-    # in hosts/macbook-m4/default.nix — one decision, not two knobs. This is the
-    # operational cap that matters: it sets the emergency KV-clear trip at
-    # (util + 0.05) * 137.44 = 100.3 GB, below the 104.86 GB wired ceiling
-    # (4.5 GB margin), so the worker sheds cache and stays fully wired before it
-    # could ever spill to swap. Raising the ceiling without raising util does
-    # nothing — the trip, not the ceiling, is what caps usable memory.
-    # https://docs.jacobpevans.com/local-llm/memory-ceilings
-    gpuMemoryUtilization = 0.68;
-
-    # MLX retained free-buffer pool. Trimmed from the 12 GB module default to
-    # keep the resident footprint under allocation_limit.
+    # MLX retained free-buffer pool. The host wired-memory ceiling is the
+    # Metal guardrail; this limits reclaimable framework buffers below it.
     bufferCacheLimitGb = 8;
 
-    # Same batch-uniformity guard as the serving host: a repetition penalty is
-    # a logits processor, and mlx_lm's batch generator dies on a batch mixing
-    # requests that carry one with requests that do not (nix-ai#1234). This dev
-    # sidecar sees ad-hoc callers with and without sampling params, which is the
-    # same mix — set it here too rather than wait to be surprised.
-    defaultRepetitionPenalty = 1.05;
+    proxy.concurrencyLimit = 1;
 
     # Clustered mode: this Mac is rank 1 (worker) of the two-Mac JACCL cluster
     # when the Thunderbolt cable is in. The worker-side quiesce/restore hooks
@@ -59,9 +57,8 @@
       # Enabled together with the coordinator (lib/hosts/mac-studio.nix).
       enable = true;
       role = "worker";
-      # Explicit cluster model, identical on both ranks — see the coordinator
-      # block (lib/hosts/mac-studio.nix) for the sizing rationale.
-      model = "mlx-community/GLM-4.7-REAP-50-mxfp4";
+      # Catalog-selected cluster model, identical on both ranks.
+      modelCatalogKey = "glm47-reap50";
     };
   };
 

@@ -12,41 +12,18 @@
 {
   lib,
   config,
-  pkgs,
   ...
 }:
 
 let
   cfg = config.system.appleSiliconTunables;
   userConfig = import ../../lib/user-config.nix;
-
-  # null → "" (leave the macOS default untouched); otherwise stringify.
-  optStr = v: if v == null then "" else toString v;
-  # tri-state pmset flag: null → "" (skip), false → "0", true → "1".
-  pmsetBool = v: if v == null then "" else (if v then "1" else "0");
-
-  # Volatile sysctls (iogpu/vm) — shared by the boot daemon and activation.
-  sysctlsScript = pkgs.writeShellApplication {
-    name = "apple-silicon-sysctls-apply";
-    runtimeInputs = [ ];
-    text = builtins.readFile ./scripts/apple-silicon-sysctls.sh;
-  };
-
-  # Environment for the volatile-sysctl script (reused by daemon + activation).
-  sysctlsEnv = {
-    WIRED_LIMIT_MB = toString cfg.wiredLimitMb;
-    WIRED_LWM_MB = optStr cfg.wiredLwmMb;
-    VM_COMPRESSOR_MODE = optStr cfg.vmCompressorMode;
-  };
-
-  # Persistent / verify-only knobs — activation only.
-  applyScript = pkgs.writeShellApplication {
-    name = "apple-silicon-tunables-apply";
-    runtimeInputs = [ ];
-    text = builtins.readFile ./scripts/apple-silicon-tunables.sh;
-  };
 in
 {
+  # The volatile-sysctl boot daemon + activation script live in the config half,
+  # split out for the 12 KB file-size gate.
+  imports = [ ./apple-silicon-tunables-apply.nix ];
+
   options.system.appleSiliconTunables = {
     enable = lib.mkEnableOption "Apple Silicon system tunables for AI";
 
@@ -95,7 +72,9 @@ in
         every boot via a one-shot launchd daemon. Prefer maxLocalLlmGb (this
         derives from it); a host not on that input sets it directly.
         max_recommended_working_set_size = wiredLimitMb * 1024^2. 0 = OS default
-        (~84% of RAM). Pairs with programs.mlx.gpuMemoryUtilization; change both.
+        (~84% of RAM). This is the L1 wired ceiling; the mlx-lm serving stack
+        sets an in-process L2 cap (programs.mlx.memoryHardLimitGb) just below it.
+        The old gpuMemoryUtilization pairing was vllm-mlx-only and is retired.
         https://docs.jacobpevans.com/local-llm/memory-ceilings
       '';
     };
@@ -192,7 +171,7 @@ in
     # Category 4: App Nap
     appNapDisabledFor = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = [ "dev.vllm-mlx.server" ];
+      default = [ "dev.mlx-model-server" ];
       description = ''
         User-defaults bundle IDs to mark NSAppSleepDisabled=YES, so macOS does
         not throttle long-lived inference daemons via App Nap.
@@ -244,65 +223,4 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    assertions = [
-      {
-        assertion = cfg.wiredLimitMb < 2147483647;
-        message = "system.appleSiliconTunables.wiredLimitMb must stay below INT_MAX (2147483647).";
-      }
-      {
-        assertion = cfg.wiredLwmMb == null || cfg.wiredLwmMb < cfg.wiredLimitMb;
-        message = "system.appleSiliconTunables.wiredLwmMb (low-water mark) must be below wiredLimitMb.";
-      }
-      {
-        # LLM budget cannot exceed installed RAM.
-        assertion = cfg.maxLocalLlmGb == null || cfg.maxLocalLlmGb <= cfg.physicalRamGb;
-        message = "system.appleSiliconTunables.maxLocalLlmGb (${toString cfg.maxLocalLlmGb} GiB) cannot exceed physicalRamGb (${toString cfg.physicalRamGb} GiB).";
-      }
-      {
-        # Derived reserve must leave macOS enough unwired RAM.
-        assertion = cfg.osReserveGb == null || cfg.osReserveGb >= 8;
-        message = "system.appleSiliconTunables: osReserveGb (physicalRamGb minus maxLocalLlmGb) must leave macOS at least 8 GiB unwired; got ${toString cfg.osReserveGb} GiB. Lower maxLocalLlmGb.";
-      }
-    ];
-
-    # Boot-time: re-apply the VOLATILE iogpu/vm sysctls on every restart via
-    # launchd RunAtLoad. Label/log path kept stable to avoid orphaning the old
-    # plist. The shared script retries the wired-limit write until the IOGPU
-    # sysctl node registers, so an early-boot race no longer strands the ceiling.
-    launchd.daemons.set-iogpu-wired-limit = {
-      serviceConfig = {
-        Label = "dev.local.set-iogpu-wired-limit";
-        ProgramArguments = [ (lib.getExe sysctlsScript) ];
-        EnvironmentVariables = sysctlsEnv;
-        RunAtLoad = true;
-        KeepAlive = false;
-        StandardOutPath = "/var/log/set-iogpu-wired-limit.log";
-        StandardErrorPath = "/var/log/set-iogpu-wired-limit.log";
-      };
-    };
-
-    # darwin-rebuild switch: volatile sysctls first (so a rebuild takes effect
-    # immediately, not just next boot), then persistent/verify-only knobs.
-    # All values escaped via lib.escapeShellArg.
-    system.activationScripts.appleSiliconTunables.text = ''
-      WIRED_LIMIT_MB=${lib.escapeShellArg sysctlsEnv.WIRED_LIMIT_MB} \
-      WIRED_LWM_MB=${lib.escapeShellArg sysctlsEnv.WIRED_LWM_MB} \
-      VM_COMPRESSOR_MODE=${lib.escapeShellArg sysctlsEnv.VM_COMPRESSOR_MODE} \
-        ${lib.getExe sysctlsScript} || true
-
-      HF_VOLUME=${lib.escapeShellArg cfg.huggingfaceVolume} \
-      TM_EXCLUDES=${lib.escapeShellArg (lib.concatStringsSep ":" cfg.timeMachineExcludes)} \
-      APPNAP_BUNDLES=${lib.escapeShellArg (lib.concatStringsSep ":" cfg.appNapDisabledFor)} \
-      USER_NAME=${lib.escapeShellArg userConfig.user.name} \
-      PMSET_LOWPOWERMODE=${lib.escapeShellArg (pmsetBool cfg.pmset.lowPowerMode)} \
-      PMSET_POWERNAP=${lib.escapeShellArg (pmsetBool cfg.pmset.powerNap)} \
-      PMSET_PROXIMITYWAKE=${lib.escapeShellArg (pmsetBool cfg.pmset.proximityWake)} \
-      PMSET_DISABLESLEEP=${lib.escapeShellArg (pmsetBool cfg.pmset.disableSleep)} \
-      PMSET_TCPKEEPALIVE=${lib.escapeShellArg (pmsetBool cfg.pmset.tcpKeepAlive)} \
-      ENERGY_MODE_DESIRED=${lib.escapeShellArg cfg.energyMode} \
-      METAL_UNSET_VARS=${lib.escapeShellArg (lib.concatStringsSep ":" cfg.metalDebugEnvToUnset)} \
-        ${lib.getExe applyScript} || true
-    '';
-  };
 }

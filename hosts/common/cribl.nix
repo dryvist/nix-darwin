@@ -38,7 +38,7 @@ in
   programs = {
     # --- Cribl Edge (inference hosts) ---
     # Log collection agent, standalone + GitOps-managed. Shared by every host
-    # that declares `mlx` (a local LLM box): the vllm-mlx log paths derive from
+    # that declares `mlx` (a local LLM box): the MLX model-server log paths derive from
     # the global userConfig homeDir, so the config is identical across machines.
     # Live path: Edge ships TCP JSON to the HAProxy-fronted Cribl Stream
     # workers' in_cribl_s2s ingest (service port 10300), which forward to the
@@ -59,7 +59,7 @@ in
         # in_file_varlog entry in default/edge/inputs.yml.
         # `filenames` patterns match against the FULL PATH, not the basename
         # (docs.cribl.io/edge/sources-file-monitor). A pattern without a
-        # leading wildcard ("vllm-mlx*.log", "access.json") silently matches
+        # leading wildcard ("*.log", "access.json") silently matches
         # NOTHING — health Green, zero files tracked (verified via the local
         # API, 4.18.0; root cause of #1623). Always lead with "*/".
         "inputs.yml" = ''
@@ -69,9 +69,9 @@ in
               disabled: false
               mode: manual
               interval: 10
-              path: ${userConfig.user.homeDir}/Library/Logs/vllm-mlx/
+              path: ${userConfig.user.homeDir}/Library/Logs/mlx-model-server/
               filenames:
-                - "*/vllm-mlx*.log"
+                - "*/*.log"
               tailOnly: false
               sendToRoutes: false
               # Ship through cribl_stream (:10300 in_cribl_s2s), the ONLY live
@@ -226,11 +226,11 @@ in
             # NO prometheus scrape input here: the Cribl prometheus scraper
             # source is not allowed on a standalone Edge ("Source is not
             # allowed in this deployment" at init — same wall as the
-            # cribl_tcp destination note above). The vllm-mlx /metrics
+            # cribl_tcp destination note above). MLX model-server metrics
             # scrape (llm_metrics index) needs a redesign: either llm-gate
             # exposes /metrics for the homelab prometheus LXC to scrape and
             # remote_write, or the metrics ride a push path. Until then the
-            # in_system_metrics + vllm-mlx log inputs above remain the
+            # in_system_metrics + MLX model-server log inputs above remain the
             # inference-host telemetry.
             # Per-AI-CLI session logs. Directories + rotation + the opt-in
             # capture wrappers come from programs.ai-cli-log-shipping
@@ -493,7 +493,8 @@ in
               pqEnabled: true
         '';
         # Model-server logs: the manager (Go) and its workers (Python) share
-        # the same two files; sourcetype is derived per line.
+        # the same two files. Keep the worker sourcetype backend-neutral so a
+        # selected MLX server change does not require downstream rewrites.
         "pipelines/llm_logs/conf.yml" = ''
           output: default
           functions:
@@ -504,7 +505,7 @@ in
                   - name: index
                     value: "'llm'"
                   - name: sourcetype
-                    value: "_raw.match(/^(INFO|DEBUG|WARNING|ERROR|CRITICAL):/) ? 'vllm:mlx' : 'llamaswap'"
+                    value: "_raw.match(/^(\\[(DEBUG|INFO|WARN|ERROR)\\] |time=[^ ]+ level=(DEBUG|INFO|WARN|ERROR) |[0-9]{4}[/][0-9]{2}[/][0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})/) ? 'llamaswap' : 'mlx:model-server'"
         '';
         "pipelines/bench_events/conf.yml" = ''
           output: default

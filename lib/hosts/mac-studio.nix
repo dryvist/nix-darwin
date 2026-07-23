@@ -12,39 +12,37 @@
   # defaults (hosts/common/default.nix) and nix-home's server preset.
   class = "server";
 
-  # The default local model id is SHARED and pinned in
-  # hosts/common/services-ai-stack.nix (no per-host default). This host pins its
-  # two warm brains via roleModelOverrides (2026-07-08 agentic tool-calling
-  # bench; verdicts + capacity in HF JacobPEvans/mlx-benchmarks + apps
-  # docs/BRAIN_ROTATION.md):
-  #   tool-calling — Qwen3-Next-80B-A3B-Instruct-4bit: the fleet brain Hermes
-  #     routes to (2026-07-17 agentic-bench winner; >=75B fleet-brain
-  #     mandate). Replaces the stock 35B stand-in from the nix-ai#915 era.
-  #   coding — Qwen3-Coder-30B-A3B 4-bit.
-  # gpt-oss-120b (63.3 GB) stays in the catalog as swap-class (on-demand,
-  # idle-unload, never preloaded); reach it by physical id or add a role
-  # override if a role should target it.
-  roleModelOverrides = {
-    # 2026-07-17 agentic-bench winner (1.0 valid_tool_call_rate, every
-    # single-stream cell) and the >=75B fleet-brain mandate. Replaces the
-    # stock 35B stand-in.
-    tool-calling = "mlx-community/Qwen3-Next-80B-A3B-Instruct-4bit";
-    coding = "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit";
-  };
+  # Logical roles are assigned through catalog selections below. Physical
+  # model ids stay centralized in nix-ai's validated catalog.
 
   mlx = {
     # Validated catalog selections (profiles in nix-ai catalog-data.nix).
-    # Residents ≈ 58.6 GB with caches, far under the ~109 GB cache-clear trip
-    # (gpuMemoryUtilization 0.80 on 128 GB); an on-demand gpt-oss swap-in
-    # transiently exceeds the trip — pre-existing; it idle-unloads.
+    # The 80B brain and 27B judge stay resident. Other models load on demand
+    # and unload through their catalog-owned proxy TTL.
     catalog = {
       # Qwen3-Next-80B Instruct is the resident fleet brain (2026-07-17
       # agentic bench; >=75B mandate) and doubles as the >=64K compression
-      # model. Residents = 80B (42 GB) + coder-30B (17.1 GB) ≈ 59 GB weights
-      # + 16 GB brain KV — under the ~102 GB trip with margin, but no room
-      # for a third resident: stock 35B and OptiQ both drop to swap.
-      qwen3-next-80b-instruct.class = "resident";
-      qwen3-coder-30b.class = "resident";
+      # model. All fleet roles resolve through this catalog selection.
+      qwen3-next-80b-instruct = {
+        class = "resident";
+        roles = [
+          "default"
+          "quickest"
+          "tool-calling"
+          "large-context"
+          "most-capable"
+          "oss"
+        ];
+      };
+      qwen3-coder-30b = {
+        class = "swap";
+        roles = [ "coding" ];
+      };
+      qwen36-27b-mxfp4 = {
+        class = "resident";
+        roles = [ "goal-judge" ];
+      };
+      qwen35-9b-optiq.class = "swap";
       qwen36-35b.class = "swap";
       qwen36-optiq.class = "swap";
       gpt-oss-120b.class = "swap";
@@ -52,7 +50,7 @@
       qwen3-next-80b.class = "swap";
     };
 
-    cacheMemoryMb = 6144;
+    cacheMemoryMb = 8192;
     prefillBatchSize = 2048;
     # Server host: no group swap, no global idle eviction (per-class unloads
     # come from the catalog). A blanket TTL would make each resident brain pay
@@ -60,30 +58,15 @@
     proxy = {
       groupSwap = false;
       idleTtl = 0;
-      # 8 (up from the default 2): llama-swap hard-429s beyond this while
-      # vllm-mlx batches + queues gracefully — a 4-way burst measured 98/100
-      # rejected at the proxy. 8 = one batch running + one queued.
-      concurrencyLimit = 8;
+      # Match the official mlx_lm prompt/decode workers: one request at a time.
+      concurrencyLimit = 1;
     };
-    autoUnloadIdleSeconds = 0;
 
-    # Applied to EVERY request so batches stay uniform. A penalty becomes a
-    # logits processor, and mlx_lm's batch generator dies on a batch that mixes
-    # requests carrying one with requests that do not — the wedge behind
-    # nix-ai#1234 (26916 crashes in this host's log). Router-side injection on a
-    # single alias produced exactly that mix against penalty-free health probes.
-    # Value matches what the router injected for ai-default; the uniformity is
-    # the point, not the number. Router-side injection can now be dropped.
-    defaultRepetitionPenalty = 1.05;
-
-    # Resident brains warmed at boot: coder (coding) + the 80B Instruct
-    # fleet brain (tool-calling). Everything else is swap-class above.
+    # Resident brains warmed at boot: the 80B Hermes brain and 27B goal judge.
     preload = [
-      "coding"
+      "goal-judge"
       "tool-calling"
     ];
-    # Global parser off; every backend's parser comes from its catalog entry.
-    toolCallParser = null;
 
     # Clustered mode: this Mac is rank 0 (coordinator) of the two-Mac JACCL
     # brain when the Thunderbolt cable is in — it binds the cluster endpoint on
@@ -98,12 +81,12 @@
       # load). Enabled together with the worker (lib/hosts/macbook-m4.nix).
       enable = true;
       role = "coordinator";
-      # Explicit cluster model, identical on both ranks. The expert-pruned
+      # Catalog-selected cluster model, identical on both ranks. The expert-pruned
       # REAP-50 build (~98 GB, glm4_moe) halves the per-rank shard to ~49 GB
       # so it fits under the cluster wired ceiling with real KV headroom; the
       # full 198 GB GLM-4.7-4bit (module default) is reserved for supervised
       # sessions until the ceiling values are validated.
-      model = "mlx-community/GLM-4.7-REAP-50-mxfp4";
+      modelCatalogKey = "glm47-reap50";
     };
   };
 
