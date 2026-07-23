@@ -95,7 +95,9 @@ in
         every boot via a one-shot launchd daemon. Prefer maxLocalLlmGb (this
         derives from it); a host not on that input sets it directly.
         max_recommended_working_set_size = wiredLimitMb * 1024^2. 0 = OS default
-        (~84% of RAM). Pairs with programs.mlx.gpuMemoryUtilization; change both.
+        (~84% of RAM). This is the L1 wired ceiling; the mlx-lm serving stack
+        sets an in-process L2 cap (programs.mlx.memoryHardLimitGb) just below it.
+        The old gpuMemoryUtilization pairing was vllm-mlx-only and is retired.
         https://docs.jacobpevans.com/local-llm/memory-ceilings
       '';
     };

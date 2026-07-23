@@ -138,24 +138,14 @@ in
       # cap bought nothing. Headroom over conservatism; the operative guard
       # against thrash is now the detach exit-3 stale-swap gate + reboot-first
       # doctrine (INC-17075), not a tiny wired ceiling.
-      clusterWiredLimitMb =
-        if hostConfig.isServer then
-          # Headless server: no GUI/WindowServer working set, so the clustered
-          # ceiling matches the standalone ceiling (104000 MiB = 109.05 GB).
-          # Derived from it so the two never drift.
-          config.system.appleSiliconTunables.wiredLimitMb
-        else
-          # Workstation worker: 100000 MiB = 104.86 GB, ~32 GB reserve. That
-          # reserve protects WindowServer + macOS during CLUSTERED mode, where
-          # cluster-quiesce has quit the GUI apps and booted out agents, so the
-          # working set is far below the ~25 GB interactive one. Lower than the
-          # headless coordinator's clustered ceiling (104000) — this machine
-          # still has a GUI to protect should quiesce be incomplete (INC-17076).
-          # Sits just above this host's standalone ceiling (98304 MiB, derived
-          # from maxLocalLlmGb = 96 in hosts/macbook-m4/default.nix): quiesced,
-          # the GUI is not competing, so the clustered profile can wire
-          # marginally more than the interactive one.
-          100000;
+      # Both ranks derive the clustered ceiling from the host's standalone wired
+      # ceiling — now identical 102400 MiB = 100 GiB on both Macs (maxLocalLlmGb
+      # = 100), so the two never drift and the 28 GiB reserve carries into
+      # clustered mode. On the worker, cluster-quiesce has already quit the GUI
+      # and booted out agents, so the same reserve that protects the headless
+      # coordinator is ample. The GLM-4.7-REAP-50 per-rank shard (~49 GB + KV +
+      # buffer ~65 GB) leaves ~42 GB slack under this ceiling.
+      clusterWiredLimitMb = config.system.appleSiliconTunables.wiredLimitMb;
     };
     energy.wakeOnMagicPacket = lib.mkIf hostConfig.isServer (lib.mkDefault true); # Wake-on-LAN for a headless box
     networkTuning.enable = lib.mkIf hostConfig.isServer (lib.mkDefault true); # socket buffers for LAN serving
