@@ -43,6 +43,10 @@
         roles = [ "goal-judge" ];
       };
       qwen35-9b-optiq.class = "swap";
+      # Small always-loadable 9B (5.2 GB) for trivial local tasks via the
+      # Gemini-CLI path — on-demand swap tier, idle-unloaded, never evicts a
+      # resident. Addressable by its physical id (mlx-community/Qwen3.5-9B-MLX-4bit).
+      qwen35-9b-mlx.class = "swap";
       qwen36-35b.class = "swap";
       qwen36-optiq.class = "swap";
       gpt-oss-120b.class = "swap";
