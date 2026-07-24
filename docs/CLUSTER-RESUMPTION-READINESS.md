@@ -171,3 +171,17 @@ out), a bare cable-yank will **not** bring serving back. Use `cluster-detach`.
 
 A failed restore is swallowed (`|| true`) and the state file is written
 unconditionally, so the up→down edge is consumed. **There is no retry.**
+Fixed in nix-ai#1384 along with the re-warm hole and the missing post-readiness
+escalation — unverified until the drill runs, and not yet converged onto either
+Mac, so the behavior described above is still what these machines do today.
+
+## 4. Recording the outcome
+
+After running [CLUSTER-RESUMPTION-DRILL.md](CLUSTER-RESUMPTION-DRILL.md),
+update [FIRST-PLUG-VALIDATION.md](FIRST-PLUG-VALIDATION.md): tick **link-down
+restore**, **unplug test**, and (if you reboot with the cable in)
+**reboot-with-cable-in**, with the observed evidence rather than a bare check.
+
+If Phase 4's second request wedges, that is the INC-17070 reproduction, and the
+`--prompt-cache-size 0` experiment in `hosts/common/cluster-wired-limit.nix`
+should be reconsidered rather than left in place silently.

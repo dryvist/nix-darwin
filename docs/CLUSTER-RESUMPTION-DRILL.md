@@ -26,22 +26,31 @@ it shard load. Run every command from the **worker** in a Ghostty window
 (Ghostty is on the quiesce terminal allowlist) with a second SSH session open
 to the coordinator.
 
-### Phase 0 — pre-flight (no cable, ~5 min)
+### Phase 0 — pre-flight (~5 min)
+
+**Reboot the worker first. This is a standing step, not a conditional one.**
 
 ```sh
-# Both hosts. All four must hold before the cable goes in.
-sysctl vm.swapusage                       # used must be < 8000 MB (join gate)
+sudo shutdown -r now      # on the worker, before anything else
+```
+
+Not conditional on any swap reading: the 8000 MB refusal belongs to
+`cluster-join`, and the cable path this drill uses has no swap check at all.
+Rebooting removes the stale-swap spiral (INC-17075) outright. Readiness §1
+records the swapped-out working set this is guarding against.
+
+Then, on both hosts once the worker is back up:
+
+```sh
+sysctl vm.swapusage
 sysctl iogpu.wired_limit_mb               # expect 102400
 cat "$HOME/Library/Application Support/mlx-cluster/link-state"   # expect: down
 launchctl print "gui/$(id -u)/dev.mlx-cluster.watcher" >/dev/null && echo watcher-ok
 ```
 
-**Closes when:** swap used is under 8000 MB on both hosts, both report
-`down`, and both watchers print. The worker was at 4281 MB on 2026-07-24 —
-only ~3.7 GB of margin. **If the worker is above 8000 MB, reboot it before
-starting.** That is the documented INC-17075 doctrine, not a suggestion.
-
-Record the baseline you will compare against at the end:
+**Closes when:** the worker has been rebooted this session, both hosts report
+`down`, and both watchers print. Treat the post-reboot swap figure as a
+baseline to compare against later, not as a threshold to pass.
 
 ```sh
 ps -Ao rss,pid,comm | sort -rn | head -5 > /tmp/drill-baseline-$(hostname -s).txt
@@ -141,6 +150,16 @@ More than one occurrence **after** the most recent `rank ready` line means the
 warm generation is not completing — the INC-17070 wedge. Go to the abort
 condition.
 
+"Wedged" means the same to you and to the watcher: **three consecutive
+warm-generation attempts after readiness**, each bounded by a 300 s timeout —
+roughly fifteen minutes. At that count the watcher (nix-ai#1384) tears the rank
+down itself: halt latch, SIGTERM, ceiling and standalone serving restored, one
+alert. That is not a pass — it is the abort you would have called by hand, and
+Phase 5 still runs to verify the result.
+
+**Until nix-ai#1384 is converged on both Macs none of that exists** and the
+abort is entirely yours to call. Check which behavior you have first.
+
 Then make a real request of your own, through the gate, on the coordinator:
 
 ```sh
@@ -227,7 +246,7 @@ any one of these reads true:**
 | Swap growth | `sysctl -n vm.swapusage` | used **> 20000 MB**, or climbing > 2 GB per minute |
 | Rank RSS overshoot | `ps -Ao rss,pid,comm \| grep python` | any rank python **> 70 GB** (shard should settle ~49 GB) |
 | UI starvation | direct observation | cursor stutter, beachball, or the menu bar stops redrawing on the worker |
-| Warm-generation wedge | `grep -c 'firing 1-token warm' …watcher.log` | **≥ 3** occurrences after the latest `rank ready` |
+| Warm-generation wedge | `grep -c 'firing 1-token warm' …watcher.log` | **3** attempts after the latest `rank ready` — same count the watcher itself acts on |
 | Kickstart loop | `…watcher.log` | any `HALTING kickstarts (RDMA PD guard)` line |
 
 The last one is special: an RDMA protection-domain leak is **reboot-only**
@@ -244,8 +263,8 @@ Nothing in this drill can be automated end to end. Explicitly required:
 1. **Cable — physical.** Insert one Thunderbolt 5 cable between the two Macs
    (Phase 2) and remove it (Phases 5–6). There is no software substitute:
    `cluster-detach` can take the link admin-down but cannot re-establish it.
-2. **Worker swap headroom.** If Phase 0 shows more than 8000 MB swap used on
-   the worker, reboot it first — `sudo shutdown -r now`, interactive password.
+2. **Reboot the worker.** `sudo shutdown -r now`, interactive password. A
+   standing pre-drill step, not conditional on any swap reading — see Phase 0.
 3. **Session placement.** Start the drill from a plain Ghostty window, not a
    tmux session under `dev.local.tmux-cc-session`; quiesce boots that agent out.
 4. **Accepting the recording gap.** The 24/7 capture agents stop for the whole
@@ -262,9 +281,6 @@ likewise granted. Neither prompts.
 
 ## 3. What to record afterwards
 
-Update [FIRST-PLUG-VALIDATION.md](FIRST-PLUG-VALIDATION.md) — tick
-**link-down restore**, **unplug test**, and (if you reboot with the cable in)
-**reboot-with-cable-in**, with the observed evidence rather than a bare check.
-If Phase 4's second request wedges, that is the INC-17070 reproduction and the
-`--prompt-cache-size 0` experiment in `hosts/common/cluster-wired-limit.nix`
-should be reconsidered rather than left in place silently.
+Recording the outcome belongs with the validation record, not the
+runbook — see
+[CLUSTER-RESUMPTION-READINESS.md](CLUSTER-RESUMPTION-READINESS.md) §4.
