@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.13.1](https://github.com/dryvist/nix-darwin/compare/v2.13.0...v2.13.1) (2026-07-24)
+
+
+### Bug Fixes
+
+* **mlx:** single-model mode — everything routes to Coder-30B ([#1860](https://github.com/dryvist/nix-darwin/issues/1860)) ([36882be](https://github.com/dryvist/nix-darwin/commit/36882be7d92178554231a43336b831560fe1ae4a))
+
 ## [2.13.0](https://github.com/dryvist/nix-darwin/compare/v2.12.3...v2.13.0) (2026-07-23)
 
 
