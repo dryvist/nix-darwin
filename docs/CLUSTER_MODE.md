@@ -19,7 +19,9 @@ is the entire ceremony; unplugging reverses everything unattended.
 > rank" interlock can never fire. Today's guards are the ~28 GiB OS reserve
 > inside that ceiling, the worker's GUI quiesce, and the join/detach swap
 > gates — not a ceiling flip. See
-> [CLUSTER-RESUMPTION-DRILL.md](CLUSTER-RESUMPTION-DRILL.md) §2.
+> [CLUSTER-RESUMPTION-READINESS.md](CLUSTER-RESUMPTION-READINESS.md) §2, and
+> [CLUSTER-RESUMPTION-DRILL.md](CLUSTER-RESUMPTION-DRILL.md) for the
+> plug/unplug acceptance test that would close the open validation gaps.
 > RDMA is enabled on both Macs (`rdma_ctl status` →
 > `enabled`, 2026-07-16) and the Thunderbolt link is verified up at 80 Gb/s in
 > both directions (full TB5 symmetric speed). The link-IP assignment

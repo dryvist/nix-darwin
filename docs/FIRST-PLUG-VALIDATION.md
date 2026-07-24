@@ -36,7 +36,7 @@ for the corrected mechanism.
     `appleSiliconTunables.wiredLimitMb` (102400 MB on both), so the ceiling
     no longer changes at link-up. Do not cite the 90000/80000 numbers as a
     current guard — see
-    [CLUSTER-RESUMPTION-DRILL.md](CLUSTER-RESUMPTION-DRILL.md) §2.
+    [CLUSTER-RESUMPTION-READINESS.md](CLUSTER-RESUMPTION-READINESS.md) §2.
 
 - [ ] **Link-down restore.** Confirm the link-down path returns each host to
   its standalone wired value.
