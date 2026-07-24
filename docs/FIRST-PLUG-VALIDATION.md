@@ -25,17 +25,25 @@ for the corrected mechanism.
     their REAP-50 shard in production (#1746).
 
 - [x] **Cluster wired ceilings.** `system.clusterLinkPrep` wired-memory
-  limits (coordinator 90000 MB, worker 80000 MB) are live and bound the
-  REAP-50 shard's wired load.
-  - _Result:_ Values deployed and active (`hosts/common/default.nix`). No
-    repeat of the 2026-07-12 WindowServer panic observed. **(verify)**:
-    whether these values have been stress-tested under a long generation
-    with the GUI working set under separate memory pressure is not
-    separately confirmed.
+  limits were live during this session (coordinator 90000 MB, worker
+  80000 MB) and bounded the REAP-50 shard's wired load.
+  - _Result:_ Values deployed and active. No repeat of the 2026-07-12
+    WindowServer panic observed. **(verify)**: whether they were
+    stress-tested under a long generation with the GUI working set under
+    separate memory pressure is not separately confirmed.
+  - _Superseded 2026-07-19:_ these differential caps are gone.
+    `clusterWiredLimitMb` now equals the host's standalone
+    `appleSiliconTunables.wiredLimitMb` (102400 MB on both), so the ceiling
+    no longer changes at link-up. Do not cite the 90000/80000 numbers as a
+    current guard — see
+    [CLUSTER-RESUMPTION-READINESS.md](CLUSTER-RESUMPTION-READINESS.md) §2.
 
 - [ ] **Link-down restore.** Confirm the link-down path returns each host to
   its standalone wired value.
   - _Result:_ **(verify)** — not directly confirmed in this session's record.
+    Note that since the 2026-07-19 change the two values are identical, so
+    this box can no longer be closed by observing the sysctl; it now means
+    only "the teardown ran". Drill Phase 5 covers it.
 
 - [x] **Readiness probe.** Confirm the coordinator watcher logs `rank ready`.
   - _Result:_ Confirmed the coordinator's rank reached readiness (one
