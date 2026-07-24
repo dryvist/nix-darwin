@@ -49,6 +49,11 @@ in
         "mlx-model-server"
         "mlx-cluster"
         "fabric"
+        # Listed while the engine is stopped, on purpose. Its own rotation was
+        # removed with the engine, leaving an 86 MB orphan log; a glob ages that
+        # out with no one-off delete to remember, and the path is already right
+        # when vllm-mlx comes back after the soak.
+        "vllm-mlx"
       ];
       description = ''
         Directory names under ~/Library/Logs to rotate. One `*.log` glob per
