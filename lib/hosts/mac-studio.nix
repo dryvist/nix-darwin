@@ -64,10 +64,12 @@
     # Resident model queues instead of instant-rejecting under overlap
     # (goal-mode judge calls got instant 429s when worker+compaction+judge
     # overlapped at the proxy default of 1 — mlx_lm.server serializes decode
-    # internally, so a small proxy-side queue is safe). Verified live: 3
-    # simultaneous requests all completed, no 429. Studio-only override —
-    # the MacBook keeps concurrencyLimit=1 by design for its screenpipe 9B.
-    modelConcurrencyLimits."mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit" = 4;
+    # internally, so a proxy-side queue is safe). 4 still 429'd on a 3-client
+    # burst (two multi-minute calls in flight + a third instant-rejected in
+    # 154us); 8 gives burst headroom. Verified live: 3 simultaneous requests
+    # all completed, no 429. Studio-only override — the MacBook keeps
+    # concurrencyLimit=1 by design for its screenpipe 9B.
+    modelConcurrencyLimits."mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit" = 8;
     # Server host: no group swap, no global idle eviction (per-class unloads
     # come from the catalog). A blanket TTL would make each resident brain pay
     # a 60-120 s cold start after any quiet period.
