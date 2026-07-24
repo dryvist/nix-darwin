@@ -13,18 +13,23 @@
   class = "server";
 
   # Logical roles are assigned through catalog selections below. Physical
-  # model ids stay centralized in nix-ai's validated catalog.
+  # model ids stay centralized in nix-ai's validated catalog. Only one
+  # resident brain at a time (single-resident-brain doctrine, 2026-07-23).
 
   mlx = {
     # Validated catalog selections (profiles in nix-ai catalog-data.nix).
-    # The 80B brain and 27B judge stay resident. Other models load on demand
-    # and unload through their catalog-owned proxy TTL.
+    # Single-resident-brain doctrine (2026-07-23): only the Coder-30B stays
+    # resident. The 80B fleet brain and the 27B judge are configured but
+    # swap-class (disable-not-delete) — 3 resident models (~75GB weights +
+    # 12GB buffer cache each) starved prefill headroom and violated the
+    # locked one-resident-brain rule.
     catalog = {
-      # Qwen3-Next-80B Instruct is the resident fleet brain (2026-07-17
-      # agentic bench; >=75B mandate) and doubles as the >=64K compression
-      # model. All fleet roles resolve through this catalog selection.
+      # Qwen3-Next-80B Instruct is the fleet brain (2026-07-17 agentic bench;
+      # >=75B mandate) and doubles as the >=64K compression model. All fleet
+      # roles resolve through this catalog selection. Swap-class: loads
+      # on-demand rather than staying resident beside the Coder-30B.
       qwen3-next-80b-instruct = {
-        class = "resident";
+        class = "swap";
         roles = [
           "default"
           "quickest"
@@ -34,14 +39,20 @@
           "oss"
         ];
       };
+      # Sole resident brain. Also serves as goal-judge: on a single-slot
+      # Studio, a judge on a different model forces a load-swap every
+      # goal-mode turn, so judge and worker share one model (verified
+      # "JUDGE OK" live with zero model swap, 2026-07-23).
       qwen3-coder-30b = {
-        class = "swap";
-        roles = [ "coding" ];
-      };
-      qwen36-27b-mxfp4 = {
         class = "resident";
-        roles = [ "goal-judge" ];
+        roles = [
+          "coding"
+          "goal-judge"
+        ];
       };
+      # Swap-class, not deleted: still fully configured, just no longer
+      # the goal-judge or resident.
+      qwen36-27b-mxfp4.class = "swap";
       qwen35-9b-optiq.class = "swap";
       qwen36-35b.class = "swap";
       qwen36-optiq.class = "swap";
@@ -62,11 +73,10 @@
       concurrencyLimit = 1;
     };
 
-    # Resident brains warmed at boot: the 80B Hermes brain and 27B goal judge.
-    preload = [
-      "goal-judge"
-      "tool-calling"
-    ];
+    # Resident brain warmed at boot: the Coder-30B (doubles as goal-judge).
+    # "tool-calling" dropped — it now resolves to the swap-class 80B, and
+    # preloading a swap model at boot would defeat the single-resident intent.
+    preload = [ "goal-judge" ];
 
     # Clustered mode: this Mac is rank 0 (coordinator) of the two-Mac JACCL
     # brain when the Thunderbolt cable is in — it binds the cluster endpoint on
