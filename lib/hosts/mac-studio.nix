@@ -16,14 +16,24 @@
   # model ids stay centralized in nix-ai's validated catalog.
 
   mlx = {
+    # SINGLE-MODEL MODE (2026-07-23, supersedes the earlier
+    # single-resident-brain-group posture): only the Coder-30B is servable.
+    # Every alias — every logical role below AND every other catalog
+    # model's own physical id — routes to it (programs.mlx.singleModel
+    # aliases every other compiled model's id onto the resident entry).
+    # Verified live: a request naming mlx-community/Qwen3.5-9B-OptiQ-4bit by
+    # its own id was answered by the Coder-30B ("ROUTED").
+    singleModel = "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit";
+
     # Validated catalog selections (profiles in nix-ai catalog-data.nix).
-    # The 80B brain and 27B judge stay resident. Other models load on demand
-    # and unload through their catalog-owned proxy TTL.
+    # Every logical role resolves to the Coder-30B — required so it's the
+    # only entry the module's role-coverage assertion needs satisfied in
+    # single-model mode. The 80B fleet brain and the 27B judge are
+    # configured but carry no roles (disable-not-delete): swap-class, kept
+    # in the tree, and — like every other non-resident entry — demoted to
+    # disabledModels by singleModel rather than deleted.
     catalog = {
-      # Qwen3-Next-80B Instruct is the resident fleet brain (2026-07-17
-      # agentic bench; >=75B mandate) and doubles as the >=64K compression
-      # model. All fleet roles resolve through this catalog selection.
-      qwen3-next-80b-instruct = {
+      qwen3-coder-30b = {
         class = "resident";
         roles = [
           "default"
@@ -32,16 +42,15 @@
           "large-context"
           "most-capable"
           "oss"
+          "coding"
+          "goal-judge"
         ];
       };
-      qwen3-coder-30b = {
-        class = "swap";
-        roles = [ "coding" ];
-      };
-      qwen36-27b-mxfp4 = {
-        class = "resident";
-        roles = [ "goal-judge" ];
-      };
+      # Fleet brain (2026-07-17 agentic bench; >=75B mandate). Configured,
+      # not deleted — no roles, so single-model mode routes everything to
+      # the Coder-30B instead.
+      qwen3-next-80b-instruct.class = "swap";
+      qwen36-27b-mxfp4.class = "swap";
       qwen35-9b-optiq.class = "swap";
       # Small always-loadable 9B (5.2 GB) for trivial local tasks via the
       # Gemini-CLI path — on-demand swap tier, idle-unloaded, never evicts a
@@ -56,6 +65,15 @@
 
     cacheMemoryMb = 8192;
     prefillBatchSize = 2048;
+    # Resident model queues instead of instant-rejecting under overlap
+    # (goal-mode judge calls got instant 429s when worker+compaction+judge
+    # overlapped at the proxy default of 1 — mlx_lm.server serializes decode
+    # internally, so a proxy-side queue is safe). 4 still 429'd on a 3-client
+    # burst (two multi-minute calls in flight + a third instant-rejected in
+    # 154us); 8 gives burst headroom. Verified live: 3 simultaneous requests
+    # all completed, no 429. Studio-only override — the MacBook keeps
+    # concurrencyLimit=1 by design for its screenpipe 9B.
+    modelConcurrencyLimits."mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit" = 8;
     # Server host: no group swap, no global idle eviction (per-class unloads
     # come from the catalog). A blanket TTL would make each resident brain pay
     # a 60-120 s cold start after any quiet period.
@@ -66,11 +84,8 @@
       concurrencyLimit = 1;
     };
 
-    # Resident brains warmed at boot: the 80B Hermes brain and 27B goal judge.
-    preload = [
-      "goal-judge"
-      "tool-calling"
-    ];
+    # Resident brain warmed at boot: the Coder-30B, the only servable model.
+    preload = [ "goal-judge" ];
 
     # Clustered mode: this Mac is rank 0 (coordinator) of the two-Mac JACCL
     # brain when the Thunderbolt cable is in — it binds the cluster endpoint on
