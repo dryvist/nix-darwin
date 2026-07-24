@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.13.0](https://github.com/dryvist/nix-darwin/compare/v2.12.3...v2.13.0) (2026-07-23)
+
+
+### Features
+
+* **mlx:** expose qwen 9b for hermes ([569c062](https://github.com/dryvist/nix-darwin/commit/569c0623823224b1d3632a9f82c153f41cf31a54))
+* **mlx:** preload catalog-selected Hermes judge ([#1843](https://github.com/dryvist/nix-darwin/issues/1843)) ([81f80cb](https://github.com/dryvist/nix-darwin/commit/81f80cbd136a4e2b7e363e5b030472b6515d5e86))
+* **mlx:** unify Mac wired ceilings to 100 GiB with 28 GiB reserve ([#1848](https://github.com/dryvist/nix-darwin/issues/1848)) ([8176e97](https://github.com/dryvist/nix-darwin/commit/8176e97f591891c03b0297915758aaee230c234c))
+
+
+### Bug Fixes
+
+* **cribl:** classify mlx worker log lines ([fd36595](https://github.com/dryvist/nix-darwin/commit/fd36595ecbb6fa0b2605500f39c2020e60bbe644))
+* **mlx:** drop empty env keys so the wired-limit daemon can spawn ([#1854](https://github.com/dryvist/nix-darwin/issues/1854)) ([cad1c49](https://github.com/dryvist/nix-darwin/commit/cad1c4983231b178967f80bfbbe7b051ec049381))
+* **mlx:** follow generic model server contract ([#1844](https://github.com/dryvist/nix-darwin/issues/1844)) ([1924f9d](https://github.com/dryvist/nix-darwin/commit/1924f9daf5ac1367696a17f173578d6328188610))
+* **mlx:** run the wired-limit activation on switch, not only at boot ([#1851](https://github.com/dryvist/nix-darwin/issues/1851)) ([184c0ae](https://github.com/dryvist/nix-darwin/commit/184c0ae99b7cbb420c200d5a3e83814d3a376e6c))
+* **renovate:** switch weekly github-actions/cribl-edge groups to Fri/Mon ([#1847](https://github.com/dryvist/nix-darwin/issues/1847)) ([4d5fb06](https://github.com/dryvist/nix-darwin/commit/4d5fb06cf69c30a5fddd4fe0acc0a3e16fc39e5a))
+
 ## [2.12.3](https://github.com/dryvist/nix-darwin/compare/v2.12.2...v2.12.3) (2026-07-22)
 
 
