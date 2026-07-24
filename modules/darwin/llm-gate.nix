@@ -49,15 +49,19 @@ let
     lib.unique ([ cfg.domain ] ++ cfg.extraHostnames)
   );
 
-  # Pin every site's listener to the host's LAN address(es) so Caddy never
-  # binds the wildcard socket. Load-bearing because apiPort/clusterPort mirror
-  # their loopback upstream ports: a wildcard listener also owns 127.0.0.1:PORT,
-  # so when llama-swap drops its specific loopback bind Caddy captures loopback
-  # traffic into its own TLS listener (INC-17114). Empty list keeps Caddy's
-  # default (all interfaces). Full rationale on the bindAddresses option.
+  # Pin every listener to the host's LAN address(es) so Caddy never binds the
+  # wildcard socket (INC-17114). Empty list keeps Caddy's default. See
+  # ./llm-gate.md and the bindAddresses option.
   bindDirective = lib.optionalString (cfg.bindAddresses != [ ]) (
     "bind " + lib.concatStringsSep " " cfg.bindAddresses
   );
+
+  # L6 input bound — ordered ahead of reverse_proxy, so an oversized body is
+  # refused before anything downstream allocates KV. See ./llm-gate.md.
+  requestBodyDirective = lib.optionalString (cfg.maxRequestBytes != null) ''
+    request_body {
+        max_size ${cfg.maxRequestBytes}
+      }'';
 
   # Optional second gated site for the cluster-mode endpoint (same bearer
   # token, same cert, own port + access log). Rendered only when a cluster
@@ -70,6 +74,7 @@ let
     } {
       ${bindDirective}
       ${tlsDirective}
+      ${requestBodyDirective}
       log {
         output file ${cfg.logDir}/cluster-access.json
         format json
@@ -93,6 +98,7 @@ let
     ${apiSiteAddresses} {
       ${bindDirective}
       ${tlsDirective}
+      ${requestBodyDirective}
       # JSON access log — the only place API-consumer traffic is visible (the
       # model server on loopback only ever sees the proxy). Written into the
       # gate's log dir (0755, outside the 0700 dataDir so a non-root Cribl
@@ -165,6 +171,12 @@ in
       ];
       default = "route53";
       description = "Certificate source: Let's Encrypt DNS-01 via Route53 (ACME AWS credentials from OpenBao secret/platform/acme) or Caddy's internal CA (autonomous stopgap).";
+    };
+
+    maxRequestBytes = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = "2MB";
+      description = "Caddy `request_body max_size` on both gated sites; a larger body gets 413 and is never forwarded. Null disables it. Rationale and sizing: ./llm-gate.md.";
     };
 
     apiPort = lib.mkOption {

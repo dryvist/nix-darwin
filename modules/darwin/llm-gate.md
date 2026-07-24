@@ -56,3 +56,38 @@ pointer to OpenBao (the AppRole), never fetched secrets.
   from OpenBao `secret/platform/acme`).
 - `internal` — Caddy's local CA (autonomous, no external dependency); clients
   must trust the CA or skip verification. Bring-up stopgap only.
+
+## The L6 input bound (`maxRequestBytes`)
+
+`request_body { max_size }` on both gated sites. A larger body gets 413 and is
+never forwarded.
+
+**Why the gate owns it.** It is the only hop that can refuse an oversized
+prompt before anything allocates KV for it. `mlx_lm.server` has no
+input-token flag at all; llama-swap has no body or token limit; the prompt
+cache evicts only idle entries, and only after the request has already been
+admitted. Caddy orders `request_body` ahead of `reverse_proxy`, so the refusal
+is structural rather than a convention someone has to maintain. The gate is
+also already the sole edge — llama-swap binds loopback and every LAN caller
+passes through here for TLS and the bearer token — so there is no bypass.
+
+`413` is deliberate: a status a caller can report and act on, never a hang and
+never a silent truncation.
+
+**Why bytes, and what that does not buy.** Caddy cannot tokenize. At roughly
+3-4 bytes per token the default bounds a request well inside the KV budget the
+serving math assumes, and it rejects the realistic runaway — a ballooning agent
+transcript, a pasted repository. It is **not** a guarantee: a pathological
+mostly-single-byte-token body could stay under the cap and still exceed the
+intended token count. A sound token bound needs tokenization at the gate, which
+nothing in the path does today; measure this cap in production before writing
+that.
+
+**Why the value is defined here.** Nothing upstream declares an input-token
+cap to derive from. nix-ai's `maxRequestTokens` caps client-requested
+`max_tokens` — *output*, despite the name — so it is not this value. The gate
+being the only consumer, one definition at the consumer is the whole of it.
+
+Serving arithmetic this feeds: the MLX memory-ceilings page in the companion
+docs site (`d/hosts/ai/mlx-memory-ceilings`), which derives the KV cost per
+token and the per-worker footprint this cap is sized against.
