@@ -6,7 +6,6 @@
 # hosts/<label>/home.nix.
 
 {
-  config,
   lib,
   osConfig,
   pkgs,
@@ -215,7 +214,9 @@ in
     };
 
     activation = lib.mkIf (hostConfig.orbstack.enable or false) {
-      linkOrbstackContainer = lib.hm.dag.entryAfter [ "writeBoundary" ] "${orbstackLinkPkg}/bin/link-orbstack-container";
+      linkOrbstackContainer = lib.hm.dag.entryAfter [
+        "writeBoundary"
+      ] "${orbstackLinkPkg}/bin/link-orbstack-container";
     };
   };
 }
