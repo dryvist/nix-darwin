@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.15.1](https://github.com/dryvist/nix-darwin/compare/v2.15.0...v2.15.1) (2026-07-25)
+
+
+### Bug Fixes
+
+* **mac-studio:** bring per-model concurrency within the 1-4 policy range ([#1881](https://github.com/dryvist/nix-darwin/issues/1881)) ([3fae9a8](https://github.com/dryvist/nix-darwin/commit/3fae9a830469d89081b8d08627682c5d5e52dfc8))
+
 ## [2.15.0](https://github.com/dryvist/nix-darwin/compare/v2.14.0...v2.15.0) (2026-07-25)
 
 
