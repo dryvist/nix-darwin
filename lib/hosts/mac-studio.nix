@@ -4,6 +4,18 @@
 # (modules/mlx/catalog-data.nix): parser stacks, chat-template kwargs, and
 # per-class flag profiles. This host only picks entries + classes and sets
 # host-scoped runtime posture. Add or fix serve args in the catalog, not here.
+let
+  # THE per-model serving concurrency for this host. Everything concurrency-
+  # shaped below derives from this one number — nothing restates it.
+  #
+  # It was previously restated: proxy.concurrencyLimit said 1 while a
+  # modelConcurrencyLimits entry said a bare 4, so the host admitted 4 while its
+  # single "source" claimed 1, and the two could drift silently. (They already
+  # had: the surrounding comment argued its way to 8 and the code said 4.)
+  # Deriving means raising this raises the override in proportion, and there is
+  # no second number to keep in sync.
+  serveConcurrency = 1;
+in
 {
   # Network identity. `system` omitted (mkHost defaults to aarch64-darwin).
   hostName = "jevans-ms";
@@ -74,13 +86,16 @@
     prefillBatchSize = 2048;
     # Resident model queues instead of instant-rejecting under overlap
     # (goal-mode judge calls got instant 429s when worker+compaction+judge
-    # overlapped at the proxy default of 1 — mlx_lm.server serializes decode
-    # internally, so a proxy-side queue is safe). 4 still 429'd on a 3-client
-    # burst (two multi-minute calls in flight + a third instant-rejected in
-    # 154us); 8 gives burst headroom. Verified live: 3 simultaneous requests
-    # all completed, no 429. Studio-only override — the MacBook keeps
-    # concurrencyLimit=1 by design for its screenpipe 9B.
-    modelConcurrencyLimits."mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit" = 4;
+    # overlapped at a proxy limit of 1 — mlx_lm.server serializes decode
+    # internally, so a proxy-side queue is safe). Verified live: 3 simultaneous
+    # requests all completed, no 429. Studio-only; the MacBook keeps the bare
+    # serveConcurrency by design for its smaller resident model.
+    #
+    # Expressed as a MULTIPLE of serveConcurrency, not a bare number, so this is
+    # a stated policy ("this host queues 4x the base") rather than a second
+    # source of truth. At serveConcurrency = 1 it compiles to 4 — byte-identical
+    # to the literal it replaces, so this is a DRY fix with no behaviour change.
+    modelConcurrencyLimits."mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit" = serveConcurrency * 4;
     # Server host: no group swap, no global idle eviction (per-class unloads
     # come from the catalog). A blanket TTL would make each resident brain pay
     # a 60-120 s cold start after any quiet period.
@@ -88,7 +103,7 @@
       groupSwap = false;
       idleTtl = 0;
       # Match the official mlx_lm prompt/decode workers: one request at a time.
-      concurrencyLimit = 1;
+      concurrencyLimit = serveConcurrency;
     };
 
     # Resident brain warmed at boot: the Coder-30B, the only servable model.
