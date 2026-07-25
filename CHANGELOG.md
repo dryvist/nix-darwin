@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.14.0](https://github.com/dryvist/nix-darwin/compare/v2.13.1...v2.14.0) (2026-07-25)
+
+
+### Features
+
+* **mlx:** 24/7 small 9B swap slot on both Macs ([#1864](https://github.com/dryvist/nix-darwin/issues/1864)) ([0ad3568](https://github.com/dryvist/nix-darwin/commit/0ad35682f16a391e78812cc87e2e2f0c8c9dbd2d))
+
+
+### Bug Fixes
+
+* **cluster:** bring Thunderbolt ports up so the link address is assigned ([#1871](https://github.com/dryvist/nix-darwin/issues/1871)) ([a3d656c](https://github.com/dryvist/nix-darwin/commit/a3d656c3e9b6a331097d7d71343e35cf620e2f59))
+
 ## [2.13.1](https://github.com/dryvist/nix-darwin/compare/v2.13.0...v2.13.1) (2026-07-24)
 
 
