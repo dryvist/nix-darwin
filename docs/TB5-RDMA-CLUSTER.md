@@ -49,7 +49,19 @@ every boot and rebuild (root postActivation, no runtime daemon):
    from `networksetup -listallhardwareports` (not the service order — with
    no per-port services the service order carries no Thunderbolt lines at
    all in the broken state being repaired).
-3. Puts the link IPv4 directly on the carrier-active physical Thunderbolt
+3. Brings every Thunderbolt device **up**. This step is not cosmetic and was
+   missing until 2026-07-25: leaving `bridge0` drops a port to
+   administratively down (`flags=8822`, no `UP`), a down port reports
+   `status: inactive` even with a live cable, and step 4 only addresses a
+   *carrier-active* device — so the sweep in step 2 silently guaranteed that
+   step 4 matched nothing and assigned no address, on both hosts. It did not
+   self-heal on reboot or rebuild, because those rerun the same sweep.
+   Symptom: a cable connected the whole time, no link address anywhere, and
+   the watcher never seeing "up" (its only link test is a ping to the peer's
+   address). The prep now also logs a `WARN … was NOT assigned` line when no
+   port had carrier, because postActivation runs it non-fatally and a run
+   that addressed nothing otherwise reports a clean activation.
+4. Puts the link IPv4 directly on the carrier-active physical Thunderbolt
    **device** via `ifconfig alias` — deliberately not a SystemConfiguration
    network service. On macOS 26, `networksetup -createnetworkservice` fails
    as root with "Unable to access the System Configuration database" even
@@ -89,9 +101,15 @@ wired allocation that crowds the GUI working set starves macOS and the RDMA
 stack itself — this is not theoretical: the 2026-07-12 auto-bring-up wired a
 ~99 GB shard per node and kernel-panicked BOTH hosts (WindowServer watchdog).
 The mitigation is live as of #1746: `system.clusterLinkPrep.clusterWiredLimitMb`
-caps each rank's ceiling before it starts (90000 MB coordinator / 80000 MB
-worker) and restores the standalone value at link-down. See
-[CLUSTER_MODE.md](CLUSTER_MODE.md) for current status.
+caps each rank's ceiling before it starts and restores the standalone value at
+link-down.
+
+The 90000 MB coordinator / 80000 MB worker caps this page used to name are
+**retired** — they were low enough to force swap. `clusterWiredLimitMb` now
+derives from the host's own standalone ceiling
+(`config.system.appleSiliconTunables.wiredLimitMb`), so there is no separate
+clustered number for this page to hold. Read the value from the config, never
+from here. See [CLUSTER_MODE.md](CLUSTER_MODE.md) for current status.
 
 ## Verification checklist
 
