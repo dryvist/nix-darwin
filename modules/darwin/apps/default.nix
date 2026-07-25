@@ -9,6 +9,7 @@ _:
 
 {
   imports = [
+    ./agent-log-rotation.nix
     ./ai-cli-log-shipping.nix
     ./apfs-volumes.nix
     ./apple-container-runtime.nix
