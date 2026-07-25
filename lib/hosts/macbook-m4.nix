@@ -30,10 +30,11 @@
         "oss"
       ];
     };
-    # On-demand summarizer for the screenpipe hourly-obsidian pipe, which
-    # requests this physical id directly. Swap-class with no roles compiles to
-    # a llama-swap models.<id> entry keyed by the physical id, so it routes
-    # without evicting the resident 30B.
+    # Small always-loadable 9B (5.2 GB) for trivial local tasks via the
+    # Gemini-CLI path and the hourly Obsidian summarizer pipe, which requests
+    # this physical id directly. Swap-class with no roles compiles to a
+    # llama-swap models.<id> entry keyed by the physical id, so it loads on
+    # demand and routes without evicting the resident 30B.
     catalog.qwen35-9b-mlx.class = "swap";
 
     cacheMemoryMb = 8192;

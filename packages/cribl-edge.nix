@@ -8,7 +8,7 @@
 }:
 stdenvNoCC.mkDerivation rec {
   pname = "cribl-edge";
-  version = "4.18.0-dfc74421"; # cribl-edge
+  version = "4.19.0-0fbd6d34"; # cribl-edge
 
   # Release directory is the semver portion of `version`. Renovate's
   # customManager only rewrites `version`, so the URL must derive the dir
@@ -21,7 +21,7 @@ stdenvNoCC.mkDerivation rec {
 
   src = fetchurl {
     url = "https://cdn.cribl.io/dl/${releaseDir}/cribl-${version}-darwin-universal.pkg";
-    hash = "sha256-szztWYz4F5E+T/gj7T2BU6TqMdQT3qa95IpUk3V3rtA=";
+    hash = "sha256-9gKBd3amQpTI64ge01u5OKhtu4hxTKpFPJayy99LiBw=";
   };
 
   nativeBuildInputs = [

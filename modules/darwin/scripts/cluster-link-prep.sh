@@ -48,6 +48,36 @@ while IFS= read -r tb_dev; do
 done < <(/usr/sbin/networksetup -listallhardwareports \
   | /usr/bin/awk '/^Hardware Port: Thunderbolt [0-9]/{getline; sub(/^Device: /, ""); print}')
 
+# 1.5 Bring every Thunderbolt device UP before any carrier is read. Removing a
+#     port from bridge0 leaves the device administratively down (flags=8822,
+#     no UP), and a down device reports `status: inactive` even with a live
+#     cable in it. Step 2 assigns the address ONLY to a carrier-active device,
+#     so without this the sweep above silently guarantees step 2 matches
+#     nothing and assigns no address at all — on both hosts, permanently, and
+#     NOT healed by a later boot or rebuild, because those rerun the same sweep.
+#
+#     Observed 2026-07-25 on the first TB5 cluster window: a cable connected
+#     the whole time produced no link on either host, `ifconfig -a` showed no
+#     link address anywhere, and a `darwin-rebuild switch` earlier that evening
+#     had not fixed it. `ifconfig <dev> up` restored carrier immediately and
+#     the prep then assigned both ends' addresses with no other change.
+#
+#     Bringing up ALL Thunderbolt devices keeps step 2's single-carrier rule
+#     intact: an uncabled port comes up without carrier, stays `inactive`, and
+#     is skipped there exactly as before.
+while IFS= read -r tb_dev; do
+  [ -n "$tb_dev" ] || continue
+  /sbin/ifconfig "$tb_dev" up 2>/dev/null \
+    || echo "$prefix WARN failed to bring $tb_dev up" >&2
+done < <(/usr/sbin/networksetup -listallhardwareports \
+  | /usr/bin/awk '/^Hardware Port: Thunderbolt [0-9]/{getline; sub(/^Device: /, ""); print}')
+
+# Thunderbolt negotiation is not instant after `up`; reading carrier in the
+# same breath can still see `inactive` on a cabled port and skip it. One short
+# settle rather than a per-device poll — the prep reruns at every boot and
+# rebuild, so a rare miss self-heals instead of needing a retry loop here.
+/bin/sleep 3
+
 # 2. Same link IPv4 directly on every physical Thunderbolt DEVICE via
 #    ifconfig — deliberately NOT SystemConfiguration services: on macOS 26,
 #    `networksetup -createnetworkservice` fails as root with "Unable to
@@ -64,6 +94,7 @@ done < <(/usr/sbin/networksetup -listallhardwareports \
 #    the cable was on en2). Stripping the alias elsewhere keeps the route on
 #    the cabled port; a cable move heals on the next boot/rebuild (this prep
 #    reruns then).
+assigned=false
 while IFS= read -r tb_dev; do
   [ -n "$tb_dev" ] || continue
   dev_state="$(/sbin/ifconfig "$tb_dev" 2>/dev/null)"
@@ -72,6 +103,7 @@ while IFS= read -r tb_dev; do
   is_active=false
   case "$dev_state" in *"status: active"*) is_active=true ;; esac
   if $is_active; then
+    assigned=true
     # Re-plumb even when the address is already present: deleting the alias
     # from a SIBLING port can drop the shared connected route out from under
     # this one (observed 2026-07-18 — traffic then fell through to the
@@ -96,3 +128,16 @@ while IFS= read -r tb_dev; do
   fi
 done < <(/usr/sbin/networksetup -listallhardwareports \
   | /usr/bin/awk '/^Hardware Port: Thunderbolt [0-9]/{getline; sub(/^Device: /, ""); print}')
+
+# Say so when nothing was addressed. This prep is invoked from postActivation
+# with `|| echo "…non-fatal failure"` so it can never fail a rebuild — which
+# means a run that assigns NO address still reports a clean activation, and the
+# cluster silently cannot form (the watcher's only link test is a ping to the
+# peer's address, so with no local address it never sees "up"). That is exactly
+# how the 2026-07-25 failure stayed invisible across a rebuild. Still exit 0 —
+# an uncabled host is the normal state and must not be an error — but leave a
+# greppable line so the cause is one search away instead of a live debug.
+if ! $assigned; then
+  echo "$prefix WARN no Thunderbolt port had carrier; $CLUSTER_LINK_IP was NOT assigned." >&2
+  echo "$prefix WARN if a cable IS connected, check the ports are up: ifconfig <tb-dev> up" >&2
+fi

@@ -25,6 +25,13 @@
     # its own id was answered by the Coder-30B ("ROUTED").
     singleModel = "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit";
 
+    # Small always-loadable 9B for trivial local tasks (Gemini-CLI path).
+    # singleModel would otherwise demote every non-resident to disabledModels;
+    # this keeps the 9B servable as an on-demand swap tier beside the pinned
+    # resident (nix-ai alwaysAvailableModels; never evicts the resident, no
+    # alias onto its roles). ~5.2 GB on demand — ceilings unchanged.
+    alwaysAvailableModels = [ "mlx-community/Qwen3.5-9B-MLX-4bit" ];
+
     # Validated catalog selections (profiles in nix-ai catalog-data.nix).
     # Every logical role resolves to the Coder-30B — required so it's the
     # only entry the module's role-coverage assertion needs satisfied in
@@ -52,6 +59,10 @@
       qwen3-next-80b-instruct.class = "swap";
       qwen36-27b-mxfp4.class = "swap";
       qwen35-9b-optiq.class = "swap";
+      # Small always-loadable 9B (5.2 GB) for trivial local tasks via the
+      # Gemini-CLI path — on-demand swap tier, idle-unloaded, never evicts a
+      # resident. Addressable by its physical id (mlx-community/Qwen3.5-9B-MLX-4bit).
+      qwen35-9b-mlx.class = "swap";
       qwen36-35b.class = "swap";
       qwen36-optiq.class = "swap";
       gpt-oss-120b.class = "swap";

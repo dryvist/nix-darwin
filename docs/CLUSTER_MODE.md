@@ -8,11 +8,21 @@ is the entire ceremony; unplugging reverses everything unattended.
 > **STATUS (2026-07-18): clustered mode is ENABLED on both hosts.**
 > `programs.mlx.clusterMode.enable = true` shipped for coordinator and worker
 > together in the supervised re-enable session (#1746) the 2026-07-12 disable
-> note called for. The wired-headroom mitigation is live:
-> `system.clusterLinkPrep.clusterWiredLimitMb` caps each rank's `iogpu.wired_limit_mb`
-> before the rank starts (90000 MB coordinator / 80000 MB worker), bounding
-> the shard's wired load instead of leaving it uncapped the way the
-> 2026-07-12 panic did. RDMA is enabled on both Macs (`rdma_ctl status` →
+> note called for.
+> **Wired-ceiling correction (2026-07-24):** the differential caps this note
+> used to advertise (90000 MB coordinator / 80000 MB worker) were superseded
+> on 2026-07-19. `hosts/common/default.nix` now sets
+> `clusterWiredLimitMb = config.system.appleSiliconTunables.wiredLimitMb`, so
+> the clustered and standalone ceilings are the SAME value on both hosts
+> (102400 MB). The watcher's `set_wired_limit` is therefore a no-op at both
+> link-up and link-down, and its "wired ceiling not applied; NOT starting the
+> rank" interlock can never fire. Today's guards are the ~28 GiB OS reserve
+> inside that ceiling, the worker's GUI quiesce, and the join/detach swap
+> gates — not a ceiling flip. See
+> [CLUSTER-RESUMPTION-READINESS.md](CLUSTER-RESUMPTION-READINESS.md) §2, and
+> [CLUSTER-RESUMPTION-DRILL.md](CLUSTER-RESUMPTION-DRILL.md) for the
+> plug/unplug acceptance test that would close the open validation gaps.
+> RDMA is enabled on both Macs (`rdma_ctl status` →
 > `enabled`, 2026-07-16) and the Thunderbolt link is verified up at 80 Gb/s in
 > both directions (full TB5 symmetric speed). The link-IP assignment
 > mechanism changed in #1747/#1750 — see
