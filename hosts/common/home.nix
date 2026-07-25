@@ -9,10 +9,22 @@
   config,
   lib,
   osConfig,
+  pkgs,
   hostConfig,
   ...
 }:
-
+let
+  # See the script's own header for why this is an activation step and not a
+  # home.file entry. Short version: home.file re-links every generation, and a
+  # write into ~/Library/Group Containers hangs rather than fails, which wedged
+  # activation and silently skipped everything after it.
+  orbstackLinkPkg = pkgs.writeShellApplication {
+    name = "link-orbstack-container";
+    runtimeInputs = [ pkgs.coreutils ];
+    runtimeEnv.ORBSTACK_CONTAINER_VOLUME = hostConfig.orbstack.containerVolume or "";
+    text = builtins.readFile ./scripts/link-orbstack-container.sh;
+  };
+in
 {
   imports = [
     # Leaves services.aiStack.defaultLocalModelId empty; MLX hosts populate
@@ -152,14 +164,10 @@
   # volume itself is created by a launchd daemon (modules/darwin/apps/orbstack.nix).
   home = {
     file = lib.mkIf (hostConfig.orbstack.enable or false) {
-      # Symlink the entire Group Container so ALL OrbStack data (Docker images,
-      # containers, volumes, Linux VMs, logs) lives on the dedicated APFS volume.
-      # MIGRATION: Stop OrbStack and move existing data before enabling.
-      # NOTE: `ln` reports a permission error when OrbStack is running because the
-      # Group Container directory is locked. This is expected — the symlink persists
-      # correctly and does not need to be recreated on every rebuild.
-      "Library/Group Containers/HUAQ24HBR6.dev.orbstack".source =
-        config.lib.file.mkOutOfStoreSymlink "/Volumes/${hostConfig.orbstack.containerVolume}";
+      # The Group Container symlink is deliberately NOT here — see
+      # `linkOrbstackContainer` below. home.file re-links every managed path on
+      # every generation, and a write into ~/Library/Group Containers does not
+      # fail on this machine, it HANGS, which wedges activation.
 
       # Docker daemon configuration for OrbStack: log rotation + build cache GC to
       # prevent unbounded disk growth. force = true: OrbStack pre-creates this file;
@@ -204,6 +212,10 @@
     sessionVariables = lib.mkIf (hostConfig.orbstack.enable or false) {
       # Container data on the dedicated external volume.
       CONTAINER_DATA = "/Volumes/${hostConfig.orbstack.containerVolume}";
+    };
+
+    activation = lib.mkIf (hostConfig.orbstack.enable or false) {
+      linkOrbstackContainer = lib.hm.dag.entryAfter [ "writeBoundary" ] "${orbstackLinkPkg}/bin/link-orbstack-container";
     };
   };
 }
