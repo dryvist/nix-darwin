@@ -102,6 +102,16 @@ in
       enable = true;
       user = userConfig.user.name;
     };
+
+    # Rotation for the AI serving stack's logs (~/Library/Logs/<service>/), via
+    # the root-run system newsyslog. Replaces three user LaunchAgents in nix-ai
+    # that could never work — `newsyslog` requires root, so they sat at exit 1
+    # while the logs grew unbounded. All hosts: a directory for a service this
+    # host does not run is simply skipped.
+    agent-log-rotation = {
+      enable = true;
+      user = userConfig.user.name;
+    };
   };
 
   system = {
