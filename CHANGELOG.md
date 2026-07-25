@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.15.0](https://github.com/dryvist/nix-darwin/compare/v2.14.0...v2.15.0) (2026-07-25)
+
+
+### Features
+
+* **llm-gate:** refuse oversized request bodies at the gate ([#1870](https://github.com/dryvist/nix-darwin/issues/1870)) ([13c803e](https://github.com/dryvist/nix-darwin/commit/13c803e566f5c6b2ceae12b89b00f22f81a722d3))
+
+
+### Bug Fixes
+
+* **logging:** rotate AI serving logs via the root-run system newsyslog ([#1869](https://github.com/dryvist/nix-darwin/issues/1869)) ([f6398b5](https://github.com/dryvist/nix-darwin/commit/f6398b5b23d49bd9301b242d23660af7e6ed90e5))
+
 ## [2.14.0](https://github.com/dryvist/nix-darwin/compare/v2.13.1...v2.14.0) (2026-07-25)
 
 
