@@ -6,6 +6,7 @@
 # hosts/<label>/home.nix.
 
 {
+  config,
   lib,
   osConfig,
   pkgs,
@@ -44,6 +45,9 @@ in
     # Feeds the system-level clusterLinkPrep wired ceilings into nix-ai's
     # programs.mlx.clusterMode so the watcher/lifecycle env carries them.
     ./cluster-wired-limit.nix
+    # Durable code-signing identity for the cluster executables, so their macOS
+    # privacy grants survive a rebuild instead of dying with the store path.
+    ./mlx-cluster-signing.nix
   ];
 
   # Share system-level Homebrew taps with nix-ai's trust.json.
@@ -154,6 +158,16 @@ in
     # macOS-specific zsh overrides (keychain API keys, GitHub tiered-token
     # switching, custom launchers) live in ./zsh-macos.nix — split out for the
     # per-file byte cap. They merge into programs.zsh via the module system.
+
+    # Only meaningful on a host that actually runs cluster ranks. The rank's
+    # interpreter is the process that opens the Thunderbolt sockets, so it is
+    # the one whose Local Network grant has to outlive a rebuild.
+    mlxClusterSigning = lib.mkIf (hostConfig ? mlx) {
+      enable = true;
+      signInPlace = {
+        rank-python = "${config.home.homeDirectory}/.local/share/uv/python/cpython-*/bin/python3*";
+      };
+    };
   };
 
   # ==========================================================================
