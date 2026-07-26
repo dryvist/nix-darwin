@@ -36,26 +36,20 @@
 # ONE-TIME OPERATOR SETUP (per host)
 #
 # The identity needs a keychain unlock and a trust decision, neither of which a
-# session can perform. Run once, in Terminal:
+# session can perform. Run ./scripts/mlx-cluster-signing-setup.sh on the host, in
+# its own GUI login session. It is idempotent (exits early if a valid identity
+# already exists) and its header records the three details that each cost a
+# debugging cycle: keyUsage=digitalSignature is required, PKCS12 must use legacy
+# algorithms, and it cannot run over ssh.
 #
-#   D=~/Library/Application\ Support/mlx-cluster/signing; mkdir -p "$D" && cd "$D" && \
-#   openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 3650 -nodes \
-#     -subj "/CN=mlx-cluster-signing" -addext "extendedKeyUsage=codeSigning" \
-#     -addext "basicConstraints=critical,CA:false" && \
-#   openssl pkcs12 -export -out b.p12 -inkey key.pem -in cert.pem -passout pass:mlxcluster \
-#     -name mlx-cluster-signing -certpbe PBE-SHA1-3DES -keypbe PBE-SHA1-3DES -macalg sha1 && \
-#   security import b.p12 -k ~/Library/Keychains/login.keychain-db -P mlxcluster \
-#     -T /usr/bin/codesign -A && \
-#   security set-key-partition-list -S apple-tool:,apple:,codesign: -s \
-#     ~/Library/Keychains/login.keychain-db && \
-#   security add-trusted-cert -r trustRoot -p codeSign \
-#     -k ~/Library/Keychains/login.keychain-db cert.pem && \
-#   rm -f b.p12 && security find-identity -v -p codesigning | grep mlx-cluster
-#
-# The legacy PKCS12 algorithms are required: OpenSSL 3 defaults to AES-256 +
-# SHA-256, which macOS `security import` rejects with "MAC verification failed".
 # The private key never leaves the host, and the certificate is trusted for code
 # signing ONLY, in the user's login keychain rather than the system domain.
+#
+# VERIFIED on jevans-mbp 2026-07-25, which is what this module rests on: a binary
+# was signed, then REPLACED with an entirely different program and re-signed under
+# the same identifier. Both produced an identical designated requirement --
+# different content, same identity, so a grant against the first applies to the
+# second. That is precisely what an ad-hoc cdhash cannot do.
 #
 # Until that runs, the activation step is a no-op that says so. A host without
 # the identity is a normal state, not an error, and must never fail activation.
