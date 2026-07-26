@@ -6,7 +6,6 @@
 # hosts/<label>/home.nix.
 
 {
-  config,
   lib,
   osConfig,
   pkgs,
@@ -159,13 +158,23 @@ in
     # switching, custom launchers) live in ./zsh-macos.nix — split out for the
     # per-file byte cap. They merge into programs.zsh via the module system.
 
-    # Only meaningful on a host that actually runs cluster ranks. The rank's
-    # interpreter is the process that opens the Thunderbolt sockets, so it is
-    # the one whose Local Network grant has to outlive a rebuild.
+    # Only meaningful on a host that actually runs cluster ranks. `uv`, not the
+    # Python it launches, is the process whose Local Network grant has to
+    # outlive a rebuild: a two-arm launchd test (ProgramArguments[0] = the Nix
+    # `uv` binary vs. the interpreter it runs) showed `uv` is the rank's
+    # responsible process — the connection succeeded on the `uv` arm without
+    # the Python underneath needing its own TCC identity at all. Signing the
+    # interpreter (the previous approach) additionally globbed and re-signed
+    # every uv-managed CPython in the cache — ~125 on the Studio — which grew
+    # without bound and, before nix-darwin#1894, tripped a hardened-runtime
+    # library-validation outage the interpreter path is otherwise exposed to
+    # (`mlx`'s ad-hoc-signed `.so` has no Team ID). `uv` itself is a single
+    # nix-store binary, not a churning cache, so `copyAndSign` stages and signs
+    # ONE file instead.
     mlxClusterSigning = lib.mkIf (hostConfig ? mlx) {
       enable = true;
-      signInPlace = {
-        rank-python = "${config.home.homeDirectory}/.local/share/uv/python/cpython-*/bin/python3*";
+      copyAndSign = {
+        uv = "${pkgs.uv}/bin/uv";
       };
     };
   };

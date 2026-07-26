@@ -105,16 +105,12 @@ in
       type = lib.types.attrsOf lib.types.str;
       default = { };
       example = {
-        rank-python = "/Users/you/.local/share/uv/python/cpython-3.14-macos-aarch64-none/bin/python3.14";
+        some-writable-executable = "/Users/you/.local/share/some-tool/bin/binary";
       };
       description = ''
-        name -> path, for executables that already live at a writable, stable
-        path. Signed in place; symlinks are resolved first so the signature
-        lands on the real file.
+        name -> path, for executables that already live at a writable, stable path outside the nix store. Signed in place; symlinks are resolved first so the signature lands on the real file.
 
-        The MLX rank's interpreter is the case that matters: uv manages it
-        outside the nix store, so it is both stable and writable, and it is the
-        process that actually opens the Thunderbolt sockets.
+        Not used by the MLX cluster today: a two-arm launchd test showed uv, not the interpreter it launches, is the rank's responsible process, and uv lives in the nix store — see copyAndSign below. This option stays available should some later executable need it.
       '';
     };
 
@@ -122,17 +118,12 @@ in
       type = lib.types.attrsOf lib.types.str;
       default = { };
       example = {
-        cluster-bash = "/nix/store/...-bash-5.3p9/bin/bash";
+        uv = "/nix/store/...-uv-x.y.z/bin/uv";
       };
       description = ''
-        name -> nix store path, for executables that cannot be signed where they
-        live. Staged into stableDir and signed there. Copied only when the
-        content differs, so an unchanged rebuild does not needlessly invalidate
-        a warm signature.
+        name -> nix store path, for executables that cannot be signed where they live. Staged into stableDir and signed there. Copied only when content differs, so an unchanged rebuild does not needlessly invalidate a warm signature.
 
-        Consumers must then invoke the staged copy rather than the store path,
-        or the signature buys nothing: TCC attributes the network call to
-        whichever binary actually runs.
+        Consumers must invoke the staged copy, not the store path, or the signature does nothing: TCC attributes the network call to whichever binary actually runs. Nothing invokes the staged copy yet — nix-ai's cluster launch scripts still exec the raw nix-store uv path directly — see dryvist/nix-ai#1410.
       '';
     };
   };
