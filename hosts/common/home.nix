@@ -170,26 +170,20 @@ in
     # switching, custom launchers) live in ./zsh-macos.nix — split out for the
     # per-file byte cap. They merge into programs.zsh via the module system.
 
-    # Only meaningful on a host that actually runs cluster ranks. The rank's
-    # interpreter is the process that opens the Thunderbolt sockets, so it is
-    # the one whose Local Network grant has to outlive a rebuild. Measured
-    # live: the rank's ephemeral uv-venv interpreter resolves via symlink to
-    # this exact stable path, so signing it in place does reach what runs.
-    #
-    # The glob is scoped to the ONE CPython minor the rank actually requests
-    # (mlxRankPythonVersion, sourced from nix-ai above) rather than every
-    # uv-managed interpreter on the host: `cpython-*` previously matched every
-    # version uv had ever cached (measured: five, on one host) plus
-    # `python3-config` — a shell script, not an interpreter, caught by the
-    # old `python3*` suffix wildcard. Both meant unrelated tooling silently
-    # wore the cluster's TCC identity, and the signed set grew without bound.
-    # Keep the "rank-python" identifier unchanged — renaming it voids
-    # whatever Local Network grant already exists for it.
+    # Only meaningful on hosts running cluster ranks. Measured live: the
+    # rank's ephemeral uv interpreter resolves via symlink to this exact
+    # path, so signing it in place reaches what actually runs. Glob scoped
+    # to the one CPython minor nix-ai actually requests (mlxRankPythonVersion
+    # above) — `cpython-*`/`python3*` previously matched every cached
+    # version (five, measured) plus every `*-config` script. Keep
+    # "rank-python" unchanged: renaming voids any existing grant. sweepRoots
+    # un-brands whatever the glob no longer matches (see that option's doc).
     mlxClusterSigning = lib.mkIf (hostConfig ? mlx) {
       enable = true;
       signInPlace = {
         rank-python = "${config.home.homeDirectory}/.local/share/uv/python/cpython-${mlxRankPythonVersion}.*-macos-aarch64-none/bin/python${mlxRankPythonVersion}";
       };
+      sweepRoots = [ "${config.home.homeDirectory}/.local/share/uv/python" ];
     };
   };
 

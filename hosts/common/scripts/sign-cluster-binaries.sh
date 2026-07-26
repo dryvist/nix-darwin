@@ -36,6 +36,13 @@ set -o nounset
 
 identity="$MLX_SIGNING_IDENTITY"
 stable_dir="$MLX_SIGNING_STABLE_DIR"
+sweep_roots="$MLX_SIGN_SWEEP_ROOTS"
+
+# Shared prefix for every identifier this script mints (sign_at appends the
+# per-target name). One definition used both when signing and, below, when
+# sweeping for stale identities — so the two can never disagree about what
+# "ours" means.
+identifier_prefix="dev.jacobpevans.mlx-cluster."
 
 if ! /usr/bin/security find-identity -v -p codesigning 2> /dev/null | grep -qF "$identity"; then
   echo "mlx-signing: no '$identity' code-signing identity on this host — skipping."
@@ -47,6 +54,9 @@ mkdir -p "$stable_dir"
 
 signed=0
 skipped=0
+# Space-separated, like the spec lists above: every real path we (re)sign
+# this run, so the sweep below can skip them rather than fight itself.
+current_targets=""
 
 sign_at() {
   # $1 = path to sign in place, $2 = identifier suffix
@@ -74,10 +84,11 @@ sign_at() {
   # `identifier "..." and certificate leaf = H"..."` — set by the identity and
   # identifier below, not by the runtime flag.
   if /usr/bin/codesign --force --sign "$identity" \
-    --identifier "dev.jacobpevans.mlx-cluster.$name" \
+    --identifier "$identifier_prefix$name" \
     "$target" 2> /dev/null; then
     echo "mlx-signing: signed $name"
     signed=$((signed + 1))
+    current_targets="$current_targets $target"
   else
     # Never fatal: a signing failure leaves the previous signature in place and
     # the operator can still grant the old identity. Failing activation here
@@ -135,6 +146,53 @@ for spec in $MLX_SIGN_COPIES; do
   fi
   sign_at "$dst" "$name"
 done
+
+# 3. Sweep: a target that moves (e.g. the pinned CPython minor bumps) leaves
+#    its old file still carrying our identity, still satisfying the TCC grant
+#    scoped to that identity, on an unbounded timeline nothing else clears.
+#    Never --remove-signature (silently SIGKILLed on Apple Silicon) — ad-hoc
+#    re-sign instead, which replaces the identity without leaving the file
+#    unsigned. Scoped three ways: only the configured roots, only their
+#    bin/ directories (the only shape sign_at has ever written into — a
+#    recursive find over a whole Python tree costs thousands of stat calls
+#    for zero payoff), and only a file whose OWN designated requirement
+#    already names our prefix, so this can only un-brand what we branded.
+#
+#    Resolve symlinks BEFORE comparing or signing: bin/python and bin/python3
+#    are aliases of bin/python3.14 in every uv-managed CPython, and codesign
+#    follows a symlink to its real target regardless of which name it is
+#    given. Comparing raw glob paths against current_targets (real paths,
+#    same as sign_at above) would miss that "bin/python" IS the just-signed
+#    target under another name — and then ad-hoc-resign it right back out,
+#    undoing step 1 in the same run (caught by testing before this shipped).
+stripped=0
+for root in $sweep_roots; do
+  [ -d "$root" ] || continue
+  for file in "$root"/*/bin/*; do
+    [ -f "$file" ] || continue
+    real="$(/usr/bin/readlink -f "$file" 2> /dev/null || echo "$file")"
+    case " $current_targets " in
+      *" $real "*) continue ;;
+    esac
+    req="$(/usr/bin/codesign -d -r- "$real" 2> /dev/null || true)"
+    # Scripts report a second, irrelevant "identifier" for their interpreter
+    # (host => identifier "com.apple.sh"); only the designated clause is ours.
+    designated="${req#*designated => }"
+    case "$designated" in
+      *"identifier \"$identifier_prefix"*)
+        old_id="${designated#*identifier \"}"
+        old_id="${old_id%%\"*}"
+        if /usr/bin/codesign --force --sign - "$real" 2> /dev/null; then
+          echo "mlx-signing: stripped stale identity ($old_id) from $real"
+          stripped=$((stripped + 1))
+        else
+          echo "mlx-signing: WARN could not strip stale identity from $real" >&2
+        fi
+        ;;
+    esac
+  done
+done
+echo "mlx-signing: $stripped stale identities stripped"
 
 echo "mlx-signing: $signed signed, $skipped skipped"
 

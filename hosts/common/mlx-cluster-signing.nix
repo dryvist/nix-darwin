@@ -72,6 +72,7 @@ let
         lib.mapAttrsToList (n: p: "${n}=${p}") cfg.signInPlace
       );
       MLX_SIGN_COPIES = lib.concatStringsSep " " (lib.mapAttrsToList (n: p: "${n}=${p}") cfg.copyAndSign);
+      MLX_SIGN_SWEEP_ROOTS = lib.concatStringsSep " " cfg.sweepRoots;
     };
     text = builtins.readFile ./scripts/sign-cluster-binaries.sh;
   };
@@ -133,6 +134,21 @@ in
         Consumers must then invoke the staged copy rather than the store path,
         or the signature buys nothing: TCC attributes the network call to
         whichever binary actually runs.
+      '';
+    };
+
+    sweepRoots = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      example = [ "/Users/you/.local/share/uv/python" ];
+      description = ''
+        Directories actively swept for files that carry one of our own
+        identifiers (the identifier prefix, not a specific target name) but
+        are no longer a current signInPlace/copyAndSign target — e.g. an old
+        CPython minor a version bump moved off. Found files are re-signed
+        ad-hoc (identity stripped, never left unsigned), so a stale target
+        does not go on satisfying a TCC grant nobody scoped it for. Keep the
+        list narrow: only roots this module actually manages.
       '';
     };
   };
