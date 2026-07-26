@@ -58,9 +58,24 @@ sign_at() {
   fi
   # --force because we re-sign the same path every activation; that is the whole
   # point (new content, same identity).
+  #
+  # Deliberately NOT --options runtime. The hardened runtime enables library
+  # validation, which refuses to load any library whose Team ID differs from the
+  # signing process. The uv-cached Python we sign here loads mlx's
+  # core.cpython-*-darwin.so, which is ad-hoc/linker-signed with no Team ID — so
+  # a hardened Python cannot load mlx at all:
+  #   ImportError: dlopen(...mlx/core...so): code signature not valid for use in
+  #   process: mapping process and mapped file (non-platform) have different
+  #   Team IDs
+  # That broke every rank start until it was found (drill 2026-07-25, FINDING 3).
+  # The hardened runtime buys nothing here: this signature exists solely to give
+  # the binary a STABLE IDENTITY so a macOS TCC grant survives rebuilds, and the
+  # designated requirement that TCC keys on is
+  # `identifier "..." and certificate leaf = H"..."` — set by the identity and
+  # identifier below, not by the runtime flag.
   if /usr/bin/codesign --force --sign "$identity" \
     --identifier "dev.jacobpevans.mlx-cluster.$name" \
-    --options runtime "$target" 2> /dev/null; then
+    "$target" 2> /dev/null; then
     echo "mlx-signing: signed $name"
     signed=$((signed + 1))
   else
