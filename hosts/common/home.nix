@@ -11,6 +11,7 @@
   osConfig,
   pkgs,
   hostConfig,
+  nix-ai,
   ...
 }:
 let
@@ -24,6 +25,16 @@ let
     runtimeEnv.ORBSTACK_CONTAINER_VOLUME = hostConfig.orbstack.containerVolume or "";
     text = builtins.readFile ./scripts/link-orbstack-container.sh;
   };
+
+  # The CPython minor the MLX cluster rank's `uv run --python <ver>` actually
+  # requests. Read directly from nix-ai's own lib/python.nix (the flake input,
+  # not a re-declared literal) so this can never drift from the value nix-ai's
+  # mlx module uses to build the rank's launch command — that repo owns the
+  # pin, this repo only needs to know it to scope the signing glob below.
+  # Deliberately the MINOR only ("3.14"): the launch command passes exactly
+  # that to uv, and uv — not nix — resolves and owns the installed patch
+  # (3.14.6 today), so the glob still wildcards the patch component.
+  mlxRankPythonVersion = (import "${nix-ai}/lib/python.nix" { inherit pkgs; }).pythonVersion;
 in
 {
   imports = [
@@ -161,11 +172,23 @@ in
 
     # Only meaningful on a host that actually runs cluster ranks. The rank's
     # interpreter is the process that opens the Thunderbolt sockets, so it is
-    # the one whose Local Network grant has to outlive a rebuild.
+    # the one whose Local Network grant has to outlive a rebuild. Measured
+    # live: the rank's ephemeral uv-venv interpreter resolves via symlink to
+    # this exact stable path, so signing it in place does reach what runs.
+    #
+    # The glob is scoped to the ONE CPython minor the rank actually requests
+    # (mlxRankPythonVersion, sourced from nix-ai above) rather than every
+    # uv-managed interpreter on the host: `cpython-*` previously matched every
+    # version uv had ever cached (measured: five, on one host) plus
+    # `python3-config` — a shell script, not an interpreter, caught by the
+    # old `python3*` suffix wildcard. Both meant unrelated tooling silently
+    # wore the cluster's TCC identity, and the signed set grew without bound.
+    # Keep the "rank-python" identifier unchanged — renaming it voids
+    # whatever Local Network grant already exists for it.
     mlxClusterSigning = lib.mkIf (hostConfig ? mlx) {
       enable = true;
       signInPlace = {
-        rank-python = "${config.home.homeDirectory}/.local/share/uv/python/cpython-*/bin/python3*";
+        rank-python = "${config.home.homeDirectory}/.local/share/uv/python/cpython-${mlxRankPythonVersion}.*-macos-aarch64-none/bin/python${mlxRankPythonVersion}";
       };
     };
   };

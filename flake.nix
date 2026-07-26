@@ -196,8 +196,17 @@
                 # nix-ai modules get their inputs via _module.args (self-contained);
                 # nix-home modules accept userConfig with sensible defaults.
                 # `hostConfig` threads the per-host attrset to home-manager modules.
+                # `nix-ai` itself (the flake input) is threaded too, so our OWN
+                # modules can read nix-ai's lib/*.nix directly rather than
+                # re-declaring a value nix-ai already owns (e.g. the pinned
+                # uv-managed CPython version — see hosts/common/home.nix).
                 extraSpecialArgs = {
-                  inherit userConfig dotgithub hostConfig;
+                  inherit
+                    userConfig
+                    dotgithub
+                    hostConfig
+                    nix-ai
+                    ;
                 };
                 users.${userConfig.user.name} = import ./hosts/${label}/home.nix;
 
