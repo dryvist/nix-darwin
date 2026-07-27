@@ -53,7 +53,7 @@ pointer to OpenBao (the AppRole), never fetched secrets.
 
 - `route53` — real Let's Encrypt cert via DNS-01 against the public zone, using
   the least-privilege `acme` AWS user the cluster ingress also uses (credentials
-  from OpenBao `secret/platform/acme`).
+  from OpenBao `secrets-external/platform/acme`).
 - `internal` — Caddy's local CA (autonomous, no external dependency); clients
   must trust the CA or skip verification. Bring-up stopgap only.
 

@@ -9,10 +9,33 @@
   config,
   lib,
   osConfig,
+  pkgs,
   hostConfig,
+  nix-ai,
   ...
 }:
+let
+  # See the script's own header for why this is an activation step and not a
+  # home.file entry. Short version: home.file re-links every generation, and a
+  # write into ~/Library/Group Containers hangs rather than fails, which wedged
+  # activation and silently skipped everything after it.
+  orbstackLinkPkg = pkgs.writeShellApplication {
+    name = "link-orbstack-container";
+    runtimeInputs = [ pkgs.coreutils ];
+    runtimeEnv.ORBSTACK_CONTAINER_VOLUME = hostConfig.orbstack.containerVolume or "";
+    text = builtins.readFile ./scripts/link-orbstack-container.sh;
+  };
 
+  # The CPython minor the MLX cluster rank's `uv run --python <ver>` actually
+  # requests. Read directly from nix-ai's own lib/python.nix (the flake input,
+  # not a re-declared literal) so this can never drift from the value nix-ai's
+  # mlx module uses to build the rank's launch command — that repo owns the
+  # pin, this repo only needs to know it to scope the signing glob below.
+  # Deliberately the MINOR only ("3.14"): the launch command passes exactly
+  # that to uv, and uv — not nix — resolves and owns the installed patch
+  # (3.14.6 today), so the glob still wildcards the patch component.
+  mlxRankPythonVersion = (import "${nix-ai}/lib/python.nix" { inherit pkgs; }).pythonVersion;
+in
 {
   imports = [
     # Leaves services.aiStack.defaultLocalModelId empty; MLX hosts populate
@@ -33,6 +56,9 @@
     # Feeds the system-level clusterLinkPrep wired ceilings into nix-ai's
     # programs.mlx.clusterMode so the watcher/lifecycle env carries them.
     ./cluster-wired-limit.nix
+    # Durable code-signing identity for the cluster executables, so their macOS
+    # privacy grants survive a rebuild instead of dying with the store path.
+    ./mlx-cluster-signing.nix
   ];
 
   # Share system-level Homebrew taps with nix-ai's trust.json.
@@ -125,6 +151,11 @@
     # nix-ai/modules/claude-config.nix in dryvist/nix-ai#853 — Claude config
     # doesn't belong in nix-darwin (host-specific opinion lives in nix-ai).
 
+    # The canonical AI MCP registry renders the same enabled server set for
+    # Claude, Codex, and the other local clients on every host. Vikunja's
+    # credentials remain injected by the shared Doppler wrapper.
+    aiMcp.servers.vikunja.disabled = lib.mkForce false;
+
     # cecli (nix-ai's Aider fork) is disabled — unused, and its
     # tree-sitter-language-pack<=0.13.0 pin fails to build on nixpkgs 26.05
     # (which ships 1.4.1). mkForce overrides nix-ai's unconditional enable
@@ -143,6 +174,22 @@
     # macOS-specific zsh overrides (keychain API keys, GitHub tiered-token
     # switching, custom launchers) live in ./zsh-macos.nix — split out for the
     # per-file byte cap. They merge into programs.zsh via the module system.
+
+    # Only meaningful on hosts running cluster ranks. Measured live: the
+    # rank's ephemeral uv interpreter resolves via symlink to this exact
+    # path, so signing it in place reaches what actually runs. Glob scoped
+    # to the one CPython minor nix-ai actually requests (mlxRankPythonVersion
+    # above) — `cpython-*`/`python3*` previously matched every cached
+    # version (five, measured) plus every `*-config` script. Keep
+    # "rank-python" unchanged: renaming voids any existing grant. sweepRoots
+    # un-brands whatever the glob no longer matches (see that option's doc).
+    mlxClusterSigning = lib.mkIf (hostConfig ? mlx) {
+      enable = true;
+      signInPlace = {
+        rank-python = "${config.home.homeDirectory}/.local/share/uv/python/cpython-${mlxRankPythonVersion}.*-macos-aarch64-none/bin/python${mlxRankPythonVersion}";
+      };
+      sweepRoots = [ "${config.home.homeDirectory}/.local/share/uv/python" ];
+    };
   };
 
   # ==========================================================================
@@ -152,14 +199,10 @@
   # volume itself is created by a launchd daemon (modules/darwin/apps/orbstack.nix).
   home = {
     file = lib.mkIf (hostConfig.orbstack.enable or false) {
-      # Symlink the entire Group Container so ALL OrbStack data (Docker images,
-      # containers, volumes, Linux VMs, logs) lives on the dedicated APFS volume.
-      # MIGRATION: Stop OrbStack and move existing data before enabling.
-      # NOTE: `ln` reports a permission error when OrbStack is running because the
-      # Group Container directory is locked. This is expected — the symlink persists
-      # correctly and does not need to be recreated on every rebuild.
-      "Library/Group Containers/HUAQ24HBR6.dev.orbstack".source =
-        config.lib.file.mkOutOfStoreSymlink "/Volumes/${hostConfig.orbstack.containerVolume}";
+      # The Group Container symlink is deliberately NOT here — see
+      # `linkOrbstackContainer` below. home.file re-links every managed path on
+      # every generation, and a write into ~/Library/Group Containers does not
+      # fail on this machine, it HANGS, which wedges activation.
 
       # Docker daemon configuration for OrbStack: log rotation + build cache GC to
       # prevent unbounded disk growth. force = true: OrbStack pre-creates this file;
@@ -204,6 +247,12 @@
     sessionVariables = lib.mkIf (hostConfig.orbstack.enable or false) {
       # Container data on the dedicated external volume.
       CONTAINER_DATA = "/Volumes/${hostConfig.orbstack.containerVolume}";
+    };
+
+    activation = lib.mkIf (hostConfig.orbstack.enable or false) {
+      linkOrbstackContainer = lib.hm.dag.entryAfter [
+        "writeBoundary"
+      ] "${orbstackLinkPkg}/bin/link-orbstack-container";
     };
   };
 }

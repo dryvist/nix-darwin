@@ -44,7 +44,12 @@
     # Metal guardrail; this limits reclaimable framework buffers below it.
     bufferCacheLimitGb = 8;
 
-    proxy.concurrencyLimit = 1;
+    # proxy.concurrencyLimit is deliberately NOT set here. nix-ai's module
+    # already defaults it to 1 (modules/mlx/options-proxy.nix), so restating it
+    # created a second independent literal that had to be kept in step with the
+    # first by hand — exactly the drift the single-source rule exists to
+    # prevent, and the shape that let mac-studio admit 4 while claiming 1.
+    # This host wants the base value, so it says nothing and inherits it.
 
     # Clustered mode: this Mac is rank 1 (worker) of the two-Mac JACCL cluster
     # when the Thunderbolt cable is in. The worker-side quiesce/restore hooks
