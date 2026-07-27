@@ -17,15 +17,21 @@
 # Usage:
 #   openbao-run --domain local-llm \
 #     [--env-file <0600-path>] \
-#     --secret ENV_NAME=<kv-path>#<field> [--secret ...] \
+#     --secret [<mount>:]ENV_NAME=<kv-path>#<field> [--secret ...] \
 #     -- <command> [args...]
+#
+# Each --secret reads from the KV v2 mount named by the optional leading
+# `<mount>:` prefix, defaulting to $OPENBAO_KV_MOUNT (itself defaulting to
+# "secret" for backward compat) when the prefix is omitted. This lets one
+# invocation mix mounts, e.g. an internal-only secret alongside one on the
+# internet-reachable secrets-external mount (see the acme example below).
 #
 # Example (the llm-large gate):
 #   openbao-run --domain local-llm \
 #     --secret LLM_LARGE_BEARER_TOKEN=ai/llm#LLM_LARGE_BEARER_TOKEN \
-#     --secret AWS_ACME_ACCESS_KEY_ID=platform/acme#AWS_ACME_ACCESS_KEY_ID \
-#     --secret AWS_ACME_SECRET_ACCESS_KEY=platform/acme#AWS_ACME_SECRET_ACCESS_KEY \
-#     --secret LLM_GATE_AWS_REGION=platform/acme#region \
+#     --secret secrets-external:AWS_ACME_ACCESS_KEY_ID=platform/acme#AWS_ACME_ACCESS_KEY_ID \
+#     --secret secrets-external:AWS_ACME_SECRET_ACCESS_KEY=platform/acme#AWS_ACME_SECRET_ACCESS_KEY \
+#     --secret secrets-external:LLM_GATE_AWS_REGION=platform/acme#region \
 #     -- caddy run --config /nix/store/....Caddyfile --adapter caddyfile
 #
 # `pkgs.writeShellApplication` wraps this in `set -euo pipefail` and lints it,
@@ -125,19 +131,24 @@ token="$(printf '%s' "$login_payload" \
   | jq -re '.auth.client_token')" \
   || die "AppRole login failed for domain '$domain' at $addr"
 
-# Fetch each mapping and export it. Format: ENV_NAME=<kv-path>#<field>.
-# KV v2 mount is `secret`; paths are given mount-relative (e.g. ai/llm).
+# KV v2 mount, per-secret override via an optional `<mount>:` spec prefix,
+# else this default. "secret" preserves prior (pre-parameterization) behavior.
+default_mount="${OPENBAO_KV_MOUNT:-secret}"
+
+# Fetch each mapping and export it. Format: [<mount>:]ENV_NAME=<kv-path>#<field>.
+# Paths are given mount-relative (e.g. ai/llm, platform/acme).
 for spec in "${specs[@]}"; do
-  if [[ ! "$spec" =~ ^([A-Za-z_][A-Za-z0-9_]*)=([^#]+)#(.+)$ ]]; then
-    die "bad --secret spec '$spec' (want ENV=path#field)"
+  if [[ ! "$spec" =~ ^(([A-Za-z0-9_-]+):)?([A-Za-z_][A-Za-z0-9_]*)=([^#]+)#(.+)$ ]]; then
+    die "bad --secret spec '$spec' (want [mount:]ENV=path#field)"
   fi
-  env_name="${BASH_REMATCH[1]}"
-  kv_path="${BASH_REMATCH[2]}"
-  field="${BASH_REMATCH[3]}"
+  mount="${BASH_REMATCH[2]:-$default_mount}"
+  env_name="${BASH_REMATCH[3]}"
+  kv_path="${BASH_REMATCH[4]}"
+  field="${BASH_REMATCH[5]}"
   value="$(/usr/bin/curl -sSf --max-time 30 -H "X-Vault-Token: $token" \
-      "$addr/v1/secret/data/$kv_path" \
+      "$addr/v1/$mount/data/$kv_path" \
     | jq -re --arg f "$field" '.data.data[$f]')" \
-    || die "read failed: secret/$kv_path field '$field' (policy or path missing?)"
+    || die "read failed: $mount/$kv_path field '$field' (policy or path missing?)"
   export "$env_name=$value"
 done
 

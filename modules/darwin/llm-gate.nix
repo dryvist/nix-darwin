@@ -170,7 +170,7 @@ in
         "internal"
       ];
       default = "route53";
-      description = "Certificate source: Let's Encrypt DNS-01 via Route53 (ACME AWS credentials from OpenBao secret/platform/acme) or Caddy's internal CA (autonomous stopgap).";
+      description = "Certificate source: Let's Encrypt DNS-01 via Route53 (ACME AWS credentials from OpenBao secrets-external/platform/acme) or Caddy's internal CA (autonomous stopgap).";
     };
 
     maxRequestBytes = lib.mkOption {
@@ -266,11 +266,11 @@ in
       ]
       ++ lib.optionals (cfg.tlsMode == "route53") [
         "--secret"
-        "AWS_ACME_ACCESS_KEY_ID=platform/acme#access_key_id"
+        "secrets-external:AWS_ACME_ACCESS_KEY_ID=platform/acme#access_key_id"
         "--secret"
-        "AWS_ACME_SECRET_ACCESS_KEY=platform/acme#secret_access_key"
+        "secrets-external:AWS_ACME_SECRET_ACCESS_KEY=platform/acme#secret_access_key"
         "--secret"
-        "LLM_GATE_AWS_REGION=platform/acme#region"
+        "secrets-external:LLM_GATE_AWS_REGION=platform/acme#region"
       ]
       ++ [
         "--secret"
