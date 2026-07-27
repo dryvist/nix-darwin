@@ -58,6 +58,12 @@ in
   };
 
   programs = {
+    # Login-time resume of an armed Claude Code mission after a reboot.
+    claude-continuity = {
+      enable = true;
+      user = userConfig.user.name;
+    };
+
     # Custom file extensions recognized as tar.gz archives (Finder auto-extract
     # + shell autocomplete).
     file-extensions.enable = true;

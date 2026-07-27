@@ -88,8 +88,7 @@
     # Updates tracked by deps-update-flake.yml (daily nix flake update) + Renovate
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
 
-    # sops-nix: declarative secret management — decrypts age-encrypted secrets
-    # to root-only files in /run/secrets at activation time
+    # Legacy bridge while remaining consumers move to OpenBao.
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -114,12 +113,12 @@
       sops-nix,
       nix-homebrew,
       dotgithub,
-      ai-llm-prompts,
       ...
     }:
     let
       userConfig = import ./lib/user-config.nix;
       hosts = import ./lib/hosts.nix;
+      hostProfiles = import ./lib/host-profiles.nix { inherit lib; };
       hmDefaults = import ./lib/home-manager-defaults.nix;
       inherit (nixpkgs) lib;
 
@@ -145,27 +144,28 @@
         label: host:
         assert _stateVersionCheck;
         let
-          # Normalize the host class ONCE: consumers read hostConfig.class /
-          # hostConfig.isServer instead of each re-deriving the
-          # `class or "workstation"` default (previously copy-pasted across
-          # every class-gated module). The fallback keeps a host that omits
-          # `class` on the safe laptop profile rather than throwing.
-          hostConfig = host // rec {
-            class = host.class or "workstation";
-            isServer = class == "server";
-          };
+          # Normalize and inject the host capability profile once.
+          class = host.class or "workstation";
+          hostProfile =
+            if builtins.hasAttr class hostProfiles then
+              hostProfiles.${class}
+            else
+              builtins.throw "Unknown host profile: ${class}";
+          hostConfig = lib.recursiveUpdate hostProfile (
+            host
+            // {
+              inherit class;
+              isServer = class == "server";
+            }
+          );
         in
         darwin.lib.darwinSystem {
           # nix-darwin is Darwin-only and every host is Apple Silicon, so the
           # registry omits `system`; default it here (overridable for an Intel host).
           system = host.system or "aarch64-darwin";
-          # nix-ai: homebrew module pulls `lib.brewFormulae` (per-agent brew
-          # formulae, e.g. qwen-code — see nix-ai per-agent-flakes.md).
-          # hostConfig threads the per-host attrset to every darwin module.
-          # nix-homebrew: consumed by modules/darwin/homebrew.nix.
+          # nix-ai maps the default-off capabilities to Homebrew packages.
           specialArgs = {
             inherit
-              ai-llm-prompts
               nix-ai
               hostConfig
               nix-homebrew
@@ -184,7 +184,7 @@
             # Determinate Nix: official module for nix.conf, GC, and determinate-nixd config
             determinate.darwinModules.default
 
-            # sops-nix: decrypts age-encrypted secrets to /run/secrets at activation
+            # Legacy SOPS bridge while remaining consumers move to OpenBao.
             sops-nix.darwinModules.sops
 
             # Python package overlay from nix-home (replaces local overlays/python-packages.nix)

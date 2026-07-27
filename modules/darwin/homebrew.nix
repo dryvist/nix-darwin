@@ -9,35 +9,25 @@
 }:
 
 let
-  # Server hosts install only serverBrews; activation removes undeclared packages.
-  inherit (hostConfig) isServer;
+  inherit (hostConfig) homebrew;
 
-  # Server-only Homebrew packages.
-  serverBrews = [
+  # Packages needed by every host.
+  baseBrews = [
     # Apple container runtime for the GitHub Actions runner VM.
     "container"
   ];
 
-  # Formulae exported by nix-ai modules that require Homebrew.
-  agentBrewFormulae = nix-ai.lib.brewFormulae or [ ];
-
-  # AI-tool taps and casks exported by nix-ai.
-  agentHomebrewTaps = nix-ai.lib.homebrewTaps or [ ];
-  agentHomebrewCasks = nix-ai.lib.homebrewCasks or [ ];
+  # AI package identities and package types come from nix-ai. This module only
+  # passes the host's single default-off capability set.
+  aiHomebrew = nix-ai.lib.homebrewFor homebrew.ai;
 
   workstationBrews = [
     # Mac App Store CLI for homebrew.masApps.
     "mas"
-    # Apple container runtime.
-    "container"
 
-    # AI agent tools available only through Homebrew.
-    "block-goose-cli"
     # Apple Silicon speech recognition.
     "whisperkit-cli"
-  ]
-  # Avoid duplicate formula declarations.
-  ++ lib.unique agentBrewFormulae;
+  ];
 
   workstationCasks = [
     # Casks install stable /Applications copies, preserving macOS TCC grants.
@@ -64,29 +54,6 @@ let
     # GitHub and Linear menu-bar notifications.
     {
       name = "neat";
-      greedy = true;
-    }
-
-    # --- Anthropic ---
-    {
-      name = "claude";
-      greedy = true;
-    } # Claude desktop app
-
-    # --- OpenAI ---
-    # ChatGPT desktop app.
-    {
-      name = "chatgpt";
-      greedy = true;
-    }
-    # Codex desktop app for ChatGPT mobile remote access; separate from the CLI.
-    {
-      name = "codex-app";
-      greedy = true;
-    }
-    # Codex CLI.
-    {
-      name = "codex";
       greedy = true;
     }
 
@@ -133,8 +100,7 @@ let
       name = "openwebstart";
       greedy = true;
     }
-  ]
-  ++ agentHomebrewCasks;
+  ];
 
   # Mac App Store apps; requires a signed-in App Store account.
   workstationMasApps = {
@@ -155,15 +121,16 @@ in
     onActivation = {
       # Avoid Homebrew index downloads during rebuilds.
       autoUpdate = false;
-      # Server hosts remove undeclared packages; workstations keep them.
-      cleanup = if isServer then "zap" else "none";
+      inherit (homebrew) cleanup;
       # Do not upgrade Homebrew packages during rebuilds.
       upgrade = false;
     };
-    # AI-tool taps from nix-ai.
-    taps = lib.optionals (!isServer) agentHomebrewTaps;
-    brews = if isServer then serverBrews else workstationBrews;
-    casks = lib.optionals (!isServer) workstationCasks;
-    masApps = if isServer then { } else workstationMasApps;
+    # AI-tool taps, formulae, and casks come from nix-ai through the injected
+    # profile. Non-AI workstation packages remain local to nix-darwin.
+    inherit (aiHomebrew) taps;
+    brews =
+      baseBrews ++ aiHomebrew.brews ++ lib.optionals homebrew.enableWorkstationApps workstationBrews;
+    casks = aiHomebrew.casks ++ lib.optionals homebrew.enableWorkstationApps workstationCasks;
+    masApps = lib.optionalAttrs homebrew.enableWorkstationApps workstationMasApps;
   };
 }

@@ -151,6 +151,11 @@ in
     # nix-ai/modules/claude-config.nix in dryvist/nix-ai#853 — Claude config
     # doesn't belong in nix-darwin (host-specific opinion lives in nix-ai).
 
+    # The canonical AI MCP registry renders the same enabled server set for
+    # Claude, Codex, and the other local clients on every host. Vikunja's
+    # credentials remain injected by the shared Doppler wrapper.
+    aiMcp.servers.vikunja.disabled = lib.mkForce false;
+
     # cecli (nix-ai's Aider fork) is disabled — unused, and its
     # tree-sitter-language-pack<=0.13.0 pin fails to build on nixpkgs 26.05
     # (which ships 1.4.1). mkForce overrides nix-ai's unconditional enable

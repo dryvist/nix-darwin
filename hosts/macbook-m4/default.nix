@@ -73,15 +73,6 @@ in
     # This host only installs the provider; it holds no GitHub credential.
     openbao-github-creds.enable = true;
 
-    # --- Reboot-continuity auto-resume ---
-    # Login-time LaunchAgent that resumes an armed Claude Code mission in tmux,
-    # so a planned reboot (e.g. clearing leaked RDMA Protection Domains during
-    # cluster work) doesn't lose the in-flight session. No-op unless armed at
-    # runtime. See modules/darwin/apps/claude-continuity.nix.
-    claude-continuity = {
-      enable = true;
-      user = userConfig.user.name;
-    };
   };
 
   # ==========================================================================
