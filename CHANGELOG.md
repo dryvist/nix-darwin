@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.16.0](https://github.com/dryvist/nix-darwin/compare/v2.15.1...v2.16.0) (2026-07-27)
+
+
+### Features
+
+* **mac-studio:** serve Qwen3.6-35B-A3B standalone at concurrency 1 ([#1907](https://github.com/dryvist/nix-darwin/issues/1907)) ([a83144f](https://github.com/dryvist/nix-darwin/commit/a83144fbc096f93812385f3fd984edb78f5d8b9e))
+* **mlx-cluster:** give the cluster executables an identity that survives a rebuild ([#1890](https://github.com/dryvist/nix-darwin/issues/1890)) ([f7b0ab0](https://github.com/dryvist/nix-darwin/commit/f7b0ab0324f37df633d6a129de05d0b9230fa7c2))
+
+
+### Bug Fixes
+
+* **mac-studio:** derive the serving concurrency from one number, and scrub a private term ([#1891](https://github.com/dryvist/nix-darwin/issues/1891)) ([7dd93e9](https://github.com/dryvist/nix-darwin/commit/7dd93e9a6c72b5bf24353b160f0709a71f72a263))
+* **macbook:** drop the last orphan concurrency literal ([#1892](https://github.com/dryvist/nix-darwin/issues/1892)) ([46f8540](https://github.com/dryvist/nix-darwin/commit/46f8540290c464f3d69a96dc30f013a6a7e9b7e8))
+* **mlx-cluster:** drop hardened runtime from binary signing ([#1894](https://github.com/dryvist/nix-darwin/issues/1894)) ([0fad33c](https://github.com/dryvist/nix-darwin/commit/0fad33c0c0d9ca9ece10f838d0b18c0298e48ea8))
+* **mlx-cluster:** narrow the rank-python signing glob to one version ([#1900](https://github.com/dryvist/nix-darwin/issues/1900)) ([a03c119](https://github.com/dryvist/nix-darwin/commit/a03c1199cdfa84ed8394554f8d57194b29237607))
+* **openbao-run:** parameterize KV mount for per-secret override ([#1902](https://github.com/dryvist/nix-darwin/issues/1902)) ([d61cdb6](https://github.com/dryvist/nix-darwin/commit/d61cdb66a9309fb3917cf50c0e66d07a8bf976fe))
+* **orbstack:** stop the container symlink wedging home-manager activation ([#1888](https://github.com/dryvist/nix-darwin/issues/1888)) ([52b4843](https://github.com/dryvist/nix-darwin/commit/52b4843cdcd6b2f57212ed0984303a9199314acd))
+
 ## [2.15.1](https://github.com/dryvist/nix-darwin/compare/v2.15.0...v2.15.1) (2026-07-25)
 
 
