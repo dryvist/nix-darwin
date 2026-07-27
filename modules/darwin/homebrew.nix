@@ -17,24 +17,17 @@ let
     "container"
   ];
 
-  # Formulae exported by nix-ai modules that require Homebrew.
-  agentBrewFormulae = nix-ai.lib.brewFormulae or [ ];
-
-  # AI packages come from nix-ai's one capability-to-package mapping.
-  agentHomebrewTaps = nix-ai.lib.homebrewTaps or [ ];
-  agentHomebrewCasks = nix-ai.lib.homebrewCasksFor homebrew.ai;
+  # AI package identities and package types come from nix-ai. This module only
+  # passes the host's single default-off capability set.
+  aiHomebrew = nix-ai.lib.homebrewFor homebrew.ai;
 
   workstationBrews = [
     # Mac App Store CLI for homebrew.masApps.
     "mas"
 
-    # AI agent tools available only through Homebrew.
-    "block-goose-cli"
     # Apple Silicon speech recognition.
     "whisperkit-cli"
-  ]
-  # Avoid duplicate formula declarations.
-  ++ lib.unique agentBrewFormulae;
+  ];
 
   workstationCasks = [
     # Casks install stable /Applications copies, preserving macOS TCC grants.
@@ -64,12 +57,6 @@ let
       greedy = true;
     }
 
-    # --- OpenAI ---
-    # ChatGPT desktop app.
-    {
-      name = "chatgpt";
-      greedy = true;
-    }
     # --- Local Inference ---
     # Local LLM inference UI and OpenAI-compatible API server.
     {
@@ -138,10 +125,12 @@ in
       # Do not upgrade Homebrew packages during rebuilds.
       upgrade = false;
     };
-    # AI-tool taps and casks come from nix-ai through the injected profile.
-    taps = agentHomebrewTaps;
-    brews = baseBrews ++ lib.optionals homebrew.enableWorkstationApps workstationBrews;
-    casks = agentHomebrewCasks ++ lib.optionals homebrew.enableWorkstationApps workstationCasks;
+    # AI-tool taps, formulae, and casks come from nix-ai through the injected
+    # profile. Non-AI workstation packages remain local to nix-darwin.
+    inherit (aiHomebrew) taps;
+    brews =
+      baseBrews ++ aiHomebrew.brews ++ lib.optionals homebrew.enableWorkstationApps workstationBrews;
+    casks = aiHomebrew.casks ++ lib.optionals homebrew.enableWorkstationApps workstationCasks;
     masApps = lib.optionalAttrs homebrew.enableWorkstationApps workstationMasApps;
   };
 }

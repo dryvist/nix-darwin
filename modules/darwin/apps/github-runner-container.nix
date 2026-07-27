@@ -136,8 +136,8 @@ in
       description = ''
         User-readable KEY=value env file containing ACCESS_TOKEN (fine-grained
         PAT with org self-hosted-runners read/write only), consumed via
-        `container run --env-file`. Use the sops-nix rendered template:
-        config.sops.templates."github-runner.env".path
+        `container run --env-file`. The current SOPS-rendered file is a
+        migration bridge; OpenBao is the required end state.
       '';
       example = "/run/secrets/rendered/github-runner.env";
     };

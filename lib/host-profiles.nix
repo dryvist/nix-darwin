@@ -1,33 +1,53 @@
-# Host-class capability profiles injected into every darwin and home-manager
-# module as hostConfig. Keep host policy here; modules consume capabilities.
+# Host capabilities injected into every darwin and home-manager module as
+# hostConfig. Every capability defaults off; host classes opt in here.
+{ lib }:
+
 let
-  server = {
+  default = {
     homebrew = {
       cleanup = "zap";
       enableWorkstationApps = false;
       ai = {
-        claudeCode = true;
-        codex = true;
+        antigravityCli = false;
+        antigravityDesktop = false;
+        antigravityIde = false;
+        chatgptDesktop = false;
+        claudeCode = false;
         claudeDesktop = false;
-        codexApp = false;
-        antigravity = false;
+        codex = false;
+        codexDesktop = false;
+        goose = false;
+        qwenCode = false;
+      };
+    };
+  };
+
+  # Headless hosts still receive every shared AI CLI.
+  server = lib.recursiveUpdate default {
+    homebrew.ai = {
+      antigravityCli = true;
+      claudeCode = true;
+      codex = true;
+      goose = true;
+      qwenCode = true;
+    };
+  };
+
+  # Workstations add graphical applications to the shared CLI baseline.
+  workstation = lib.recursiveUpdate server {
+    homebrew = {
+      cleanup = "none";
+      enableWorkstationApps = true;
+      ai = {
+        antigravityDesktop = true;
+        antigravityIde = true;
+        chatgptDesktop = true;
+        claudeDesktop = true;
+        codexDesktop = true;
       };
     };
   };
 in
 {
-  default = server;
-  inherit server;
-
-  workstation = server // {
-    homebrew = server.homebrew // {
-      cleanup = "none";
-      enableWorkstationApps = true;
-      ai = server.homebrew.ai // {
-        claudeDesktop = true;
-        codexApp = true;
-        antigravity = true;
-      };
-    };
-  };
+  inherit default server workstation;
 }

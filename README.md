@@ -111,20 +111,21 @@ Other foundational pieces:
 | **Determinate Nix** | Manages Nix itself -- daemon, updates, core config |
 | **nix-darwin** | macOS packages, system settings, Homebrew integration |
 | **home-manager** | Activation recovery, config symlinks, and Raycast scripts |
-| **sops-nix** | Decrypts age-encrypted secrets to `/run/secrets/` for system services |
+| **OpenBao** | General runtime secret store and injection path |
+| **sops-nix** | Legacy bridge for the remaining repo-local encrypted values |
 
 **Key Rule**: Use nixpkgs for everything. Homebrew is fallback only.
 
 ## Secrets Management
 
-System-level secrets (used by LaunchDaemons and activation scripts) are managed via
-**[sops-nix](https://github.com/Mic92/sops-nix)**. Encrypted YAML files live in `secrets/`
-and are safe to commit. The age private key (`~/.config/sops/age/keys.txt`) is generated
-once per machine and never committed.
+**OpenBao is the general replacement for SOPS.** Shared homelab values belong
+there. SaaS/external credentials must use OpenBao or their designated runtime
+credential provider, never SOPS.
 
-**Doppler** is used for developer credentials accessed in the user session (Terraform state,
-API tokens, etc.). Doppler CLI requires Keychain and cannot be called from activation scripts
-(which run as root). sops-nix handles that boundary.
+**[sops-nix](https://github.com/Mic92/sops-nix)** is being retired. Its only
+permitted end state is trivial sensitive data owned exclusively by this
+repository and never consumed elsewhere. The remaining GitHub runner and
+Hugging Face entries are migration debt, not examples to copy.
 
 ## Documentation
 

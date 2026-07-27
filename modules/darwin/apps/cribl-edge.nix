@@ -8,7 +8,7 @@
 # Two management modes (mode option):
 #
 #   managed    — Fleet enrollment at first start via `cribl mode-managed-edge`
-#                using credentials from the sops-rendered secrets file; Cribl
+#                using credentials from the configured secrets file; Cribl
 #                Cloud owns runtime configuration after enrollment.
 #                FLEET POLICY: Cribl Cloud fleets are reserved for Linux
 #                machines (VMs/containers/servers). Do not enroll macOS hosts.
@@ -22,10 +22,9 @@
 #                stale fleet enrollment state is retired at startup. See
 #                docs/CRIBL-GITOPS.md.
 #
-# Secrets are provided via sops-nix (modules/darwin/sops.nix), which decrypts
-# age-encrypted credentials to a root-only (0400) KEY=value file at activation
-# time. The startScript parses this file line-by-line — no `source`, no shell
-# eval — and only exports recognized CRIBL_* keys. (Managed mode only.)
+# Managed mode accepts a root-only (0400) KEY=value file from the caller's
+# secret provider. The startScript parses it line-by-line — no `source`, no
+# shell eval — and only exports recognized CRIBL_* keys.
 #
 # Service runs as root (temporary — revert serviceUser/serviceGroup to cribl:cribl when ready).
 
@@ -163,12 +162,12 @@ in
         type = lib.types.nullOr lib.types.str;
         default = null;
         description = ''
-          Path to a root-readable KEY=value file containing CRIBL_ORG_ID,
-          CRIBL_WORKSPACE_ID, and CRIBL_TOKEN. Use the sops-nix rendered
-          template: config.sops.templates."cribl-edge.env".path
-          Required when mode = "managed"; unused in standalone mode.
+          Path to a root-readable KEY=value file containing
+          CRIBL_DIST_MASTER_URL or the legacy CRIBL_ORG_ID,
+          CRIBL_WORKSPACE_ID, and CRIBL_TOKEN fields. Required when mode =
+          "managed"; unused in standalone mode.
         '';
-        example = "/run/secrets/rendered/cribl-edge.env";
+        example = "/run/credentials/cribl-edge.env";
       };
 
       group = lib.mkOption {

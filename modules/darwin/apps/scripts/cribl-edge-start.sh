@@ -2,8 +2,8 @@
 # Cribl Edge startup script.
 #
 # Arguments (set by the Nix wrapper in cribl-edge.nix):
-#   $1 = path to sops-rendered KEY=value secrets file (root-only 0400;
-#        /dev/null in standalone mode)
+#   $1 = path to a KEY=value secrets file (root-only 0400; /dev/null in
+#        standalone mode)
 #   $2 = CRIBL_VOLUME_DIR (mutable state / data dir)
 #   $3 = CRIBL_HOME (read-only path into the Nix store package)
 #   $4 = Cribl fleet group name (default; overridden by the URL's `?group=` if present)

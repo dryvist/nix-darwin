@@ -157,7 +157,8 @@ Source: `modules/darwin/homebrew.nix`
 | Package | Description |
 | --- | --- |
 | container | Apple container CLI/runtime for Linux containers on Apple Silicon |
-| block-goose-cli | Block's Goose AI agent |
+| block-goose-cli | Block's Goose AI agent (shared CLI capability from nix-ai) |
+| qwen-code | Alibaba Qwen Code agent (shared CLI capability from nix-ai) |
 | whisperkit-cli | Swift native on-device speech recognition (Apple Silicon) |
 
 ### Casks
@@ -175,8 +176,9 @@ All casks use `greedy = true` so that `brew upgrade --greedy` always installs th
 | chatgpt | yes | OpenAI ChatGPT desktop app (moved from nixpkgs — version lag + no self-update) |
 | codex-app | yes | OpenAI Codex desktop app (workstation capability; separate from the CLI) |
 | codex | yes | OpenAI Codex CLI (shared CLI cask on every host) |
-| antigravity | yes | Google AI-powered agent orchestrator (workstation capability) |
-| antigravity-ide | yes | Google AI-powered IDE environment (workstation capability) |
+| antigravity-cli | yes | Google Antigravity CLI (`agy`; shared CLI cask on every host) |
+| antigravity | yes | Google Antigravity 2.0 standalone agent command center (workstation capability) |
+| antigravity-ide | yes | Google Antigravity IDE (workstation capability) |
 | lm-studio | yes | Local LLM inference UI + OpenAI-compatible API server |
 | postman | yes | API development environment (moved from nixpkgs — version lag caused schema mismatch) |
 | orbstack | yes | Container/Linux VM runtime — cask for TCC permission stability |
