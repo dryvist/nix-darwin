@@ -9,11 +9,10 @@
 }:
 
 let
-  # Server hosts install only serverBrews; activation removes undeclared packages.
-  inherit (hostConfig) isServer;
+  inherit (hostConfig) homebrew;
 
-  # Server-only Homebrew packages.
-  serverBrews = [
+  # Packages needed by every host.
+  baseBrews = [
     # Apple container runtime for the GitHub Actions runner VM.
     "container"
   ];
@@ -21,15 +20,13 @@ let
   # Formulae exported by nix-ai modules that require Homebrew.
   agentBrewFormulae = nix-ai.lib.brewFormulae or [ ];
 
-  # AI-tool taps and casks exported by nix-ai.
+  # AI packages come from nix-ai's one capability-to-package mapping.
   agentHomebrewTaps = nix-ai.lib.homebrewTaps or [ ];
-  agentHomebrewCasks = nix-ai.lib.homebrewCasks or [ ];
+  agentHomebrewCasks = nix-ai.lib.homebrewCasksFor homebrew.ai;
 
   workstationBrews = [
     # Mac App Store CLI for homebrew.masApps.
     "mas"
-    # Apple container runtime.
-    "container"
 
     # AI agent tools available only through Homebrew.
     "block-goose-cli"
@@ -67,29 +64,12 @@ let
       greedy = true;
     }
 
-    # --- Anthropic ---
-    {
-      name = "claude";
-      greedy = true;
-    } # Claude desktop app
-
     # --- OpenAI ---
     # ChatGPT desktop app.
     {
       name = "chatgpt";
       greedy = true;
     }
-    # Codex desktop app for ChatGPT mobile remote access; separate from the CLI.
-    {
-      name = "codex-app";
-      greedy = true;
-    }
-    # Codex CLI.
-    {
-      name = "codex";
-      greedy = true;
-    }
-
     # --- Local Inference ---
     # Local LLM inference UI and OpenAI-compatible API server.
     {
@@ -133,8 +113,7 @@ let
       name = "openwebstart";
       greedy = true;
     }
-  ]
-  ++ agentHomebrewCasks;
+  ];
 
   # Mac App Store apps; requires a signed-in App Store account.
   workstationMasApps = {
@@ -155,15 +134,14 @@ in
     onActivation = {
       # Avoid Homebrew index downloads during rebuilds.
       autoUpdate = false;
-      # Server hosts remove undeclared packages; workstations keep them.
-      cleanup = if isServer then "zap" else "none";
+      inherit (homebrew) cleanup;
       # Do not upgrade Homebrew packages during rebuilds.
       upgrade = false;
     };
-    # AI-tool taps from nix-ai.
-    taps = lib.optionals (!isServer) agentHomebrewTaps;
-    brews = if isServer then serverBrews else workstationBrews;
-    casks = lib.optionals (!isServer) workstationCasks;
-    masApps = if isServer then { } else workstationMasApps;
+    # AI-tool taps and casks come from nix-ai through the injected profile.
+    taps = agentHomebrewTaps;
+    brews = baseBrews ++ lib.optionals homebrew.enableWorkstationApps workstationBrews;
+    casks = agentHomebrewCasks ++ lib.optionals homebrew.enableWorkstationApps workstationCasks;
+    masApps = lib.optionalAttrs homebrew.enableWorkstationApps workstationMasApps;
   };
 }

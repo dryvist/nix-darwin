@@ -16,8 +16,8 @@
 # fires when the machine has rebooted since arming, so darwin-rebuild's
 # apply-time RunAtLoad fire is safe while the original session still runs.
 #
-# Auth follows the claude-scheduled-jobs model: the claude CLI's own login
-# session (macOS Keychain), no token on disk. The login keychain is unlocked
+# Auth uses the claude CLI's own login session (macOS Keychain), no token on
+# disk. The login keychain is unlocked
 # by the login itself, so a RunAtLoad agent can authenticate.
 
 {
@@ -32,8 +32,8 @@ let
   homeDir = "/Users/${cfg.user}";
   logDir = "${homeDir}/Library/Logs/claude-continuity";
 
-  # Same resolution order as claude-scheduled-jobs: vendor claude install
-  # first, then the per-user nix profile (tmux), system profile, base system.
+  # Resolve the vendor claude install first, then the per-user nix profile
+  # (tmux), system profile, and base system.
   agentPath = lib.concatStringsSep ":" [
     "${homeDir}/.local/bin"
     "/etc/profiles/per-user/${cfg.user}/bin"

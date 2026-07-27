@@ -15,7 +15,6 @@ _:
     ./apple-container-runtime.nix
     ./auto-update-prevention.nix
     ./claude-continuity.nix
-    ./claude-scheduled-jobs.nix
     ./cribl-edge.nix
     ./cribl-stream.nix
     ./git-apfs-volume.nix

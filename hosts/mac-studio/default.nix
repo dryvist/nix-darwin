@@ -10,7 +10,6 @@
 # tuning, the llm-large serving gate, and the ephemeral GitHub Actions runner.
 
 {
-  ai-llm-prompts,
   config,
   hostConfig,
   lib,
@@ -29,9 +28,6 @@ let
   };
 
   userConfig = import ../../lib/user-config.nix;
-  promptBody =
-    path:
-    lib.concatStringsSep "\n---\n" (lib.drop 1 (lib.splitString "\n---\n" (builtins.readFile path)));
 in
 {
   imports = [ ../common/default.nix ];
@@ -145,30 +141,6 @@ in
       secretsFile = config.sops.templates."github-runner.env".path;
     };
 
-    # ========================================================================
-    # Nix-Managed Scheduled Claude Jobs (headless, launchd user agents)
-    # ========================================================================
-    # Unattended local `claude -p` runs on the Studio's own clones. No token
-    # anywhere: the OAuth token must never live on disk (a file the agent can
-    # read is a file every AI process can read). Auth is the claude CLI's own
-    # login session — run `claude /login` once interactively on this host; the
-    # CLI keeps its session in its own macOS Keychain entry. Jobs fail safe
-    # (auth error in the job log) until that login exists, or if a rebuild
-    # ever breaks the Keychain ACL (see the module header).
-    claude-scheduled-jobs = {
-      enable = true;
-      user = userConfig.user.name;
-      jobs.studio-hygiene = {
-        schedule = {
-          hour = 3;
-          minute = 30;
-        };
-        prompt = lib.replaceStrings [ "\${hostConfig.hostName}" ] [ hostConfig.hostName ] (
-          promptBody "${ai-llm-prompts}/developer-tools/nix-darwin-studio-hygiene.md"
-        );
-      };
-    };
-
     # --- OpenBao-minted AWS STS credential_process ---
     # Installs the `openbao-aws-creds` wrapper for the tf-proxmox AWS profile.
     # Secret-zero (VAULT_ADDR + the terraform AppRole) is supplied ambiently by
@@ -182,13 +154,6 @@ in
     # host needs for the OpenBao GitHub path.
     openbao-github-creds.enable = true;
 
-    # --- Reboot-continuity auto-resume ---
-    # Same login-time armed-mission resume as the laptop; no-op unless armed
-    # at runtime. See modules/darwin/apps/claude-continuity.nix.
-    claude-continuity = {
-      enable = true;
-      user = userConfig.user.name;
-    };
   };
 
   # nix-prebuild: warm the darwin closure on a schedule so the next
@@ -219,8 +184,7 @@ in
     };
   };
 
-  # nix-prebuild writes to its own log dir; create it with user ownership so the
-  # user agent can write (claude-scheduled-jobs creates its own dir separately).
+  # nix-prebuild writes to its own log dir; create it with user ownership.
   #
   # The serving gate runs last: a rebuild bounces dev.mlx-model-server, and this
   # host can come back with an orphaned worker or a wedged scheduler, neither of

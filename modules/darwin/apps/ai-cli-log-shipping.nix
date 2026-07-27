@@ -3,8 +3,8 @@
 # One log home per AI coding CLI under ~/Library/Logs/<cli>/, rotated by the
 # system newsyslog run — the local half of the per-CLI Cribl Edge shipping
 # pipeline (hosts/common/cribl.nix tails each directory into its own tcpjson
-# output/service port). Model: claude-scheduled-jobs.nix (launchd logs +
-# /etc/newsyslog.d rotation) and nix-ai's fabric launchd module.
+# output/service port). Uses launchd logs + /etc/newsyslog.d rotation and
+# nix-ai's fabric launchd module as the operational model.
 #
 # Capture mechanism per CLI — deliberately conservative. These are
 # INTERACTIVE tools (TUIs and a GUI), not services: wrapping them in a

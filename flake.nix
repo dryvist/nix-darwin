@@ -114,12 +114,12 @@
       sops-nix,
       nix-homebrew,
       dotgithub,
-      ai-llm-prompts,
       ...
     }:
     let
       userConfig = import ./lib/user-config.nix;
       hosts = import ./lib/hosts.nix;
+      hostProfiles = import ./lib/host-profiles.nix;
       hmDefaults = import ./lib/home-manager-defaults.nix;
       inherit (nixpkgs) lib;
 
@@ -145,15 +145,22 @@
         label: host:
         assert _stateVersionCheck;
         let
-          # Normalize the host class ONCE: consumers read hostConfig.class /
-          # hostConfig.isServer instead of each re-deriving the
-          # `class or "workstation"` default (previously copy-pasted across
-          # every class-gated module). The fallback keeps a host that omits
-          # `class` on the safe laptop profile rather than throwing.
-          hostConfig = host // rec {
-            class = host.class or "workstation";
-            isServer = class == "server";
-          };
+          # Normalize the host class ONCE, then inject its complete capability
+          # profile. Modules consume hostConfig capabilities rather than
+          # re-deriving workstation/server policy or naming individual hosts.
+          class = host.class or "workstation";
+          hostProfile =
+            if builtins.hasAttr class hostProfiles then
+              lib.recursiveUpdate hostProfiles.default hostProfiles.${class}
+            else
+              builtins.throw "Unknown host profile: ${class}";
+          hostConfig = lib.recursiveUpdate hostProfile (
+            host
+            // {
+              inherit class;
+              isServer = class == "server";
+            }
+          );
         in
         darwin.lib.darwinSystem {
           # nix-darwin is Darwin-only and every host is Apple Silicon, so the
@@ -165,7 +172,6 @@
           # nix-homebrew: consumed by modules/darwin/homebrew.nix.
           specialArgs = {
             inherit
-              ai-llm-prompts
               nix-ai
               hostConfig
               nix-homebrew

@@ -170,14 +170,13 @@ All casks use `greedy = true` so that `brew upgrade --greedy` always installs th
 | bitwarden | yes | Password manager desktop app (moved from nixpkgs — EOL electron_39) |
 | wispr-flow | yes | AI-powered voice dictation |
 | voiceink | yes | Voice-to-text app (local whisper) |
-| claude | yes | Anthropic Claude desktop app (not in nixpkgs for Darwin) |
-| claude-code | yes | Anthropic Claude Code CLI |
+| claude | yes | Anthropic Claude desktop app (workstation capability) |
+| claude-code@latest | yes | Anthropic Claude Code CLI (shared CLI cask on every host) |
 | chatgpt | yes | OpenAI ChatGPT desktop app (moved from nixpkgs — version lag + no self-update) |
-| codex-app | yes | OpenAI Codex desktop app (ChatGPT mobile remote access; separate from the CLI) |
-| codex | yes | OpenAI Codex CLI (moved from nixpkgs; migrated from homebrew/core to cask) |
-| antigravity | yes | Google AI-powered agent orchestrator (Gemini 3) |
-| antigravity-cli | yes | Google terminal interface for agents (agy command) |
-| antigravity-ide | yes | Google AI-powered IDE environment |
+| codex-app | yes | OpenAI Codex desktop app (workstation capability; separate from the CLI) |
+| codex | yes | OpenAI Codex CLI (shared CLI cask on every host) |
+| antigravity | yes | Google AI-powered agent orchestrator (workstation capability) |
+| antigravity-ide | yes | Google AI-powered IDE environment (workstation capability) |
 | lm-studio | yes | Local LLM inference UI + OpenAI-compatible API server |
 | postman | yes | API development environment (moved from nixpkgs — version lag caused schema mismatch) |
 | orbstack | yes | Container/Linux VM runtime — cask for TCC permission stability |
@@ -240,14 +239,15 @@ at Friday 00:00 UTC there.
 
 ---
 
-## Claude MCP Servers (Host-Specific)
+## AI MCP Servers (Shared)
 
-Source: `hosts/macbook-m4/home.nix`
+Source: `hosts/common/home.nix`
 
-Custom MCP server entries added to `programs.claude.mcpServers` at the host level.
+The canonical `programs.aiMcp` registry renders the same MCP server set for
+Claude, Codex, and the other local AI clients on every host.
 
 | Server | Command | Description |
 | --- | --- | --- |
-| splunk | `doppler-mcp splunk-mcp-connect` | Splunk REST API via mcp-remote, secrets injected by Doppler |
+| vikunja | `doppler-mcp bunx @democratize-technology/vikunja-mcp@<pinned>` | Vikunja task API, with credentials injected by Doppler |
 
 ---

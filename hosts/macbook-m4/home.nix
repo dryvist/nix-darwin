@@ -5,7 +5,6 @@
 # This file adds only the host-unique bits — the TCC-sensitive GUI app list.
 
 {
-  lib,
   pkgs,
   userConfig,
   ...
@@ -23,13 +22,6 @@
       enable = true;
       endpoint = "https://llm.${userConfig.baseDomain}/v1";
     };
-
-    # Vikunja task-management MCP: the nix-ai catalog ships it disabled; this
-    # workstation opts in. Its VIKUNJA_URL + VIKUNJA_API_TOKEN come from the
-    # shared Doppler wrapper. Each MCP client forwards
-    # only the non-secret Doppler selectors; the wrapper injects the service
-    # credentials into the Vikunja child process.
-    aiMcp.servers.vikunja.disabled = lib.mkForce false;
 
     # Recreates the tmux "cc" session at every login — a reboot always kills
     # the tmux server, and Termius' "tmux attach -t cc" startup command needs
