@@ -11,8 +11,8 @@ let
   # It was previously restated: proxy.concurrencyLimit said 1 while a
   # modelConcurrencyLimits entry said a bare 4, so the host admitted 4 while its
   # single "source" claimed 1, and the two could drift silently. Since
-  # 2026-07-27 the per-model override is gone entirely (the resident is a 40B+
-  # single-slot model), so this is now the only concurrency number on the host.
+  # 2026-07-27 the per-model override is gone entirely, so this is now the
+  # only concurrency number on the host.
   serveConcurrency = 1;
 in
 {
@@ -35,20 +35,32 @@ in
     # Verified live: a request naming mlx-community/Qwen3.5-9B-OptiQ-4bit by
     # its own id was answered by the resident entry ("ROUTED").
     #
-    # 2026-07-27: promoted from the Coder-30B to the 80B fleet brain for
-    # standalone (MacBook unplugged, no cluster). Measured on this host
-    # against an isolated worker whose loaded weights were confirmed by
-    # pid -> `ps` (the alias map above makes a request-echoed model name
-    # worthless as evidence):
-    #   Qwen3-Next-80B-A3B-Instruct-4bit  70.5 tok/s decode (70.0/70.6/70.9)
-    #   Qwen3.6-35B-A3B-4bit              83.1 tok/s decode (82.6/83.2/83.5)
-    # Both parse tool calls cleanly (single + parallel multi-tool, finish_reason
-    # tool_calls, no markup leak). The 80B wins on capability at 1.8x the
-    # >40 tok/s floor, and its mandated single-slot posture is what makes
-    # that rate a SUSTAINED per-stream number rather than a quiet-box one:
-    # the Coder-30B admitting 4 concurrent streams measured 12.5 tok/s per
-    # stream and returned 429 to 52% of gate requests over the preceding hour.
-    singleModel = "mlx-community/Qwen3-Next-80B-A3B-Instruct-4bit";
+    # 2026-07-27: promoted from the Coder-30B to the 35B for standalone
+    # (MacBook unplugged, no cluster). Every candidate was measured on THIS
+    # host against a dedicated isolated worker on a scratch port, with the
+    # loaded checkpoint confirmed by lsof -i :PORT -> pid -> `ps -p <pid>`
+    # reading --model. That step is mandatory, not ceremony: the alias map
+    # above routes every other model's physical id onto the resident entry
+    # and the server echoes the requested name back, so a model id in a
+    # request or a response proves nothing about which weights answered.
+    #
+    # Headline metric is CUMULATIVE tok/s — (prompt + completion) / wall —
+    # so prefill gains count. Identical 111-118 token prompt, 300 max_tokens,
+    # 3 timed runs after a discarded warmup, decode-concurrency 1:
+    #
+    #   model                             cumulative  decode  ttft   tools
+    #   Qwen3.6-35B-A3B-4bit                   115.2    84.9  0.12s  PASS
+    #   Qwen3-Next-80B-A3B-Instruct-4bit        97.5    71.5  0.08s  PASS
+    #   GLM-4.7-Flash-4bit                      95.8       -  -      FAIL
+    #   gpt-oss-120b-MXFP4-Q8 (peer-measured)  51-54   40-43  0.23s  FAIL
+    #
+    # The 35B wins on throughput outright while being the smallest of the
+    # four (19.4 GB), which also leaves headroom to raise concurrency later.
+    # GLM-4.7-Flash is disqualified on tool calls, not speed: given two tools
+    # it emits no call at all and stops on `length`. gpt-oss-120b is
+    # disqualified because mlx-lm ships no harmony parser, so tool_calls is
+    # null and raw <|channel|> markup leaks into content.
+    singleModel = "mlx-community/Qwen3.6-35B-A3B-4bit";
 
     # Small always-loadable 9B for trivial local tasks (Gemini-CLI path).
     # singleModel would otherwise demote every non-resident to disabledModels;
@@ -58,16 +70,19 @@ in
     alwaysAvailableModels = [ "mlx-community/Qwen3.5-9B-MLX-4bit" ];
 
     # Validated catalog selections (profiles in nix-ai catalog-data.nix).
-    # Every logical role resolves to the 80B fleet brain — required so it's
-    # the only entry the module's role-coverage assertion needs satisfied in
-    # single-model mode. The Coder-30B and the 27B judge are configured but
-    # carry no roles (disable-not-delete): swap-class, kept in the tree, and
-    # — like every other non-resident entry — demoted to disabledModels by
+    # Every logical role resolves to the 35B — required so it's the only entry
+    # the module's role-coverage assertion needs satisfied in single-model
+    # mode. The Coder-30B, the 80B and the 27B judge are configured but carry
+    # no roles (disable-not-delete): swap-class, kept in the tree, and — like
+    # every other non-resident entry — demoted to disabledModels by
     # singleModel rather than deleted.
     catalog = {
-      # Fleet brain (2026-07-17 agentic bench; >=75B mandate), and since
-      # 2026-07-27 the standalone resident that every role resolves to.
-      qwen3-next-80b-instruct = {
+      # 2026-07-27 standalone bench winner on cumulative throughput, and the
+      # resident that every role resolves to. Thinking is off in its catalog
+      # entry, which matters for Hermes: a thinking variant spends hundreds
+      # of reasoning tokens before it emits a tool call, and Hermes pays that
+      # latency on every single action it takes.
+      qwen36-35b = {
         class = "resident";
         roles = [
           "default"
@@ -80,6 +95,7 @@ in
           "goal-judge"
         ];
       };
+      qwen3-next-80b-instruct.class = "swap";
       qwen3-coder-30b.class = "swap";
       qwen36-27b-mxfp4.class = "swap";
       qwen35-9b-optiq.class = "swap";
@@ -87,7 +103,6 @@ in
       # Gemini-CLI path — on-demand swap tier, idle-unloaded, never evicts a
       # resident. Addressable by its physical id (mlx-community/Qwen3.5-9B-MLX-4bit).
       qwen35-9b-mlx.class = "swap";
-      qwen36-35b.class = "swap";
       qwen36-optiq.class = "swap";
       gpt-oss-120b.class = "swap";
       # Thinking sibling: the deep-analysis escalation tier, on demand.
@@ -96,18 +111,22 @@ in
 
     cacheMemoryMb = 8192;
     prefillBatchSize = 2048;
-    # NO per-model concurrency override. The resident is now a 40B+ model, and
-    # the 40B+ single-slot policy (nix-ai catalog-data.nix, user directive
-    # 2026-07-21) forbids one: it must admit a single in-flight request at both
-    # the proxy and the engine, so it inherits proxy.concurrencyLimit below.
+    # NO per-model concurrency override: the resident inherits
+    # proxy.concurrencyLimit below, so it is served at concurrency 1 — the
+    # exact condition every benchmark above was run under.
     #
     # The 4x override this replaces was written for the Coder-30B and was
-    # actively harmful by 2026-07-27: admitting 4 concurrent streams to one GPU
-    # measured 12.5 tok/s per stream (vs 70.5 serialized on the 80B), drove gate
-    # p90 to 194 s with a 1298 s tail, and still returned 429 to 52% of requests
-    # in the preceding hour. Serializing trades nothing real — mlx_lm.server
-    # serializes decode internally anyway — and converts instant rejection into
-    # a bounded queue.
+    # measured actively harmful on 2026-07-27. Admitting 4 concurrent streams
+    # to one GPU gave 12.5 tok/s per stream, drove gate p90 to 194 s with a
+    # 1298 s tail, returned 429 to 52% of requests over the preceding hour,
+    # and ultimately wedged the worker outright (a router request failed with
+    # 502 after a 40-minute hang). Concurrency buys nothing here to offset
+    # that: mlx_lm.server serializes decode internally regardless, so 4-way
+    # admission only time-slices one GPU and inflates every caller's latency.
+    #
+    # This is current operating guidance while single-stream stability is
+    # being established, not a permanent ceiling — raising it is a one-line
+    # change to serveConcurrency once concurrency-1 is proven solid.
 
     # Server host: no group swap, no global idle eviction (per-class unloads
     # come from the catalog). A blanket TTL would make each resident brain pay
@@ -119,7 +138,7 @@ in
       concurrencyLimit = serveConcurrency;
     };
 
-    # Resident brain warmed at boot: the 80B, the only servable model. The
+    # Resident brain warmed at boot: the 35B, the only servable model. The
     # role name is unchanged because every role now resolves to that entry.
     preload = [ "goal-judge" ];
 
