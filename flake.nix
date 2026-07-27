@@ -88,8 +88,7 @@
     # Updates tracked by deps-update-flake.yml (daily nix flake update) + Renovate
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
 
-    # Legacy sops-nix bridge. OpenBao is the general secret store; this input
-    # remains only for the shrinking repo-local exception set.
+    # Legacy bridge while remaining consumers move to OpenBao.
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -145,9 +144,7 @@
         label: host:
         assert _stateVersionCheck;
         let
-          # Normalize the host class ONCE, then inject its complete capability
-          # profile. Modules consume hostConfig capabilities rather than
-          # re-deriving workstation/server policy or naming individual hosts.
+          # Normalize and inject the host capability profile once.
           class = host.class or "workstation";
           hostProfile =
             if builtins.hasAttr class hostProfiles then
@@ -166,10 +163,7 @@
           # nix-darwin is Darwin-only and every host is Apple Silicon, so the
           # registry omits `system`; default it here (overridable for an Intel host).
           system = host.system or "aarch64-darwin";
-          # nix-ai owns AI Homebrew package identities and maps the injected
-          # default-off host capabilities to formulae and casks.
-          # hostConfig threads the per-host attrset to every darwin module.
-          # nix-homebrew: consumed by modules/darwin/homebrew.nix.
+          # nix-ai maps the default-off capabilities to Homebrew packages.
           specialArgs = {
             inherit
               nix-ai
