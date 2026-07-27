@@ -11,6 +11,7 @@
   osConfig,
   pkgs,
   hostConfig,
+  nix-ai,
   ...
 }:
 let
@@ -24,6 +25,16 @@ let
     runtimeEnv.ORBSTACK_CONTAINER_VOLUME = hostConfig.orbstack.containerVolume or "";
     text = builtins.readFile ./scripts/link-orbstack-container.sh;
   };
+
+  # The CPython minor the MLX cluster rank's `uv run --python <ver>` actually
+  # requests. Read directly from nix-ai's own lib/python.nix (the flake input,
+  # not a re-declared literal) so this can never drift from the value nix-ai's
+  # mlx module uses to build the rank's launch command — that repo owns the
+  # pin, this repo only needs to know it to scope the signing glob below.
+  # Deliberately the MINOR only ("3.14"): the launch command passes exactly
+  # that to uv, and uv — not nix — resolves and owns the installed patch
+  # (3.14.6 today), so the glob still wildcards the patch component.
+  mlxRankPythonVersion = (import "${nix-ai}/lib/python.nix" { inherit pkgs; }).pythonVersion;
 in
 {
   imports = [
@@ -159,14 +170,20 @@ in
     # switching, custom launchers) live in ./zsh-macos.nix — split out for the
     # per-file byte cap. They merge into programs.zsh via the module system.
 
-    # Only meaningful on a host that actually runs cluster ranks. The rank's
-    # interpreter is the process that opens the Thunderbolt sockets, so it is
-    # the one whose Local Network grant has to outlive a rebuild.
+    # Only meaningful on hosts running cluster ranks. Measured live: the
+    # rank's ephemeral uv interpreter resolves via symlink to this exact
+    # path, so signing it in place reaches what actually runs. Glob scoped
+    # to the one CPython minor nix-ai actually requests (mlxRankPythonVersion
+    # above) — `cpython-*`/`python3*` previously matched every cached
+    # version (five, measured) plus every `*-config` script. Keep
+    # "rank-python" unchanged: renaming voids any existing grant. sweepRoots
+    # un-brands whatever the glob no longer matches (see that option's doc).
     mlxClusterSigning = lib.mkIf (hostConfig ? mlx) {
       enable = true;
       signInPlace = {
-        rank-python = "${config.home.homeDirectory}/.local/share/uv/python/cpython-*/bin/python3*";
+        rank-python = "${config.home.homeDirectory}/.local/share/uv/python/cpython-${mlxRankPythonVersion}.*-macos-aarch64-none/bin/python${mlxRankPythonVersion}";
       };
+      sweepRoots = [ "${config.home.homeDirectory}/.local/share/uv/python" ];
     };
   };
 

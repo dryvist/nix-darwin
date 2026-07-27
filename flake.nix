@@ -197,7 +197,12 @@
                 # nix-home modules accept userConfig with sensible defaults.
                 # `hostConfig` threads the per-host attrset to home-manager modules.
                 extraSpecialArgs = {
-                  inherit userConfig dotgithub hostConfig;
+                  inherit
+                    userConfig
+                    dotgithub
+                    hostConfig
+                    nix-ai
+                    ;
                 };
                 users.${userConfig.user.name} = import ./hosts/${label}/home.nix;
 
