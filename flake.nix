@@ -3,7 +3,10 @@
   description = "nix-darwin configuration for M4 Max MacBook Pro";
 
   inputs = {
-    # Using stable nixpkgs-26.05 for reliability
+    # Channel branch = intended major-version pin (26.05, stable). Renovate
+    # CANNOT bump this: it updates an input when its ref changes, and a
+    # channel branch's ref never changes. deps-refresh-nixpkgs.yml refreshes
+    # the lock on a schedule instead.
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
 
     # Consolidated systems input for darwin-only configuration

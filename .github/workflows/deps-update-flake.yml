@@ -5,8 +5,12 @@
 # nix-darwin immediately instead of waiting for Renovate.
 #   CLI: gh workflow run deps-update-flake.yml
 #
-# Third-party inputs (nixpkgs, home-manager, etc.) are handled by Renovate's
-# nix manager — see renovate.json5.
+# Third-party digest-tracked inputs (home-manager, etc.) are handled by
+# Renovate's nix manager — see renovate.json5. nixpkgs is the exception: it's
+# pinned to a moving channel branch, whose ref never changes, so Renovate
+# never bumps it. That lock is refreshed instead by
+# deps-refresh-nixpkgs.yml, on its own schedule (this workflow is
+# workflow_dispatch-only and never runs on a schedule).
 name: Update flake dependencies
 
 on:
