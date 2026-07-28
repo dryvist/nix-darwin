@@ -9,6 +9,13 @@ This repository uses a **complementary dependency update strategy** combining:
 1. **Renovate Bot** (primary) - Automated dependency PRs with grouping and auto-merge
 2. **Custom Workflow** (fallback) - Manual flake updates ONLY when Renovate hasn't acted
 
+**Exception: the `nixpkgs` channel pin.** Renovate's nix manager bumps an
+input when its git ref changes; `nixpkgs.url` here is pinned to a moving
+channel branch (`nixpkgs-26.05-darwin`) whose ref never changes, so Renovate
+never advances it — regardless of what the table below implies. That lock is
+refreshed instead by `.github/workflows/deps-refresh-nixpkgs.yml` on its own
+schedule.
+
 Host-side application is separate: `modules/darwin/auto-upgrade.nix` runs `darwin-rebuild switch`
 directly on a weekly root `launchd` schedule against the latest merged `dryvist/nix-darwin` flake on
 each configured Mac. Server hosts pin UTC so the same Friday 00:00 schedule lands at Friday 00:00 UTC
