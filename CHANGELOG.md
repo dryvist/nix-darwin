@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.18.1](https://github.com/dryvist/nix-darwin/compare/v2.18.0...v2.18.1) (2026-07-29)
+
+
+### Bug Fixes
+
+* **offbox-sync:** expand OFFBOX_ROOT in the destination ([c0699ae](https://github.com/dryvist/nix-darwin/commit/c0699aea67edc4140cf0ef382a2385ac1c2c4d42))
+* **offbox-sync:** expand OFFBOX_ROOT in the destination ([eecce79](https://github.com/dryvist/nix-darwin/commit/eecce79d79c1a7a7ae0ef568696fdae4bc151cff))
+
 ## [2.18.0](https://github.com/dryvist/nix-darwin/compare/v2.17.1...v2.18.0) (2026-07-29)
 
 
