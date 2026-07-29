@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.18.2](https://github.com/dryvist/nix-darwin/compare/v2.18.1...v2.18.2) (2026-07-29)
+
+
+### Bug Fixes
+
+* **offbox-sync:** keep versions via --suffix, not --backup-dir ([1f7118a](https://github.com/dryvist/nix-darwin/commit/1f7118a7769e2e472ad25bab2c6d0e3c070fe4a4))
+* **offbox-sync:** keep versions via --suffix, not --backup-dir ([4d7e25a](https://github.com/dryvist/nix-darwin/commit/4d7e25a917eb3a816c32c69c46e18402ec8c1d1c))
+
 ## [2.18.1](https://github.com/dryvist/nix-darwin/compare/v2.18.0...v2.18.1) (2026-07-29)
 
 
