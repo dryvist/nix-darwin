@@ -19,6 +19,7 @@ _:
     ./cribl-stream.nix
     ./git-apfs-volume.nix
     ./github-runner-container.nix
+    ./offbox-sync.nix
     ./openbao-aws-creds.nix
     ./openbao-github-creds.nix
     ./openbao-run.nix
