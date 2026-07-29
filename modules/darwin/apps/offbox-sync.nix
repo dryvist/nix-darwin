@@ -90,7 +90,8 @@ let
 
   # `--min-age` is applied to every job: a file still being written (an
   # in-flight video chunk, a half-flushed frame) must not be copied mid-write.
-  mkJobArgs = job:
+  mkJobArgs =
+    job:
     lib.concatStringsSep " " (
       [
         "copy"
@@ -113,8 +114,9 @@ let
       ]
       ++ lib.optional job.immutable "--immutable"
       ++ lib.optional (job.maxAge != null) "--max-age ${job.maxAge} --no-traverse"
-      ++ lib.optional (job.backupDir != null)
-        "--backup-dir \":sftp:\${OFFBOX_ROOT}/${job.backupDir}/$(date -u +%Y%m%d)\""
+      ++ lib.optional (
+        job.backupDir != null
+      ) "--backup-dir \":sftp:\${OFFBOX_ROOT}/${job.backupDir}/$(date -u +%Y%m%d)\""
     );
 
   runner = pkgs.writeShellScript "offbox-sync" ''
