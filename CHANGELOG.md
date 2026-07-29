@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.17.1](https://github.com/dryvist/nix-darwin/compare/v2.17.0...v2.17.1) (2026-07-29)
+
+
+### Bug Fixes
+
+* **deps:** pin nix-ai input to main, not its develop default ([#1925](https://github.com/dryvist/nix-darwin/issues/1925)) ([b5c3436](https://github.com/dryvist/nix-darwin/commit/b5c3436af6a3497be70e1aab337a7ba2eed5a0a0))
+
 ## [2.17.0](https://github.com/dryvist/nix-darwin/compare/v2.16.0...v2.17.0) (2026-07-29)
 
 
