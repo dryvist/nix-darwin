@@ -76,13 +76,14 @@ let
           an old file must still replicate.
         '';
       };
-      backupDir = lib.mkOption {
-        type = lib.types.nullOr lib.types.str;
-        default = null;
+      keepVersions = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
         description = ''
-          Remote path under which overwritten versions are preserved, dated per
-          run. Use for mutable trees so an edit cannot destroy the prior
-          remote copy.
+          Preserve superseded remote files by renaming them with a dated
+          suffix instead of overwriting. Use for mutable trees so an edit
+          cannot destroy the prior remote copy. Unnecessary for immutable
+          trees, where a changed file is corruption rather than an update.
         '';
       };
     };
@@ -120,9 +121,13 @@ let
       ]
       ++ lib.optional job.immutable "--immutable"
       ++ lib.optional (job.maxAge != null) "--max-age ${job.maxAge} --no-traverse"
-      ++ lib.optional (
-        job.backupDir != null
-      ) "--backup-dir \":sftp:\${OFFBOX_ROOT}/${job.backupDir}/$(date -u +%Y%m%d)\""
+      # --suffix, not --backup-dir. --backup-dir moves the superseded remote
+      # file into a dated directory, and over SFTP that rename fails with
+      # SSH_FX_FAILURE when the directory does not already exist — rclone does
+      # not create it first, so every run with a changed file errored. --suffix
+      # renames in place, needs no directory, and gives the same guarantee: an
+      # edit never destroys the previous remote copy.
+      ++ lib.optional job.keepVersions "--suffix \".\$(date -u +%Y%m%d)\" --suffix-keep-extension"
     );
 
   runner = pkgs.writeShellScript "offbox-sync" ''
