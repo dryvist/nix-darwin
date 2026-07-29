@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.18.0](https://github.com/dryvist/nix-darwin/compare/v2.17.1...v2.18.0) (2026-07-29)
+
+
+### Features
+
+* **offbox-sync:** one-way replication of local data to an SFTP target ([d1925e1](https://github.com/dryvist/nix-darwin/commit/d1925e1e844cb5e866c293e197b428b12ab37951))
+* **offbox-sync:** one-way replication of local data to an SFTP target ([a80b3a3](https://github.com/dryvist/nix-darwin/commit/a80b3a333f4a1887489783b359daba4b3b9937b6))
+
 ## [2.17.1](https://github.com/dryvist/nix-darwin/compare/v2.17.0...v2.17.1) (2026-07-29)
 
 
