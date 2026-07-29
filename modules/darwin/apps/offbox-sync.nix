@@ -96,7 +96,13 @@ let
       [
         "copy"
         (lib.escapeShellArg job.source)
-        (lib.escapeShellArg ":sftp:\${OFFBOX_ROOT}/${job.dest}")
+        # NOT escapeShellArg: that single-quotes the string, and the shell does
+        # not expand ${...} inside single quotes. The destination reached rclone
+        # as the literal ":sftp:${OFFBOX_ROOT}/data", which fails at connect
+        # time with a confusing "couldn't connect SSH" rather than an obvious
+        # quoting error. Double quotes expand and still protect whitespace;
+        # job.dest is a module option, not user input.
+        "\":sftp:\${OFFBOX_ROOT}/${job.dest}\""
         "--min-age ${cfg.minAge}"
         "--transfers ${toString cfg.transfers}"
         "--checkers ${toString cfg.checkers}"
