@@ -170,6 +170,7 @@ All casks use `greedy = true` so that `brew upgrade --greedy` always installs th
 | obsidian | yes | Knowledge base / note-taking |
 | bitwarden | yes | Password manager desktop app (moved from nixpkgs — EOL electron_39) |
 | wispr-flow | yes | AI-powered voice dictation |
+| superwhisper | yes | Dictation with LLM reformatting |
 | voiceink | yes | Voice-to-text app (local whisper) |
 | claude | yes | Anthropic Claude desktop app (workstation capability) |
 | claude-code@latest | yes | Anthropic Claude Code CLI (shared CLI cask on every host) |

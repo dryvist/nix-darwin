@@ -58,7 +58,6 @@ in
       # AI Assistants
       "/Applications/Claude.app" # Anthropic Claude desktop app (homebrew cask)
       "${homeDir}/Applications/Gemini.app" # Google Gemini AI assistant
-      "/Applications/Antigravity.app" # Google Antigravity 2.0 agent command center
       "/Applications/Antigravity IDE.app" # Google Antigravity IDE
 
       # Browsers
