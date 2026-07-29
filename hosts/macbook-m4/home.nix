@@ -43,7 +43,23 @@
   # Workstation-only: a headless host drops these.
   home.packages = with pkgs; [
     # Terminal & Development
-    ghostty-bin # Terminal emulator - needs Full Disk Access for darwin-rebuild
+    # ghostty: moved to homebrew.nix cask (greedy). It is the ONE app whose TCC
+    # grants block work when they lapse — it is the terminal every agent session
+    # and every darwin-rebuild runs inside, so losing Full Disk Access there
+    # stops the machine being manageable until a human re-grants it by hand.
+    #
+    # copyApps was not enough. It gives a stable PATH, and Ghostty is properly
+    # Developer ID signed (Mitchell Hashimoto, 24VZTF6M5V, hardened runtime), so
+    # neither of the usual nix causes applies. But activation REPLACES the bundle
+    # wholesale — verified 2026-07-29, every app under ~/Applications/Home Manager
+    # Apps/ carrying the same rewrite timestamp — and a delete-and-recreate at a
+    # stable path is still a new bundle to TCC. A cask is a real /Applications
+    # copy that Homebrew upgrades IN PLACE, which is the same reason OrbStack
+    # already lives there (see hosts/common/default.nix).
+    #
+    # ghostty-bin.terminfo stays a nix package (hosts/common/ghostty-terminfo.nix):
+    # it is terminfo data, not an app, nothing about it is TCC-sensitive, and
+    # servers need it without the GUI.
     rapidapi # Full-featured HTTP client for testing and describing APIs (sandboxed — auto-update prevention not possible)
 
     # AI IDEs & Tools (nixpkgs - stable TCC paths via copyApps)

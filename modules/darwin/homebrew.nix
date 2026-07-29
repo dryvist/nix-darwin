@@ -33,6 +33,18 @@ let
     # Casks install stable /Applications copies, preserving macOS TCC grants.
     # greedy lets Homebrew upgrade apps with built-in updaters.
 
+    # --- Terminal ---
+    # THE most TCC-sensitive app here: every agent session and every
+    # darwin-rebuild runs inside it, so a lapsed Full Disk Access grant does not
+    # merely annoy — it stops the machine being manageable until a human
+    # re-grants it. Moved off nixpkgs copyApps on 2026-07-29 because activation
+    # replaces the bundle wholesale, and a delete-and-recreate is a new bundle to
+    # TCC even at a stable path and even for a Developer-ID-signed app.
+    {
+      name = "ghostty";
+      greedy = true;
+    } # Terminal emulator — needs Full Disk Access + App Management
+
     # --- Productivity / Communication ---
     {
       name = "obsidian";

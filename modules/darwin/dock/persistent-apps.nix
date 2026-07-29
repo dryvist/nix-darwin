@@ -10,9 +10,13 @@
 #   - Manual installs: /Applications/
 #   - User apps: ~/Applications/
 #
-# NOTE: TCC-sensitive apps (Ghostty, VS Code) use copyApps (migrated from
-# mac-app-util trampolines) for stable paths that persist macOS TCC
-# permissions across darwin-rebuild.
+# NOTE on TCC-sensitive apps. copyApps (migrated from mac-app-util trampolines)
+# gives a stable PATH, which is necessary but NOT sufficient: activation replaces
+# the bundle wholesale, and a delete-and-recreate reads as a new bundle to TCC
+# even at an unchanged path. Ghostty — the terminal every agent session and every
+# darwin-rebuild runs inside — therefore moved to a greedy Homebrew cask on
+# 2026-07-29, which Homebrew upgrades in place. VS Code remains on copyApps; if
+# its grants prove to lapse the same way, it should follow.
 
 _:
 
@@ -36,7 +40,11 @@ in
       "/Applications/Obsidian.app"
 
       # Development & Tools (after Toggl)
-      "${homeDir}/Applications/Home Manager Apps/Ghostty.app"
+      # /Applications, not Home Manager Apps: Ghostty moved to a greedy Homebrew
+      # cask on 2026-07-29 so its TCC grants survive (see modules/darwin/homebrew.nix).
+      # A Dock entry pointing at the old copyApps path would silently resolve to
+      # a bundle that activation no longer writes.
+      "/Applications/Ghostty.app"
       "${homeDir}/Applications/Home Manager Apps/Visual Studio Code.app"
 
       # Communication
