@@ -58,9 +58,7 @@
     # via nix-ai (kept off nix-darwin's top-level inputs to avoid pulling
     # 24 marketplace inputs + nix-devenv dev-tooling into our lock).
     nix-ai = {
-      # Pinned to main explicitly: nix-ai is git-flow (default branch
-      # develop), so an unref'd url resolves to develop and tracks
-      # unreleased commits instead of release-please-tagged releases.
+      # git-flow default is develop; pin main so we track releases, not it.
       url = "github:dryvist/nix-ai/main";
       inputs = {
         nixpkgs.follows = "nixpkgs";
