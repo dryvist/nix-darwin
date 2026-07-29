@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.17.0](https://github.com/dryvist/nix-darwin/compare/v2.16.0...v2.17.0) (2026-07-29)
+
+
+### Features
+
+* **ci:** refresh nixpkgs channel pin on a schedule ([#1916](https://github.com/dryvist/nix-darwin/issues/1916)) ([c44afc6](https://github.com/dryvist/nix-darwin/commit/c44afc6ec3c5ee90b107ec73cd4d3d0bb510783c))
+
 ## [2.16.0](https://github.com/dryvist/nix-darwin/compare/v2.15.1...v2.16.0) (2026-07-27)
 
 
