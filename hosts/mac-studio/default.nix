@@ -165,7 +165,7 @@ in
     ProgramArguments = [
       "/run/current-system/sw/bin/nix"
       "build"
-      "github:dryvist/nix-darwin#darwinConfigurations.${hostConfig.hostName}.system"
+      "github:dryvist/nix-darwin/main#darwinConfigurations.${hostConfig.hostName}.system"
       "--no-link"
       "--print-build-logs"
     ];
