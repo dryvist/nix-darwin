@@ -86,11 +86,27 @@ let
           trees, where a changed file is corruption rather than an update.
         '';
       };
+      minAge = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        example = "30m";
+        description = ''
+          Per-job override of the global minAge. Needed when a source writes
+          one file over a long span with pauses in it: the global 2m floor lets
+          such a file be copied during a lull, and when the writer appends
+          afterwards an immutable job wedges permanently on an immutable-file
+          -modified error. Every later run then fails, so nothing else in that
+          job replicates either. Observed live. Set above the longest write
+          span for the source. Null inherits the global value.
+        '';
+      };
     };
   };
 
   # `--min-age` is applied to every job: a file still being written (an
   # in-flight video chunk, a half-flushed frame) must not be copied mid-write.
+  # The global floor is not enough on its own for a source that writes one file
+  # over many minutes with idle gaps — see the per-job `minAge` option.
   mkJobArgs =
     job:
     lib.concatStringsSep " " (
@@ -104,7 +120,7 @@ let
         # quoting error. Double quotes expand and still protect whitespace;
         # job.dest is a module option, not user input.
         "\":sftp:\${OFFBOX_ROOT}/${job.dest}\""
-        "--min-age ${cfg.minAge}"
+        "--min-age ${if job.minAge != null then job.minAge else cfg.minAge}"
         "--transfers ${toString cfg.transfers}"
         "--checkers ${toString cfg.checkers}"
         "--sftp-concurrency ${toString cfg.transfers}"
