@@ -58,6 +58,14 @@ Source: `modules/darwin/common.nix`
 | --- | --- |
 | mas | Mac App Store CLI |
 
+### Graphical Applications
+
+Source: `modules/darwin/common.nix`
+
+| Package | Description |
+| --- | --- |
+| gimp | GNU Image Manipulation Program photo editor |
+
 ---
 
 ## Cross-Platform Packages

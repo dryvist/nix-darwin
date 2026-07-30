@@ -74,6 +74,11 @@ in
     mas # Mac App Store CLI
 
     # ========================================================================
+    # Graphical applications
+    # ========================================================================
+    gimp # GNU Image Manipulation Program photo editor
+
+    # ========================================================================
     # Network & process tools
     # ========================================================================
     ngrep # Network packet grep (useful for debugging)
