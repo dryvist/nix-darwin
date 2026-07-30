@@ -30,7 +30,8 @@ in
     # Left side of Dock (before separator) - Main apps
     # ========================================================================
     persistent-apps = [
-      # Time & Tasks
+      # System settings & time (immediately after the fixed Finder Dock item)
+      "/System/Applications/System Settings.app"
       "/System/Applications/Clock.app"
       "/System/Applications/Reminders.app"
       "/System/Applications/Calendar.app"
@@ -49,26 +50,21 @@ in
 
       # Communication
       "/System/Applications/Mail.app" # Apple Mail (system app)
-      "/Applications/Microsoft Outlook.app"
-      "/Applications/Microsoft Teams.app"
       "/Applications/Slack.app"
-      "/Applications/zoom.us.app" # Manual install - now at system level
       "/System/Applications/Messages.app"
 
-      # AI Assistants
+      # AI & API tools
+      "/Applications/ProxMan.app"
       "/Applications/Claude.app" # Anthropic Claude desktop app (homebrew cask)
+      "/Applications/ChatGPT.app"
+      "/Applications/Codex.app"
       "${homeDir}/Applications/Gemini.app" # Google Gemini AI assistant
-      "/Applications/Antigravity IDE.app" # Google Antigravity IDE
 
       # Browsers
       "/Applications/Safari.app"
       "/Applications/Brave Browser.app"
+      "/Applications/Google Chrome.app"
 
-      # Remote Desktop
-      "/Applications/Windows App.app"
-
-      # NOTE: Additional AI tools (ChatGPT, Cursor) can be found in
-      # ~/Applications/Home Manager Apps/, but they are not pinned to the Dock.
       # NOTE: RapidAPI, Postman, and Bitwarden removed from dock per #438
     ];
 
