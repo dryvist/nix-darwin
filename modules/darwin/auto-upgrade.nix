@@ -14,7 +14,10 @@ in
 
     flake = lib.mkOption {
       type = lib.types.str;
-      default = "github:dryvist/nix-darwin";
+      # Pinned to main: nix-darwin is git-flow (default branch develop), so
+      # an unref'd url would resolve to develop and auto-apply unreleased
+      # commits weekly, unattended.
+      default = "github:dryvist/nix-darwin/main";
       description = "Remote nix-darwin flake to apply.";
     };
 
