@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.20.0](https://github.com/dryvist/nix-darwin/compare/v2.19.0...v2.20.0) (2026-07-30)
+
+
+### Features
+
+* **dock:** add GIMP and refresh app layout ([c7b9f56](https://github.com/dryvist/nix-darwin/commit/c7b9f56b1383a0729f2be19a729ada5ea31a2b07))
+
+
+### Bug Fixes
+
+* **auto-upgrade:** pin self-referencing flake urls to main ([#1948](https://github.com/dryvist/nix-darwin/issues/1948)) ([623e54e](https://github.com/dryvist/nix-darwin/commit/623e54efd99ff69860eeab8e2f5b5473946e2592))
+
 ## [2.19.0](https://github.com/dryvist/nix-darwin/compare/v2.18.2...v2.19.0) (2026-07-30)
 
 
