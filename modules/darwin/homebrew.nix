@@ -60,6 +60,10 @@ let
       greedy = true;
     } # AI-powered voice dictation
     {
+      name = "superwhisper";
+      greedy = true;
+    } # Dictation with LLM reformatting
+    {
       name = "voiceink";
       greedy = true;
     } # Voice-to-text app (local whisper)
