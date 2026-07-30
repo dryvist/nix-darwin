@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.19.0](https://github.com/dryvist/nix-darwin/compare/v2.18.2...v2.19.0) (2026-07-30)
+
+
+### Features
+
+* **homebrew:** add Superwhisper cask ([5697846](https://github.com/dryvist/nix-darwin/commit/5697846cf09349b6b1449adcca3fb4e11913cd65))
+
+
+### Bug Fixes
+
+* **ghostty:** install via greedy cask so TCC grants survive activation ([#1935](https://github.com/dryvist/nix-darwin/issues/1935)) ([023f8b7](https://github.com/dryvist/nix-darwin/commit/023f8b71fcff2b814cb19f1d77ae0f2ea4fd7e36))
+* **homebrew:** pin current cask runtime ([#1943](https://github.com/dryvist/nix-darwin/issues/1943)) ([c8c5186](https://github.com/dryvist/nix-darwin/commit/c8c51862d4960d31d84d87ff78acf8ec75a5915d))
+
 ## [2.18.2](https://github.com/dryvist/nix-darwin/compare/v2.18.1...v2.18.2) (2026-07-29)
 
 
