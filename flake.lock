@@ -3,11 +3,11 @@
     "ai-assistant-instructions": {
       "flake": false,
       "locked": {
-        "lastModified": 1785246104,
+        "lastModified": 1785440170,
         "narHash": "sha256-o8o9WyqXCgToWgmXqVwrg1EnGQtKPR83aLsglw8GACI=",
         "owner": "dryvist",
         "repo": "ai-assistant-instructions",
-        "rev": "01610e81875d6b289a53558d6dea63e87afbce14",
+        "rev": "ab7cc75427cd67124763016f30e5f7a94c752fcd",
         "type": "github"
       },
       "original": {
@@ -910,6 +910,28 @@
         "url": "https://flakehub.com/f/DeterminateSystems/nix-src/%2A"
       }
     },
+    "nix-agy": {
+      "inputs": {
+        "nixpkgs": [
+          "nix-ai",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1785346339,
+        "narHash": "sha256-Nz+3GR4MBKk02AZVhRU+UXw/BNQhNXbdqLbstcLuuWk=",
+        "owner": "dryvist",
+        "repo": "nix-agy",
+        "rev": "ea175909c59f03e8a357f3747866d0128e0f8381",
+        "type": "github"
+      },
+      "original": {
+        "owner": "dryvist",
+        "ref": "main",
+        "repo": "nix-agy",
+        "type": "github"
+      }
+    },
     "nix-ai": {
       "inputs": {
         "ai-assistant-instructions": [
@@ -932,7 +954,9 @@
         ],
         "karpathy-skills": "karpathy-skills",
         "last30days-skill": "last30days-skill",
+        "nix-agy": "nix-agy",
         "nix-claude-code": "nix-claude-code",
+        "nix-codex": "nix-codex",
         "nixpkgs": [
           "nixpkgs"
         ],
@@ -940,11 +964,11 @@
         "ponytail": "ponytail"
       },
       "locked": {
-        "lastModified": 1785286049,
-        "narHash": "sha256-4a45cf2QIHclBc7oMg0HeDRrQDV7bzvU3XLB70kBSbQ=",
+        "lastModified": 1785440879,
+        "narHash": "sha256-x8t6raQeMS/0iA0hBNf5qXmzQdSd8XVfm4CH+nucw8g=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "2b9982046688b629c1cc7f6d7ee109144186db53",
+        "rev": "4810afb03a7add463c72d9f1dea6342ad5950dea",
         "type": "github"
       },
       "original": {
@@ -1071,6 +1095,28 @@
         "type": "github"
       }
     },
+    "nix-codex": {
+      "inputs": {
+        "nixpkgs": [
+          "nix-ai",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1785321946,
+        "narHash": "sha256-8r/qm7huFsURh0M62QNwHvM8hOv2XAD0HTbaBbBVhH0=",
+        "owner": "dryvist",
+        "repo": "nix-codex",
+        "rev": "9b5d50fcdca0d9bd4dd7f72b06dc792a9ce8b962",
+        "type": "github"
+      },
+      "original": {
+        "owner": "dryvist",
+        "ref": "main",
+        "repo": "nix-codex",
+        "type": "github"
+      }
+    },
     "nix-home": {
       "inputs": {
         "home-manager": [
@@ -1083,11 +1129,11 @@
         "orbstack-kubernetes": "orbstack-kubernetes"
       },
       "locked": {
-        "lastModified": 1784557924,
-        "narHash": "sha256-AwxKnqbu8TGV5B1Tsp4W9bg5NS3swrnPoFiYvFY3Je8=",
+        "lastModified": 1785441051,
+        "narHash": "sha256-TucVvIFPptwBIusIDohrXEFRu0jjp0cmCd1hiuM+JPM=",
         "owner": "dryvist",
         "repo": "nix-home",
-        "rev": "e8cc0fe041ce11eb5e56a40172e4b29858ee51da",
+        "rev": "70b519d8c26ffff870e5bf1d0fed009ec36c5c5d",
         "type": "github"
       },
       "original": {
