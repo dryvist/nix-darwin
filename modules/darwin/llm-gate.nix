@@ -257,7 +257,27 @@ in
     # Caddy exits and launchd retries on the ThrottleInterval.
     launchd.user.agents.llm-gate.serviceConfig = {
       Label = "com.nix-darwin.llm-gate";
+      # LAUNCHED THROUGH APPLE'S INTERPRETER — the estate-wide launchd
+      # convention, and load-bearing here. macOS keys a Local Network privacy
+      # grant to a binary's code-signing identity; a Nix binary's identity IS
+      # its content hash, so every rebuild produces an executable macOS has
+      # never seen and every prior grant is inert. A Nix interpreter ANYWHERE
+      # in the chain becomes the responsible process for everything beneath it,
+      # which is why the wrapper's own /usr/bin/curl was denied. Launching the
+      # script through /bin/bash keeps the identity on `com.apple.bash`, which
+      # is stable across rebuilds and needs no grant at all.
+      #
+      # Symptom when this regresses: the OpenBao fetch fails in ~2 ms with
+      # "Couldn't connect" / "No route to host". That is the denial surfacing
+      # as EHOSTUNREACH, NOT a network fault — OpenBao is reachable the whole
+      # time. AppRole login then fails, Caddy never starts, and the host serves
+      # nothing on the LAN. Reaching it over ssh does NOT prove it works: ssh
+      # sessions inherit their own exemption. Check the listening port instead.
+      #
+      # openbao-run must stay parseable AND runnable under Apple's bash 3.2 for
+      # this to hold — see the bash-3.2 note in scripts/openbao-run.sh.
       ProgramArguments = [
+        "/bin/bash"
         (lib.getExe config.programs.openbao-run.package)
         "--domain"
         "llm-gate"
