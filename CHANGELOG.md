@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.21.0](https://github.com/dryvist/nix-darwin/compare/v2.20.0...v2.21.0) (2026-07-30)
+
+
+### Features
+
+* **offbox:** per-job min-age override to stop immutable jobs wedging ([#1944](https://github.com/dryvist/nix-darwin/issues/1944)) ([8d599f3](https://github.com/dryvist/nix-darwin/commit/8d599f3c0a2da37fb415a9b8a910981a0415e67b))
+
+
+### Bug Fixes
+
+* **darwin:** drop gimp, unavailable on darwin in the current nixpkgs pin ([#1956](https://github.com/dryvist/nix-darwin/issues/1956)) ([9d71715](https://github.com/dryvist/nix-darwin/commit/9d71715ddbe79c6a989c317e228836bc1d11bf22))
+
 ## [2.20.0](https://github.com/dryvist/nix-darwin/compare/v2.19.0...v2.20.0) (2026-07-30)
 
 
