@@ -87,9 +87,7 @@
       inputs.home-manager.follows = "home-manager";
     };
 
-    # Official Determinate Nix module for nix-darwin
-    # Manages nix.conf, determinate-nixd config, and GC automatically
-    # Updates tracked by deps-update-flake.yml (daily nix flake update) + Renovate
+    # Official Determinate Nix module; automated updates are tracked by Renovate.
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
 
     # Legacy bridge while remaining consumers move to OpenBao.
@@ -98,9 +96,16 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # nix-homebrew: installs/owns the /opt/homebrew prefix so `brew bundle` works
-    # on a fresh host. Wired up in modules/darwin/homebrew.nix.
-    nix-homebrew.url = "github:zhaofengli/nix-homebrew";
+    # nix-homebrew owns /opt/homebrew; brew-src tracks the current cask DSL.
+    nix-homebrew = {
+      url = "github:zhaofengli/nix-homebrew";
+      inputs.brew-src.follows = "brew-src";
+    };
+
+    brew-src = {
+      url = "github:Homebrew/brew/master";
+      flake = false;
+    };
 
   };
 
