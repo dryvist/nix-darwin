@@ -111,25 +111,57 @@ secret_id="$(resolve "${env_prefix}_VAULT_SECRET_ID")"
 
 # ALL OpenBao HTTP goes through /usr/bin/curl — the APPLE PLATFORM binary,
 # hardcoded path, never a nixpkgs curl. macOS Local Network privacy silently
-# denies NON-platform binaries LAN access in GUI-session launchd contexts
-# ("connect: no route to host"), while platform binaries are exempt. Verified
-# live 2026-07-17 on macOS 26.5.2 from the same gui/501 one-shot: the
-# nix-store `bao` CLI got EHOSTUNREACH on the very login /usr/bin/curl
-# completed with HTTP 200 (ssh sessions are also exempt, which is why shell
-# tests never reproduced it). There is no supported CLI/MDM pre-approval for
-# Local Network TCC, so the fix is to keep the network path on the exempt
-# platform binary. jq (no network) parses the responses.
+# denies LAN access in GUI-session launchd contexts ("connect: no route to
+# host"). Verified live 2026-07-17 on macOS 26.5.2 from a gui/501 one-shot: the
+# nix-store `bao` CLI got EHOSTUNREACH where /usr/bin/curl completed with HTTP
+# 200 (ssh sessions are exempt, which is why shell tests never reproduced it).
+# There is no supported CLI/MDM pre-approval for Local Network TCC.
+#
+# USING THE PLATFORM BINARY IS NECESSARY BUT NOT SUFFICIENT — do not read the
+# paragraph above as "TCC cannot be the cause here". Disproved live 2026-07-28
+# on jevans-ms: this very invocation got `Immediate connect fail ... No route to
+# host` from /usr/bin/curl, deterministically, 3/3 rounds, while a bare
+# /usr/bin/curl to the SAME host in the SAME launchd process returned 200 and
+# the same login run over ssh exited 0. The denial follows the responsible app,
+# not the executed binary, so one path can be permitted while another is not.
+# Only System Settings -> Privacy & Security -> Local Network clears it.
+#
+# jq (no network) parses the responses.
 
 # AppRole login -> a short-lived token, used only for the reads below. Never
 # persisted; scoped to this process. Credentials travel via a private
 # temporary payload on stdin (never argv).
 login_payload="$(jq -n --arg r "$role_id" --arg s "$secret_id" \
   '{role_id: $r, secret_id: $s}')"
+# Why a diagnostic at all: `curl -sSf` renders a refused connection as the
+# generic "Couldn't connect to server", which reads as a dead service and sent a
+# 2026-07-28 investigation down three wrong paths before `-v` revealed the
+# actual errno. The re-probe below costs one request on the failure path only,
+# carries NO credentials (plain GET of the unauthenticated health endpoint), and
+# turns a 40-minute hunt into one line. Connect-level failures are
+# credential-independent, so health is a faithful stand-in for the login socket.
+login_diagnosis() {
+  local detail
+  detail="$(/usr/bin/curl -sv --max-time 10 -o /dev/null "$addr/v1/sys/health" 2>&1 || true)"
+  case "$detail" in
+    *'No route to host'*)
+      echo "$prefix HINT: EHOSTUNREACH to $addr from this context." >&2
+      echo "$prefix       This is macOS Local Network privacy (TCC) denying the agent, NOT a network fault." >&2
+      echo "$prefix       Using /usr/bin/curl does not exempt it — the denial follows the responsible app." >&2
+      echo "$prefix       Fix: System Settings -> Privacy & Security -> Local Network, enable this agent." >&2
+      echo "$prefix       Confirm: the same command run over ssh will succeed; ssh sessions are exempt." >&2
+      ;;
+  esac
+}
+
 token="$(printf '%s' "$login_payload" \
   | /usr/bin/curl -sSf --max-time 30 -X POST -H 'Content-Type: application/json' \
       --data-binary @- "$addr/v1/auth/approle/login" \
   | jq -re '.auth.client_token')" \
-  || die "AppRole login failed for domain '$domain' at $addr"
+  || {
+    login_diagnosis
+    die "AppRole login failed for domain '$domain' at $addr"
+  }
 
 # KV v2 mount, per-secret override via an optional `<mount>:` spec prefix,
 # else this default. "secret" preserves prior (pre-parameterization) behavior.
