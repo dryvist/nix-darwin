@@ -111,6 +111,13 @@ let
       greedy = true;
     }
 
+    # Image editor. nixpkgs gimp is Linux-only (no darwin meta.platforms
+    # entry) — cask is the only working path here.
+    {
+      name = "gimp";
+      greedy = true;
+    }
+
     # Java Web Start replacement for iDRAC virtual-console files.
     {
       name = "openwebstart";
