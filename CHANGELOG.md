@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.22.0](https://github.com/dryvist/nix-darwin/compare/v2.21.2...v2.22.0) (2026-08-01)
+
+
+### Features
+
+* **mlx-cluster:** set shardMemoryMb for the memory-headroom rung ([0d986cc](https://github.com/dryvist/nix-darwin/commit/0d986cce3a3520a13d898dd01c6b77356f249319))
+* **mlx-cluster:** set shardMemoryMb for the memory-headroom rung ([3fdb891](https://github.com/dryvist/nix-darwin/commit/3fdb891f7aa099893753f09a358ce46b681e5b10))
+* **mlx-cluster:** set wiredCeilingMb so the runtime guard is not decorative ([c235cc3](https://github.com/dryvist/nix-darwin/commit/c235cc3971a5d959627283c879d92d38e2fd0c13))
+
 ## [2.21.2](https://github.com/dryvist/nix-darwin/compare/v2.21.1...v2.21.2) (2026-08-01)
 
 
