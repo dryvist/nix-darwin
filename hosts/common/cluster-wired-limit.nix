@@ -73,20 +73,34 @@ in
       # transient into a halt.
       shardMemoryMb = 56000;
 
-      # Runtime companion to shardMemoryMb (dryvist/nix-ai#1481). That rung
-      # gates a rank START on free memory; nothing watched a rank already
-      # running, so on 2026-08-01 a legally-started rank grew until the
-      # compositor could not get a Metal command buffer and the hardware
-      # watchdog reset the host. Derived from the ceiling actually applied here
-      # (102400 MB on both hosts) so the two cannot drift apart:
-      #   102400 * 3 / 4 = 76800 MB (75 GiB), leaving 25 GiB of the GPU budget.
+      # wiredCeilingMb (dryvist/nix-ai#1481) is DELIBERATELY LEFT UNSET (0 =
+      # disabled). A value of 76800 was set here earlier today and is reverted:
+      # it was derived ad hoc, without reading the layered-ceiling model in
+      # docs-starlight d/hosts/ai/mlx-memory-ceilings, and that model shows the
+      # value reaps healthy ranks.
       #
-      # Chosen to sit between ONE shard and TWO. A healthy rank's wired figure
-      # is disputed — ~3.5 GiB per mem_stat_mb's note in nix-ai, ~49.9 GiB per
-      # the measurement above — so a ceiling clear of one whole shard is safe
-      # under either reading, and the starvation above read 96.7 GiB, close to
-      # two shards. Re-measure and tighten once that contradiction is settled.
-      wiredCeilingMb = linkPrep.clusterWiredLimitMb * 3 / 4;
+      # From the definition sites, per that page's clustered formula:
+      #   F_rank(N) = W_shard + L1_buf + B_cache + N * C_seq
+      # with W_shard ~49 GiB (catalog weightGb 98.0 sharded over two ranks),
+      # L1_buf 12 GiB (bufferCacheLimitGb), B_cache 8 GiB (cacheMemoryMb 8192):
+      #   F_rank(N) = 69 GiB + N * C_seq
+      # The floor is 69 GiB before ONE request is served, so a 75 GiB ceiling
+      # leaves 6 GiB for all concurrency and fires at N=1 on the declared
+      # context. It reaps healthy work.
+      #
+      # The premise was also wrong, not merely the number. That page gives
+      #   N_max(clustered) = floor((L0_wired - W_shard - L1_buf - B_cache)/C_seq)
+      # i.e. usage is DESIGNED to run up toward L0_wired. No wired threshold
+      # below L0_wired can separate legitimate load from a leak, so a runtime
+      # wired ceiling is the wrong instrument at any value.
+      #
+      # What today's watchdog reset actually shows is that L0_wired itself is
+      # too high: the compositor draws GPU memory from the same pool, and at
+      # 96.7 GiB of a 100 GiB ceiling it could not get a Metal command buffer.
+      # The layered model treats L0_wired as fully available to MLX and does not
+      # account for that competitor. The fix belongs at the single definition
+      # site — appleSiliconTunables.maxLocalLlmGb — not in a second ad-hoc
+      # ceiling here, and it is a capacity decision for the operator.
 
       # EXPERIMENT (INC-17070, remove once resolved): disables the prompt cache
       # on both cluster ranks to isolate a multi-request pipeline hang. The only
