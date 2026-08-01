@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.22.1](https://github.com/dryvist/nix-darwin/compare/v2.22.0...v2.22.1) (2026-08-01)
+
+
+### Bug Fixes
+
+* **mlx-cluster:** revert wiredCeilingMb, it reaps healthy ranks ([d317a7f](https://github.com/dryvist/nix-darwin/commit/d317a7fb5cd28b31c7ddd304c6d37c9ced2fd01e))
+* **mlx-cluster:** revert wiredCeilingMb, it reaps healthy ranks ([8f964d1](https://github.com/dryvist/nix-darwin/commit/8f964d177348ceb3d4210f7e082d5fd5c767c538))
+
 ## [2.22.0](https://github.com/dryvist/nix-darwin/compare/v2.21.2...v2.22.0) (2026-08-01)
 
 
