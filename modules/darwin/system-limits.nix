@@ -26,7 +26,7 @@ let
     text = builtins.readFile ./scripts/system-limits.sh;
   };
 
-  # Reused by the root daemon, activation, and GUI-domain user LaunchAgent.
+  # Reused by the root daemon and activation.
   limitsEnv = {
     MAXFILES = optStr cfg.maxFiles;
     MAXFILESPERPROC = optStr cfg.maxFilesPerProc;
@@ -133,22 +133,6 @@ in
         KeepAlive = false;
         StandardOutPath = "/var/log/set-resource-limits.log";
         StandardErrorPath = "/var/log/set-resource-limits.log";
-      };
-    };
-
-    # `launchctl limit` is scoped to the calling bootstrap domain. The root
-    # daemon above cannot raise the GUI domain inherited by Terminal, Codex,
-    # and other interactive tools, so apply the same maxfiles limit from a
-    # user LaunchAgent at login.
-    launchd.user.agents.set-resource-limits = {
-      serviceConfig = {
-        Label = "dev.local.set-resource-limits-user";
-        ProgramArguments = [ (lib.getExe applyScript) ];
-        EnvironmentVariables = limitsEnv // {
-          SYSTEM_LIMITS_APPLY_SYSCTLS = "0";
-        };
-        RunAtLoad = true;
-        KeepAlive = false;
       };
     };
 
