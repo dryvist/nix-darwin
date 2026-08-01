@@ -77,11 +77,19 @@
     containerVolume = "ContainerData";
   };
 
-  # Dedicated APFS volumes on the internal container (disk3). Logical
-  # separation only — no quota. diskutil apfs list to find the container.
+  # Dedicated APFS volumes on the internal container (disk3). diskutil apfs list
+  # to find the container. A bare name is logical separation only; an attrset
+  # with `quota` adds a hard size ceiling (a maximum, not a reservation).
   apfsContainer = "disk3";
   apfsVolumes = [
     "HuggingFace"
     "ContainerData"
+    # Capped: holds a continuously-appended local data set bounded only by
+    # time-based retention, which does not bound a burst. The ceiling keeps it
+    # from consuming the container however those retention settings drift.
+    {
+      name = "Streams";
+      quota = "100g";
+    }
   ];
 }
