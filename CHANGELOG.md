@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.21.1](https://github.com/dryvist/nix-darwin/compare/v2.21.0...v2.21.1) (2026-08-01)
+
+
+### Bug Fixes
+
+* **darwin:** apply maxfiles in GUI sessions ([#1962](https://github.com/dryvist/nix-darwin/issues/1962)) ([b32cf3a](https://github.com/dryvist/nix-darwin/commit/b32cf3abbf4657510ffdd9124b117f922a9a1095))
+
 ## [2.21.0](https://github.com/dryvist/nix-darwin/compare/v2.20.0...v2.21.0) (2026-07-30)
 
 
