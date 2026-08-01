@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.21.2](https://github.com/dryvist/nix-darwin/compare/v2.21.1...v2.21.2) (2026-08-01)
+
+
+### Bug Fixes
+
+* **darwin:** remove ineffective GUI limits agent ([#1966](https://github.com/dryvist/nix-darwin/issues/1966)) ([26c9290](https://github.com/dryvist/nix-darwin/commit/26c92907ab4aeee71e0c2eb135ae1dc95cff59c8))
+
 ## [2.21.1](https://github.com/dryvist/nix-darwin/compare/v2.21.0...v2.21.1) (2026-08-01)
 
 
