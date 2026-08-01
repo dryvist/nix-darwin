@@ -73,6 +73,21 @@ in
       # transient into a halt.
       shardMemoryMb = 56000;
 
+      # Runtime companion to shardMemoryMb (dryvist/nix-ai#1481). That rung
+      # gates a rank START on free memory; nothing watched a rank already
+      # running, so on 2026-08-01 a legally-started rank grew until the
+      # compositor could not get a Metal command buffer and the hardware
+      # watchdog reset the host. Derived from the ceiling actually applied here
+      # (102400 MB on both hosts) so the two cannot drift apart:
+      #   102400 * 3 / 4 = 76800 MB (75 GiB), leaving 25 GiB of the GPU budget.
+      #
+      # Chosen to sit between ONE shard and TWO. A healthy rank's wired figure
+      # is disputed — ~3.5 GiB per mem_stat_mb's note in nix-ai, ~49.9 GiB per
+      # the measurement above — so a ceiling clear of one whole shard is safe
+      # under either reading, and the starvation above read 96.7 GiB, close to
+      # two shards. Re-measure and tighten once that contradiction is settled.
+      wiredCeilingMb = linkPrep.clusterWiredLimitMb * 3 / 4;
+
       # EXPERIMENT (INC-17070, remove once resolved): disables the prompt cache
       # on both cluster ranks to isolate a multi-request pipeline hang. The only
       # knob the clusterMode module exposes for rank server args is
