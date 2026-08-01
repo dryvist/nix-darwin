@@ -3,8 +3,8 @@
 # System resource limits — apply (boot + activation)
 #
 # Driven by environment variables from the nix-darwin module; an empty value
-# means "leave the macOS default untouched". Best-effort: a failure logs a
-# warning but never aborts. Native macOS CLIs only.
+# means "leave the macOS default untouched". The root daemon applies kernel
+# sysctls; the user LaunchAgent applies launchctl's GUI-domain maxfiles limit.
 
 prefix="[system-limits]"
 log() { echo "$prefix INFO $*"; }
@@ -20,10 +20,12 @@ apply_sysctl() {
   fi
 }
 
-apply_sysctl kern.maxfiles "${MAXFILES:-}"
-apply_sysctl kern.maxfilesperproc "${MAXFILESPERPROC:-}"
-apply_sysctl kern.maxproc "${MAXPROC:-}"
-apply_sysctl kern.maxprocperuid "${MAXPROCPERUID:-}"
+if [ "${SYSTEM_LIMITS_APPLY_SYSCTLS:-1}" = "1" ]; then
+  apply_sysctl kern.maxfiles "${MAXFILES:-}"
+  apply_sysctl kern.maxfilesperproc "${MAXFILESPERPROC:-}"
+  apply_sysctl kern.maxproc "${MAXPROC:-}"
+  apply_sysctl kern.maxprocperuid "${MAXPROCPERUID:-}"
+fi
 
 # Global launchd open-file limit (soft hard).
 if [ -n "${LAUNCHCTL_MAXFILES_SOFT:-}" ] && [ -n "${LAUNCHCTL_MAXFILES_HARD:-}" ]; then
@@ -31,6 +33,7 @@ if [ -n "${LAUNCHCTL_MAXFILES_SOFT:-}" ] && [ -n "${LAUNCHCTL_MAXFILES_HARD:-}" 
     log "launchctl limit maxfiles ${LAUNCHCTL_MAXFILES_SOFT} ${LAUNCHCTL_MAXFILES_HARD}"
   else
     warn "launchctl limit maxfiles failed"
+    exit 1
   fi
 fi
 

@@ -26,7 +26,7 @@ let
     text = builtins.readFile ./scripts/system-limits.sh;
   };
 
-  # Reused by both the boot daemon (EnvironmentVariables) and activation.
+  # Reused by the root daemon, activation, and GUI-domain user LaunchAgent.
   limitsEnv = {
     MAXFILES = optStr cfg.maxFiles;
     MAXFILESPERPROC = optStr cfg.maxFilesPerProc;
@@ -136,6 +136,22 @@ in
       };
     };
 
+    # `launchctl limit` is scoped to the calling bootstrap domain. The root
+    # daemon above cannot raise the GUI domain inherited by Terminal, Codex,
+    # and other interactive tools, so apply the same maxfiles limit from a
+    # user LaunchAgent at login.
+    launchd.user.agents.set-resource-limits = {
+      serviceConfig = {
+        Label = "dev.local.set-resource-limits-user";
+        ProgramArguments = [ (lib.getExe applyScript) ];
+        EnvironmentVariables = limitsEnv // {
+          SYSTEM_LIMITS_APPLY_SYSCTLS = "0";
+        };
+        RunAtLoad = true;
+        KeepAlive = false;
+      };
+    };
+
     # darwin-rebuild switch: apply immediately (do not wait for next boot).
     system.activationScripts.resourceLimits.text = ''
       MAXFILES=${lib.escapeShellArg limitsEnv.MAXFILES} \
@@ -144,7 +160,7 @@ in
       MAXPROCPERUID=${lib.escapeShellArg limitsEnv.MAXPROCPERUID} \
       LAUNCHCTL_MAXFILES_SOFT=${lib.escapeShellArg limitsEnv.LAUNCHCTL_MAXFILES_SOFT} \
       LAUNCHCTL_MAXFILES_HARD=${lib.escapeShellArg limitsEnv.LAUNCHCTL_MAXFILES_HARD} \
-        ${lib.getExe applyScript} || true
+        ${lib.getExe applyScript}
     '';
   };
 }
