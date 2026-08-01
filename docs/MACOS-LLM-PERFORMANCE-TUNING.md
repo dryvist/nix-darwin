@@ -122,7 +122,7 @@ Large model files and many worker threads can exhaust descriptor limits.
 | `kern.maxfilesperproc` | `resourceLimits.maxFilesPerProc` | macOS default | `524288` | VOLATILE | mmap'd shard sets |
 | `kern.maxproc` | `resourceLimits.maxProc` | macOS default | `null` (leave) | VOLATILE | adequate for single server |
 | `kern.maxprocperuid` | `resourceLimits.maxProcPerUid` | macOS default | `null` (leave) | VOLATILE | exposed for completeness |
-| `launchctl limit maxfiles` | `resourceLimits.launchctlMaxFiles.{soft,hard}` | system default | `524288/524288` | per-boot | boot LaunchDaemon |
+| `launchctl maxfiles` | `resourceLimits.launchctlMaxFiles.{soft,hard}` | system default | `524288/524288` | per-login | GUI agent; fresh terminals inherit |
 
 Never set a `kern.*` limit at/above INT_MAX (`2147483647`) — it is read as a negative 32-bit int and
 panics macOS. The module asserts this.
