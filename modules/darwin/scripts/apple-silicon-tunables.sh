@@ -27,61 +27,64 @@ apply_pmset() {
   fi
 }
 
-apply_pmset lowpowermode "${PMSET_LOWPOWERMODE:-}"
 apply_pmset powernap "${PMSET_POWERNAP:-}"
 apply_pmset proximitywake "${PMSET_PROXIMITYWAKE:-}"
 apply_pmset disablesleep "${PMSET_DISABLESLEEP:-}"
 apply_pmset tcpkeepalive "${PMSET_TCPKEEPALIVE:-}"
 
 # --- High Power Mode (Energy Mode) enforce -------------------------------
-# SET it, then verify by re-reading. This used to only warn, on the belief
-# that Energy Mode "cannot be set via CLI" — `pmset -a powermode <n>` does
-# work as root on models that expose it, and this script already runs as root
-# at activation. A cluster rank left on Automatic thermally throttles mid-run,
-# which shows up as inexplicably slow tokens rather than as an error, so a
-# warning nobody reads was the wrong control.
+# `powermode` is a THREE-state control and its values follow the System
+# Settings -> Battery -> Energy Mode menu order:
 #
-# Read the AC-block powermode from `pmset -g custom`. Observed mapping:
-# 0 = Automatic, 1 = High Power, 2 = Low Power. Models that do not expose it
-# (e.g. desktops without an Energy Mode control) report empty — there the set
-# is skipped rather than retried every activation.
-if [ -n "${ENERGY_MODE_DESIRED:-}" ] && [ "${ENERGY_MODE_DESIRED}" != "unmanaged" ]; then
-  ac_powermode="$(/usr/bin/pmset -g custom 2>/dev/null | /usr/bin/awk '
-    /^AC Power:/ { in_ac = 1; next }
-    /Power:[[:space:]]*$/ { in_ac = 0 }
-    in_ac && $1 == "powermode" { print $2; exit }
-  ' || true)"
-  case "${ENERGY_MODE_DESIRED}" in
-    high) want=1 ;;
-    automatic) want=0 ;;
-    low) want=2 ;;
-    *) want="" ;;
-  esac
-  if [ -z "${ac_powermode}" ]; then
-    warn "Energy Mode: AC powermode not reported (model does not expose it); skipping"
-  elif [ -z "${want}" ]; then
-    warn "Energy Mode: unrecognised desired value '${ENERGY_MODE_DESIRED}'; leaving powermode=${ac_powermode}"
-  elif [ "${ac_powermode}" = "${want}" ]; then
-    log "Energy Mode AC powermode=${ac_powermode} already matches desired ${ENERGY_MODE_DESIRED}"
-  else
+#   0 = Automatic    1 = Low Power    2 = High Power
+#
+# High Power is the only value this repo ever writes. Automatic thermally
+# throttles a rank mid-run, which surfaces as inexplicably slow tokens rather
+# than as an error; Low Power does the same, harder.
+#
+# `pmset -a lowpowermode <0|1>` writes this same key, so a boolean can only
+# ever reach Automatic or Low Power — never High. That is why it is not used
+# here and why no `lowPowerMode` option exists.
+#
+# Both power sources are checked. Enforcing AC alone leaves a laptop that
+# throttles the moment it is unplugged, which is exactly when a long run is
+# least able to report why it slowed down.
+#
+# Models that do not expose an Energy Mode control report empty — there the
+# set is skipped rather than retried every activation.
+POWERMODE_HIGH=2
+
+read_powermode() {
+  # $1 = "AC" or "Battery"
+  /usr/bin/pmset -g custom 2>/dev/null | /usr/bin/awk -v want_block="$1 Power:" '
+    $0 == want_block { in_block = 1; next }
+    /Power:[[:space:]]*$/ { in_block = 0 }
+    in_block && $1 == "powermode" { print $2; exit }
+  ' || true
+}
+
+if [ "${ENERGY_MODE_DESIRED:-high}" != "unmanaged" ]; then
+  for source in AC Battery; do
+    current="$(read_powermode "${source}")"
+    if [ -z "${current}" ]; then
+      log "Energy Mode: ${source} powermode not reported (model does not expose it); skipping"
+      continue
+    fi
+    if [ "${current}" = "${POWERMODE_HIGH}" ]; then
+      log "Energy Mode: ${source} powermode=${current} (High Power)"
+      continue
+    fi
     # Apply, then re-read. Never trust the exit code alone: pmset can accept a
     # value the hardware then ignores, which would report success while the
-    # machine stays on Automatic.
-    if /usr/bin/pmset -a powermode "${want}" 2>/dev/null; then
-      ac_now="$(/usr/bin/pmset -g custom 2>/dev/null | /usr/bin/awk '
-        /^AC Power:/ { in_ac = 1; next }
-        /Power:[[:space:]]*$/ { in_ac = 0 }
-        in_ac && $1 == "powermode" { print $2; exit }
-      ' || true)"
-      if [ "${ac_now}" = "${want}" ]; then
-        log "Energy Mode set: AC powermode ${ac_powermode} -> ${ac_now} (${ENERGY_MODE_DESIRED})"
-      else
-        warn "Energy Mode: pmset accepted powermode=${want} but it read back as '${ac_now:-empty}'; set it in System Settings -> Battery -> Energy Mode"
-      fi
+    # machine stays throttled.
+    /usr/bin/pmset -a powermode "${POWERMODE_HIGH}" 2>/dev/null || true
+    now="$(read_powermode "${source}")"
+    if [ "${now}" = "${POWERMODE_HIGH}" ]; then
+      log "Energy Mode: ${source} powermode ${current} -> ${now} (High Power)"
     else
-      warn "Energy Mode: pmset -a powermode ${want} failed; set it in System Settings -> Battery -> Energy Mode"
+      warn "Energy Mode: ${source} powermode is '${now:-empty}', not High Power (${POWERMODE_HIGH}) — the machine will throttle. Set System Settings -> Battery -> Energy Mode -> High Power"
     fi
-  fi
+  done
 fi
 
 # --- Spotlight indexing off on the HuggingFace volume --------------------

@@ -57,7 +57,7 @@ Tuned in the LLM-software session, recorded here so the boundary is explicit:
 sysctl iogpu.wired_limit_mb kern.maxfiles kern.maxfilesperproc
 launchctl limit maxfiles
 
-# pmset perf flags + Energy Mode (look for lowpowermode 0, powernap 0, powermode)
+# pmset perf flags + Energy Mode (expect powermode 2 = High Power, powernap 0)
 pmset -g custom
 
 # Boot LaunchDaemon logs
