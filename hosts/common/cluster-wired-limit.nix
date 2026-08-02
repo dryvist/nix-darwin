@@ -53,6 +53,26 @@ in
       wiredLimitMb = linkPrep.clusterWiredLimitMb;
       inherit (linkPrep) standaloneWiredLimitMb;
 
+      # UNATTENDED AUTO-REBOOT: only where the host can actually finish booting
+      # without a human. 0 disables it (halt-and-alert only).
+      #
+      # An auto-reboot is self-healing ONLY if the machine returns to service
+      # by itself. With FileVault enabled and no auto-unlock, a reboot parks at
+      # the pre-boot unlock prompt and STAYS DOWN until someone types a
+      # password — converting a recoverable halt into an outage of unbounded
+      # length, and doing it unattended, at night, on a laptop that may not be
+      # near its owner. That is strictly worse than the halt it is clearing.
+      #
+      # Measured 2026-08-01: `fdesetup status` reports FileVault On on the
+      # laptop and Off on the headless host, and only the headless host has an
+      # autoLoginUser set. So the headless host reboots straight back into
+      # service and keeps the feature; the laptop must not.
+      #
+      # Gate on the real precondition rather than a hostname: a host may enable
+      # this only if it boots unattended. If FileVault is ever disabled on the
+      # laptop (or an auto-unlock is configured), flip this and say so here.
+      pdAutoRebootWindowSecs = if hostConfig.isServer then 21600 else 0;
+
       # Expected per-rank shard size for nix-ai's memory-headroom precondition
       # rung (rank_start_preconditions_ok, cluster-link-guards.sh): refuses a
       # rank start unless free+reclaimable memory covers this many MB. Closes
