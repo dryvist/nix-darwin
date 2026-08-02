@@ -94,10 +94,9 @@ in
       shardMemoryMb = 56000;
 
       # wiredCeilingMb (dryvist/nix-ai#1481) is DELIBERATELY LEFT UNSET (0 =
-      # disabled). A value of 76800 was set here earlier today and is reverted:
-      # it was derived ad hoc, without reading the layered-ceiling model in
-      # docs-starlight d/hosts/ai/mlx-memory-ceilings, and that model shows the
-      # value reaps healthy ranks.
+      # disabled). Any value here must come from the layered-ceiling model in
+      # the private docs repo, never from an ad-hoc estimate: a ceiling derived
+      # without it reaps healthy ranks.
       #
       # From the definition sites, per that page's clustered formula:
       #   F_rank(N) = W_shard + L1_buf + B_cache + N * C_seq
