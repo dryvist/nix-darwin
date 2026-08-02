@@ -238,10 +238,6 @@ Managed by nix-darwin modules but installed externally (not via nixpkgs or Homeb
 | Network Tuning | `modules/darwin/network-tuning.nix` | TCP/socket-buffer sysctls (exposed, off by default) |
 | Boot | `modules/darwin/boot-activation.nix` | Creates /run/current-system at boot |
 | Logging | `modules/darwin/logging.nix` | Syslog forwarding to remote server |
-| Auto Upgrade | `modules/darwin/auto-upgrade.nix` | Weekly root launchd `darwin-rebuild switch` against merged `dryvist/nix-darwin` |
-
-Note: Friday 00:00 local time; server hosts pin UTC so the same schedule lands
-at Friday 00:00 UTC there.
 | File Extensions | `modules/darwin/file-extensions.nix` | File type associations |
 | Auto Recovery | `modules/darwin/auto-recovery.nix` | Activation error recovery |
 

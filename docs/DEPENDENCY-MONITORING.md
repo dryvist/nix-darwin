@@ -16,11 +16,6 @@ never advances it — regardless of what the table below implies. That lock is
 refreshed instead by `.github/workflows/deps-refresh-nixpkgs.yml` on its own
 schedule.
 
-Host-side application is separate: `modules/darwin/auto-upgrade.nix` runs `darwin-rebuild switch`
-directly on a weekly root `launchd` schedule against the latest merged `dryvist/nix-darwin` flake on
-each configured Mac. Server hosts pin UTC so the same Friday 00:00 schedule lands at Friday 00:00 UTC
-there. It does not mutate `flake.lock` or create dependency PRs.
-
 ## Update Automation Layers
 
 | Layer | Role | What Updates | When | Auto-merge |
@@ -29,7 +24,6 @@ there. It does not mutate `flake.lock` or create dependency PRs.
 | **Custom Workflow** (Fallback) | Safety net | All inputs IF no Renovate PR exists | Tue/Fri (all), daily (AI-focused) | No |
 | **repository_dispatch** | Rapid response | ai-assistant-instructions only | Instant (on push to source) | No |
 | **workflow_dispatch** | Manual | Any inputs | On demand | No |
-| **Host auto-upgrade** | Apply merged config | Current host system profile | Friday 00:00 local time (UTC on server hosts) | N/A |
 
 **Key relationship:** Custom Workflow checks if a Renovate PR exists and skips if one does, preventing duplicate update attempts.
 
