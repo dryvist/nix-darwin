@@ -55,23 +55,40 @@ sysctl cap does not protect against that (see the LLM-software layer).
 
 ## Category 2 — Power / pmset
 
-High Power Mode is the biggest sustained-throughput lever on a laptop (raises the fan ceiling,
-defers thermal throttling), but there is **no `pmset`/`sysctl`/`defaults` key** for it.
+High Power Mode is the biggest sustained-throughput lever on a laptop: it raises the fan
+ceiling and defers thermal throttling. It is set by `pmset -a powermode 2`.
+
+`powermode` is a three-state key whose values follow the System Settings → Battery →
+Energy Mode menu order:
+
+| Value | Energy Mode |
+| --- | --- |
+| `0` | Automatic |
+| `1` | Low Power |
+| `2` | **High Power** |
+
+`pmset -a lowpowermode <0\|1>` writes this same key, so a boolean can only reach Automatic
+or Low Power — never High. There is no `lowPowerMode` nix option for that reason.
 
 | Parameter | nix option / cmd | Default | This host | Persist | Notes |
 | --- | --- | --- | --- | --- | --- |
-| Energy Mode (High Power) | `energyMode` (verify) | Automatic | `"high"` | VERIFY | manual: System Settings → Battery |
-| `pmset -a lowpowermode` | `pmset.lowPowerMode` | `0` | `false` (0) | PERSIST | LPM caps performance — keep off |
+| Energy Mode (High Power) | `energyMode` | High Power | `"high"` | PERSIST | `pmset -a powermode 2`, AC **and** battery |
 | `pmset -a powernap` | `pmset.powerNap` | `1` | `false` (0) | PERSIST | avoids background wakes |
 | `pmset -a proximitywake` | `pmset.proximityWake` | `1` | `false` (0) | PERSIST | fewer spurious wakes |
 | `pmset -a disablesleep` | `pmset.disableSleep` | `0` | `null` (leave) | PERSIST | sledgehammer; `sleep.ac=0` covers AC |
 | `pmset -a tcpkeepalive` | `pmset.tcpKeepAlive` | `1` | `null` (leave) | PERSIST | only for serving in standby |
 | sleep / displaysleep / disksleep | `system.energy.*` | — | ac=0, batt=60, disp=30, disk=10 | PERSIST | sleep-timer policy (separate module) |
 
-`energyMode` drives a verify/nudge: activation reads `pmset -g custom`, parses the AC-block
-`powermode` (observed: 0 = Automatic, 1 = High Power, 2 = Low Power) and logs a WARN on drift.
-Set it once: **System Settings → Battery → Energy Mode → High Power** (M4 Max is supported), or via an
-MDM Energy Saver profile. `gpuswitch` is meaningless on Apple Silicon (single GPU).
+`energyMode` enforces: activation writes `pmset -a powermode 2`, then re-reads both the AC and
+Battery blocks of `pmset -g custom` to confirm it took. Both sources are checked so an
+unplugged laptop does not throttle. Models that expose no `powermode` key (the Mac Studio)
+are skipped rather than retried every activation.
+
+`"high"` is the only value that can be requested; `"unmanaged"` leaves the setting alone.
+Automatic and Low Power both throttle the SoC, and a throttled rank reports slow tokens
+rather than an error, so no code path may select them.
+
+`gpuswitch` is meaningless on Apple Silicon (single GPU).
 
 ## Category 3 — Thermal / sustained performance
 

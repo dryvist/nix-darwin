@@ -91,7 +91,6 @@ in
       TM_EXCLUDES=${lib.escapeShellArg (lib.concatStringsSep ":" cfg.timeMachineExcludes)} \
       APPNAP_BUNDLES=${lib.escapeShellArg (lib.concatStringsSep ":" cfg.appNapDisabledFor)} \
       USER_NAME=${lib.escapeShellArg userConfig.user.name} \
-      PMSET_LOWPOWERMODE=${lib.escapeShellArg (pmsetBool cfg.pmset.lowPowerMode)} \
       PMSET_POWERNAP=${lib.escapeShellArg (pmsetBool cfg.pmset.powerNap)} \
       PMSET_PROXIMITYWAKE=${lib.escapeShellArg (pmsetBool cfg.pmset.proximityWake)} \
       PMSET_DISABLESLEEP=${lib.escapeShellArg (pmsetBool cfg.pmset.disableSleep)} \

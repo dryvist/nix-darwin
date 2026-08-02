@@ -109,14 +109,6 @@ in
 
     # Category 2: power / pmset (inference-perf knobs)
     pmset = {
-      lowPowerMode = lib.mkOption {
-        type = lib.types.nullOr lib.types.bool;
-        default = false;
-        description = ''
-          pmset -a lowpowermode. Throttles the SoC and stalls inference, so
-          default false (off) on all power sources. null = macOS default.
-        '';
-      };
       powerNap = lib.mkOption {
         type = lib.types.nullOr lib.types.bool;
         default = false;
@@ -154,17 +146,19 @@ in
     energyMode = lib.mkOption {
       type = lib.types.enum [
         "high"
-        "automatic"
-        "low"
         "unmanaged"
       ];
       default = "high";
       description = ''
-        Desired macOS Energy Mode (System Settings → Battery). High Power Mode
-        is the biggest sustained-throughput lever on an M4 Max laptop but CANNOT
-        be set programmatically — set it once in System Settings or via MDM.
-        Activation reads `pmset -g custom`, parses the AC-block powermode, and
-        WARNs on drift. "unmanaged" skips the check. Verify/nudge only.
+        macOS Energy Mode (System Settings → Battery). High Power Mode is the
+        biggest sustained-throughput lever on an M4 Max, so it is the only
+        value this repo writes: activation sets `pmset -a powermode 2` on both
+        AC and battery and verifies it by re-reading. "unmanaged" leaves the
+        setting alone entirely.
+
+        There is deliberately no way to request Automatic or Low Power. Both
+        throttle the SoC, and a throttled rank reports slow tokens rather than
+        an error, so the failure is invisible at the point it happens.
       '';
     };
 
