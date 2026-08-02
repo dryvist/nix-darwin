@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.23.4](https://github.com/dryvist/nix-darwin/compare/v2.23.3...v2.23.4) (2026-08-02)
+
+
+### Bug Fixes
+
+* **llm-gate:** launch through Apple's interpreter so the gate keeps LAN access ([#1959](https://github.com/dryvist/nix-darwin/issues/1959)) ([483a77b](https://github.com/dryvist/nix-darwin/commit/483a77beb168ff8afee5c13661a8a9de7164c906))
+
 ## [2.23.3](https://github.com/dryvist/nix-darwin/compare/v2.23.2...v2.23.3) (2026-08-02)
 
 
