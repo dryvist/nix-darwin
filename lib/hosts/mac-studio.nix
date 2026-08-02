@@ -151,7 +151,8 @@ in
 
     # Resident brain warmed at boot: the 35B, the only servable model.
     # "default" is one of several role aliases that all resolve to that same
-    # entry in singleModel mode (line ~106 above lists them). This used to
+    # entry in singleModel mode; the full list is qwen36-35b's `roles`
+    # attribute above, which is also where goal-judge is declared. This used to
     # read `[ "goal-judge" ]` — also a valid alias to the SAME resident, so
     # functionally a no-op change — but that name reads as "warm a separate,
     # smaller judge model", which does not exist on this host: every role
