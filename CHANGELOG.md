@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.23.1](https://github.com/dryvist/nix-darwin/compare/v2.23.0...v2.23.1) (2026-08-02)
+
+
+### Bug Fixes
+
+* **mlx-cluster:** no unattended auto-reboot where FileVault blocks the boot ([e6c0157](https://github.com/dryvist/nix-darwin/commit/e6c01570408d279966ec53a6a6b9e69ecf89097e))
+
 ## [2.23.0](https://github.com/dryvist/nix-darwin/compare/v2.22.1...v2.23.0) (2026-08-02)
 
 
