@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.23.2](https://github.com/dryvist/nix-darwin/compare/v2.23.1...v2.23.2) (2026-08-02)
+
+
+### Bug Fixes
+
+* **mac-studio:** enforce llm-concurrency parity with tofu-proxmox via CI ([2c52d82](https://github.com/dryvist/nix-darwin/commit/2c52d824aa528346298546220b06c03ac612563b))
+* **mac-studio:** enforce llm-concurrency parity with tofu-proxmox via CI ([6d98bab](https://github.com/dryvist/nix-darwin/commit/6d98babff6d91090a281e8a93c576882a7c8aa47))
+
 ## [2.23.1](https://github.com/dryvist/nix-darwin/compare/v2.23.0...v2.23.1) (2026-08-02)
 
 
