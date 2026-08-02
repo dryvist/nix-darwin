@@ -1,0 +1,21 @@
+# LLM Concurrency Parity - scheduled drift check (standalone)
+#
+# ci-gate.yml runs this on every PR that touches nix files, but that only
+# catches drift introduced by a nix-darwin commit. A change made purely on
+# the dryvist/tofu-proxmox side (pipeline_constants.serving.llm_concurrency)
+# would ship with no nix-darwin PR to trigger the check — this daily run
+# closes that gap. Calls the reusable workflow for DRY.
+
+name: LLM Concurrency Parity (Scheduled)
+
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  parity:
+    uses: ./.github/workflows/_llm-concurrency-parity.yml

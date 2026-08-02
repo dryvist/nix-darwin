@@ -13,6 +13,17 @@ let
   # single "source" claimed 1, and the two could drift silently. Since
   # 2026-07-27 the per-model override is gone entirely, so this is now the
   # only concurrency number on the host.
+  #
+  # It is ALSO no longer this repo's only definition of the number, just the
+  # only one nix can evaluate hermetically. dryvist/tofu-proxmox's
+  # modules/proxmox-stack/constants.tf (pipeline_constants.serving.
+  # llm_concurrency) is the canonical source; ansible-proxmox-ai derives its
+  # ai_llm_concurrency from it directly over the tofu_data.constants channel.
+  # Flake evaluation has no network access, so this repo cannot derive the
+  # same way — instead CI (.github/workflows/_llm-concurrency-parity.yml)
+  # fetches dryvist/tofu-proxmox's published constant and fails the build
+  # when it disagrees with the value below. Raise both together; the check
+  # enforces that now, not this comment.
   serveConcurrency = 1;
 in
 {
@@ -138,9 +149,20 @@ in
       concurrencyLimit = serveConcurrency;
     };
 
-    # Resident brain warmed at boot: the 35B, the only servable model. The
-    # role name is unchanged because every role now resolves to that entry.
-    preload = [ "goal-judge" ];
+    # Resident brain warmed at boot: the 35B, the only servable model.
+    # "default" is one of several role aliases that all resolve to that same
+    # entry in singleModel mode; the full list is qwen36-35b's `roles`
+    # attribute above, which is also where goal-judge is declared. This used to
+    # read `[ "goal-judge" ]` — also a valid alias to the SAME resident, so
+    # functionally a no-op change — but that name reads as "warm a separate,
+    # smaller judge model", which does not exist on this host: every role
+    # here, including goal-judge, aliases the one 35B resident (ttl=0). That
+    # misreading cost a real multi-hour misdiagnosis of a warmup starvation
+    # incident on 2026-08-01 (the actual cause was external: something
+    # kickstarting the warmup agent in a tight loop, force-reloading this
+    # SAME resident over and over — see nix-ai's mlx-warmup.py RE-INVOCATION
+    # BOUND). "default" says what actually happens here.
+    preload = [ "default" ];
 
     # Clustered mode: this Mac is rank 0 (coordinator) of the two-Mac JACCL
     # brain when the Thunderbolt cable is in — it binds the cluster endpoint on

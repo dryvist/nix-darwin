@@ -1,5 +1,67 @@
 # Changelog
 
+## [2.23.3](https://github.com/dryvist/nix-darwin/compare/v2.23.2...v2.23.3) (2026-08-02)
+
+
+### Bug Fixes
+
+* **mac-studio:** stop preload from carrying a misleading alias name ([cc206d8](https://github.com/dryvist/nix-darwin/commit/cc206d850fe86e256db85b59ed72ed87bf5ef432))
+* **mac-studio:** stop preload from carrying a misleading alias name ([75f44ce](https://github.com/dryvist/nix-darwin/commit/75f44ce497080e7d92e35578c832051cd7c0fb0e))
+
+## [2.23.2](https://github.com/dryvist/nix-darwin/compare/v2.23.1...v2.23.2) (2026-08-02)
+
+
+### Bug Fixes
+
+* **mac-studio:** enforce llm-concurrency parity with tofu-proxmox via CI ([2c52d82](https://github.com/dryvist/nix-darwin/commit/2c52d824aa528346298546220b06c03ac612563b))
+* **mac-studio:** enforce llm-concurrency parity with tofu-proxmox via CI ([6d98bab](https://github.com/dryvist/nix-darwin/commit/6d98babff6d91090a281e8a93c576882a7c8aa47))
+
+## [2.23.1](https://github.com/dryvist/nix-darwin/compare/v2.23.0...v2.23.1) (2026-08-02)
+
+
+### Bug Fixes
+
+* **mlx-cluster:** no unattended auto-reboot where FileVault blocks the boot ([e6c0157](https://github.com/dryvist/nix-darwin/commit/e6c01570408d279966ec53a6a6b9e69ecf89097e))
+
+## [2.23.0](https://github.com/dryvist/nix-darwin/compare/v2.22.1...v2.23.0) (2026-08-02)
+
+
+### Features
+
+* **tunables:** actually set High Power Mode instead of warning about it ([7897e2f](https://github.com/dryvist/nix-darwin/commit/7897e2f2a833291eca35e7cba64343dceb73d49d))
+* **tunables:** actually set High Power Mode instead of warning about it ([4a5aa4f](https://github.com/dryvist/nix-darwin/commit/4a5aa4fdbbbbe528082b21fa50f239eab0c63c44))
+
+## [2.22.1](https://github.com/dryvist/nix-darwin/compare/v2.22.0...v2.22.1) (2026-08-01)
+
+
+### Bug Fixes
+
+* **mlx-cluster:** revert wiredCeilingMb, it reaps healthy ranks ([d317a7f](https://github.com/dryvist/nix-darwin/commit/d317a7fb5cd28b31c7ddd304c6d37c9ced2fd01e))
+* **mlx-cluster:** revert wiredCeilingMb, it reaps healthy ranks ([8f964d1](https://github.com/dryvist/nix-darwin/commit/8f964d177348ceb3d4210f7e082d5fd5c767c538))
+
+## [2.22.0](https://github.com/dryvist/nix-darwin/compare/v2.21.2...v2.22.0) (2026-08-01)
+
+
+### Features
+
+* **mlx-cluster:** set shardMemoryMb for the memory-headroom rung ([0d986cc](https://github.com/dryvist/nix-darwin/commit/0d986cce3a3520a13d898dd01c6b77356f249319))
+* **mlx-cluster:** set shardMemoryMb for the memory-headroom rung ([3fdb891](https://github.com/dryvist/nix-darwin/commit/3fdb891f7aa099893753f09a358ce46b681e5b10))
+* **mlx-cluster:** set wiredCeilingMb so the runtime guard is not decorative ([c235cc3](https://github.com/dryvist/nix-darwin/commit/c235cc3971a5d959627283c879d92d38e2fd0c13))
+
+## [2.21.2](https://github.com/dryvist/nix-darwin/compare/v2.21.1...v2.21.2) (2026-08-01)
+
+
+### Bug Fixes
+
+* **darwin:** remove ineffective GUI limits agent ([#1966](https://github.com/dryvist/nix-darwin/issues/1966)) ([26c9290](https://github.com/dryvist/nix-darwin/commit/26c92907ab4aeee71e0c2eb135ae1dc95cff59c8))
+
+## [2.21.1](https://github.com/dryvist/nix-darwin/compare/v2.21.0...v2.21.1) (2026-08-01)
+
+
+### Bug Fixes
+
+* **darwin:** apply maxfiles in GUI sessions ([#1962](https://github.com/dryvist/nix-darwin/issues/1962)) ([b32cf3a](https://github.com/dryvist/nix-darwin/commit/b32cf3abbf4657510ffdd9124b117f922a9a1095))
+
 ## [2.21.0](https://github.com/dryvist/nix-darwin/compare/v2.20.0...v2.21.0) (2026-07-30)
 
 

@@ -9,8 +9,9 @@ same way [TB5-RDMA-CLUSTER.md](TB5-RDMA-CLUSTER.md) holds the Recovery-mode
 steps and [CLUSTER_MODE.md](CLUSTER_MODE.md) holds current status.
 
 Two link-IP bugs (#1747, #1750) were found and fixed live during this same
-session — see [TB5-RDMA-CLUSTER.md](TB5-RDMA-CLUSTER.md#network-substrate-two-track--do-not-bridge-the-rdma-path)
-for the corrected mechanism.
+session — the corrected mechanism lives in `modules/darwin/cluster-link-prep.nix`
+and its rules in the nix-ai
+[cluster-link-truths page](https://github.com/dryvist/nix-ai/blob/develop/docs/runbooks/cluster-link-truths.md).
 
 ## Checklist
 
@@ -35,8 +36,7 @@ for the corrected mechanism.
     `clusterWiredLimitMb` now equals the host's standalone
     `appleSiliconTunables.wiredLimitMb` (102400 MB on both), so the ceiling
     no longer changes at link-up. Do not cite the 90000/80000 numbers as a
-    current guard — see
-    [CLUSTER-RESUMPTION-READINESS.md](CLUSTER-RESUMPTION-READINESS.md) §2.
+    current guard — see [CLUSTER_MODE.md](CLUSTER_MODE.md).
 
 - [ ] **Link-down restore.** Confirm the link-down path returns each host to
   its standalone wired value.
@@ -58,7 +58,7 @@ for the corrected mechanism.
 
 - [ ] **Second cable.** Test whether JACCL uses a second link between the same
   pair (expected: no). Record the result in
-  [CLUSTER_MODE.md](CLUSTER_MODE.md#second-cable).
+  [CLUSTER_MODE.md](CLUSTER_MODE.md).
   - _Result:_ **(verify)** — not tested.
 
 - [ ] **Recovery-mode Reduced Security.** Record in

@@ -26,7 +26,7 @@ let
     text = builtins.readFile ./scripts/system-limits.sh;
   };
 
-  # Reused by both the boot daemon (EnvironmentVariables) and activation.
+  # Reused by the root daemon and activation.
   limitsEnv = {
     MAXFILES = optStr cfg.maxFiles;
     MAXFILESPERPROC = optStr cfg.maxFilesPerProc;
@@ -144,7 +144,7 @@ in
       MAXPROCPERUID=${lib.escapeShellArg limitsEnv.MAXPROCPERUID} \
       LAUNCHCTL_MAXFILES_SOFT=${lib.escapeShellArg limitsEnv.LAUNCHCTL_MAXFILES_SOFT} \
       LAUNCHCTL_MAXFILES_HARD=${lib.escapeShellArg limitsEnv.LAUNCHCTL_MAXFILES_HARD} \
-        ${lib.getExe applyScript} || true
+        ${lib.getExe applyScript}
     '';
   };
 }

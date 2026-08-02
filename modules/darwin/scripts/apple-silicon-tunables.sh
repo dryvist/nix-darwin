@@ -33,10 +33,18 @@ apply_pmset proximitywake "${PMSET_PROXIMITYWAKE:-}"
 apply_pmset disablesleep "${PMSET_DISABLESLEEP:-}"
 apply_pmset tcpkeepalive "${PMSET_TCPKEEPALIVE:-}"
 
-# --- High Power Mode (Energy Mode) verify / nudge ------------------------
-# Cannot be set via CLI. Read the AC-block powermode from `pmset -g custom`
-# and warn on drift. Observed mapping: 0 = Automatic, 1 = High Power,
-# 2 = Low Power. On models that do not report powermode the value is empty.
+# --- High Power Mode (Energy Mode) enforce -------------------------------
+# SET it, then verify by re-reading. This used to only warn, on the belief
+# that Energy Mode "cannot be set via CLI" — `pmset -a powermode <n>` does
+# work as root on models that expose it, and this script already runs as root
+# at activation. A cluster rank left on Automatic thermally throttles mid-run,
+# which shows up as inexplicably slow tokens rather than as an error, so a
+# warning nobody reads was the wrong control.
+#
+# Read the AC-block powermode from `pmset -g custom`. Observed mapping:
+# 0 = Automatic, 1 = High Power, 2 = Low Power. Models that do not expose it
+# (e.g. desktops without an Energy Mode control) report empty — there the set
+# is skipped rather than retried every activation.
 if [ -n "${ENERGY_MODE_DESIRED:-}" ] && [ "${ENERGY_MODE_DESIRED}" != "unmanaged" ]; then
   ac_powermode="$(/usr/bin/pmset -g custom 2>/dev/null | /usr/bin/awk '
     /^AC Power:/ { in_ac = 1; next }
@@ -50,11 +58,29 @@ if [ -n "${ENERGY_MODE_DESIRED:-}" ] && [ "${ENERGY_MODE_DESIRED}" != "unmanaged
     *) want="" ;;
   esac
   if [ -z "${ac_powermode}" ]; then
-    warn "Energy Mode: AC powermode not reported (unsupported model/macOS); set it manually in System Settings -> Battery -> Energy Mode"
-  elif [ -n "${want}" ] && [ "${ac_powermode}" != "${want}" ]; then
-    warn "Energy Mode drift: AC powermode=${ac_powermode}, desired ${ENERGY_MODE_DESIRED} (=${want}); set System Settings -> Battery -> Energy Mode -> High Power"
+    warn "Energy Mode: AC powermode not reported (model does not expose it); skipping"
+  elif [ -z "${want}" ]; then
+    warn "Energy Mode: unrecognised desired value '${ENERGY_MODE_DESIRED}'; leaving powermode=${ac_powermode}"
+  elif [ "${ac_powermode}" = "${want}" ]; then
+    log "Energy Mode AC powermode=${ac_powermode} already matches desired ${ENERGY_MODE_DESIRED}"
   else
-    log "Energy Mode AC powermode=${ac_powermode} matches desired ${ENERGY_MODE_DESIRED}"
+    # Apply, then re-read. Never trust the exit code alone: pmset can accept a
+    # value the hardware then ignores, which would report success while the
+    # machine stays on Automatic.
+    if /usr/bin/pmset -a powermode "${want}" 2>/dev/null; then
+      ac_now="$(/usr/bin/pmset -g custom 2>/dev/null | /usr/bin/awk '
+        /^AC Power:/ { in_ac = 1; next }
+        /Power:[[:space:]]*$/ { in_ac = 0 }
+        in_ac && $1 == "powermode" { print $2; exit }
+      ' || true)"
+      if [ "${ac_now}" = "${want}" ]; then
+        log "Energy Mode set: AC powermode ${ac_powermode} -> ${ac_now} (${ENERGY_MODE_DESIRED})"
+      else
+        warn "Energy Mode: pmset accepted powermode=${want} but it read back as '${ac_now:-empty}'; set it in System Settings -> Battery -> Energy Mode"
+      fi
+    else
+      warn "Energy Mode: pmset -a powermode ${want} failed; set it in System Settings -> Battery -> Energy Mode"
+    fi
   fi
 fi
 
