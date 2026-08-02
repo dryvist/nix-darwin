@@ -152,12 +152,21 @@ jobs:
     if: needs.changes.outputs.claude == 'true'
     uses: ./.github/workflows/_claude-settings.yml
 
+  # Cross-repo mechanical check: lib/hosts/mac-studio.nix's serveConcurrency
+  # must equal dryvist/tofu-proxmox's pipeline_constants.serving.llm_concurrency
+  # (the single source of truth). See _llm-concurrency-parity.yml header.
+  llm-concurrency-parity:
+    name: LLM Concurrency Parity
+    needs: changes
+    if: needs.changes.outputs.nix == 'true'
+    uses: ./.github/workflows/_llm-concurrency-parity.yml
+
   # ==========================================================================
   # MERGE GATE - The ONLY required check in branch protection
   # ==========================================================================
   gate:
     name: Merge Gate
-    needs: [changes, shared-gate, nix-build, nix-validate, claude-settings]
+    needs: [changes, shared-gate, nix-build, nix-validate, claude-settings, llm-concurrency-parity]
     if: ${{ !cancelled() }}
     runs-on: ${{ github.event.pull_request.head.repo.full_name == github.repository && format('runs-on={0}/runner=2cpu-linux-x64', github.run_id) || 'ubuntu-latest' }}
     steps:
@@ -169,6 +178,8 @@ jobs:
           # For Nix changes: only nix-validate can be skipped, nix-build must pass
           # claude-settings is intentionally NOT skippable for deps-only: a
           # flake.lock bump can change the rendered settings, so it must validate.
+          # llm-concurrency-parity shares nix-validate's `if:` (any nix change),
+          # so it is skippable in exactly the same cases nix-validate is.
           # shared-gate is never skippable — it always reports.
-          allowed-skips: ${{ (needs.changes.outputs.is-deps-only == 'true' && 'nix-build, nix-validate') || (needs.changes.outputs.nix == 'false' && 'nix-build, nix-validate, claude-settings') || 'nix-validate, claude-settings' }}
+          allowed-skips: ${{ (needs.changes.outputs.is-deps-only == 'true' && 'nix-build, nix-validate, llm-concurrency-parity') || (needs.changes.outputs.nix == 'false' && 'nix-build, nix-validate, claude-settings, llm-concurrency-parity') || 'nix-validate, claude-settings, llm-concurrency-parity' }}
           jobs: ${{ toJSON(needs) }}
