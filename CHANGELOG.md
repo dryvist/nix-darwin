@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.23.0](https://github.com/dryvist/nix-darwin/compare/v2.22.1...v2.23.0) (2026-08-02)
+
+
+### Features
+
+* **tunables:** actually set High Power Mode instead of warning about it ([7897e2f](https://github.com/dryvist/nix-darwin/commit/7897e2f2a833291eca35e7cba64343dceb73d49d))
+* **tunables:** actually set High Power Mode instead of warning about it ([4a5aa4f](https://github.com/dryvist/nix-darwin/commit/4a5aa4fdbbbbe528082b21fa50f239eab0c63c44))
+
 ## [2.22.1](https://github.com/dryvist/nix-darwin/compare/v2.22.0...v2.22.1) (2026-08-01)
 
 
