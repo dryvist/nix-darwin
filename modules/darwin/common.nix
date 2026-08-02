@@ -36,7 +36,6 @@ in
     ./activation-error-tracking.nix
     ./llm-gate.nix
     ./nix-storage.nix
-    ./auto-upgrade.nix
     ./ws-monitor.nix
     ./apple-silicon-tunables.nix
     ./system-limits.nix

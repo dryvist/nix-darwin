@@ -138,7 +138,6 @@ in
     # from the laptop-oriented module defaults. `mkDefault` so an explicit host
     # value still wins. `mkIf isServer` gates each: a workstation needs nothing —
     # the module defaults already match the laptop.
-    nixDarwinAutoUpgrade.enable = true; # Friday 00:00 local-time launchd target; server hosts are pinned to UTC above.
     # Both hosts are cluster-mode nodes: keep every RDMA-capable Thunderbolt
     # port out of bridge0 and converge the role link address onto whichever
     # port the cable is in. Role follows machine class: the headless desktop
