@@ -54,12 +54,12 @@ in
       # mid-generation shows up as inexplicably slow tokens, not as an error.
       # Declared on BOTH cluster Macs so the intent is recorded in one place.
       #
-      # Currently a no-op on this model — measured 2026-08-01, the AC block of
-      # `pmset -g custom` here reports only `lowpowermode`, with no `powermode`
-      # key, so macOS exposes no Energy Mode control on this hardware. The
-      # apply script detects that and skips rather than retrying every
-      # activation. Kept declared so it takes effect automatically if a future
-      # macOS exposes the control, instead of being silently forgotten.
+      # Measured 2026-08-01: the AC block of `pmset -g custom` here reports only
+      # `lowpowermode`, not the tri-state `powermode`, so this model offers no
+      # High Power step. The apply script writes whichever name the model
+      # reports and degrades "high" to the boolean's unthrottled 0 — so this
+      # still guarantees "never throttled", and picks up a real High Power step
+      # automatically if a future macOS exposes one here.
       energyMode = "high";
       # huggingfaceVolume uses the module default (/Volumes/HuggingFace) — the
       # dedicated APFS volume created by apfs-volumes, identical on every host.

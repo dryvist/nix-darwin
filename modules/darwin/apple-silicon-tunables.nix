@@ -161,10 +161,17 @@ in
       default = "high";
       description = ''
         Desired macOS Energy Mode (System Settings → Battery). High Power Mode
-        is the biggest sustained-throughput lever on an M4 Max laptop but CANNOT
-        be set programmatically — set it once in System Settings or via MDM.
-        Activation reads `pmset -g custom`, parses the AC-block powermode, and
-        WARNs on drift. "unmanaged" skips the check. Verify/nudge only.
+        is the biggest sustained-throughput lever on an M4 Max laptop, and IS
+        settable as root: activation writes `pmset -c/-b powermode` and re-reads
+        it per power source to confirm it stuck. "unmanaged" skips it entirely.
+
+        powermode values are 0 = Automatic, 1 = Low Power, 2 = High Power.
+        Because "high" is AC-only on portables, it requests 2 on AC and 0
+        (Automatic) on battery — macOS offers no High Power on battery.
+
+        This option owns the preference slot that `pmset.lowPowerMode` also
+        writes (they are one slot under two names), so whenever this is not
+        "unmanaged" the boolean stands down rather than racing it.
       '';
     };
 

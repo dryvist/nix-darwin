@@ -92,9 +92,9 @@ in
     # Metal debug-env guard. See modules/darwin/apple-silicon-tunables.nix.
     appleSiliconTunables = {
       enable = true;
-      # High Power Mode is the biggest sustained-throughput lever on the laptop
-      # but cannot be set via CLI; this drives a verify/nudge at activation.
-      # Set it once: System Settings -> Battery -> Energy Mode -> High Power.
+      # High Power Mode is the biggest sustained-throughput lever on the laptop.
+      # Activation sets it (AC powermode 2) and re-reads to confirm it stuck.
+      # Never set this below "high" here: this host must never run throttled.
       energyMode = "high";
       # pmset perf flags (lowPowerMode / powerNap / proximityWake off) and the
       # Metal debug-env guard use the module's safe-win defaults.
