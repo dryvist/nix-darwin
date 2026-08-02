@@ -17,10 +17,15 @@
   # flake.nix imports the module on macbook-m4 alone. The runtime bearer token
   # OPENAI_API_KEY is exported from the automation keychain in ../common/home.nix
   # (alongside HF_TOKEN etc.), so this host only names the endpoint.
+  #
+  # The router is an internal service, so its FQDN composes from
+  # userConfig.internalDomain. Composing it from the public apex instead yields
+  # a name with no DNS record, which every harness surfaces as a connection
+  # failure rather than as a configuration error.
   programs = {
     openHarness = {
       enable = true;
-      endpoint = "https://llm.${userConfig.baseDomain}/v1";
+      endpoint = "https://llm.${userConfig.internalDomain}/v1";
     };
 
     # Recreates the tmux "cc" session at every login — a reboot always kills
