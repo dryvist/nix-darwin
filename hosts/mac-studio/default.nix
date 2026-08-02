@@ -50,7 +50,17 @@ in
       # headless session needs OS headroom, and the resident 80B + 27B workers
       # (~74 GB) sit well under the 99 GiB L2 cap that sits under this ceiling.
       maxLocalLlmGb = 100;
-      # energyMode comes from the server class default ("unmanaged") in ../common.
+      # Cluster hosts want High Power Mode: a rank that thermally throttles
+      # mid-generation shows up as inexplicably slow tokens, not as an error.
+      # Declared on BOTH cluster Macs so the intent is recorded in one place.
+      #
+      # Currently a no-op on this model — measured 2026-08-01, the AC block of
+      # `pmset -g custom` here reports only `lowpowermode`, with no `powermode`
+      # key, so macOS exposes no Energy Mode control on this hardware. The
+      # apply script detects that and skips rather than retrying every
+      # activation. Kept declared so it takes effect automatically if a future
+      # macOS exposes the control, instead of being silently forgotten.
+      energyMode = "high";
       # huggingfaceVolume uses the module default (/Volumes/HuggingFace) — the
       # dedicated APFS volume created by apfs-volumes, identical on every host.
     };
