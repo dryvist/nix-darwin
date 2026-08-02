@@ -3,11 +3,11 @@
     "ai-assistant-instructions": {
       "flake": false,
       "locked": {
-        "lastModified": 1785440170,
-        "narHash": "sha256-o8o9WyqXCgToWgmXqVwrg1EnGQtKPR83aLsglw8GACI=",
+        "lastModified": 1785697784,
+        "narHash": "sha256-rNPloMtU9F0Is7kY9UPDqh/EGx9HBmfrvQv0RcLf7SA=",
         "owner": "dryvist",
         "repo": "ai-assistant-instructions",
-        "rev": "ab7cc75427cd67124763016f30e5f7a94c752fcd",
+        "rev": "755b05548124de4c7463b4abe5d280b6c1595d0c",
         "type": "github"
       },
       "original": {
@@ -852,11 +852,11 @@
     "jacobpevans-cc-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1784406832,
-        "narHash": "sha256-5w6WDjGLXrQTUi7qPC+YEaARipcAlSB3ToUqzNSXMtk=",
+        "lastModified": 1785697838,
+        "narHash": "sha256-AULu1CEuXES061jWmjYSU/THfpPt/L9rFDP5O0xMuTM=",
         "owner": "dryvist",
         "repo": "claude-code-plugins",
-        "rev": "df391a808beadafed5ae57500c3c12da3f6bac75",
+        "rev": "99988ee849e2e05beac894a0ee8f69c53efe50be",
         "type": "github"
       },
       "original": {
@@ -1004,11 +1004,11 @@
         "ponytail": "ponytail"
       },
       "locked": {
-        "lastModified": 1785689895,
-        "narHash": "sha256-alaiyA2TBJUQskkscT2PGwEV348gh4Q5mvV77p2y3mw=",
+        "lastModified": 1785698305,
+        "narHash": "sha256-1Usz5nSxJE8pHFelMpGSECKCRNaYAvovEr1mHaFpBkU=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "154331a555ae4ac3597525b693b5a88ef7eb95bf",
+        "rev": "17d84d272660ec10560c67ab12052978eba1ce07",
         "type": "github"
       },
       "original": {
@@ -1170,11 +1170,11 @@
         "orbstack-kubernetes": "orbstack-kubernetes"
       },
       "locked": {
-        "lastModified": 1785693624,
-        "narHash": "sha256-p2j7miQMhyyV4PUkB8vxfUpLMR6SqHUBAavDR/eTt/E=",
+        "lastModified": 1785693989,
+        "narHash": "sha256-PA7I7n4x+PQFL/dAVXTZd5kmWYYlxRrmLOjAlTnOYs8=",
         "owner": "dryvist",
         "repo": "nix-home",
-        "rev": "cf97d108f979f9395fdfe197f40571c417484aa4",
+        "rev": "bdb295d730ff8b9809780197255e07b0194cdc3b",
         "type": "github"
       },
       "original": {
