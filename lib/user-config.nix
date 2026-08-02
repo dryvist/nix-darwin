@@ -26,11 +26,25 @@ let
   # domains via "${hostConfig.hostName}.${userConfig.baseDomain}"). Never
   # hard-code the domain at a use site.
   baseDomain = "jacobpevans.com";
+
+  # Internal-services zone under the apex. Every homelab service that is not
+  # published on the public apex resolves here — compose those FQDNs from this
+  # var, never by re-spelling the zone label at a use site. Defined ONCE for
+  # the same reason baseDomain is: a use site that omits it composes a name
+  # that does not resolve, and the failure looks like an outage rather than a
+  # typo (that is exactly how the open-harness endpoint came to point at a
+  # nonexistent host).
+  internalDomain = "pve.${baseDomain}";
+
   docsHost = "docs.${baseDomain}";
 in
 {
   # Public DNS apex (see let-binding above). Compose FQDNs from this.
   inherit baseDomain;
+
+  # Internal-services zone (see let-binding above). Compose internal FQDNs
+  # from this rather than re-spelling the zone at each use site.
+  inherit internalDomain;
 
   # ==========================================================================
   # User Identity
@@ -86,7 +100,7 @@ in
       # cribl.nix). The old syslogd remote forward that also used this block
       # is retired (see modules/darwin/logging.nix header); only the server
       # name remains in use.
-      server = "haproxy.pve.${baseDomain}";
+      server = "haproxy.${internalDomain}";
     };
   };
 
