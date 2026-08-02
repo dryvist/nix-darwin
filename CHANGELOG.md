@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.23.3](https://github.com/dryvist/nix-darwin/compare/v2.23.2...v2.23.3) (2026-08-02)
+
+
+### Bug Fixes
+
+* **mac-studio:** stop preload from carrying a misleading alias name ([cc206d8](https://github.com/dryvist/nix-darwin/commit/cc206d850fe86e256db85b59ed72ed87bf5ef432))
+* **mac-studio:** stop preload from carrying a misleading alias name ([75f44ce](https://github.com/dryvist/nix-darwin/commit/75f44ce497080e7d92e35578c832051cd7c0fb0e))
+
 ## [2.23.2](https://github.com/dryvist/nix-darwin/compare/v2.23.1...v2.23.2) (2026-08-02)
 
 
