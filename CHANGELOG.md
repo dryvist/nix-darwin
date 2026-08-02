@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.23.5](https://github.com/dryvist/nix-darwin/compare/v2.23.4...v2.23.5) (2026-08-02)
+
+
+### Bug Fixes
+
+* **ci:** drop unused id-token: write from ci-fix.yml ([#2000](https://github.com/dryvist/nix-darwin/issues/2000)) ([e1589c5](https://github.com/dryvist/nix-darwin/commit/e1589c5add528783dd6766f64ef88f20c7e40ea2))
+* **power:** enforce High Power Mode instead of writing Low Power ([#2001](https://github.com/dryvist/nix-darwin/issues/2001)) ([bc96f80](https://github.com/dryvist/nix-darwin/commit/bc96f803a8e14bb6bdacd60e248944cd50da2590))
+
 ## [2.23.4](https://github.com/dryvist/nix-darwin/compare/v2.23.3...v2.23.4) (2026-08-02)
 
 
