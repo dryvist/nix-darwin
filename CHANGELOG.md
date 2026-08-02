@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.23.6](https://github.com/dryvist/nix-darwin/compare/v2.23.5...v2.23.6) (2026-08-02)
+
+
+### Bug Fixes
+
+* **ai:** point the open-harness endpoint at the internal services zone ([#2003](https://github.com/dryvist/nix-darwin/issues/2003)) ([28945bf](https://github.com/dryvist/nix-darwin/commit/28945bf892d85745ff455a4a7b4304b8c48665ec))
+
 ## [2.23.5](https://github.com/dryvist/nix-darwin/compare/v2.23.4...v2.23.5) (2026-08-02)
 
 
