@@ -87,6 +87,16 @@
       inputs.home-manager.follows = "home-manager";
     };
 
+    # flow-lock / deployment-json: the single-writer lease and gated credential
+    # injection for shared desired-state objects. Also vendored inside the
+    # inventory_resolve Ansible role, which is how guests get it — but that copy
+    # is never on a workstation PATH, so every interactive attempt began by
+    # concluding the tooling was missing. This input puts it on PATH.
+    homelab-contracts = {
+      url = "github:dryvist/homelab-contracts";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Official Determinate Nix module; automated updates are tracked by Renovate.
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
 
@@ -118,6 +128,7 @@
       nix-ai,
       nix-ai-open-harness,
       nix-home,
+      homelab-contracts,
       determinate,
       sops-nix,
       nix-homebrew,
@@ -178,6 +189,7 @@
               nix-ai
               hostConfig
               nix-homebrew
+              homelab-contracts
               ;
           };
           modules = [

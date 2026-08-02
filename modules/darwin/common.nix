@@ -1,6 +1,7 @@
 {
   pkgs,
   hostConfig,
+  homelab-contracts,
   ...
 }:
 
@@ -58,7 +59,14 @@ in
   # System packages from nixpkgs
   # All packages should come from nixpkgs - homebrew is fallback only
   # NOTE: User dev tools (bat, ripgrep, jq, etc.) provided by nix-home via home.packages
-  environment.systemPackages = with pkgs; [
+  environment.systemPackages = [
+    # Single-writer lease + gated credential injection for shared desired-state
+    # objects (deployment.json). Guests get this vendored inside the
+    # inventory_resolve Ansible role; a workstation has no such path, so without
+    # this it is absent from PATH and reads as "the tooling is missing".
+    homelab-contracts.packages.${pkgs.stdenv.hostPlatform.system}.flow-lock
+  ]
+  ++ (with pkgs; [
     # ========================================================================
     # Core CLI tools (bootstrapping - needed before home-manager)
     # ========================================================================
@@ -82,7 +90,7 @@ in
     # ========================================================================
     sox # Audio recording, conversion, and effects (Sound eXchange)
     portaudio # Cross-platform audio I/O library
-  ];
+  ]);
   # GUI apps (Raycast, SwiftBar, etc.) are user-level via home-manager
   # copyApps (hosts/macbook-m4/home.nix) for TCC-stable paths — not
   # system packages. bitwarden-desktop is a Homebrew cask (see homebrew.nix).
