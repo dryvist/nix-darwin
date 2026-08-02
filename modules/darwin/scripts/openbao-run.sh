@@ -102,8 +102,13 @@ addr="$(resolve BAO_ADDR)"
 
 # This domain's AppRole role_id/secret_id, named e.g. LLM_GATE_VAULT_ROLE_ID
 # (domain uppercased, - -> _).
-env_prefix="${domain^^}"
-env_prefix="${env_prefix//-/_}"
+#
+# BASH 3.2 ONLY. Apple ships bash 3.2 and launchd jobs here are launched
+# through /bin/bash on purpose (see the launchd-interpreter convention), so
+# this file must parse AND run under it. `${domain^^}` is bash 4+ and fails
+# at runtime with `bad substitution` under 3.2 — it still passes `bash -n`,
+# so a syntax check alone will not catch a regression here. Use tr.
+env_prefix="$(printf '%s' "$domain" | tr '[:lower:]-' '[:upper:]_')"
 role_id="$(resolve "${env_prefix}_VAULT_ROLE_ID")"
 secret_id="$(resolve "${env_prefix}_VAULT_SECRET_ID")"
 [ -n "$role_id" ] || die "${env_prefix}_VAULT_ROLE_ID not in $src"

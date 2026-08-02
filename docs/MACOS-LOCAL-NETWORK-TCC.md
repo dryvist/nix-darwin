@@ -55,6 +55,32 @@ probing the gateway and a host on any routed subnet — both should succeed.
    was discarded each rebuild. Casks fixed that (2026-07-29). It is still lost
    on every cask upgrade, since `greedy` replaces the bundle again.
 
+## launchd user agents built by Nix
+
+The table above lists launchd as allowed. That holds for **daemons** (root,
+`/Library/LaunchDaemons`). It does **not** hold for **user agents** (`gui/<uid>`),
+which carry the same per-app verdict as any GUI process. Two things compound
+there:
+
+- A grant is keyed to the executable's **code-signing identity**, and a Nix
+  binary's identity is its **content hash**. Every `darwin-rebuild` produces an
+  executable macOS has never seen, so every prior grant is already inert.
+- A Nix interpreter **anywhere** in the chain becomes the responsible process
+  for everything beneath it — which is how a wrapper's own `/usr/bin/curl` gets
+  denied even though curl is exempt when invoked directly.
+
+**Remedy: launch through Apple's interpreter.** Putting `/bin/bash` at the head
+of `ProgramArguments` keeps the responsible identity on `com.apple.bash`, which
+is stable across rebuilds and needs no grant at all. The script it execs must
+therefore stay parseable *and* runnable under Apple's **bash 3.2**.
+
+Regression symptom: the OpenBao fetch fails in ~2 ms with "Couldn't connect" /
+"No route to host". That is the denial surfacing as `EHOSTUNREACH`, **not** a
+network fault — OpenBao is reachable the whole time. AppRole login then fails,
+the service never starts, and the host serves nothing on the LAN. Reaching the
+host over ssh does **not** prove it works: ssh sessions carry their own
+exemption. Check the listening port instead.
+
 ## What will not work
 
 - There is **no MDM payload** and **no `tccutil` verb** for Local Network, so
