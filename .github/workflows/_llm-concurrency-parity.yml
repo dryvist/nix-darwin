@@ -2,7 +2,7 @@
 #
 # lib/hosts/mac-studio.nix's serveConcurrency and dryvist/tofu-proxmox's
 # pipeline_constants.serving.llm_concurrency (modules/proxmox-stack/
-# constants.tf) are the same number, published from tofu-proxmox to
+# constants-serving.tf) are the same number, published from tofu-proxmox to
 # ansible-proxmox-ai over the tofu_data.constants channel. nix's flake
 # evaluation is hermetic (no network access at build time), so it cannot
 # derive the value the way ansible does — this check is the mechanical
@@ -27,10 +27,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Fetch dryvist/tofu-proxmox constants.tf
+      - name: Fetch dryvist/tofu-proxmox serving constants
         run: |
           curl -fsSL -o /tmp/constants.tf \
-            https://raw.githubusercontent.com/dryvist/tofu-proxmox/main/modules/proxmox-stack/constants.tf
+            https://raw.githubusercontent.com/dryvist/tofu-proxmox/main/modules/proxmox-stack/constants-serving.tf
 
       - name: Assert parity
         run: |
