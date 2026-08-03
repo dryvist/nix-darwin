@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.24.0](https://github.com/dryvist/nix-darwin/compare/v2.23.6...v2.24.0) (2026-08-03)
+
+
+### Features
+
+* **apfs-volumes:** optional per-volume size ceiling ([#1970](https://github.com/dryvist/nix-darwin/issues/1970)) ([a001c34](https://github.com/dryvist/nix-darwin/commit/a001c3476f23d746afabc7b6078ce239d94e2c32))
+
 ## [2.23.6](https://github.com/dryvist/nix-darwin/compare/v2.23.5...v2.23.6) (2026-08-02)
 
 
