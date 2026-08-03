@@ -33,7 +33,7 @@ fi
 if [[ "$nix_value" != "$tofu_value" ]]; then
   echo "::error::LLM serving concurrency drift: $nix_file serveConcurrency=$nix_value" \
     "but dryvist/tofu-proxmox pipeline_constants.serving.llm_concurrency=$tofu_value." \
-    "Raise both together — see docs-starlight d/reference/llm-serving-concurrency."
+    "Raise both together — see the private serving-concurrency reference."
   exit 1
 fi
 
