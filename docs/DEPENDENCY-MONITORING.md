@@ -1,182 +1,109 @@
 # Dependency Monitoring System
 
-Automated dependency monitoring and update system for nix-darwin configuration.
+How dependencies are kept current in this repository, and which mechanism owns
+which file.
 
-## Overview
+## Two mechanisms, no overlap
 
-This repository uses a **complementary dependency update strategy** combining:
+| Mechanism | Owns | Never touches |
+| --- | --- | --- |
+| `.github/workflows/deps-flake-lock.yml` | `flake.lock`, entirely | anything else |
+| Renovate Bot | GitHub Actions pins, `# renovate:`-annotated version strings in `.nix` files, npm | `flake.lock` |
 
-1. **Renovate Bot** (primary) - Automated dependency PRs with grouping and auto-merge
-2. **Custom Workflow** (fallback) - Manual flake updates ONLY when Renovate hasn't acted
+The boundary is absolute and deliberate. **`flake.lock` has exactly one
+writer.** Renovate's `nix` manager is disabled org-wide in
+`dryvist/.github`'s `renovate-nix.json`, so nothing else can open a competing
+lock PR.
 
-**Exception: the `nixpkgs` channel pin.** Renovate's nix manager bumps an
-input when its git ref changes; `nixpkgs.url` here is pinned to a moving
-channel branch (`nixpkgs-26.05-darwin`) whose ref never changes, so Renovate
-never advances it — regardless of what the table below implies. That lock is
-refreshed instead by `.github/workflows/deps-refresh-nixpkgs.yml` on its own
-schedule.
+## flake.lock: one workflow, one branch, one pull request
 
-## Update Automation Layers
+`deps-flake-lock.yml` calls the shared
+`dryvist/.github/.github/workflows/_update-flake-lock.yml`, which runs a bare
+`nix flake update` — every root input moves together.
 
-| Layer | Role | What Updates | When | Auto-merge |
-| --- | --- | --- | --- | --- |
-| **Renovate Bot** (Primary) | Proactive updates | Critical infra, AI tools, npm | Daily 7am (critical/AI), Mon (npm) | Yes (varies by group) |
-| **Custom Workflow** (Fallback) | Safety net | All inputs IF no Renovate PR exists | Tue/Fri (all), daily (AI-focused) | No |
-| **repository_dispatch** | Rapid response | ai-assistant-instructions only | Instant (on push to source) | No |
-| **workflow_dispatch** | Manual | Any inputs | On demand | No |
-
-**Key relationship:** Custom Workflow checks if a Renovate PR exists and skips if one does, preventing duplicate update attempts.
-
-## Renovate Bot (Primary Automation)
-
-**Configuration**: `.github/renovate.json5`
-
-Renovate Bot is a GitHub App that automatically creates pull requests for dependency updates.
-It provides native Nix flake support and can scan arbitrary files for package versions.
-
-### Why Renovate?
-
-**Chosen over Dependabot** because:
-
-- ✅ Native Nix flake support (updates `flake.lock`)
-- ✅ Custom regex managers (scans bunx wrappers in `.nix` files)
-- ✅ Flexible grouping (by package type, criticality, schedule)
-- ✅ Auto-merge policies (configurable per group, including all-types for trusted inputs)
-- ✅ Node.js LTS constraints (prevents non-LTS versions)
-- ✅ Signed commits via GitHub App
-
-**What Renovate monitors:**
-
-1. **Nix flake inputs** - via native `nix` manager
-2. **Bunx wrappers** - via regex manager scanning `.nix` files
-3. **npm package versions** - in comments and wrapper scripts
-
-### Update Schedule by Package Group
-
-Tier taxonomy, cadence, and auto-merge policy are canonical — see <https://docs.jacobpevans.com/infrastructure/cicd/dependency-automation>.
-
-### How Renovate PRs Work
-
-1. **Detection**: Renovate checks for updates on schedule or when triggered
-2. **Grouping**: Updates are grouped by package type (critical, AI tools, npm)
-3. **PR Creation**: Creates PR with:
-   - Descriptive title (e.g., "chore(deps): update critical-infrastructure group")
-   - Changelog links and release notes
-   - Verified signature via Renovate App
-4. **CI Validation**: PR triggers:
-   - `nix flake check` (syntax and evaluation)
-   - Package staleness check (`.github/workflows/ci-package-staleness.yml`)
-   - AI review (`.github/workflows/review-deps.yml`)
-5. **Auto-merge** (if enabled):
-   - Waits for all CI checks to pass
-   - Requires PR to be up-to-date with base branch
-   - Auto-merges based on group policy (patch/minor for most, all types for AI Tools)
-6. **Manual Review** (when required):
-   - User reviews changelog and breaking changes
-   - Tests locally if needed: `nix flake update <input> && darwin-rebuild build`
-   - Approves and merges manually
-
-### Renovate Dashboard
-
-Renovate creates a **Dependency Dashboard** issue that shows:
-
-- Pending updates (waiting for schedule)
-- Rate-limited updates (too many concurrent PRs)
-- Conflicted PRs (need rebase)
-- Manually approved updates
-
-**Access**: Check for issue titled "Dependency Dashboard" with label `dependencies`.
-
-### Installation (Required - Manual)
-
-**Renovate must be installed as a GitHub App:**
-
-1. Navigate to <https://github.com/apps/renovate>
-2. Click "Configure" → Select repository
-3. Grant permissions:
-   - Read/write: code, pull requests, issues
-   - Read: workflows, actions
-4. Enable signed commits (automatic via Renovate App)
-
-**Verification:**
-
-```bash
-# Check for Renovate PRs
-gh pr list --search "author:app/renovate"
-
-# View Dependency Dashboard
-gh issue list --search "Dependency Dashboard in:title"
-```
-
-## Custom Workflow (Fallback)
-
-**Workflow**: `.github/workflows/deps-update-flake.yml`
-
-A single workflow handles all flake input updates with verified commit signatures.
-
-### Update Strategy
-
-| Day | Inputs Updated |
+| Trigger | When |
 | --- | --- |
-| Monday, Wednesday, Thursday, Saturday, Sunday | AI-focused inputs (9 total) |
-| Tuesday, Friday | ALL flake inputs |
-| repository_dispatch event | ai-assistant-instructions only (fast sync) |
-| Manual with `update_all: true` | ALL flake inputs |
+| `schedule` | Thursday 18:00 UTC (`11 18 * * 4`; the minute differs per nix repo) |
+| `repository_dispatch` | An upstream dryvist repo cuts a release (`update-flake-input`) |
+| `workflow_dispatch` | On demand: `gh workflow run deps-flake-lock.yml` |
 
-### AI-Focused Inputs (Daily)
+All three land on the branch **`chore/flake-lock`**, so this repository never
+carries more than one open flake pull request. A dispatch arriving while that
+pull request is open re-runs the relock from the base branch and amends it, so
+no earlier bump is lost.
 
-Updated daily at noon UTC:
+### Auto-merge is gated on nixpkgs
 
-- `nixpkgs`
-- `ai-assistant-instructions`
-- `claude-code-plugins`
-- `claude-cookbooks`
-- `claude-plugins-official`
-- `anthropic-agent-skills`
-- `superpowers-marketplace`
+- **No `nixpkgs*` input moved** — the pull request auto-merges once CI is green.
+  This keeps release propagation hands-off.
+- **A `nixpkgs*` input moved** — auto-merge is withheld and the pull request is
+  labelled `needs-review`. This repository configures live machines, and a
+  channel jump rebuilds the world.
 
-### Full Updates (Tue/Fri)
+### Why Renovate cannot do this
 
-Includes all AI-focused inputs plus:
+Renovate advances a flake input when the input's **reference** changes.
+`nixpkgs.url` is pinned to `nixpkgs-26.05-darwin`, a moving channel branch whose
+reference never changes — new commits simply land on the same branch. Renovate
+has nothing to diff, so the locked revision would freeze permanently.
 
-- `darwin`
-- `home-manager`
-- All other flake inputs
+Advancing it requires `nix flake update`, which in Renovate terms is
+`lockFileMaintenance`; that is disabled for nix org-wide because it resolves to
+absolute-latest, ignores `minimumReleaseAge`, and once looped roughly 60 pull
+requests a week on this repository.
 
-### Verified Commit Signatures
+A `minimumReleaseAge: "2 days"` rule labelled "for nixpkgs-darwin Hydra eval
+lag" used to sit in `renovate.json5`. It was removed on 2026-08-05 because it
+never once fired — for the same reason: there was no reference change for the
+age gate to hold back.
 
-All commits are signed via GitHub's REST API using `peter-evans/create-pull-request`
-with `sign-commits: true`. This produces verified signatures as `github-actions[bot]`.
+### Hydra alignment
 
-**Key benefit**: No additional secrets required - uses built-in `GITHUB_TOKEN`.
+The shared workflow compares the newly locked revision against
+`channels.nixos.org/<ref>/git-revision` and emits a **warning** on mismatch. It
+is advisory, never a hard failure, because the channel URL can lag briefly after
+a Hydra evaluation. A pin that drifts off the evaluated channel head loses
+binary-cache coverage, which is what makes staleness expensive rather than
+cosmetic.
 
-### Manual Trigger
+## Renovate Bot
+
+**Configuration**: `renovate.json5`, extending `local>dryvist/.github:renovate-nix`.
+
+Tier taxonomy, cadence, and auto-merge policy are canonical at
+<https://docs.jacobpevans.com/infrastructure/cicd/dependency-automation>.
+Pull-request creation runs in two weekly windows, Monday ~05:00 America/New_York
+and Thursday 18:00 UTC.
+
+Renovate still owns, in this repository:
+
+- GitHub Actions version and digest pins.
+- The Cribl Edge version pin in `packages/cribl-edge.nix`, via a custom
+  datasource.
+- Any `# renovate:`-annotated version string in a `.nix` file. This is a
+  separate mechanism from the `nix` manager and is unaffected by that manager
+  being off — it edits version strings, never `flake.lock`.
+
+Cluster-critical files (`hosts/common/cluster-wired-limit.nix`,
+`hosts/common/cluster-quiesce.nix`, `modules/darwin/cluster-link-prep.nix`) are
+excluded from Renovate entirely: wired-memory ceilings and static link
+configuration must only ever change through a deliberate, supervised pull
+request.
+
+Renovate publishes a **Dependency Dashboard** issue listing pending,
+rate-limited, and conflicted updates:
 
 ```bash
-# Update based on day of week (AI-focused or all)
-gh workflow run deps-update-flake.yml
-
-# Force update ALL inputs regardless of day
-gh workflow run deps-update-flake.yml -f update_all=true
+gh issue list --search "Dependency Dashboard in:title"
+gh pr list --search "author:app/renovate"
 ```
-
-## Instant Sync: ai-assistant-instructions
-
-When the `ai-assistant-instructions` repository is updated, a `repository_dispatch`
-event triggers an immediate sync of just that input.
-
-### How It Works
-
-1. Push to `ai-assistant-instructions` main branch triggers repository_dispatch
-2. `deps-update-flake.yml` receives the `ai-instructions-updated` event
-3. Only `ai-assistant-instructions` input is updated (fast sync)
-4. PR created with verified signature
 
 ## References
 
-- [GitHub Actions Workflows](../.github/workflows/)
-- [Nix Flake Inputs](../flake.nix)
-- [AI Review Workflow](../.github/workflows/review-deps.yml)
-- [Repository Dispatch Documentation](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#repository_dispatch)
-- [Renovate PR Procedures](../RUNBOOK.md#handling-renovate-prs)
-- [Package Staleness Troubleshooting](../RUNBOOK.md#troubleshooting-renovate)
+- [`deps-flake-lock.yml`](../.github/workflows/deps-flake-lock.yml)
+- [Flake inputs](../flake.nix)
+- [AI review workflow](../.github/workflows/review-deps.yml)
+- [Package staleness check](../.github/workflows/ci-package-staleness.yml)
+- [Handling Renovate PRs](../RUNBOOK.md#handling-renovate-prs)
+- [Troubleshooting Renovate](../RUNBOOK.md#troubleshooting-renovate)
+- [repository_dispatch](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#repository_dispatch)
