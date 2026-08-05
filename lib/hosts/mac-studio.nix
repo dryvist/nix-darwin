@@ -46,47 +46,37 @@ in
     # Verified live: a request naming mlx-community/Qwen3.5-9B-OptiQ-4bit by
     # its own id was answered by the resident entry ("ROUTED").
     #
-    # 2026-07-27: promoted from the Coder-30B to the 35B for standalone
-    # (MacBook unplugged, no cluster). Every candidate was measured on THIS
-    # host against a dedicated isolated worker on a scratch port, with the
-    # loaded checkpoint confirmed by lsof -i :PORT -> pid -> `ps -p <pid>`
-    # reading --model. That step is mandatory, not ceremony: the alias map
-    # above routes every other model's physical id onto the resident entry
-    # and the server echoes the requested name back, so a model id in a
-    # request or a response proves nothing about which weights answered.
-    #
-    # Headline metric is CUMULATIVE tok/s — (prompt + completion) / wall —
-    # so prefill gains count. Identical 111-118 token prompt, 300 max_tokens,
-    # 3 timed runs after a discarded warmup, decode-concurrency 1:
-    #
-    #   model                             cumulative  decode  ttft   tools
-    #   Qwen3.6-35B-A3B-4bit                   115.2    84.9  0.12s  PASS
-    #   Qwen3-Next-80B-A3B-Instruct-4bit        97.5    71.5  0.08s  PASS
-    #   GLM-4.7-Flash-4bit                      95.8       -  -      FAIL
-    #   gpt-oss-120b-MXFP4-Q8 (peer-measured)  51-54   40-43  0.23s  FAIL
-    #
-    # The 35B wins on throughput outright while being the smallest of the
-    # four (19.4 GB), which also leaves headroom to raise concurrency later.
-    # GLM-4.7-Flash is disqualified on tool calls, not speed: given two tools
-    # it emits no call at all and stops on `length`. gpt-oss-120b is
-    # disqualified because mlx-lm ships no harmony parser, so tool_calls is
-    # null and raw <|channel|> markup leaks into content.
+    # 2026-07-27 standalone bench winner on cumulative tok/s (115.2, and the
+    # smallest of the four candidates at 19.4 GB). Full method, results table
+    # and the disqualifications: ./mac-studio.md.
     singleModel = "mlx-community/Qwen3.6-35B-A3B-4bit";
 
-    # Small always-loadable 9B for trivial local tasks (Gemini-CLI path).
-    # singleModel would otherwise demote every non-resident to disabledModels;
-    # this keeps the 9B servable as an on-demand swap tier beside the pinned
-    # resident (nix-ai alwaysAvailableModels; no alias onto its roles).
-    # ~5.2 GB on demand — ceilings unchanged.
+    # Small always-loadable 9B (~5.2 GB) for trivial local tasks (Gemini-CLI
+    # path). singleModel would otherwise demote every non-resident to
+    # disabledModels; this keeps it servable as a swap tier (nix-ai
+    # alwaysAvailableModels; no alias onto its roles).
     #
-    # IT DOES EVICT THE RESIDENT HERE; this comment used to claim otherwise.
-    # maxResidentWorkers defaults to 1, collapsing the resident and this id
-    # into ONE swapping group so only one worker holds weights — the memory
-    # bound, not a bug. Measured 2026-08-05: loading the 9B left ONLY the 9B.
-    # Never-evicts is the k_max >= 2 tiered shape, opt-in, needing
-    # memoryHardLimitGb lowered to fit two workers. So traffic here costs the
-    # NEXT 35B request a reload: wrong on the hot path (e.g. compression).
+    # It no longer evicts the resident: that was the k_max = 1 collapsed-group
+    # behaviour, corrected below. See ./mac-studio.md "Residency budget".
     alwaysAvailableModels = [ "mlx-community/Qwen3.5-9B-MLX-4bit" ];
+
+    # RESIDENCY BUDGET — these two move together or the host over-commits.
+    #
+    #   maxResidentWorkers * memoryHardLimitGb <= wired ceiling (100 GiB here,
+    #   from appleSiliconTunables.maxLocalLlmGb in hosts/mac-studio/default.nix)
+    #
+    # 2 x 48 = 96 GiB, a 4 GiB cushion. At the previous k_max = 1 the resident
+    # and the 9B shared one exclusive group, so loading the 9B evicted the 35B
+    # and the next request paid a reload — measured 2026-08-05. k_max = 2
+    # restores the tiered topology so both hold weights at once.
+    #
+    # NEVER raise maxResidentWorkers without lowering memoryHardLimitGb in the
+    # same change: 2 workers at the old 99 GiB permits 198 GiB against 100.
+    # suppressWiredLimit defaults true, so weights are pageable and exceeding
+    # the ceiling trades a kernel panic for swap thrash. Rationale + the
+    # measured working sets this 48 is derived from: ./mac-studio.md.
+    maxResidentWorkers = 2;
+    memoryHardLimitGb = 48;
 
     # Validated catalog selections (profiles in nix-ai catalog-data.nix).
     # Every logical role resolves to the 35B — required so it's the only entry
@@ -133,20 +123,10 @@ in
     prefillBatchSize = 2048;
     # NO per-model concurrency override: the resident inherits
     # proxy.concurrencyLimit below, so it is served at concurrency 1 — the
-    # exact condition every benchmark above was run under.
-    #
-    # The 4x override this replaces was written for the Coder-30B and was
-    # measured actively harmful on 2026-07-27. Admitting 4 concurrent streams
-    # to one GPU gave 12.5 tok/s per stream, drove gate p90 to 194 s with a
-    # 1298 s tail, returned 429 to 52% of requests over the preceding hour,
-    # and ultimately wedged the worker outright (a router request failed with
-    # 502 after a 40-minute hang). Concurrency buys nothing here to offset
-    # that: mlx_lm.server serializes decode internally regardless, so 4-way
-    # admission only time-slices one GPU and inflates every caller's latency.
-    #
-    # This is current operating guidance while single-stream stability is
-    # being established, not a permanent ceiling — raising it is a one-line
-    # change to serveConcurrency once concurrency-1 is proven solid.
+    # exact condition every benchmark was run under. The 4x override this
+    # replaced was measured actively harmful on 2026-07-27 AND still returned
+    # 429 to 52% of requests, so concurrency is not the lever for rejection
+    # rates. Numbers and reasoning: ./mac-studio.md "Serving concurrency".
 
     # Server host: no group swap, no global idle eviction (per-class unloads
     # come from the catalog). A blanket TTL would make each resident brain pay
@@ -158,19 +138,11 @@ in
       concurrencyLimit = serveConcurrency;
     };
 
-    # Resident brain warmed at boot: the 35B, the only servable model.
-    # "default" is one of several role aliases that all resolve to that same
-    # entry in singleModel mode; the full list is qwen36-35b's `roles`
-    # attribute above, which is also where goal-judge is declared. This used to
-    # read `[ "goal-judge" ]` — also a valid alias to the SAME resident, so
-    # functionally a no-op change — but that name reads as "warm a separate,
-    # smaller judge model", which does not exist on this host: every role
-    # here, including goal-judge, aliases the one 35B resident (ttl=0). That
-    # misreading cost a real multi-hour misdiagnosis of a warmup starvation
-    # incident on 2026-08-01 (the actual cause was external: something
-    # kickstarting the warmup agent in a tight loop, force-reloading this
-    # SAME resident over and over — see nix-ai's mlx-warmup.py RE-INVOCATION
-    # BOUND). "default" says what actually happens here.
+    # Resident brain warmed at boot. Every role alias resolves to the same 35B
+    # in singleModel mode, so this name is cosmetic — but it must not name a
+    # role that reads as a separate model. It used to say `[ "goal-judge" ]`,
+    # which cost a multi-hour misdiagnosis on 2026-08-01; see ./mac-studio.md
+    # "Preload". "default" says what actually happens here.
     preload = [ "default" ];
 
     # Clustered mode: this Mac is rank 0 (coordinator) of the two-Mac JACCL
