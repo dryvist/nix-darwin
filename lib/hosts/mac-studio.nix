@@ -170,12 +170,29 @@ in
     # link watcher quiesces normal serving at link-up and re-warms the preload
     # list on unplug.
     clusterMode = {
-      # RE-ENABLED 2026-07-18 in the supervised session the 2026-07-12
-      # disable note called for (boot-time auto-bring-up had panicked both
-      # hosts via WindowServer starvation; the link-state wired ceiling —
-      # clusterLinkPrep.clusterWiredLimitMb — now bounds the shard's wired
-      # load). Enabled together with the worker (lib/hosts/macbook-m4.nix).
-      enable = true;
+      # DISABLED 2026-08-05: the Thunderbolt interconnect is physically
+      # disconnected (all four ports inactive/NO-CARRIER, 6060 consecutive DOWN
+      # ticks), so no peer can ever be admitted — yet the watcher kept trying.
+      # Measured on this host: 560 pair-wide standdowns and 1686
+      # rendezvous-absent strikes since 2026-07-12. Each standdown calls
+      # restore_normal_serving, which kickstarts the warmup agent, which holds
+      # llama-swap's single concurrency slot for the length of the warm. That is
+      # the external tight-loop force-reloading this resident named in the
+      # `preload` comment above — the source, not just the symptom. Hermes saw
+      # it as hourly 429s and paged accordingly.
+      #
+      # nix-ai now writes a halt marker on the peer-absent standdown so the loop
+      # cannot recur unbounded, but a host with no cable should not be running
+      # the pairing machinery at all. RE-ENABLE PRECONDITION: cable physically
+      # in, both ranks up, and a supervised session — same bar the 2026-07-12
+      # disable note set and the 2026-07-18 re-enable met. `role` and
+      # `modelCatalogKey` stay so re-enabling is a one-word change.
+      #
+      # Prior history: RE-ENABLED 2026-07-18 in the supervised session the
+      # 2026-07-12 disable note called for (boot-time auto-bring-up had panicked
+      # both hosts via WindowServer starvation; the link-state wired ceiling —
+      # clusterLinkPrep.clusterWiredLimitMb — bounds the shard's wired load).
+      enable = false;
       role = "coordinator";
       # Catalog-selected cluster model, identical on both ranks. The expert-pruned
       # REAP-50 build (~98 GB, glm4_moe) halves the per-rank shard to ~49 GB
