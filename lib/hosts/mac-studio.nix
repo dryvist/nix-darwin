@@ -76,8 +76,22 @@ in
     # Small always-loadable 9B for trivial local tasks (Gemini-CLI path).
     # singleModel would otherwise demote every non-resident to disabledModels;
     # this keeps the 9B servable as an on-demand swap tier beside the pinned
-    # resident (nix-ai alwaysAvailableModels; never evicts the resident, no
-    # alias onto its roles). ~5.2 GB on demand — ceilings unchanged.
+    # resident (nix-ai alwaysAvailableModels; no alias onto its roles).
+    # ~5.2 GB on demand — ceilings unchanged.
+    #
+    # IT DOES EVICT THE RESIDENT ON THIS HOST, and this comment used to claim
+    # the opposite. nix-ai's maxResidentWorkers defaults to 1, which collapses
+    # the resident and this id into ONE swapping group so only one worker holds
+    # weights at a time — that is the memory bound, not a bug. Measured
+    # 2026-08-05: requesting the 9B returned 200 and left ONLY the 9B resident;
+    # reloading the 35B took ~2s. The never-evicts shape is nix-ai's k_max >= 2
+    # tiered mode, opt-in and requiring memoryHardLimitGb lowered so two
+    # workers fit.
+    #
+    # Consequence worth knowing before routing anything here: any traffic sent
+    # to this id costs the NEXT 35B request a reload. Fine for occasional
+    # trivial calls, wrong for anything on the hot path (e.g. context
+    # compression), which is what the false comment made look safe.
     alwaysAvailableModels = [ "mlx-community/Qwen3.5-9B-MLX-4bit" ];
 
     # Validated catalog selections (profiles in nix-ai catalog-data.nix).
@@ -111,8 +125,11 @@ in
       qwen36-27b-mxfp4.class = "swap";
       qwen35-9b-optiq.class = "swap";
       # Small always-loadable 9B (5.2 GB) for trivial local tasks via the
-      # Gemini-CLI path — on-demand swap tier, idle-unloaded, never evicts a
-      # resident. Addressable by its physical id (mlx-community/Qwen3.5-9B-MLX-4bit).
+      # Gemini-CLI path — on-demand swap tier, idle-unloaded. Addressable by its
+      # physical id (mlx-community/Qwen3.5-9B-MLX-4bit). It DOES evict the
+      # resident at this host's maxResidentWorkers = 1; see the
+      # alwaysAvailableModels note above for why that is the memory bound
+      # working, not a defect.
       qwen35-9b-mlx.class = "swap";
       qwen36-optiq.class = "swap";
       gpt-oss-120b.class = "swap";
