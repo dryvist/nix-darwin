@@ -1,33 +1,33 @@
-# Residency-budget guard: k_max x per-worker limit must fit the host ceiling.
+# Residency budget: DERIVE the per-worker limit, then assert it fits.
+#
+# `maxLocalLlmGb` is documented as "the single knob; everything downstream
+# derives" — wiredLimitMb and osReserveGb already do. memoryHardLimitGb never
+# joined that chain: it was a hand-computed literal per host, so every future
+# change to the ceiling or to k_max required someone to redo the arithmetic and
+# get it right. This module closes that gap. The only numbers a host states are
+# the ceiling (maxLocalLlmGb) and how many workers may hold weights
+# (maxResidentWorkers); the per-worker budget follows:
+#
+#   memoryHardLimitGb = (maxLocalLlmGb - baselineReserveGb) / maxResidentWorkers
 #
 # nix-ai states the invariant in modules/mlx/options-residency.nix —
 #
 #   maxResidentWorkers * memoryHardLimitGb <= host wired ceiling
 #
-# — but nothing enforced it anywhere. The two halves live in different repos and
-# nix-ai cannot see the ceiling (that is a nix-darwin sysctl,
-# system.appleSiliconTunables.wiredLimitMb, which nix-ai deliberately does not
-# set). So the invariant was comment-enforced only, and an edit to EITHER side
-# alone failed nothing:
+# — but cannot enforce or derive it: the ceiling is a nix-darwin sysctl
+# (system.appleSiliconTunables.wiredLimitMb) that nix-ai deliberately does not
+# set. nix-darwin evaluates both halves in one closure, so this is the only
+# place either can happen. Same bridge shape as ./cluster-wired-limit.nix.
 #
-#   - raising maxResidentWorkers without lowering memoryHardLimitGb silently
-#     over-commits (2 workers at the 99 GiB default permits 198 GiB against a
-#     100 GiB ceiling — the exact over-commit the k_max=1 default was introduced
-#     to prevent, nix-ai#1515)
-#   - lowering maxLocalLlmGb without revisiting the per-worker limit does the
-#     same from the other direction
-#
-# nix-darwin evaluates both in one closure, so this is the only place the check
-# can exist. Same bridge-and-assert shape as ./cluster-wired-limit.nix.
+# The assertion is kept as a backstop for a host that overrides the derived
+# value explicitly. Derivation makes the common path correct by construction;
+# the assertion catches the deliberate exception.
 #
 # WHAT THIS DOES NOT MEAN. mx.set_memory_limit is a sizing GUIDELINE, not a
 # refusal: upstream MLX raises only when RAM and swap are exhausted, so a worker
-# can transiently exceed its limit and the runtime will shed buffer cache rather
-# than fail. This assertion therefore guards the BUDGET you chose, not a bound
-# the runtime imposes. It also does not model the non-MLX wired baseline
-# (~3.4 GiB measured on jevans-ms while decoding), so a configuration that
-# passes at exactly the ceiling still has less headroom than the arithmetic
-# suggests. Leave real cushion; do not tune this to equality.
+# can transiently exceed its limit and the runtime sheds buffer cache rather
+# than failing. This guards the BUDGET you chose, not a bound the runtime
+# imposes.
 {
   lib,
   config,
@@ -42,16 +42,28 @@ let
   tunables = osConfig.system.appleSiliconTunables or { };
   ceilingMb = tunables.wiredLimitMb or null;
 
-  # Read the RESOLVED values, not hostConfig, so module defaults are covered:
-  # a host that sets neither knob still gets 1 x 99 GiB checked against its
-  # ceiling. That is the case a hostConfig-only read would silently skip.
-  mlx = config.programs.mlx;
-  kMax = mlx.maxResidentWorkers or 1;
-  perWorkerGb = mlx.memoryHardLimitGb or 99;
+  # Read the RESOLVED value, not hostConfig, so module defaults are covered too.
+  kMax = config.programs.mlx.maxResidentWorkers or 1;
+
+  # Wired GiB the budget must NOT claim. Measured ~3.4 GiB host-wide on
+  # jevans-ms while one worker decodes (non-MLX baseline: WindowServer, the
+  # proxy, system daemons). Ignoring it is what made an earlier "4 GiB cushion"
+  # claim wrong: 2 x 48 + 3.4 = 99.4 against 100, so the true cushion was
+  # ~0.6 GiB. 4 rounds that measurement up to a whole GiB.
+  baselineReserveGb = 4;
+
+  ceilingGb = ceilingMb / 1024;
+  derivedPerWorkerGb = (ceilingGb - baselineReserveGb) / kMax;
+
+  perWorkerGb = config.programs.mlx.memoryHardLimitGb;
   budgetMb = kMax * perWorkerGb * 1024;
 in
 {
   config = lib.mkIf (mlxHost && ceilingMb != null) {
+    # mkDefault so a host can still override deliberately; the assertion then
+    # holds that override to the same invariant.
+    programs.mlx.memoryHardLimitGb = lib.mkDefault derivedPerWorkerGb;
+
     assertions = [
       {
         assertion = budgetMb <= ceilingMb;
@@ -64,11 +76,10 @@ in
             wired ceiling (system.appleSiliconTunables.wiredLimitMb)
               = ${toString ceilingMb} MiB
 
-          Raise maxResidentWorkers only alongside a lowered memoryHardLimitGb so
-          the product still fits (nix-ai modules/mlx/options-residency.nix), or
-          raise maxLocalLlmGb if the host genuinely has the memory. Note the
-          product must leave room for the non-MLX wired baseline too, so fitting
-          exactly is not the same as being safe.
+          The per-worker limit normally DERIVES from the ceiling and k_max, so
+          reaching this means a host overrode memoryHardLimitGb by hand. Drop
+          the override and let it derive, raise maxLocalLlmGb if the host
+          genuinely has the memory, or lower maxResidentWorkers.
         '';
       }
     ];

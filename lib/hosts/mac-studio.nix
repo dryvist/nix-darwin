@@ -77,13 +77,17 @@ in
     # small-model load sits BESIDE the resident. It does not pin the 9B
     # resident: that entry keeps ttl 900 and still idle-unloads.
     #
-    # NEVER raise maxResidentWorkers without lowering memoryHardLimitGb in the
-    # same change: 2 workers at the old 99 GiB permits 198 GiB against 100.
-    # suppressWiredLimit defaults true, so weights are pageable and exceeding
-    # the ceiling trades a kernel panic for swap thrash. Rationale + the
-    # measured working sets this 48 is derived from: ./mac-studio.md.
+    # k_max is the ONLY number stated here. memoryHardLimitGb is DERIVED from
+    # the host ceiling in hosts/common/residency-budget.nix as
+    # (maxLocalLlmGb - baselineReserve) / maxResidentWorkers, which at 100 GiB
+    # and k=2 gives 48 GiB per worker. Change k_max alone and the per-worker
+    # budget re-derives; nobody redoes the arithmetic, and an explicit override
+    # is still held to the invariant by that module's assertion.
+    #
+    # suppressWiredLimit defaults true, so weights are pageable and overshoot
+    # spills to swap rather than panicking. Rationale and the measurements
+    # behind the reserve: ./mac-studio.md.
     maxResidentWorkers = 2;
-    memoryHardLimitGb = 48;
 
     # Validated catalog selections (profiles in nix-ai catalog-data.nix).
     # Every logical role resolves to the 35B — required so it's the only entry
