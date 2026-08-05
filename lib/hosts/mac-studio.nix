@@ -76,8 +76,16 @@ in
     # Small always-loadable 9B for trivial local tasks (Gemini-CLI path).
     # singleModel would otherwise demote every non-resident to disabledModels;
     # this keeps the 9B servable as an on-demand swap tier beside the pinned
-    # resident (nix-ai alwaysAvailableModels; never evicts the resident, no
-    # alias onto its roles). ~5.2 GB on demand — ceilings unchanged.
+    # resident (nix-ai alwaysAvailableModels; no alias onto its roles).
+    # ~5.2 GB on demand — ceilings unchanged.
+    #
+    # IT DOES EVICT THE RESIDENT HERE; this comment used to claim otherwise.
+    # maxResidentWorkers defaults to 1, collapsing the resident and this id
+    # into ONE swapping group so only one worker holds weights — the memory
+    # bound, not a bug. Measured 2026-08-05: loading the 9B left ONLY the 9B.
+    # Never-evicts is the k_max >= 2 tiered shape, opt-in, needing
+    # memoryHardLimitGb lowered to fit two workers. So traffic here costs the
+    # NEXT 35B request a reload: wrong on the hot path (e.g. compression).
     alwaysAvailableModels = [ "mlx-community/Qwen3.5-9B-MLX-4bit" ];
 
     # Validated catalog selections (profiles in nix-ai catalog-data.nix).
@@ -111,8 +119,9 @@ in
       qwen36-27b-mxfp4.class = "swap";
       qwen35-9b-optiq.class = "swap";
       # Small always-loadable 9B (5.2 GB) for trivial local tasks via the
-      # Gemini-CLI path — on-demand swap tier, idle-unloaded, never evicts a
-      # resident. Addressable by its physical id (mlx-community/Qwen3.5-9B-MLX-4bit).
+      # Gemini-CLI path — on-demand swap tier, idle-unloaded. Addressable by its
+      # physical id (mlx-community/Qwen3.5-9B-MLX-4bit). It DOES evict the
+      # resident at k_max = 1 — see the alwaysAvailableModels note above.
       qwen35-9b-mlx.class = "swap";
       qwen36-optiq.class = "swap";
       gpt-oss-120b.class = "swap";
