@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.26.0](https://github.com/dryvist/nix-darwin/compare/v2.25.1...v2.26.0) (2026-08-05)
+
+
+### Features
+
+* **ci:** relock the whole flake into a single pull request ([#2044](https://github.com/dryvist/nix-darwin/issues/2044)) ([f7d50c3](https://github.com/dryvist/nix-darwin/commit/f7d50c33ef6b8f1cd40aed7ad35e5e355c1cd4d7))
+* **mac-studio:** two resident workers, 48 GiB each ([#2045](https://github.com/dryvist/nix-darwin/issues/2045)) ([a68b4bc](https://github.com/dryvist/nix-darwin/commit/a68b4bcbf7af9ec8c8fc619be036b3cf3e122375))
+
 ## [2.25.1](https://github.com/dryvist/nix-darwin/compare/v2.25.0...v2.25.1) (2026-08-05)
 
 
