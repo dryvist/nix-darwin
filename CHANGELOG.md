@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.25.1](https://github.com/dryvist/nix-darwin/compare/v2.25.0...v2.25.1) (2026-08-05)
+
+
+### Bug Fixes
+
+* **mlx:** disable cluster mode on both ranks while the link is disconnected ([#2039](https://github.com/dryvist/nix-darwin/issues/2039)) ([53028d1](https://github.com/dryvist/nix-darwin/commit/53028d1a14958ae8f755dcea8e8bd2a7fb00dd8e))
+
 ## [2.25.0](https://github.com/dryvist/nix-darwin/compare/v2.24.0...v2.25.0) (2026-08-05)
 
 
