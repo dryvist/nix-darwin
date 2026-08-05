@@ -65,18 +65,29 @@ in
     #   maxResidentWorkers * memoryHardLimitGb <= wired ceiling (100 GiB here,
     #   from appleSiliconTunables.maxLocalLlmGb in hosts/mac-studio/default.nix)
     #
-    # 2 x 48 = 96 GiB, a 4 GiB cushion. At the previous k_max = 1 the resident
-    # and the 9B shared one exclusive group, so loading the 9B evicted the 35B
-    # and the next request paid a reload — measured 2026-08-05. k_max = 2
-    # restores the tiered topology so both hold weights at once.
+    # 2 x 48 = 96 GiB. The cushion is NOT the 4 GiB that subtraction suggests:
+    # the non-MLX wired baseline measures ~3.4 GiB while a worker decodes, so
+    # the strict worst case is 99.4 against 100 — roughly 0.6 GiB. It holds, and
+    # overshoot spills to pageable memory rather than failing (the limit is a
+    # shed-hint, not a refusal), but do not spend that 4 GiB.
     #
-    # NEVER raise maxResidentWorkers without lowering memoryHardLimitGb in the
-    # same change: 2 workers at the old 99 GiB permits 198 GiB against 100.
-    # suppressWiredLimit defaults true, so weights are pageable and exceeding
-    # the ceiling trades a kernel panic for swap thrash. Rationale + the
-    # measured working sets this 48 is derived from: ./mac-studio.md.
+    # At the previous k_max = 1 the resident and the 9B shared one exclusive
+    # group, so loading the 9B evicted the 35B and the next request paid a
+    # reload — measured 2026-08-05. k_max = 2 restores the tiered topology so a
+    # small-model load sits BESIDE the resident. It does not pin the 9B
+    # resident: that entry keeps ttl 900 and still idle-unloads.
+    #
+    # k_max is the ONLY number stated here. memoryHardLimitGb is DERIVED from
+    # the host ceiling in hosts/common/residency-budget.nix as
+    # (maxLocalLlmGb - baselineReserve) / maxResidentWorkers, which at 100 GiB
+    # and k=2 gives 48 GiB per worker. Change k_max alone and the per-worker
+    # budget re-derives; nobody redoes the arithmetic, and an explicit override
+    # is still held to the invariant by that module's assertion.
+    #
+    # suppressWiredLimit defaults true, so weights are pageable and overshoot
+    # spills to swap rather than panicking. Rationale and the measurements
+    # behind the reserve: ./mac-studio.md.
     maxResidentWorkers = 2;
-    memoryHardLimitGb = 48;
 
     # Validated catalog selections (profiles in nix-ai catalog-data.nix).
     # Every logical role resolves to the 35B — required so it's the only entry

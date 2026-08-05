@@ -47,8 +47,14 @@ in
       #   maxLocalLlmGb 100 GiB -> wiredLimitMb 102400 MiB -> osReserveGb 28 GiB.
       # The old "headless needs no reserve" rationale (104000, ~13 GB reserve) is
       # superseded: WindowServer-starvation incidents show even an auto-login
-      # headless session needs OS headroom, and the resident 80B + 27B workers
-      # (~74 GB) sit well under the 99 GiB L2 cap that sits under this ceiling.
+      # headless session needs OS headroom.
+      #
+      # The fleet sentence that used to follow ("the resident 80B + 27B workers
+      # (~74 GB) sit well under the 99 GiB L2 cap") was stale twice over: the
+      # resident has been the 35B since 2026-07-27, and the per-worker limit on
+      # this host is 48 GiB since 2026-08-05 (k_max=2). Current budget lives with
+      # the values that define it — ../../lib/hosts/mac-studio.{nix,md}. Do not
+      # restate it here; that duplication is what went stale.
       maxLocalLlmGb = 100;
       # Cluster hosts want High Power Mode: a rank that thermally throttles
       # mid-generation shows up as inexplicably slow tokens, not as an error.
