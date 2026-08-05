@@ -65,10 +65,17 @@ in
     #   maxResidentWorkers * memoryHardLimitGb <= wired ceiling (100 GiB here,
     #   from appleSiliconTunables.maxLocalLlmGb in hosts/mac-studio/default.nix)
     #
-    # 2 x 48 = 96 GiB, a 4 GiB cushion. At the previous k_max = 1 the resident
-    # and the 9B shared one exclusive group, so loading the 9B evicted the 35B
-    # and the next request paid a reload — measured 2026-08-05. k_max = 2
-    # restores the tiered topology so both hold weights at once.
+    # 2 x 48 = 96 GiB. The cushion is NOT the 4 GiB that subtraction suggests:
+    # the non-MLX wired baseline measures ~3.4 GiB while a worker decodes, so
+    # the strict worst case is 99.4 against 100 — roughly 0.6 GiB. It holds, and
+    # overshoot spills to pageable memory rather than failing (the limit is a
+    # shed-hint, not a refusal), but do not spend that 4 GiB.
+    #
+    # At the previous k_max = 1 the resident and the 9B shared one exclusive
+    # group, so loading the 9B evicted the 35B and the next request paid a
+    # reload — measured 2026-08-05. k_max = 2 restores the tiered topology so a
+    # small-model load sits BESIDE the resident. It does not pin the 9B
+    # resident: that entry keeps ttl 900 and still idle-unloads.
     #
     # NEVER raise maxResidentWorkers without lowering memoryHardLimitGb in the
     # same change: 2 workers at the old 99 GiB permits 198 GiB against 100.
