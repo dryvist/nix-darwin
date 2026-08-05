@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.25.0](https://github.com/dryvist/nix-darwin/compare/v2.24.0...v2.25.0) (2026-08-05)
+
+
+### Features
+
+* **openbao-github-creds:** route write minting per repository ([#2034](https://github.com/dryvist/nix-darwin/issues/2034)) ([304111b](https://github.com/dryvist/nix-darwin/commit/304111b5e8f5bf092d161eeb692e333cdfd3b1bb))
+
 ## [2.24.0](https://github.com/dryvist/nix-darwin/compare/v2.23.6...v2.24.0) (2026-08-03)
 
 
