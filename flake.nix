@@ -5,8 +5,8 @@
   inputs = {
     # Channel branch = intended major-version pin (26.05, stable). Renovate
     # CANNOT bump this: it updates an input when its ref changes, and a
-    # channel branch's ref never changes. deps-refresh-nixpkgs.yml refreshes
-    # the lock on a schedule instead.
+    # channel branch's ref never changes. deps-flake-lock.yml relocks the whole
+    # file on a schedule instead.
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
 
     # Consolidated systems input for darwin-only configuration
