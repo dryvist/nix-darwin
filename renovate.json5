@@ -58,29 +58,21 @@
       ],
       "enabled": false
     },
-    {
-      "description": "External critical system inputs - 2-day delay for nixpkgs-darwin Hydra eval lag",
-      "matchDatasources": ["git-refs"],
-      "matchPackageNames": [
-        "NixOS/nixpkgs",
-        "nix-darwin/nix-darwin",
-        "nix-community/home-manager",
-        "Mic92/sops-nix"
-      ],
-      "groupName": "critical-infrastructure",
-      "schedule": ["after 7am"],
-      "minimumReleaseAge": "2 days"
-    },
-    {
-      "description": "External AI-focused flake inputs - daily updates at 7am",
-      "matchDatasources": ["git-refs"],
-      "matchPackageNames": [
-        "anthropics/**",
-        "obra/superpowers-marketplace"
-      ],
-      "groupName": "ai-tools-external",
-      "schedule": ["after 7am"]
-    },
+    // REMOVED 2026-08-05: two `matchDatasources: ["git-refs"]` rules,
+    // `critical-infrastructure` and `ai-tools-external`. Only Renovate's `nix`
+    // manager emits the git-refs datasource for flake inputs, and that manager
+    // is disabled org-wide in renovate-nix.json — flake.lock now has exactly
+    // one writer, .github/workflows/deps-flake-lock.yml. The rules could no
+    // longer match anything.
+    //
+    // The `critical-infrastructure` rule also carried
+    // `minimumReleaseAge: "2 days"` labelled "for nixpkgs-darwin Hydra eval
+    // lag". It never once fired: Renovate advances an input when its REFERENCE
+    // changes, and nixpkgs is pinned to a channel branch whose reference never
+    // changes, so there was nothing for the age gate to hold back. Verified
+    // 2026-08-05 — no Renovate PR has ever bumped nixpkgs here. Hydra
+    // alignment is instead reported by the relock workflow, which compares the
+    // locked rev against channels.nixos.org.
     {
       "description": "GitHub Actions updates - Fri ~15:00 / Mon ~05:00 America/New_York",
       "matchManagers": ["github-actions"],
