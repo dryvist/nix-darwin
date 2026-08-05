@@ -124,6 +124,39 @@ bao_login() {
   printf '%s' "${token}"
 }
 
+# Which AppRole identity mints writes for a repository.
+#
+# Most repositories use the single organisation-wide write identity. A
+# repository may instead belong to a WRITE REALM: its own policy and AppRole
+# with its own allowlist, so that a narrower group of repositories is not
+# reachable by the organisation-wide credential and vice versa.
+#
+# Realms are described by OPENBAO_GITHUB_WRITE_SCOPES, the SAME variable the
+# openbao role reads to render the policies — one definition drives both the
+# server-side boundary and this client-side routing, so they cannot disagree.
+# Shape: {"<realm-name>": ["repo", ...]}. Unset, or a repository named in no
+# realm, yields the default identity; that fallback is what keeps this change
+# inert until realms exist.
+#
+# The realm name becomes the AppRole env-var prefix the same way every other
+# prefix is formed: upper-cased, non-alphanumerics to underscores.
+write_login_prefix_for() {
+  local repo="$1" scopes realm
+  scopes="${OPENBAO_GITHUB_WRITE_SCOPES:-}"
+  if [ -n "${scopes}" ]; then
+    # `index` on the repo list, not string matching: a realm holding "docs"
+    # must not claim "docs-internal".
+    realm="$(jq -r --arg r "${repo}" \
+      'to_entries | map(select(.value | index($r))) | .[0].key // empty' \
+      <<<"${scopes}" 2>/dev/null || true)"
+    if [ -n "${realm}" ]; then
+      printf '%s' "${realm}" | tr '[:lower:]' '[:upper:]' | tr -c '[:alnum:]' '_'
+      return
+    fi
+  fi
+  printf 'GITHUB_WRITE'
+}
+
 mint_read() {
   local owner="$1" set_name bao_tok resp gh_tok
   set_name="$(read_set_for "${owner}")"
@@ -148,23 +181,30 @@ write_token_body() {
 }
 
 mint_write() {
-  local owner="$1" repo="$2" iid bao_tok body resp gh_tok
+  local owner="$1" repo="$2" iid bao_tok body resp gh_tok prefix
   iid="$(installation_id_for "${owner}")"
   [ -n "${iid}" ] || die "no installation id for owner '${owner}' — set OPENBAO_GITHUB_*_INSTALLATION_ID"
-  bao_tok="$(bao_login GITHUB_WRITE)"
+  prefix="$(write_login_prefix_for "${repo}")"
+  bao_tok="$(bao_login "${prefix}")"
   body="$(write_token_body "${iid}" "${repo}")"
   resp="$(curl -sf --max-time 10 -X POST -H "X-Vault-Token: ${bao_tok}" \
     -d "${body}" "${bao_addr}/v1/github/token")" \
-    || die "mint write token for ${owner}/${repo} failed.
-Most likely ${repo} is not on the server-side github-write allowlist. That is a
-deny, not a bug, and there is no client-side workaround — do NOT fall back to a
-personal access token or any other standing credential to complete the write.
+    || die "mint write token for ${owner}/${repo} failed (identity: ${prefix}).
+Most likely ${repo} is not on the allowlist this identity is pinned to. That is
+a deny, not a bug, and there is no client-side workaround — do NOT fall back to
+a personal access token or any other standing credential to complete the write.
 
-To grant it: add the repository name to OPENBAO_GITHUB_WRITE_REPOS in the iac
-secret store (comma-separated; the ansible-proxmox-apps openbao role reads it
-into openbao_github_write_repo_allowlist), then converge the openbao role so the
-github-write policy is rewritten. The change is not live until that converge
-runs. If ${repo} is already listed, re-check that the converge actually ran."
+If the identity above is GITHUB_WRITE, add the repository name to
+OPENBAO_GITHUB_WRITE_REPOS in the iac secret store (comma-separated; the
+ansible-proxmox-apps openbao role reads it into
+openbao_github_write_repo_allowlist).
+
+Otherwise ${repo} belongs to a write realm and the name must be on THAT realm's
+list inside OPENBAO_GITHUB_WRITE_SCOPES — adding it to the organisation-wide
+list instead would defeat the boundary the realm exists to draw.
+
+Either way the change is not live until the openbao role is converged. If the
+name is already listed, re-check that the converge actually ran."
   gh_tok="$(jq -r '.data.token // empty' <<<"${resp}")"
   [ -n "${gh_tok}" ] || die "no token in write mint response for ${owner}/${repo}"
   printf '%s' "${gh_tok}"
@@ -241,7 +281,7 @@ lock_path() { echo "github/token"; }  # documented anchor; real path built inlin
 lock_acquire() {
   local iid="$1" repo="$2" bao_tok data_url meta_url cur ver holder me now
   me="$(lock_holder)"
-  bao_tok="$(bao_login GITHUB_WRITE)"
+  bao_tok="$(bao_login "$(write_login_prefix_for "${repo}")")"
   data_url="${bao_addr}/v1/secret/data/locks/github-write/${iid}/${repo}"
   meta_url="${bao_addr}/v1/secret/metadata/locks/github-write/${iid}/${repo}"
   # Server-side deadman: each lock version self-deletes, freeing a crashed holder.
@@ -282,7 +322,7 @@ lock_acquire() {
 
 lock_release() {
   local iid="$1" repo="$2" bao_tok meta_url
-  bao_tok="$(bao_login GITHUB_WRITE)"
+  bao_tok="$(bao_login "$(write_login_prefix_for "${repo}")")"
   meta_url="${bao_addr}/v1/secret/metadata/locks/github-write/${iid}/${repo}"
   curl -sf --max-time 10 -X DELETE -H "X-Vault-Token: ${bao_tok}" "${meta_url}" >/dev/null \
     || echo "$prefix warning: could not release lease for ${repo} (it will expire on its own)" >&2
@@ -384,8 +424,43 @@ self_check() {
   if [ "$(jq -r 'has("administration")' <<<"${bg_write_scope}")" != "false" ]; then
     echo "self-check FAIL: break-glass write scope must never grant administration"; return 1
   fi
+  self_check_write_realms || return 1
   self_check_lock_reacquire || return 1
   echo "self-check OK"
+}
+
+# Realm routing, exercised without a server. Both directions matter: a mapped
+# repository must reach its own identity, and — just as important — everything
+# else must keep reaching the default one, because that fallback is what makes
+# realms optional rather than a flag day.
+self_check_write_realms() {
+  local got
+  # No realms configured at all: every repository uses the default identity.
+  got="$(OPENBAO_GITHUB_WRITE_SCOPES="" write_login_prefix_for any-repo)"
+  [ "${got}" = "GITHUB_WRITE" ] \
+    || { echo "self-check FAIL: unset realms routed to '${got}'"; return 1; }
+
+  local scopes='{"realm-one":["mapped-repo"],"realm-two":["other-repo"]}'
+
+  got="$(OPENBAO_GITHUB_WRITE_SCOPES="${scopes}" write_login_prefix_for mapped-repo)"
+  [ "${got}" = "REALM_ONE" ] \
+    || { echo "self-check FAIL: mapped repo routed to '${got}'"; return 1; }
+
+  got="$(OPENBAO_GITHUB_WRITE_SCOPES="${scopes}" write_login_prefix_for unmapped-repo)"
+  [ "${got}" = "GITHUB_WRITE" ] \
+    || { echo "self-check FAIL: unmapped repo routed to '${got}'"; return 1; }
+
+  # Exact membership, not substring: a realm holding "mapped-repo" must not
+  # capture a differently-named repository that merely contains it.
+  got="$(OPENBAO_GITHUB_WRITE_SCOPES="${scopes}" write_login_prefix_for mapped-repo-extra)"
+  [ "${got}" = "GITHUB_WRITE" ] \
+    || { echo "self-check FAIL: substring match captured '${got}'"; return 1; }
+
+  # Malformed data must not silently route a realm repository to the shared
+  # identity in a way that looks like success; it falls back, visibly.
+  got="$(OPENBAO_GITHUB_WRITE_SCOPES="not json" write_login_prefix_for mapped-repo)"
+  [ "${got}" = "GITHUB_WRITE" ] \
+    || { echo "self-check FAIL: malformed realm data routed to '${got}'"; return 1; }
 }
 
 # A lease whose deadman fired must still be re-acquirable. The failure this
