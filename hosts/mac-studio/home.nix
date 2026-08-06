@@ -24,7 +24,19 @@
     enable = lib.mkDefault hostConfig.aiTooling.tokenMeter.enable;
     menuBar = lib.mkDefault hostConfig.aiTooling.tokenMeter.menuBar;
     httpsGate = lib.mkDefault hostConfig.aiTooling.tokenMeter.httpsGate;
-    bindAddress = lib.head osConfig.programs.llm-gate.bindAddresses;
+    # llm-gate treats an empty bindAddresses as a supported state, so nothing
+    # guarantees this list is populated. Say which invariant broke: a bare
+    # lib.head reports "list must not be empty" from inside nixpkgs, one layer
+    # before nix-ai's own bindAddress assertion and with no hint that the two
+    # settings are coupled.
+    bindAddress =
+      let
+        addresses = osConfig.programs.llm-gate.bindAddresses;
+      in
+      if addresses == [ ] then
+        throw "token-meter: the HTTPS gate takes its bind address from programs.llm-gate.bindAddresses, which is empty on this host — set one there, or set programs.token-meter.httpsGate = false."
+      else
+        lib.head addresses;
   };
 
   # Model cache uses the module default (/Volumes/HuggingFace) — identical to the
