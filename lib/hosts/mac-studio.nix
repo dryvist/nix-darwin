@@ -24,7 +24,7 @@ let
   # fetches dryvist/tofu-proxmox's published constant and fails the build
   # when it disagrees with the value below. Raise both together; the check
   # enforces that now, not this comment.
-  serveConcurrency = 1;
+  serveConcurrency = 2;
 in
 {
   # Network identity. `system` omitted (mkHost defaults to aarch64-darwin).
@@ -133,11 +133,11 @@ in
     cacheMemoryMb = 8192;
     prefillBatchSize = 2048;
     # NO per-model concurrency override: the resident inherits
-    # proxy.concurrencyLimit below, so it is served at concurrency 1 — the
-    # exact condition every benchmark was run under. The 4x override this
-    # replaced was measured actively harmful on 2026-07-27 AND still returned
-    # 429 to 52% of requests, so concurrency is not the lever for rejection
-    # rates. Numbers and reasoning: ./mac-studio.md "Serving concurrency".
+    # proxy.concurrencyLimit below — 2 since 2026-08-06 (the 2026-07 benches
+    # ran at 1). The 9B and every 40B+ entry keep their catalog
+    # concurrencyLimit=1 pins, so only the resident serves 2. Why 2 is safe
+    # where the 2026-07-27 4x override was harmful: ./mac-studio.md
+    # "Serving concurrency".
 
     # Server host: no group swap, no global idle eviction (per-class unloads
     # come from the catalog). A blanket TTL would make each resident brain pay
@@ -145,7 +145,8 @@ in
     proxy = {
       groupSwap = false;
       idleTtl = 0;
-      # Match the official mlx_lm prompt/decode workers: one request at a time.
+      # Advertised admission AND the worker's --decode/--prompt-concurrency
+      # both derive from this one number (nix-ai effectiveConcurrency).
       concurrencyLimit = serveConcurrency;
     };
 
