@@ -125,20 +125,45 @@ contradicts upstream semantics — failure arrives at RAM+swap exhaustion, which
 *behind* the ceiling, not ahead of it. Pre-existing defect in that repo, tracked
 separately; docs-starlight already states it correctly.
 
-## Serving concurrency
+## Serving concurrency (2 since 2026-08-06)
 
-`proxy.concurrencyLimit` inherits `serveConcurrency = 1`; there is no per-model
-override. The 4× override this replaced was written for the Coder-30B and was
-measured actively harmful on 2026-07-27: 4 concurrent streams gave 12.5 tok/s
-per stream, drove gate p90 to 194 s with a 1298 s tail, returned 429 to 52% of
-requests over the preceding hour, and ultimately wedged the worker outright.
-Concurrency buys nothing here to offset that — `mlx_lm.server` serializes decode
-internally regardless, so 4-way admission only time-slices one GPU.
+`proxy.concurrencyLimit` inherits `serveConcurrency = 2`. The host sets no
+per-model override; catalog pins hold the 9B and every 40B+ entry at
+`concurrencyLimit = 1` (nix-ai's 40B+ single-slot policy, flake-check
+enforced), so only the resident 35B serves two-wide. Raised from 1 because a
+single slot serializes every caller: with several uncoordinated callers,
+queueing delay — not failure rate — dominated the latency tail. Two in-flight
+requests let the server batch-decode them instead of queueing one behind the
+other.
 
-This is current operating guidance while single-stream stability is established,
-not a permanent ceiling. Note the 52% rejection figure above: raising
-concurrency alone did **not** fix rejection rates, so it is not the lever for
-them.
+**Why 2 is safe where the 2026-07-27 4× override was harmful.** That
+measurement was 4-way *admission* against a worker whose
+`--decode-concurrency` was still hard-coded 1 (pre-unification): the proxy
+time-sliced one serialized GPU, gave 12.5 tok/s per stream, drove gate p90 to
+194 s with a 1298 s tail, returned 429 to 52% of requests, and wedged the
+worker. Since the unification, admission and served width derive from one
+number, and mlx-lm 0.31.3's `--decode-concurrency` feeds a real batch
+scheduler (`BatchGenerator`; upstream defaults are 32 decode / 8 prompt, so 2
+is conservative). The resident qwen3_5_moe is batchable in 0.31.3: no draft
+model, and both cache classes its `make_cache` returns (`KVCache`,
+`ArraysCache`) implement `merge`. The old note here that "`mlx_lm.server`
+serializes decode internally regardless" described that hard-coded-1 state,
+not 0.31.3 with the flag set. Still true: concurrency is not the lever for
+*rejection* rates.
+
+**Memory cost of the second stream.** The 35B is hybrid-attention
+(config.json: 10 of 40 layers full attention, 2 KV heads, head_dim 256), so
+KV costs `2 × 10 × 2 × 256 × 2 B = 20 KiB/token` — 1.25 GiB per
+65,536-token stream, 5.0 GiB at the architectural max 262,144. The second
+in-flight stream therefore adds ~1.3–5 GiB plus ~0.25 GiB of fixed
+linear-attention state. `mlx_lm.server` trims the stored prompt cache to
+`prompt-cache-bytes − active batch KV`, so stored + in-flight KV stays inside
+the 16 GiB cache budget. Worst constructible worker at 2 is ~21.3 (weights) +
+≤16 (KV + prompt cache) + ~0.5 (state) + ≤12 (shedable buffer cache) ≈ 50 GiB
+against the 48 GiB per-worker budget — sheds cache rather than failing, and
+the residency invariant is untouched: `maxResidentWorkers` counts workers,
+not in-flight requests. A third request per model is parked or 429'd by
+llama-swap's scheduler and never reaches the worker.
 
 ## Preload
 
