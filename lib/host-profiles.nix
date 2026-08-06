@@ -4,6 +4,11 @@
 
 let
   default = {
+    aiTooling.tokenMeter = {
+      enable = false;
+      menuBar = false;
+      httpsGate = false;
+    };
     homebrew = {
       cleanup = "zap";
       enableWorkstationApps = false;
@@ -24,6 +29,14 @@ let
 
   # Headless hosts still receive every shared AI CLI.
   server = lib.recursiveUpdate default {
+    # token-meter measures the Claude Code / Codex CLIs enabled just below, so
+    # it belongs to the same tier. httpsGate additionally needs a per-host
+    # bindAddress, which cannot come from a shared tier.
+    aiTooling.tokenMeter = {
+      enable = true;
+      menuBar = true;
+      httpsGate = true;
+    };
     homebrew.ai = {
       antigravityCli = true;
       claudeCode = true;
