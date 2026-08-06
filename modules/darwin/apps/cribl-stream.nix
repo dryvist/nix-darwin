@@ -1,6 +1,6 @@
 # Cribl Stream Service Management (Apple container)
 #
-# Runs a single-instance Cribl Stream node in an Apple `container` (v1.0) as the
+# Runs a single-instance Cribl Stream node in an Apple `container` as the
 # local single egress for this Mac: everything collected here ships to this
 # Stream, which enriches, persistent-queues, and forwards once to the Proxmox
 # Stream tier (instead of many local sources each dialing Proxmox).

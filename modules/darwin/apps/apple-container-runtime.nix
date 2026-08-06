@@ -1,6 +1,6 @@
 # Apple `container` Runtime Bring-Up (shared one-shot)
 #
-# Every module that supervises an Apple `container` (v1.0) Linux VM needs the
+# Every module that supervises an Apple `container` Linux VM needs the
 # per-user container-apiserver running first. This module owns that bring-up
 # as ONE launchd one-shot agent, shared by all consumers (cribl-stream,
 # github-runner-container) — each sets `enable = lib.mkDefault true` from its
