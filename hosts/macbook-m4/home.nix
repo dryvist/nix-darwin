@@ -12,6 +12,12 @@
   ...
 }:
 
+let
+  # The registry is the only place a host name is written. flake.nix threads in
+  # this host's own entry, not the others, so reaching a peer means importing
+  # the registry — which is pure static data and safe to read here.
+  hosts = import ../../lib/hosts.nix;
+in
 {
   imports = [ ../common/home.nix ];
 
@@ -40,6 +46,14 @@
       enable = lib.mkDefault hostConfig.aiTooling.tokenMeter.enable;
       menuBar = lib.mkDefault hostConfig.aiTooling.tokenMeter.menuBar;
       httpsGate = false;
+    };
+
+    # Hourly push of AI session history to the mac-studio (nix-ai module).
+    # Laptop-side only: the studio is the durable copy, so the direction is
+    # one-way and the studio needs no access back to this machine.
+    sessionSync = {
+      enable = true;
+      remote = hosts.mac-studio.hostName;
     };
 
     # Recreates the tmux "cc" session at every login — a reboot always kills
