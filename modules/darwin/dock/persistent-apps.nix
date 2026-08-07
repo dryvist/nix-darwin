@@ -18,54 +18,60 @@
 # 2026-07-29, which Homebrew upgrades in place. VS Code remains on copyApps; if
 # its grants prove to lapse the same way, it should follow.
 
-_:
+{ lib, hostConfig, ... }:
 
 let
   userConfig = import ../../../lib/user-config.nix;
   inherit (userConfig.user) homeDir;
+
+  inherit (hostConfig.homebrew) enableWorkstationApps;
 in
 {
   system.defaults.dock = {
     # ========================================================================
     # Left side of Dock (before separator) - Main apps
     # ========================================================================
+    # Uses native Nix conditional expressions (`lib.optionals`) driven by
+    # `hostConfig` capabilities to include GUI applications only on hosts where
+    # they are installed (workstations), while keeping server Docks clean.
     persistent-apps = [
-      # System settings & time (immediately after the fixed Finder Dock item)
+      # System settings & time (system apps present on all hosts)
       "/System/Applications/System Settings.app"
       "/System/Applications/Clock.app"
       "/System/Applications/Reminders.app"
       "/System/Applications/Calendar.app"
+      "/Applications/Safari.app"
+
+      # Terminal (present on all hosts)
+      "/Applications/Ghostty.app"
+    ]
+    ++ lib.optionals enableWorkstationApps [
       "/Applications/Toggl Track.app"
 
-      # Knowledge & Notes (after Toggl)
+      # Knowledge & Notes
       "/Applications/Obsidian.app"
 
-      # Development & Tools (after Toggl)
-      # /Applications, not Home Manager Apps: Ghostty moved to a greedy Homebrew
-      # cask on 2026-07-29 so its TCC grants survive (see modules/darwin/homebrew.nix).
-      # A Dock entry pointing at the old copyApps path would silently resolve to
-      # a bundle that activation no longer writes.
-      "/Applications/Ghostty.app"
+      # Development & Tools
       "${homeDir}/Applications/Home Manager Apps/Visual Studio Code.app"
 
       # Communication
-      "/System/Applications/Mail.app" # Apple Mail (system app)
-      "/Applications/Slack.app"
+      "/System/Applications/Mail.app"
       "/System/Applications/Messages.app"
-
-      # AI & API tools
+      "/Applications/Slack.app"
+      "/Applications/Microsoft Teams.app"
+    ]
+    ++ [
+      # AI & API tools (present on all hosts)
       "/Applications/ProxMan.app"
-      "/Applications/Claude.app" # Anthropic Claude desktop app (homebrew cask)
+      "/Applications/Claude.app"
+      "${homeDir}/Applications/Gemini.app"
       "/Applications/ChatGPT.app"
       "/Applications/Codex.app"
-      "${homeDir}/Applications/Gemini.app" # Google Gemini AI assistant
-
-      # Browsers
-      "/Applications/Safari.app"
+    ]
+    ++ lib.optionals enableWorkstationApps [
+      # Third Party Browsers
       "/Applications/Brave Browser.app"
       "/Applications/Google Chrome.app"
-
-      # NOTE: RapidAPI, Postman, and Bitwarden removed from dock per #438
     ];
 
     # ========================================================================
