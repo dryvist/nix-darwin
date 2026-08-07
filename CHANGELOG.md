@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.30.0](https://github.com/dryvist/nix-darwin/compare/v2.29.0...v2.30.0) (2026-08-07)
+
+
+### Features
+
+* **cluster:** re-enable two-Mac JACCL clustered mode ([#2075](https://github.com/dryvist/nix-darwin/issues/2075)) ([5efcd0a](https://github.com/dryvist/nix-darwin/commit/5efcd0a97f39a6101ae90e8659a29af7935256d2))
+
+
+### Bug Fixes
+
+* **cluster-link-prep:** converge the Thunderbolt link at boot, not only at rebuild ([#2073](https://github.com/dryvist/nix-darwin/issues/2073)) ([8b06ac2](https://github.com/dryvist/nix-darwin/commit/8b06ac2e4e619be4f5b5af319fc711a2d5648f79)), closes [#1768](https://github.com/dryvist/nix-darwin/issues/1768)
+* **cluster:** drop the duplicate shardMemoryMb definitions ([#2086](https://github.com/dryvist/nix-darwin/issues/2086)) ([bbed68a](https://github.com/dryvist/nix-darwin/commit/bbed68a41f24b6bbb1385d512c7bc88a0c6e2560))
+* **macbook-m4:** turn token-meter off on the laptop ([#2087](https://github.com/dryvist/nix-darwin/issues/2087)) ([2b895b7](https://github.com/dryvist/nix-darwin/commit/2b895b736ad8b5634f1314a15e5d074b9421cc61))
+
 ## [2.29.0](https://github.com/dryvist/nix-darwin/compare/v2.28.0...v2.29.0) (2026-08-07)
 
 
