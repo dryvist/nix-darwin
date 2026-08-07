@@ -53,6 +53,20 @@ in
       wiredLimitMb = linkPrep.clusterWiredLimitMb;
       inherit (linkPrep) standaloneWiredLimitMb;
 
+      # The cluster model (modelCatalogKey = "glm47-reap50") is a glm4_moe,
+      # which implements pipelining and NOT tensor parallelism. The nix-ai
+      # default is tensor-parallel, and picking it here is silent rather than
+      # fatal: mlx-lm's has_tensor_parallel predicate is simply false, so no
+      # split happens, every rank loads the FULL model, and generation wedges
+      # with both ranks at the wired ceiling. Measured with this unset: MBP
+      # 4.4 -> 83.5 GiB and Studio 21.8 -> 101.8 GiB resident, ~80 GiB per rank
+      # for a model that should shard to ~49 GiB.
+      #
+      # Tied to the model, not the host: change this whenever modelCatalogKey
+      # moves to an architecture outside glm4_moe/glm4_moe_lite, or the ranks
+      # die at startup with "The model does not support pipelining".
+      shardingMode = "pipeline";
+
       # UNATTENDED AUTO-REBOOT: only where the host can actually finish booting
       # without a human. 0 disables it (halt-and-alert only).
       #
