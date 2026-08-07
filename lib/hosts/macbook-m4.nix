@@ -60,20 +60,18 @@
       # clusterLinkPrep.clusterWiredLimitMb before any shard loads and
       # restored to the standalone value at link-down. The REAP-50 build
       # halves the per-rank shard. Background: Zammad AI/LLM Serving #17126.
-      # DISABLED 2026-08-05 together with the coordinator
-      # (lib/hosts/mac-studio.nix), which carries the full rationale: the
-      # Thunderbolt cable is out, so neither rank can admit a peer. The pair is
-      # enabled and disabled as a unit — a half-enabled pair is a config that
-      # reads as "clustered" while no cluster can form. Re-enable both together,
-      # cable in, under supervision.
-      enable = false;
+      # RE-ENABLED 2026-08-07 together with the coordinator
+      # (lib/hosts/mac-studio.nix), which carries the full root-cause
+      # rationale for the 2026-08-05 disable and this re-enable. The pair is
+      # enabled and disabled as a unit — a half-enabled pair reads as
+      # "clustered" while no cluster can ever form.
+      enable = true;
       role = "worker";
       # Catalog-selected cluster model, identical on both ranks.
+      # shardMemoryMb (the memory-headroom rank-start precondition) is set once
+      # for both ranks in hosts/common/cluster-wired-limit.nix, from a measured
+      # shard size. Change it there alongside this key.
       modelCatalogKey = "glm47-reap50";
-      # Arms the memory-headroom rank-start precondition (0 = off): the
-      # glm47-reap50 per-rank shard is ~49 GB; 55000 leaves KV margin. Change
-      # alongside modelCatalogKey if the selected cluster model changes.
-      shardMemoryMb = 55000;
     };
   };
 
