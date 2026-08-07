@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.32.0](https://github.com/dryvist/nix-darwin/compare/v2.31.0...v2.32.0) (2026-08-07)
+
+
+### Features
+
+* **dock:** add Microsoft Teams and filter persistent apps with native Nix ([#2053](https://github.com/dryvist/nix-darwin/issues/2053)) ([45ad1f6](https://github.com/dryvist/nix-darwin/commit/45ad1f655b423a0ce200d855392eee13da8ef507))
+
 ## [2.31.0](https://github.com/dryvist/nix-darwin/compare/v2.30.2...v2.31.0) (2026-08-07)
 
 
