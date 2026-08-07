@@ -24,7 +24,7 @@ let
   userConfig = import ../../../lib/user-config.nix;
   inherit (userConfig.user) homeDir;
 
-  enableWorkstationApps = hostConfig.homebrew.enableWorkstationApps or (!hostConfig.isServer);
+  inherit (hostConfig.homebrew) enableWorkstationApps;
 in
 {
   system.defaults.dock = {
