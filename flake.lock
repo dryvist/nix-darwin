@@ -147,11 +147,11 @@
     "brew-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1785929629,
-        "narHash": "sha256-/V2UHH49sEMOfenaATycOTz8i2lgEfJThUEguqbYcUw=",
+        "lastModified": 1786019360,
+        "narHash": "sha256-8cvIzhDpvhm3z+RR36ha0paSFgGaeJuGG8INX5eaLHk=",
         "owner": "Homebrew",
         "repo": "brew",
-        "rev": "67658c8cf6ee685420c531ed94ed46b6e7ba5b2a",
+        "rev": "73720671af9c86920d7baf090bfb4161765bb5ef",
         "type": "github"
       },
       "original": {
@@ -249,11 +249,11 @@
     "claude-code-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1785883188,
-        "narHash": "sha256-YZa5wmwB0LBf1UDaa22DLtZeqFEOyfOeuFS7xawOET4=",
+        "lastModified": 1785977551,
+        "narHash": "sha256-YOgR6c0E7ah33wVnt5fnmk0LFdRxOrdhJpmnLpy4zVY=",
         "owner": "anthropics",
         "repo": "claude-code",
-        "rev": "3b272769d0c8fb32845ff3ea0132aeaeafa0ca6e",
+        "rev": "5cf69b18c86d0224dc53815332bbd85574b97097",
         "type": "github"
       },
       "original": {
@@ -1004,11 +1004,11 @@
         "ponytail": "ponytail"
       },
       "locked": {
-        "lastModified": 1786058136,
-        "narHash": "sha256-EhYPF2FVoXO8ldgg22BcmwztYPL9m7C6/6O2lO4sKdA=",
+        "lastModified": 1786059978,
+        "narHash": "sha256-InyTh0cptUPhShrRb9LFBfqc2RlTcurTxeAqpT8Fy5o=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "853726dce0c588c440a732d3aeb27da824f816bb",
+        "rev": "e3da7795fc37114dbe6d6349668efb43cac6eb65",
         "type": "github"
       },
       "original": {
