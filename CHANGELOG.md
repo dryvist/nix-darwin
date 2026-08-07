@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.30.1](https://github.com/dryvist/nix-darwin/compare/v2.30.0...v2.30.1) (2026-08-07)
+
+
+### Bug Fixes
+
+* **cluster:** shard cluster ranks with pipeline parallelism ([#2090](https://github.com/dryvist/nix-darwin/issues/2090)) ([4b035bb](https://github.com/dryvist/nix-darwin/commit/4b035bbfc2dcb35ce1d9eb34c7f7536cdb464c66))
+
 ## [2.30.0](https://github.com/dryvist/nix-darwin/compare/v2.29.0...v2.30.0) (2026-08-07)
 
 
