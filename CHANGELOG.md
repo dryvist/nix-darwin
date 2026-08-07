@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.29.0](https://github.com/dryvist/nix-darwin/compare/v2.28.0...v2.29.0) (2026-08-07)
+
+
+### Features
+
+* **cluster:** arm memory-headroom guard and split wired ceiling by host class ([#2071](https://github.com/dryvist/nix-darwin/issues/2071)) ([c188739](https://github.com/dryvist/nix-darwin/commit/c188739f68078b6eadda9413a63d185b5231b483))
+
+
+### Bug Fixes
+
+* **cluster:** support a machine-local restore denylist ([#2072](https://github.com/dryvist/nix-darwin/issues/2072)) ([93e8835](https://github.com/dryvist/nix-darwin/commit/93e8835d79856fddad5982e923c588f6173686e0))
+
 ## [2.28.0](https://github.com/dryvist/nix-darwin/compare/v2.27.0...v2.28.0) (2026-08-07)
 
 
