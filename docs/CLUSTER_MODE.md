@@ -17,7 +17,17 @@ entire ceremony; unplugging reverses everything unattended.
 > checklists and lesson prose here are superseded by those pages; history is
 > in git.
 
-Status: `programs.mlx.clusterMode.enable = true` on both hosts since #1746.
+Status: `programs.mlx.clusterMode.enable = true` on both hosts, re-enabled
+2026-08-07 after closing the 2026-08-05 disable's root causes:
+
+| Root cause | Status |
+| --- | --- |
+| Standdown tight-loop (peer-absent retries reloading the resident) | Fixed — nix-ai halts on peer-absent standdown |
+| PD-debt exhaustion | Fixed — nix-ai#1478 (merged, self-reboot); preflight check implemented in nix-ai PR #1556 (tracking #1442) |
+| Warmup-slot starvation | Fixed — repair-attempt caps in nix-ai cluster resilience |
+| bridge0 re-enslaves TB ports on reboot | Fix in flight — dryvist/nix-darwin#1768 / PR #2073; manual un-enslave needed until it lands |
+| TCC store-path grants for interpreter/signing identity | Fixed — `hosts/common/mlx-cluster-signing.nix`, `appleInterpreter` |
+
 RDMA is enabled on both Macs; the link runs at 80 Gb/s both directions.
 Physical/Recovery-mode steps: [TB5-RDMA-CLUSTER.md](TB5-RDMA-CLUSTER.md).
 
