@@ -23,7 +23,7 @@ Status: `programs.mlx.clusterMode.enable = true` on both hosts, re-enabled
 | Root cause | Status |
 | --- | --- |
 | Standdown tight-loop (peer-absent retries reloading the resident) | Fixed — nix-ai halts on peer-absent standdown |
-| PD-debt exhaustion | Fixed — nix-ai#1478 (self-reboot), nix-ai#1442 (preflight) |
+| PD-debt exhaustion | Fixed — nix-ai#1478 (merged, self-reboot); preflight check implemented in nix-ai PR #1556 (tracking #1442) |
 | Warmup-slot starvation | Fixed — repair-attempt caps in nix-ai cluster resilience |
 | bridge0 re-enslaves TB ports on reboot | Fix in flight — dryvist/nix-darwin#1768 / PR #2073; manual un-enslave needed until it lands |
 | TCC store-path grants for interpreter/signing identity | Fixed — `hosts/common/mlx-cluster-signing.nix`, `appleInterpreter` |

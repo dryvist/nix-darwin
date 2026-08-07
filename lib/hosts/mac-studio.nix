@@ -172,9 +172,8 @@ in
       #     rendezvous-absent strikes since 2026-07-12): fixed. nix-ai writes a
       #     halt marker on peer-absent standdown so the warmup-agent reload
       #     loop cannot recur unbounded.
-      #   - PD-debt exhaustion: fixed. nix-ai#1478 (merged) adds a self-reboot
-      #     to clear it; nix-ai#1442 adds the devicePdBudget preflight check
-      #     against the host's measured `ibv_devinfo` maximum.
+      #   - PD-debt exhaustion: fixed — nix-ai#1478 (merged, self-reboot);
+      #     preflight check implemented in nix-ai PR #1556 (tracking #1442).
       #   - Warmup-slot starvation: fixed via repair-attempt caps in nix-ai's
       #     cluster resilience module.
       #   - bridge0 re-enslaving the Thunderbolt ports on reboot: fix in
