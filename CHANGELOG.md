@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.30.2](https://github.com/dryvist/nix-darwin/compare/v2.30.1...v2.30.2) (2026-08-07)
+
+
+### Bug Fixes
+
+* **cribl:** exclude GitLens.log from the VS Code log tail ([#2060](https://github.com/dryvist/nix-darwin/issues/2060)) ([50de206](https://github.com/dryvist/nix-darwin/commit/50de206c19b11c384238ed81550789da0eea5318))
+
 ## [2.30.1](https://github.com/dryvist/nix-darwin/compare/v2.30.0...v2.30.1) (2026-08-07)
 
 
