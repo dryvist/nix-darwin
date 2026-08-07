@@ -153,14 +153,20 @@ in
       # cap bought nothing. Headroom over conservatism; the operative guard
       # against thrash is now the detach exit-3 stale-swap gate + reboot-first
       # doctrine (INC-17075), not a tiny wired ceiling.
-      # Both ranks derive the clustered ceiling from the host's standalone wired
-      # ceiling — now identical 102400 MiB = 100 GiB on both Macs (maxLocalLlmGb
-      # = 100), so the two never drift and the 28 GiB reserve carries into
-      # clustered mode. On the worker, cluster-quiesce has already quit the GUI
-      # and booted out agents, so the same reserve that protects the headless
-      # coordinator is ample. The GLM-4.7-REAP-50 per-rank shard (~49 GB + KV +
-      # buffer ~65 GB) leaves ~42 GB slack under this ceiling.
-      clusterWiredLimitMb = config.system.appleSiliconTunables.wiredLimitMb;
+      # The headless coordinator derives the clustered ceiling from the host's
+      # standalone wired ceiling (102400 MiB = 100 GiB, maxLocalLlmGb = 100) — it
+      # has no GUI working set to protect, so the same reserve that bounds
+      # standalone serving is ample in clustered mode too. The GLM-4.7-REAP-50
+      # per-rank shard (~49 GB + KV + buffer ~65 GB) leaves ~35 GB slack.
+      #
+      # The MacBook worker is a workstation: WindowServer and the rest of the
+      # GUI working set must stay unwirable even while a shard is loaded, which
+      # is the exact starvation the 2026-07-12 panic hit (INC-17076). cluster-
+      # quiesce quits the GUI and boots out agents at link-up, but the ceiling
+      # itself is the last-resort guard, so it is sized below the standalone
+      # value rather than equal to it.
+      clusterWiredLimitMb =
+        if hostConfig.isServer then config.system.appleSiliconTunables.wiredLimitMb else 90000;
     };
     energy.wakeOnMagicPacket = lib.mkIf hostConfig.isServer (lib.mkDefault true); # Wake-on-LAN for a headless box
     networkTuning.enable = lib.mkIf hostConfig.isServer (lib.mkDefault true); # socket buffers for LAN serving
