@@ -57,6 +57,18 @@ in
       remote = hosts.mac-studio.hostName;
     };
 
+    # Daily push of the same history to the per-vendor object buckets (nix-ai
+    # module) — the off-Mac copy behind the studio one. Runs as a launchd
+    # agent on purpose: agents carry no GUI responsible app, so macOS Local
+    # Network gating never applies to them, where the same push from a
+    # terminal-descended shell breaks whenever en0 wakes up on the storage
+    # subnet (probe-verified). Credentials are the ai-sessions-backup AppRole,
+    # doppler-injected per run; nothing is stored on this machine.
+    sessionArchive = {
+      enable = true;
+      endpoint = "https://s3.${userConfig.internalDomain}";
+    };
+
     # Recreates the tmux "cc" session at every login — a reboot always kills
     # the tmux server, and Termius' "tmux attach -t cc" startup command needs
     # the session to already exist. Workstation-only: this is the box reached
