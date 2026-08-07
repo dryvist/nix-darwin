@@ -26,7 +26,7 @@ repos:
 
   # Markdown linting (uses .markdownlint-cli2.yaml — canonical from dryvist/.github)
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.23.1
+    rev: v0.23.2
     hooks:
       - id: markdownlint-cli2
         files: \.md$
@@ -54,7 +54,7 @@ repos:
   # Runs security-audit rules on all supported languages
   # See: https://semgrep.dev/docs/extensions/pre-commit
   - repo: https://github.com/semgrep/pre-commit
-    rev: v1.171.0
+    rev: v1.172.0
     hooks:
       - id: semgrep
         args: ['--config', 'p/security-audit', '--skip-unknown-extensions']

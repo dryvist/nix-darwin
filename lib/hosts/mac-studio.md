@@ -66,34 +66,104 @@ non-exclusive small tier hold weights simultaneously. `memoryHardLimitGb` must
 drop in the same change or the product over-commits the ceiling — 2 workers at
 the old 99 GiB would permit 198 GiB against 100 GiB.
 
-Chosen: `memoryHardLimitGb = 48`, so `2 × 48 = 96 GiB` with a 4 GiB cushion.
-Measured working sets are 19.4 GB (35B) and ~5.2 GB (9B), leaving roughly 28 GiB
-per worker above its weights for KV and the 8 GiB prompt cache.
+Chosen: `memoryHardLimitGb = 48`, so `2 × 48 = 96 GiB` against a 100 GiB ceiling.
+
+**The cushion is not 4 GiB.** 96 vs 100 ignores the non-MLX wired baseline,
+measured at ~3.4 GiB host-wide while one worker decodes. Strict worst case is
+`96 + 3.4 = 99.4 GiB`, so the honest cushion is **~0.6 GiB**. It still holds, and
+overshoot spills to pageable memory rather than failing, but do not read 4 GiB as
+spare capacity.
+
+Per-worker budget for the resident, using measurements rather than the catalog's
+declared `weightGb`:
+
+| quantity | value | source |
+| --- | --- | --- |
+| weights, live RSS mid-decode | 18.72 GiB | `ps` on the running worker |
+| weights, RSS recorded 2026-07-24 | 21.31 GiB | docs-starlight memory-ceilings |
+| prompt cache | **16 GiB** | live `--prompt-cache-bytes 17179869184` |
+| buffer cache (shedable) | up to 12 GiB | `bufferCacheLimitGb` default |
+
+So roughly `48 − 21.3 − 16 ≈ 10.7 GiB` is left for KV and scratch — not the ~28
+GiB an earlier draft of this file claimed. That draft also called 19.4 GB and
+5.2 GB "measured": they are **declared** catalog `weightGb` values
+(`catalog-data.nix`), they match neither disk (19.03 / 5.57 GiB) nor live RSS,
+and the unit they are expressed in is undocumented. Measure W; never take it
+from a spec sheet.
+
+Note the prompt cache is 16 GiB for the **resident**, not the host-wide 8 GiB:
+the resident class overrides `cacheMemoryMb = 16384` in the nix-ai catalog. The
+9B runs at the host default, 8 GiB.
+
+The worst constructible single-worker set therefore EXCEEDS 48 GiB. That is not
+a defect, because `memoryHardLimitGb` refuses nothing — see below.
 
 `suppressWiredLimit` defaults true (it avoids an IOGPUFamily kernel panic), which
 leaves weights pageable and makes this budget load-bearing: exceed the ceiling
 and the trade is a kernel panic for swap thrash. Do not raise `maxResidentWorkers`
 again without lowering `memoryHardLimitGb` to match.
 
-`memoryHardLimitGb` is an L2 in-process cap applied by the `mlx_lm` launcher via
-`mx.set_memory_limit`. It is real on this host because `modelServerBackend` is
-`mlx-lm` — nix-ai `modules/mlx/assertions.nix` asserts that outright. It would
-be inert under a `vllm-mlx` backend.
+`memoryHardLimitGb` is applied by the `mlx_lm` launcher via `mx.set_memory_limit`.
+It is wired up on this host because `modelServerBackend` is `mlx-lm` — nix-ai
+`modules/mlx/assertions.nix` asserts that outright — and inert under `vllm-mlx`.
 
-## Serving concurrency
+**It is a sizing guideline, not an enforcement.** Upstream MLX raises only when
+RAM *and swap* are exhausted; crossing the limit sheds the free-buffer cache and
+otherwise proceeds. So a worker can transiently exceed 48 GiB with nothing
+refused, and `k_max × memoryHardLimitGb ≤ ceiling` is a budget you choose to
+respect, not one the runtime imposes.
 
-`proxy.concurrencyLimit` inherits `serveConcurrency = 1`; there is no per-model
-override. The 4× override this replaced was written for the Coder-30B and was
-measured actively harmful on 2026-07-27: 4 concurrent streams gave 12.5 tok/s
-per stream, drove gate p90 to 194 s with a 1298 s tail, returned 429 to 52% of
-requests over the preceding hour, and ultimately wedged the worker outright.
-Concurrency buys nothing here to offset that — `mlx_lm.server` serializes decode
-internally regardless, so 4-way admission only time-slices one GPU.
+This matters for reading the numbers above: the worst constructible resident set
+(~21.3 weights + 16 prompt cache + up to 12 shedable buffer cache) is larger than
+48 GiB, and that is fine precisely because the limit sheds rather than fails. The
+practical effect of lowering 99 → 48 is *earlier buffer-cache shedding under
+long-context load*, costing some re-allocation latency — not allocation failure.
 
-This is current operating guidance while single-stream stability is established,
-not a permanent ceiling. Note the 52% rejection figure above: raising
-concurrency alone did **not** fix rejection rates, so it is not the lever for
-them.
+nix-ai's own prose still says this limit "forces … allocation failure ahead of
+the host wired ceiling" (`options-residency.nix`, `mlx-lm-launch.py`). That
+contradicts upstream semantics — failure arrives at RAM+swap exhaustion, which is
+*behind* the ceiling, not ahead of it. Pre-existing defect in that repo, tracked
+separately; docs-starlight already states it correctly.
+
+## Serving concurrency (2 since 2026-08-06)
+
+`proxy.concurrencyLimit` inherits `serveConcurrency = 2`. The host sets no
+per-model override; catalog pins hold the 9B and every 40B+ entry at
+`concurrencyLimit = 1` (nix-ai's 40B+ single-slot policy, flake-check
+enforced), so only the resident 35B serves two-wide. Raised from 1 because a
+single slot serializes every caller: with several uncoordinated callers,
+queueing delay — not failure rate — dominated the latency tail. Two in-flight
+requests let the server batch-decode them instead of queueing one behind the
+other.
+
+**Why 2 is safe where the 2026-07-27 4× override was harmful.** That
+measurement was 4-way *admission* against a worker whose
+`--decode-concurrency` was still hard-coded 1 (pre-unification): the proxy
+time-sliced one serialized GPU, gave 12.5 tok/s per stream, drove gate p90 to
+194 s with a 1298 s tail, returned 429 to 52% of requests, and wedged the
+worker. Since the unification, admission and served width derive from one
+number, and mlx-lm 0.31.3's `--decode-concurrency` feeds a real batch
+scheduler (`BatchGenerator`; upstream defaults are 32 decode / 8 prompt, so 2
+is conservative). The resident qwen3_5_moe is batchable in 0.31.3: no draft
+model, and both cache classes its `make_cache` returns (`KVCache`,
+`ArraysCache`) implement `merge`. The old note here that "`mlx_lm.server`
+serializes decode internally regardless" described that hard-coded-1 state,
+not 0.31.3 with the flag set. Still true: concurrency is not the lever for
+*rejection* rates.
+
+**Memory cost of the second stream.** The 35B is hybrid-attention
+(config.json: 10 of 40 layers full attention, 2 KV heads, head_dim 256), so
+KV costs `2 × 10 × 2 × 256 × 2 B = 20 KiB/token` — 1.25 GiB per
+65,536-token stream, 5.0 GiB at the architectural max 262,144. The second
+in-flight stream therefore adds ~1.3–5 GiB plus ~0.25 GiB of fixed
+linear-attention state. `mlx_lm.server` trims the stored prompt cache to
+`prompt-cache-bytes − active batch KV`, so stored + in-flight KV stays inside
+the 16 GiB cache budget. Worst constructible worker at 2 is ~21.3 (weights) +
+≤16 (KV + prompt cache) + ~0.5 (state) + ≤12 (shedable buffer cache) ≈ 50 GiB
+against the 48 GiB per-worker budget — sheds cache rather than failing, and
+the residency invariant is untouched: `maxResidentWorkers` counts workers,
+not in-flight requests. A third request per model is parked or 429'd by
+llama-swap's scheduler and never reaches the worker.
 
 ## Preload
 

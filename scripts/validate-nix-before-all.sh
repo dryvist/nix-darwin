@@ -19,7 +19,7 @@ EXCLUSIONS=(
   "claude-code:Intentionally using homebrew due to recent nixpkgs latency on latest packages"
   "antigravity-cli:Intentionally using homebrew due to recent nixpkgs latency on latest packages"
   "bitwarden:nixpkgs build pins EOL electron_39 (insecure); cask uses Bitwarden's maintained build"
-  "container:Homebrew tracks Apple container 1.0.0 while nixpkgs is still 0.12.3; use current upstream runtime"
+  "container:Homebrew tracks Apple container releases ahead of nixpkgs; use current upstream runtime"
   "orbstack:Cask preferred over nixpkgs for TCC permission stability (nixpkgs symlink changes on rebuild, forcing TCC re-grant)"
   "postman:Nixpkgs version lags significantly behind upstream, causing Squirrel/ShipIt schema mismatch errors"
 )

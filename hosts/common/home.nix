@@ -56,6 +56,7 @@ in
     # Feeds the system-level clusterLinkPrep wired ceilings into nix-ai's
     # programs.mlx.clusterMode so the watcher/lifecycle env carries them.
     ./cluster-wired-limit.nix
+    ./residency-budget.nix
     # Durable code-signing identity for the cluster executables, so their macOS
     # privacy grants survive a rebuild instead of dying with the store path.
     ./mlx-cluster-signing.nix

@@ -352,26 +352,27 @@ in
               connections:
                 - pipeline: llm_normalize
                   output: cribl_agy
-            in_copilot_logs:
-              type: file
-              disabled: false
-              mode: manual
-              interval: 10
-              path: ${userConfig.user.homeDir}/Library/Logs/copilot/
-              filenames:
-                - "*.log"
-              tailOnly: false
-              sendToRoutes: false
-              connections:
-                - output: cribl_copilot
+            # The copilot input is deliberately absent. It watched a directory
+            # the CLI creates once and never writes to, and the tool keeps no
+            # on-disk log elsewhere. An input on a never-written path is not
+            # collection: it reads as configured while delivering nothing,
+            # which is worse than having no input at all, because it answers
+            # "is this wired up" with a yes. Restore it only together with a
+            # verified path the tool actually writes.
+            #
+            # VS Code writes per-session logs under Application Support, not
+            # under Library/Logs, which is why the previous path stayed empty.
+            # Sessions are timestamped directories, so the search descends one
+            # level and picks up sessions created after the collector starts.
             in_vscode_logs:
               type: file
               disabled: false
               mode: manual
               interval: 10
-              path: ${userConfig.user.homeDir}/Library/Logs/vscode/
+              path: ${userConfig.user.homeDir}/Library/Application Support/Code/logs/
               filenames:
                 - "*.log"
+              recurse: true
               tailOnly: false
               sendToRoutes: false
               connections:
@@ -476,11 +477,11 @@ in
               host: ${userConfig.logging.syslog.server}
               port: 10313
               pqEnabled: true
-            cribl_copilot:
-              type: tcpjson
-              host: ${userConfig.logging.syslog.server}
-              port: 10314
-              pqEnabled: true
+            # The copilot destination is removed with its input: nothing feeds
+            # it, and a persistent-queue output with no source is a place for
+            # events to accumulate unseen if one is ever connected by accident.
+            # Its ingest port stays reserved upstream, so restoring both halves
+            # later is additive.
             cribl_vscode:
               type: tcpjson
               host: ${userConfig.logging.syslog.server}

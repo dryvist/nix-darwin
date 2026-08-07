@@ -5,6 +5,8 @@
 # This file adds only the host-unique bits — the TCC-sensitive GUI app list.
 
 {
+  hostConfig,
+  lib,
   pkgs,
   userConfig,
   ...
@@ -26,6 +28,18 @@
     openHarness = {
       enable = true;
       endpoint = "https://llm.${userConfig.internalDomain}/v1";
+    };
+
+    # Token Meter (nix-ai home-manager module) — this host only supplies
+    # parameters. httpsGate is off here, unlike the tier default: this host has
+    # no fixed LAN address declared anywhere in this repo, and Caddy's `bind`
+    # needs a socket address literal. Set bindAddress to this machine's
+    # reservation and drop the httpsGate line to turn the LAN front on; the
+    # loopback dashboard works either way.
+    token-meter = {
+      enable = lib.mkDefault hostConfig.aiTooling.tokenMeter.enable;
+      menuBar = lib.mkDefault hostConfig.aiTooling.tokenMeter.menuBar;
+      httpsGate = false;
     };
 
     # Recreates the tmux "cc" session at every login — a reboot always kills
