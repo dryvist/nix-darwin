@@ -8,8 +8,11 @@
 # copy lives in nix-ai `programs.mlx.clusterMode.staticLinkIps` and these
 # defaults must match it.
 #
-# Everything is applied ONCE at activation (root) — there is no runtime
-# daemon. macOS SystemConfiguration persists the settings:
+# Everything is applied by one idempotent root pass, triggered at rebuild
+# (postActivation) and again at boot (a RunAtLoad LaunchDaemon). Still no
+# runtime daemon: nothing polls, nothing stays resident. macOS
+# SystemConfiguration persists most of the settings, but not all of them —
+# see the boot trigger below for what a reboot undoes:
 #   1. The "Thunderbolt Bridge" network service is disabled, so macOS never
 #      enslaves a Thunderbolt port into bridge0 (RDMA needs exclusive L2).
 #   2. Every physical Thunderbolt port's network service gets the SAME manual
@@ -126,7 +129,38 @@ in
         '';
     };
 
-    # postActivation (root, boot + rebuild): idempotent one-shot link config;
+    # Boot trigger (root, RunAtLoad): the SAME prep, one more time to run it.
+    #
+    # This repo deliberately does not run a full activation at boot —
+    # ./boot-activation.nix restores only the /run/current-system symlink,
+    # because full activation early in boot trips App Management prompts. So
+    # postActivation below fires at REBUILD time and never at boot, while
+    # macOS re-enslaves every Thunderbolt port into bridge0 across a reboot
+    # and drops the role alias. The link therefore stayed unconfigured after
+    # every restart until someone ran `activate` by hand on both nodes, and
+    # the watcher — whose only link test is a ping to the peer address — read
+    # that as a pulled cable.
+    #
+    # Idempotent and self-limiting: the prep is the same one-shot pass, and
+    # the daemon exists only while clusterLinkPrep is enabled, so a host with
+    # cluster mode off installs nothing.
+    launchd.daemons.cluster-link-prep.serviceConfig = {
+      Label = "com.nix-darwin.cluster-link-prep";
+      # /nix/store is not guaranteed mounted when launchd starts root daemons;
+      # wait4path first, exactly as ./boot-activation.nix does.
+      ProgramArguments = [
+        "/bin/sh"
+        "-c"
+        "/bin/wait4path /nix/store && exec ${lib.getExe prepPkg}"
+      ];
+      EnvironmentVariables.CLUSTER_LINK_IP = cfg.linkIps.${cfg.role};
+      RunAtLoad = true;
+      KeepAlive = false;
+      StandardOutPath = "/var/log/cluster-link-prep.log";
+      StandardErrorPath = "/var/log/cluster-link-prep.log";
+    };
+
+    # postActivation (root, rebuild): idempotent one-shot link config;
     # never allowed to fail activation.
     system.activationScripts.postActivation.text = lib.mkAfter ''
       CLUSTER_LINK_IP=${

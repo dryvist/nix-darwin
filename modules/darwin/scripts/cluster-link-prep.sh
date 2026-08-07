@@ -15,7 +15,29 @@
 : "${CLUSTER_LINK_IP:?CLUSTER_LINK_IP must be set}"
 
 prefix="[cluster-link-prep]"
-order="$(/usr/sbin/networksetup -listnetworkserviceorder)"
+
+# 0. Wait for SystemConfiguration to publish the network service list. From a
+#    rebuild this returns on the first read and costs nothing. From the BOOT
+#    LaunchDaemon it is load-bearing: launchd can start the daemon before
+#    configd has published anything, and EVERY step below reads that list — so
+#    without the wait the boot pass finds no Thunderbolt devices, sweeps
+#    nothing, assigns nothing, and exits 0. A pass that silently does nothing
+#    is the failure mode this prep keeps having, so bound the wait rather than
+#    block forever, and continue either way: the final "no carrier" WARN
+#    already makes an unconfigured link greppable.
+order=""
+waited=0
+while [ "$waited" -lt 60 ]; do
+  order="$(/usr/sbin/networksetup -listnetworkserviceorder 2>/dev/null || true)"
+  if [ -n "$order" ]; then
+    break
+  fi
+  /bin/sleep 1
+  waited=$((waited + 1))
+done
+if [ -z "$order" ]; then
+  echo "$prefix WARN network service list still empty after ${waited}s; continuing" >&2
+fi
 
 # 1. Thunderbolt Bridge network service off. The service name is derived
 #    from its device (bridge0) since the display name is localisable.
