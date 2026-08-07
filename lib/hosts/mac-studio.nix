@@ -197,11 +197,10 @@ in
       # so it fits under the cluster wired ceiling with real KV headroom; the
       # full 198 GB GLM-4.7-4bit (module default) is reserved for supervised
       # sessions until the ceiling values are validated.
+      # shardMemoryMb (the memory-headroom rank-start precondition) is set once
+      # for both ranks in hosts/common/cluster-wired-limit.nix, from a measured
+      # shard size. Change it there alongside this key.
       modelCatalogKey = "glm47-reap50";
-      # Arms the memory-headroom rank-start precondition (0 = off): the
-      # glm47-reap50 per-rank shard is ~49 GB; 55000 leaves KV margin. Change
-      # alongside modelCatalogKey if the selected cluster model changes.
-      shardMemoryMb = 55000;
     };
   };
 

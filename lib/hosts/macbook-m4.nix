@@ -68,11 +68,10 @@
       enable = true;
       role = "worker";
       # Catalog-selected cluster model, identical on both ranks.
+      # shardMemoryMb (the memory-headroom rank-start precondition) is set once
+      # for both ranks in hosts/common/cluster-wired-limit.nix, from a measured
+      # shard size. Change it there alongside this key.
       modelCatalogKey = "glm47-reap50";
-      # Arms the memory-headroom rank-start precondition (0 = off): the
-      # glm47-reap50 per-rank shard is ~49 GB; 55000 leaves KV margin. Change
-      # alongside modelCatalogKey if the selected cluster model changes.
-      shardMemoryMb = 55000;
     };
   };
 
