@@ -370,8 +370,31 @@ in
               mode: manual
               interval: 10
               path: ${userConfig.user.homeDir}/Library/Application Support/Code/logs/
+              # GitLens.log is excluded on timestamp grounds, not volume. Its
+              # lines carry two stamps in different zones: GitLens' own in
+              # local time, plus a bracketed UTC one belonging to the wrapped
+              # Git extension message. Continuation lines begin with the
+              # bracketed UTC form alone, which gets read as local time and
+              # lands the event +4h in the future. Measured over 24h on
+              # 2026-08-06: 120 GitLens.log events skewed up to +3.9h, against
+              # ~293k events from every other VS Code log at or slightly
+              # behind index time.
+              #
+              # A future-dated event is blinding, not merely wrong: it pulls
+              # latest(_time) ahead of now across the whole index, so the
+              # surface reads as perpetually fresh and no staleness detector
+              # can ever fire on VS Code — 120 events suppressing the signal
+              # from 293k. No timezone setting repairs it, since the two forms
+              # really are in separate zones inside one file.
+              #
+              # Nothing is lost: these lines are the Git extension's own
+              # output, collected correctly already from Git.log. Leading "*"
+              # makes the pattern match the full path (Cribl matches filename
+              # patterns against the full path, never the basename) at any
+              # directory depth.
               filenames:
                 - "*.log"
+                - "!*GitLens.log"
               recurse: true
               tailOnly: false
               sendToRoutes: false
