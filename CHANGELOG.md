@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.31.0](https://github.com/dryvist/nix-darwin/compare/v2.30.2...v2.31.0) (2026-08-07)
+
+
+### Features
+
+* **macbook-m4:** enable daily session archive to vendor buckets ([#2095](https://github.com/dryvist/nix-darwin/issues/2095)) ([d7c7a3f](https://github.com/dryvist/nix-darwin/commit/d7c7a3fff1a412c392a8fa4b5ef2462384fef7b3))
+
 ## [2.30.2](https://github.com/dryvist/nix-darwin/compare/v2.30.1...v2.30.2) (2026-08-07)
 
 
