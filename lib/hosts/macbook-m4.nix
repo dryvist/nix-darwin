@@ -70,6 +70,10 @@
       role = "worker";
       # Catalog-selected cluster model, identical on both ranks.
       modelCatalogKey = "glm47-reap50";
+      # Arms the memory-headroom rank-start precondition (0 = off): the
+      # glm47-reap50 per-rank shard is ~49 GB; 55000 leaves KV margin. Change
+      # alongside modelCatalogKey if the selected cluster model changes.
+      shardMemoryMb = 55000;
     };
   };
 
