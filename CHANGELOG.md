@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.28.0](https://github.com/dryvist/nix-darwin/compare/v2.27.0...v2.28.0) (2026-08-07)
+
+
+### Features
+
+* **macbook-m4:** hourly AI session push to mac-studio ([#2065](https://github.com/dryvist/nix-darwin/issues/2065)) ([fd5b876](https://github.com/dryvist/nix-darwin/commit/fd5b876dec3bb352a2a1e02c28d116a03b563264))
+
 ## [2.27.0](https://github.com/dryvist/nix-darwin/compare/v2.26.0...v2.27.0) (2026-08-07)
 
 
