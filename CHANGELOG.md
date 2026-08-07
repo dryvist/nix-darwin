@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.27.0](https://github.com/dryvist/nix-darwin/compare/v2.26.0...v2.27.0) (2026-08-07)
+
+
+### Features
+
+* **hosts:** enable token-meter on both Macs ([#2061](https://github.com/dryvist/nix-darwin/issues/2061)) ([401508d](https://github.com/dryvist/nix-darwin/commit/401508dc25388b40adc49d57593f8c4d0c88fa83))
+* **mac-studio:** raise serving concurrency to 2 ([#2059](https://github.com/dryvist/nix-darwin/issues/2059)) ([b2cef95](https://github.com/dryvist/nix-darwin/commit/b2cef95791e6b40ff91e17fe9e1a3095316f29f7))
+
+
+### Bug Fixes
+
+* **cribl:** remove a dead log tail and repoint one at the real path ([#2054](https://github.com/dryvist/nix-darwin/issues/2054)) ([f7086eb](https://github.com/dryvist/nix-darwin/commit/f7086ebfce7b292e13d2d1639b809f0292e4085b))
+* **mac-studio:** enforce the residency invariant and correct its numbers ([#2049](https://github.com/dryvist/nix-darwin/issues/2049)) ([30030ef](https://github.com/dryvist/nix-darwin/commit/30030efb2d6a9c02625c25d8f2c0f8af0a2670fa))
+
 ## [2.26.0](https://github.com/dryvist/nix-darwin/compare/v2.25.1...v2.26.0) (2026-08-05)
 
 
