@@ -21,6 +21,8 @@ in
     ./energy.nix
     ./file-extensions.nix
     ./cluster-link-prep.nix
+    ./cluster-rebuild-gate.nix
+    ./cluster-maintenance-window.nix
     ./finder.nix
     ./homebrew.nix
     ./nix-homebrew.nix
