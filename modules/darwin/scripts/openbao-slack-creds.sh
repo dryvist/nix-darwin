@@ -14,7 +14,9 @@
 # SUBCOMMANDS: token, rotate, manifest-create <path>, manifest-validate
 # <path> (apps.manifest.create / .validate against a local manifest JSON
 # file), --self-check. manifest-create/validate obtain their bearer token
-# through the exact same get_valid_token() path as `token`.
+# through the exact same get_valid_token() path as `token`. manifest-create
+# also persists the one-time app credentials Slack returns — see
+# persist_app_credentials below.
 #
 # SECRET-ZERO is AMBIENT, identical in shape to openbao-github-creds.sh:
 # BAO_ADDR (or legacy VAULT_ADDR) + OPENBAO_APPROLE_SLACK_ADMIN_ROLE_ID /
@@ -254,13 +256,47 @@ cmd_manifest_create() {
     "https://slack.com/api/apps.manifest.create")" || die "apps.manifest.create call failed"
   ok="$(jq -r '.ok // false' <<<"${resp}")"
   [ "${ok}" = "true" ] || die "apps.manifest.create rejected: $(jq -c '.errors // .error // "unknown"' <<<"${resp}")"
-  printf 'app_id=%s\n' "$(jq -r '.app_id // empty' <<<"${resp}")"
+  local app_id
+  app_id="$(jq -r '.app_id // empty' <<<"${resp}")"
+  printf 'app_id=%s\n' "${app_id}"
   printf 'oauth_authorize_url=%s\n' "$(jq -r '.oauth_authorize_url // empty' <<<"${resp}")"
-  # client_secret/signing_secret ride along in the response but are never
-  # printed — note only that they came back, never their values.
-  if jq -e '.credentials' >/dev/null 2>&1 <<<"${resp}"; then
-    echo "$prefix note: response also returned app credentials (client_secret/signing_secret) — not printed" >&2
+  persist_app_credentials "${app_id}" "${resp}" "${manifest}"
+}
+
+# client_id/client_secret/verification_token/signing_secret are issued once,
+# at creation, with no API to re-fetch client_secret later — losing this
+# write loses them permanently. Stored at
+# secrets-external/data/platform/slack-app-<lowercased app_id> with cas:0
+# (create-only: refuses to ever overwrite a previous app's credentials).
+# Values are never printed; only the storage path is, so an operator can
+# find them.
+persist_app_credentials() {
+  local app_id="$1" create_resp="$2" manifest="$3" creds app_name created_at path body bao_tok code
+  creds="$(jq -c '.credentials // empty' <<<"${create_resp}")"
+  [ -n "${creds}" ] && [ "${creds}" != "null" ] || return 0
+
+  app_name="$(jq -r '.display_information.name // empty' <<<"${manifest}")"
+  created_at="$("${date_bin}" -u +%Y-%m-%dT%H:%M:%SZ)"
+  path="secrets-external/data/platform/slack-app-$(printf '%s' "${app_id}" | tr '[:upper:]' '[:lower:]')"
+  body="$(jq -cn --argjson c "${creds}" --arg an "${app_name}" --arg ca "${created_at}" \
+    '{options: {cas: 0}, data: ($c + {app_name: $an, created_at: $ca})}')"
+
+  bao_tok="$(bao_login)"
+  code="$("${curl_bin}" -s -o /dev/null -w '%{http_code}' --max-time 10 -X POST \
+    -H "X-Vault-Token: ${bao_tok}" -d "${body}" "${bao_addr}/v1/${path}")"
+
+  if [ "${code}" = "200" ]; then
+    echo "$prefix app credentials written to ${path}" >&2
+    return 0
   fi
+
+  echo "$prefix ERROR app ${app_id} was created at Slack, but its credentials could NOT be stored at ${path} and are UNRECOVERABLE — Slack has no API to re-fetch client_secret." >&2
+  if [ "${code}" = "403" ]; then
+    echo "$prefix ERROR OpenBao denied the write (HTTP 403): the slack-admin policy lacks 'create' on ${path} — see the follow-up policy PR in ansible-proxmox-apps." >&2
+  else
+    echo "$prefix ERROR OpenBao write to ${path} failed (HTTP ${code})." >&2
+  fi
+  exit 1
 }
 
 # Dry-run check against apps.manifest.validate. Tier 3 on Slack's side (no

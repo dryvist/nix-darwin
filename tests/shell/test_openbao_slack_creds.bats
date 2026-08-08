@@ -9,7 +9,11 @@
 # Also exercises the write-back retry/brick path, since losing that write is
 # the one failure mode that permanently destroys the credential, and the
 # manifest-create/manifest-validate commands (success, rejection, and that
-# credential values from apps.manifest.create never reach stdout/stderr).
+# credential values from apps.manifest.create never reach stdout/stderr),
+# and the credentials-persistence write after a successful manifest-create
+# (cas:0, correct path, and loud non-zero failure — including the specific
+# 403/missing-policy case — rather than silently losing an unrecoverable
+# secret).
 
 bats_require_minimum_version 1.5.0 # for `run --separate-stderr`
 
@@ -33,9 +37,13 @@ setup() {
   ROTATE_CALLS="$BATS_TEST_TMPDIR/rotate-calls"
   WRITE_ATTEMPTS="$BATS_TEST_TMPDIR/write-attempts"
   MANIFEST_CALLS="$BATS_TEST_TMPDIR/manifest-calls"
+  CREDS_WRITE_URLS="$BATS_TEST_TMPDIR/creds-write-urls"
+  CREDS_WRITE_BODIES="$BATS_TEST_TMPDIR/creds-write-bodies"
   : > "$ROTATE_CALLS"
   : > "$WRITE_ATTEMPTS"
   : > "$MANIFEST_CALLS"
+  : > "$CREDS_WRITE_URLS"
+  : > "$CREDS_WRITE_BODIES"
 
   # This repo's OpenBao scripts target BSD `/bin/date` (macOS-only, by
   # design — these scripts only ever run on the user's Mac). That binary
@@ -125,7 +133,7 @@ case "\$url" in
   https://slack.com/api/apps.manifest.create)
     echo "1" >> "$MANIFEST_CALLS"
     if [ "\${MANIFEST_MODE:-ok}" = "ok" ]; then
-      echo '{"ok":true,"app_id":"A123","oauth_authorize_url":"https://api.slack.com/apps/A123/install-on-team","credentials":{"client_id":"999.888","client_secret":"SECRETVALUE","signing_secret":"SIGNSECRET"}}'
+      echo '{"ok":true,"app_id":"A123","oauth_authorize_url":"https://api.slack.com/apps/A123/install-on-team","credentials":{"client_id":"999.888","client_secret":"SUPERSECRETVALUE","verification_token":"SUPERVERIFYTOKEN","signing_secret":"SUPERSIGNSECRET"}}'
     else
       echo '{"ok":false,"errors":[{"message":"invalid_manifest"}]}'
     fi
@@ -137,6 +145,15 @@ case "\$url" in
     else
       echo '{"ok":false,"errors":[{"message":"invalid_manifest"}]}'
     fi
+    ;;
+  */secrets-external/data/platform/slack-app-*)
+    printf '%s\n' "\$url" >> "$CREDS_WRITE_URLS"
+    printf '%s\n' "\$data" >> "$CREDS_WRITE_BODIES"
+    case "\${CREDS_WRITE_MODE:-ok}" in
+      ok)  echo -n "200" ;;
+      403) echo -n "403" ;;
+      *)   echo -n "500" ;;
+    esac
     ;;
   *)
     echo '{}'
@@ -299,4 +316,42 @@ run_creds() { run --separate-stderr bash -euo pipefail "$SCRIPTS/openbao-slack-c
   MANIFEST_MODE=fail run_creds manifest-validate "$BATS_TEST_TMPDIR/manifest.json"
   [ "$status" -ne 0 ]
   [[ "$stderr" == *"invalid_manifest"* ]]
+}
+
+@test "manifest-create persists app credentials with cas:0 at the lowercased app_id path, and never leaks secret values" {
+  seed_kv "$(far_future)" 200
+  echo '{"display_information":{"name":"Test App"}}' > "$BATS_TEST_TMPDIR/manifest.json"
+  MANIFEST_MODE=ok CREDS_WRITE_MODE=ok run_creds manifest-create "$BATS_TEST_TMPDIR/manifest.json"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"app_id=A123"* ]]
+  [[ "$output" != *"SUPERSECRETVALUE"* ]]
+  [[ "$output" != *"SUPERSIGNSECRET"* ]]
+  [[ "$output" != *"SUPERVERIFYTOKEN"* ]]
+  [[ "$stderr" != *"SUPERSECRETVALUE"* ]]
+  [[ "$stderr" != *"SUPERSIGNSECRET"* ]]
+  [[ "$stderr" != *"SUPERVERIFYTOKEN"* ]]
+  grep -q "secrets-external/data/platform/slack-app-a123" "$CREDS_WRITE_URLS"
+  [ "$(jq -r '.options.cas' "$CREDS_WRITE_BODIES")" = "0" ]
+  [ "$(jq -r '.data.client_secret' "$CREDS_WRITE_BODIES")" = "SUPERSECRETVALUE" ]
+  [ "$(jq -r '.data.app_name' "$CREDS_WRITE_BODIES")" = "Test App" ]
+}
+
+@test "a 403 on the credentials write names the missing OpenBao capability and fails loudly" {
+  seed_kv "$(far_future)" 200
+  echo '{"display_information":{"name":"Test App"}}' > "$BATS_TEST_TMPDIR/manifest.json"
+  MANIFEST_MODE=ok CREDS_WRITE_MODE=403 run_creds manifest-create "$BATS_TEST_TMPDIR/manifest.json"
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"403"* ]]
+  [[ "$stderr" == *"slack-admin policy lacks 'create'"* ]]
+  [[ "$stderr" == *"UNRECOVERABLE"* ]]
+  [[ "$stderr" == *"A123"* ]]
+}
+
+@test "a generic credentials-write failure reports the app as created but its credentials unrecoverable" {
+  seed_kv "$(far_future)" 200
+  echo '{"display_information":{"name":"Test App"}}' > "$BATS_TEST_TMPDIR/manifest.json"
+  MANIFEST_MODE=ok CREDS_WRITE_MODE=fail run_creds manifest-create "$BATS_TEST_TMPDIR/manifest.json"
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"UNRECOVERABLE"* ]]
+  [[ "$stderr" == *"500"* ]]
 }
