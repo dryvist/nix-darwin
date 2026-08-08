@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.32.1](https://github.com/dryvist/nix-darwin/compare/v2.32.0...v2.32.1) (2026-08-08)
+
+
+### Bug Fixes
+
+* **cluster-quiesce:** quit GUI apps by bundle id under a bounded sweep ([#2108](https://github.com/dryvist/nix-darwin/issues/2108)) ([a48be5f](https://github.com/dryvist/nix-darwin/commit/a48be5f18f5843d0f73c9a633af64b77f2715c9b))
+
 ## [2.32.0](https://github.com/dryvist/nix-darwin/compare/v2.31.0...v2.32.0) (2026-08-07)
 
 
