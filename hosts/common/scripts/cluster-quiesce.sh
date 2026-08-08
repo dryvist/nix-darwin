@@ -32,27 +32,60 @@ fi
 #    The keep list is fed in via CLUSTER_QUIESCE_TERMINALS (newline-separated,
 #    set by the module from programs.clusterQuiesce.terminalAllowlist) so a
 #    session in any other terminal can be protected without editing this file.
+#
+# QUIT BY BUNDLE ID, NEVER BY NAME. `tell application <name>` resolves the name
+# through CFURLCreateFromApplicationNameAndContainer, and when no bundle matches
+# — routine, because `name of every application process` yields PROCESS names,
+# which are not always application names — AppleScript falls back to
+# PromptUserForApplication: the "Where is…?" chooser, an NSApplication modal.
+# Under launchd there is no one to answer it and no window to see, so the sweep
+# parks forever. `with timeout` cannot save it; the block is in name resolution,
+# before the timeout-guarded event send. Measured 2026-08-07: this wedged the
+# worker's link-up for 14+ minutes between the rank-start boundary and the
+# kickstart, so the coordinator struck out on peer-rendezvous and stood the pair
+# down. `tell application id <bundleID>` resolves through LaunchServices, which
+# returns an error instead of opening UI.
+#
+# SIGTERM instead of AppleScript was considered and rejected: quit events honor
+# unsaved-work prompts and a signal does not, so the cheaper sweep is the one
+# that loses a user's open documents.
 default_terminals=$'Finder\nGhostty\nTerminal\niTerm2\nWezTerm\nAlacritty\nkitty'
 terminals="${CLUSTER_QUIESCE_TERMINALS:-$default_terminals}"
-/usr/bin/osascript - "$terminals" <<'EOF' || true
+
+# Belt to the bundle-id braces above. Quitting GUI apps is best-effort memory
+# reclaim and is never worth blocking a rank start, so bound the whole sweep on
+# the wall clock: a modal in a headless process is a CLASS of failure, not one
+# bug, and the next member of it must cost a logged timeout rather than a window.
+gui_timeout="${CLUSTER_QUIESCE_GUI_TIMEOUT:-30}"
+rc=0
+timeout -k 5 "$gui_timeout" /usr/bin/osascript - "$terminals" <<'EOF' || rc=$?
 on run argv
     set AppleScript's text item delimiters to linefeed
     set keepList to text items of (item 1 of argv)
     tell application "System Events"
-        set appNames to name of every application process whose background only is false
+        set quitIds to {}
+        repeat with p in (every application process whose background only is false)
+            set bid to bundle identifier of p
+            if (name of p) is not in keepList and bid is not missing value then
+                set end of quitIds to bid
+            end if
+        end repeat
     end tell
-    repeat with appName in appNames
-        set appText to appName as text
-        if appText is not in keepList then
-            try
-                with timeout of 15 seconds
-                    tell application appText to quit
-                end timeout
-            end try
-        end if
+    repeat with bid in quitIds
+        try
+            with timeout of 15 seconds
+                tell application id (bid as text) to quit
+            end timeout
+        end try
     end repeat
 end run
 EOF
+# 124 = timeout fired, 137 = the -k KILL that followed it.
+if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
+  echo "cluster-quiesce: GUI quit sweep exceeded ${gui_timeout}s and was killed; continuing without it (rank start must not block on it)" >&2
+elif [ "$rc" -ne 0 ]; then
+  echo "cluster-quiesce: GUI quit sweep exited $rc; continuing" >&2
+fi
 
 # 2. Boot out every user agent not on the KEEP allowlist, recording each
 #    label for restore. Only agents with a plist under ~/Library/LaunchAgents
