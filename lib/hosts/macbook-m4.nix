@@ -62,6 +62,18 @@
       model = "mlx-community/Qwen3-4B-Instruct-2507-4bit";
     };
 
+    # persistent:true only protects the judge from eviction — it does NOT
+    # preload it. The warmup LaunchAgent (native to nix-ai, mlx-warmup.py)
+    # is the actual preload mechanism: it sends a real completion to every
+    # role in this list right after llama-swap comes up, so the first REAL
+    # request never pays the cold-load cost. "judge" listed BEFORE "default":
+    # the list warms sequentially and the judge (2.1 GB, seconds to load)
+    # must not sit queued behind the 30B's slower cold load.
+    preload = [
+      "judge"
+      "default"
+    ];
+
     cacheMemoryMb = 8192;
     prefillBatchSize = 2048;
 
