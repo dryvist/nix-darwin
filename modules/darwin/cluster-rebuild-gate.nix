@@ -51,6 +51,16 @@ let
   );
 in
 {
+  # Declared unconditionally (options always are) so any consumer can reference
+  # the detector without depending on the gate being enabled — there must stay
+  # exactly one definition of "a rank is live", whoever is asking.
+  options.system.clusterRebuildGate.rankLivePackage = lib.mkOption {
+    type = lib.types.package;
+    default = rankLivePkg;
+    readOnly = true;
+    description = "The built mlx-cluster-rank-live derivation, for other modules that must ask the same question the gate asks.";
+  };
+
   config = lib.mkIf config.system.clusterLinkPrep.enable {
     # mkOrder 50 runs ahead of mkBefore (500). Several modules here already
     # use mkBefore for preActivation and their relative order is merge order,
