@@ -40,7 +40,7 @@ for label in "$@"; do
   healed=0
   for wait_secs in 5 15; do
     /bin/launchctl bootout "system/$label" 2>/dev/null || true
-    /bin/launchctl bootstrap system "$plist" 2>/dev/null || true
+    /bin/launchctl bootstrap system "$plist" || true
     sleep "$wait_secs"
     if is_running "$label"; then
       echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] launchd self-heal: $label reloaded and running" >&2
