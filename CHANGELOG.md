@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.33.0](https://github.com/dryvist/nix-darwin/compare/v2.32.1...v2.33.0) (2026-08-08)
+
+
+### Features
+
+* **cluster:** open and close the host's maintenance window automatically ([#2113](https://github.com/dryvist/nix-darwin/issues/2113)) ([00d15e0](https://github.com/dryvist/nix-darwin/commit/00d15e0b936c64e55c20206bc767b582ef921f07))
+* **cluster:** refuse system activation while a local rank is live ([#2112](https://github.com/dryvist/nix-darwin/issues/2112)) ([eb7fd33](https://github.com/dryvist/nix-darwin/commit/eb7fd333f7f7c4a2ee863f02c44586938370b905))
+
 ## [2.32.1](https://github.com/dryvist/nix-darwin/compare/v2.32.0...v2.32.1) (2026-08-08)
 
 
