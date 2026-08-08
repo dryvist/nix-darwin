@@ -36,8 +36,20 @@ in
   # listtimezones); "GMT" is the accepted +00:00 value.
   time.timeZone = if hostConfig.isServer then "GMT" else null;
 
-  # SSH/Remote Login — macOS Remote Login via launchd (Settings > General > Sharing).
-  services.openssh.enable = true;
+  services = {
+    # SSH/Remote Login — macOS Remote Login via launchd (Settings > General > Sharing).
+    openssh.enable = true;
+
+    # Both hosts are cluster-mode nodes, so both announce their own maintenance
+    # window while a rank is live and close it at teardown. Enabled here rather
+    # than per host for the same reason clusterLinkPrep is: the pair is
+    # symmetric, and a window that only one side of a cluster opens is worse
+    # than none.
+    clusterMaintenanceWindow = {
+      enable = true;
+      projectId = 54;
+    };
+  };
 
   # Screen Sharing (VNC) — macOS Remote Login's GUI counterpart, enabled on
   # every host so a reboot always leaves remote recovery available without a
