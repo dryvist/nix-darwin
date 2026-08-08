@@ -82,7 +82,7 @@
       }
       ''
         cd ${src}
-        for f in test_bats_framework.bats test_check_file_sizes.bats test_cribl_llm_classifier.bats test_verify_symlinks.bats; do
+        for f in test_bats_framework.bats test_check_file_sizes.bats test_cluster_rebuild_gate.bats test_cribl_llm_classifier.bats test_verify_symlinks.bats; do
           bats tests/shell/$f
         done
         touch $out
