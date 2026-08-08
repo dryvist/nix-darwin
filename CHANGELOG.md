@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.33.1](https://github.com/dryvist/nix-darwin/compare/v2.33.0...v2.33.1) (2026-08-08)
+
+
+### Bug Fixes
+
+* **cribl,launchd:** stop cribl-edge cold-boot race; verify self-heal actually revives daemons ([#2119](https://github.com/dryvist/nix-darwin/issues/2119)) ([0b5f71f](https://github.com/dryvist/nix-darwin/commit/0b5f71f9845b709735952cde8f297db2a6c21b81))
+
 ## [2.33.0](https://github.com/dryvist/nix-darwin/compare/v2.32.1...v2.33.0) (2026-08-08)
 
 
