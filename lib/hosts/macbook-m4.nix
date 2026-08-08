@@ -49,8 +49,30 @@
     # qwen3-coder-30b to a catalog.qwen38-27b block and flip the classes.
     catalog.qwen38-27b.class = "swap";
 
+    # Resident judge model, in its own llama-swap group (nix-ai
+    # programs.mlx.judge, modules/mlx/options-judge.nix). Bypasses the
+    # catalog/maxResidentWorkers topology entirely: persistent + non-exclusive
+    # means it is never evicted by the main brain's exclusive group and never
+    # evicts that group itself, so it answers even while the main brain is
+    # busy serving a long request. Physical id is already cached under
+    # HF_HOME (2.1 GB weights) — see hosts/common/residency-budget.nix for the
+    # memoryHardLimitGb halving this needs.
+    judge = {
+      enable = true;
+      model = "mlx-community/Qwen3-4B-Instruct-2507-4bit";
+    };
+
     cacheMemoryMb = 8192;
     prefillBatchSize = 2048;
+
+    # Two workers can be resident at once now (the catalog brain plus the
+    # judge above), so the single-worker budget hosts/common/residency-budget.nix
+    # derives (kMax still 1 there — the judge sits outside maxResidentWorkers)
+    # must be halved by hand: (100 GiB ceiling - 4 GiB baseline reserve) / 2
+    # workers = 48 GiB, rounded down for cushion. Applies to every worker
+    # equally (MLX_L1_MEMORY_LIMIT_BYTES is one shared wrapper-level export),
+    # including the judge, whose real usage (~2-3 GiB) sits nowhere near it.
+    memoryHardLimitGb = 46;
 
     # MLX retained free-buffer pool. The host wired-memory ceiling is the
     # Metal guardrail; this limits reclaimable framework buffers below it.
