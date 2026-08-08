@@ -169,6 +169,13 @@ in
     # host needs for the OpenBao GitHub path.
     openbao-github-creds.enable = true;
 
+    # --- OpenBao-backed Slack app configuration token provider ---
+    # Installs the `openbao-slack-creds` wrapper. Secret-zero (BAO_ADDR + the
+    # slack-admin AppRole) is ambient via `doppler run`; the token pair lives
+    # in OpenBao KV-v2, never on disk here. See
+    # modules/darwin/apps/openbao-slack-creds.nix.
+    openbao-slack-creds.enable = true;
+
   };
 
   # nix-prebuild: warm the darwin closure on a schedule so the next
