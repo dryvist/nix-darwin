@@ -24,6 +24,10 @@ let
 
   quiescePkg = pkgs.writeShellApplication {
     name = "cluster-quiesce";
+    # coreutils for `timeout`, which bounds the GUI quit sweep. macOS ships no
+    # timeout(1), so without this the wrapper cannot fail closed on a hung
+    # osascript — the exact 2026-08-07 wedge.
+    runtimeInputs = [ pkgs.coreutils ];
     # Feed the terminal keep list to the script (newline-separated) so a
     # session in a non-default terminal can be protected from the GUI quit
     # without editing the public script.
