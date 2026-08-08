@@ -23,6 +23,7 @@ _:
     ./openbao-aws-creds.nix
     ./openbao-github-creds.nix
     ./openbao-run.nix
+    ./openbao-slack-creds.nix
     ./orbstack.nix
     ./raycast.nix
     ./screen-sharing.nix
