@@ -9,12 +9,20 @@
 #
 # stored at secrets-external/data/platform/slack-admin alongside rotated_at
 # and expires_at (both ISO8601 UTC; expires_at is derived from the rotate
-# response's `exp` epoch and is only absent before this tool's first rotation).
+# response's `exp` epoch).
+#
+# SUBCOMMANDS: token, rotate, manifest-create <path>, manifest-validate
+# <path> (apps.manifest.create / .validate against a local manifest JSON
+# file), --self-check. manifest-create/validate obtain their bearer token
+# through the exact same get_valid_token() path as `token`.
 #
 # SECRET-ZERO is AMBIENT, identical in shape to openbao-github-creds.sh:
 # BAO_ADDR (or legacy VAULT_ADDR) + OPENBAO_APPROLE_SLACK_ADMIN_ROLE_ID /
 # OPENBAO_APPROLE_SLACK_ADMIN_SECRET_ID, injected by running under
-# `doppler run`.
+# `doppler run`. AppRole login (bao_login) is the ONLY credential path in
+# this file — there is no break-glass, no root-token fallback, and no
+# operator-supplied token; every code path that needs a token gets it from
+# get_valid_token(), which always goes through bao_login().
 #
 # CONCURRENCY: the refresh token is single-use, which is Slack's own mutex —
 # two rotations racing on the same refresh token can only ever produce one
@@ -195,7 +203,10 @@ do_rotate() {
   done
 }
 
-cmd_token() {
+# The one path to a usable token — token/rotate and the manifest commands all
+# go through this, so AppRole login (bao_login) is the ONLY credential this
+# tool ever produces or accepts. No break-glass, no operator-supplied token.
+get_valid_token() {
   require_env
   local bao_tok entry tok expires_at
   bao_tok="$(bao_login)"
@@ -207,7 +218,12 @@ cmd_token() {
     tok="$(jq -r '.data.data.app_config_token // empty' <<<"${LAST_ENTRY}")"
   fi
   [ -n "${tok}" ] || die "no app_config_token available after rotation attempt"
-  printf '%s\n' "${tok}"
+  printf '%s' "${tok}"
+}
+
+cmd_token() {
+  get_valid_token
+  echo
 }
 
 cmd_rotate() {
@@ -216,6 +232,53 @@ cmd_rotate() {
   local expires_at
   expires_at="$(jq -r '.data.data.expires_at // "unknown"' <<<"${LAST_ENTRY}")"
   echo "$prefix rotation complete; token now expires ${expires_at}" >&2
+}
+
+# Reads a manifest JSON file and returns it compacted; used by both manifest
+# subcommands so a malformed file is rejected identically either way.
+read_manifest() {
+  local path="$1"
+  [ -f "${path}" ] || die "manifest file not found: ${path}"
+  jq -c . "${path}" 2>/dev/null || die "manifest file is not valid JSON: ${path}"
+}
+
+cmd_manifest_create() {
+  local path="${1:?usage: openbao-slack-creds manifest-create <path-to-manifest.json>}"
+  local manifest tok resp ok
+  manifest="$(read_manifest "${path}")"
+  tok="$(get_valid_token)"
+  resp="$("${curl_bin}" -sf --max-time 15 -X POST \
+    -H "Authorization: Bearer ${tok}" \
+    -H 'Content-Type: application/json; charset=utf-8' \
+    -d "$(jq -cn --argjson m "${manifest}" '{manifest: $m}')" \
+    "https://slack.com/api/apps.manifest.create")" || die "apps.manifest.create call failed"
+  ok="$(jq -r '.ok // false' <<<"${resp}")"
+  [ "${ok}" = "true" ] || die "apps.manifest.create rejected: $(jq -c '.errors // .error // "unknown"' <<<"${resp}")"
+  printf 'app_id=%s\n' "$(jq -r '.app_id // empty' <<<"${resp}")"
+  printf 'oauth_authorize_url=%s\n' "$(jq -r '.oauth_authorize_url // empty' <<<"${resp}")"
+  # client_secret/signing_secret ride along in the response but are never
+  # printed — note only that they came back, never their values.
+  if jq -e '.credentials' >/dev/null 2>&1 <<<"${resp}"; then
+    echo "$prefix note: response also returned app credentials (client_secret/signing_secret) — not printed" >&2
+  fi
+}
+
+# Dry-run check against apps.manifest.validate. Tier 3 on Slack's side (no
+# rotation consumed there); still goes through get_valid_token like every
+# other call, so it is bound by the same rotation/safety-margin logic.
+cmd_manifest_validate() {
+  local path="${1:?usage: openbao-slack-creds manifest-validate <path-to-manifest.json>}"
+  local manifest tok resp ok
+  manifest="$(read_manifest "${path}")"
+  tok="$(get_valid_token)"
+  resp="$("${curl_bin}" -sf --max-time 15 -X POST \
+    -H "Authorization: Bearer ${tok}" \
+    -H 'Content-Type: application/json; charset=utf-8' \
+    -d "$(jq -cn --argjson m "${manifest}" '{manifest: $m}')" \
+    "https://slack.com/api/apps.manifest.validate")" || die "apps.manifest.validate call failed"
+  ok="$(jq -r '.ok // false' <<<"${resp}")"
+  [ "${ok}" = "true" ] || die "apps.manifest.validate rejected: $(jq -c '.errors // .error // "unknown"' <<<"${resp}")"
+  echo "$prefix manifest valid" >&2
 }
 
 self_check() {
@@ -233,23 +296,22 @@ self_check() {
   [ -n "${tok}" ] || die "self-check: app_config_token missing at ${kv_path}"
   [ -n "${refresh}" ] || die "self-check: app_config_refresh_token missing at ${kv_path}"
   [ -n "${rotated_at}" ] || die "self-check: rotated_at missing at ${kv_path}"
+  [ -n "${expires_at}" ] || die "self-check: expires_at missing at ${kv_path}"
   echo "$prefix self-check: required keys present (rotated_at=${rotated_at})" >&2
-  if [ -n "${expires_at}" ]; then
-    local exp_epoch now_epoch remaining
-    exp_epoch="$(epoch_of "${expires_at}")" || die "self-check: expires_at '${expires_at}' unparseable"
-    now_epoch="$("${date_bin}" -u +%s)"
-    remaining=$((exp_epoch - now_epoch))
-    echo "$prefix self-check: token life remaining ${remaining}s (expires_at=${expires_at})" >&2
-    [ "${remaining}" -gt 0 ] || die "self-check: stored token is already expired (expires_at=${expires_at})"
-  else
-    echo "$prefix self-check: no expires_at recorded — remaining life unknown" >&2
-  fi
+  local exp_epoch now_epoch remaining
+  exp_epoch="$(epoch_of "${expires_at}")" || die "self-check: expires_at '${expires_at}' unparseable"
+  now_epoch="$("${date_bin}" -u +%s)"
+  remaining=$((exp_epoch - now_epoch))
+  echo "$prefix self-check: token life remaining ${remaining}s (expires_at=${expires_at})" >&2
+  [ "${remaining}" -gt 0 ] || die "self-check: stored token is already expired (expires_at=${expires_at})"
   echo "$prefix self-check OK" >&2
 }
 
 case "${1:-}" in
-  token)        cmd_token ;;
-  rotate)       cmd_rotate ;;
-  --self-check) self_check ;;
-  *) die "usage: openbao-slack-creds {token|rotate|--self-check}" ;;
+  token)             cmd_token ;;
+  rotate)            cmd_rotate ;;
+  manifest-create)   shift; cmd_manifest_create "${1:-}" ;;
+  manifest-validate) shift; cmd_manifest_validate "${1:-}" ;;
+  --self-check)      self_check ;;
+  *) die "usage: openbao-slack-creds {token|rotate|manifest-create <path>|manifest-validate <path>|--self-check}" ;;
 esac

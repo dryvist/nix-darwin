@@ -7,7 +7,9 @@
 # concurrency branches from the single-use refresh token (a CAS-rejected
 # write-back, and an `invalid_refresh_token` loss to a sibling process).
 # Also exercises the write-back retry/brick path, since losing that write is
-# the one failure mode that permanently destroys the credential.
+# the one failure mode that permanently destroys the credential, and the
+# manifest-create/manifest-validate commands (success, rejection, and that
+# credential values from apps.manifest.create never reach stdout/stderr).
 
 bats_require_minimum_version 1.5.0 # for `run --separate-stderr`
 
@@ -30,8 +32,10 @@ setup() {
   KV_STATE="$BATS_TEST_TMPDIR/kv-state.json"
   ROTATE_CALLS="$BATS_TEST_TMPDIR/rotate-calls"
   WRITE_ATTEMPTS="$BATS_TEST_TMPDIR/write-attempts"
+  MANIFEST_CALLS="$BATS_TEST_TMPDIR/manifest-calls"
   : > "$ROTATE_CALLS"
   : > "$WRITE_ATTEMPTS"
+  : > "$MANIFEST_CALLS"
 
   # This repo's OpenBao scripts target BSD `/bin/date` (macOS-only, by
   # design — these scripts only ever run on the user's Mac). That binary
@@ -117,6 +121,22 @@ case "\$url" in
         echo '{"ok":false,"error":"invalid_refresh_token"}'
         ;;
     esac
+    ;;
+  https://slack.com/api/apps.manifest.create)
+    echo "1" >> "$MANIFEST_CALLS"
+    if [ "\${MANIFEST_MODE:-ok}" = "ok" ]; then
+      echo '{"ok":true,"app_id":"A123","oauth_authorize_url":"https://api.slack.com/apps/A123/install-on-team","credentials":{"client_id":"999.888","client_secret":"SECRETVALUE","signing_secret":"SIGNSECRET"}}'
+    else
+      echo '{"ok":false,"errors":[{"message":"invalid_manifest"}]}'
+    fi
+    ;;
+  https://slack.com/api/apps.manifest.validate)
+    echo "1" >> "$MANIFEST_CALLS"
+    if [ "\${MANIFEST_MODE:-ok}" = "ok" ]; then
+      echo '{"ok":true}'
+    else
+      echo '{"ok":false,"errors":[{"message":"invalid_manifest"}]}'
+    fi
     ;;
   *)
     echo '{}'
@@ -235,4 +255,48 @@ run_creds() { run --separate-stderr bash -euo pipefail "$SCRIPTS/openbao-slack-c
   [[ "$stderr" == *"BRICKED"* ]]
   [[ "$stderr" == *"manual regeneration"* ]]
   [ "$(jq -r '.version' "$KV_STATE")" = "1" ]
+}
+
+@test "manifest-create prints app_id and oauth_authorize_url to stdout and never leaks credential values" {
+  seed_kv "$(far_future)" 200
+  echo '{"display_information":{"name":"test"}}' > "$BATS_TEST_TMPDIR/manifest.json"
+  MANIFEST_MODE=ok run_creds manifest-create "$BATS_TEST_TMPDIR/manifest.json"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"app_id=A123"* ]]
+  [[ "$output" == *"oauth_authorize_url=https://api.slack.com/apps/A123/install-on-team"* ]]
+  [[ "$output" != *"SECRETVALUE"* ]]
+  [[ "$output" != *"SIGNSECRET"* ]]
+  [[ "$stderr" != *"SECRETVALUE"* ]]
+}
+
+@test "manifest-create fails loudly when Slack rejects the manifest" {
+  seed_kv "$(far_future)" 200
+  echo '{"display_information":{"name":"test"}}' > "$BATS_TEST_TMPDIR/manifest.json"
+  MANIFEST_MODE=fail run_creds manifest-create "$BATS_TEST_TMPDIR/manifest.json"
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"invalid_manifest"* ]]
+}
+
+@test "manifest-create dies when the manifest file does not exist" {
+  seed_kv "$(far_future)" 200
+  run_creds manifest-create "$BATS_TEST_TMPDIR/missing.json"
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"not found"* ]]
+}
+
+@test "manifest-validate succeeds against a valid manifest, consuming no rotation" {
+  seed_kv "$(far_future)" 200
+  echo '{"display_information":{"name":"test"}}' > "$BATS_TEST_TMPDIR/manifest.json"
+  MANIFEST_MODE=ok run_creds manifest-validate "$BATS_TEST_TMPDIR/manifest.json"
+  [ "$status" -eq 0 ]
+  [[ "$stderr" == *"manifest valid"* ]]
+  [ ! -s "$ROTATE_CALLS" ]
+}
+
+@test "manifest-validate reports errors for an invalid manifest" {
+  seed_kv "$(far_future)" 200
+  echo '{"bad":true}' > "$BATS_TEST_TMPDIR/manifest.json"
+  MANIFEST_MODE=fail run_creds manifest-validate "$BATS_TEST_TMPDIR/manifest.json"
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"invalid_manifest"* ]]
 }
