@@ -224,7 +224,15 @@ in
         Label = "com.nix-darwin.cribl-edge";
         ProgramArguments = [ "${startScript}/bin/cribl-edge-start" ];
         RunAtLoad = true;
-        KeepAlive = true;
+        # Plain `KeepAlive = true` races the Nix store mount at cold boot:
+        # /nix is a separate APFS volume mounted by the async RunAtLoad
+        # `systems.determinate.nix-store` daemon, so ProgramArguments'
+        # /nix/store/... path can be missing when launchd first spawns this
+        # daemon, crashing it into the penalty box for the rest of the
+        # uptime (observed both Macs, 2026-08-08 reboot). PathState makes
+        # launchd itself wait for /nix/store to exist before spawning, and
+        # keeps watching it — no reboot-dependent recovery needed.
+        KeepAlive.PathState."/nix/store" = true;
         ThrottleInterval = 10;
         UserName = cfg.serviceUser;
         GroupName = cfg.serviceGroup;
