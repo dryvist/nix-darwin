@@ -47,7 +47,10 @@ let
     # same port — reads as an outage, every hand-run probe says otherwise.
     # No MDM payload and no tccutil verb exist, so only a human can grant it.
     # greedy compounds it: each upgrade is a new bundle to TCC, revoking it.
-    # Apple-signed binaries are exempt by design; ad-hoc/Nix-signed ones are not.
+    # Two independent exemptions, either sufficient: the binary is an Apple
+    # platform binary, or the responsible app is exempt/granted. That is why
+    # /usr/bin/curl works here ungranted while a nix python does not, and why
+    # everything works under Apple's own Terminal.app.
     {
       name = "ghostty";
       greedy = true;
