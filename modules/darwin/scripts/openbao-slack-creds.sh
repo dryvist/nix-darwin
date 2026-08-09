@@ -13,18 +13,35 @@
 #
 # SUBCOMMANDS: token, rotate, manifest-create <path>, manifest-validate
 # <path> (apps.manifest.create / .validate against a local manifest JSON
-# file), --self-check. manifest-create/validate obtain their bearer token
-# through the exact same get_valid_token() path as `token`. manifest-create
-# also persists the one-time app credentials Slack returns — see
-# persist_app_credentials below.
+# file), channel {list|create|rename|topic|purpose|invite|archive|members}
+# (conversations.* channel lifecycle ops), --self-check. manifest-create/
+# validate obtain their bearer token through the exact same
+# get_valid_token() path as `token`. manifest-create also persists the
+# one-time app credentials Slack returns — see persist_app_credentials
+# below.
 #
-# SECRET-ZERO is AMBIENT, identical in shape to openbao-github-creds.sh:
-# BAO_ADDR (or legacy VAULT_ADDR) + OPENBAO_APPROLE_SLACK_ADMIN_ROLE_ID /
-# OPENBAO_APPROLE_SLACK_ADMIN_SECRET_ID, injected by running under
-# `doppler run`. AppRole login (bao_login) is the ONLY credential path in
-# this file — there is no break-glass, no root-token fallback, and no
-# operator-supplied token; every code path that needs a token gets it from
-# get_valid_token(), which always goes through bao_login().
+# SECRET-ZERO is AMBIENT, identical in shape to openbao-github-creds.sh, and
+# spans TWO separate identities for TWO separate credentials — never mix
+# them up:
+#
+#   token/rotate/manifest-*  app-configuration token (apps.manifest.* only)
+#                            KV-v2 at secrets-external/data/platform/slack-admin
+#                            AppRole: OPENBAO_APPROLE_SLACK_ADMIN_ROLE_ID /
+#                            OPENBAO_APPROLE_SLACK_ADMIN_SECRET_ID
+#   channel *                bot token (conversations.*/chat.* scopes)
+#                            KV-v2 at secrets-external/data/platform/slack-ops,
+#                            key `bot_token`. This app has token rotation
+#                            disabled, so the token does not expire — there
+#                            is no rotation logic for it, unlike slack-admin.
+#                            AppRole: OPENBAO_APPROLE_SLACK_OPS_ROLE_ID /
+#                            OPENBAO_APPROLE_SLACK_OPS_SECRET_ID
+#
+# BAO_ADDR (or legacy VAULT_ADDR) is shared by both. Injected by running
+# under `doppler run`. AppRole login (bao_login / bao_login_slack_ops) is the
+# ONLY credential path in this file — there is no break-glass, no
+# root-token fallback, and no operator-supplied token; every code path that
+# needs a token gets it from get_valid_token() or get_bot_token(), which
+# always go through one of those two logins.
 #
 # CONCURRENCY: the refresh token is single-use, which is Slack's own mutex —
 # two rotations racing on the same refresh token can only ever produce one
@@ -50,6 +67,12 @@
 #
 # `pkgs.writeShellApplication` wraps this in `set -euo pipefail` and lints
 # it, so this file omits its own set line.
+
+# Without this, a die() (exit 1) inside a command substitution nested two
+# levels deep — e.g. tok="$(get_bot_token)" where get_bot_token itself does
+# bao_tok="$(bao_login_slack_ops)" — gets silently swallowed: `set -e` does
+# not propagate into `$()` subshells by default, only the outermost one.
+shopt -s inherit_errexit
 
 prefix="[openbao-slack-creds]"
 die() { echo "$prefix ERROR $*" >&2; exit 1; }
@@ -317,6 +340,239 @@ cmd_manifest_validate() {
   echo "$prefix manifest valid" >&2
 }
 
+# --- Channel management ------------------------------------------------
+#
+# Uses the bot token at slack_ops_kv_path, NOT the app-config token above —
+# that token can only call apps.manifest.*. See the SECRET-ZERO block at the
+# top of this file. This app has token rotation disabled, so unlike
+# slack-admin's app_config_token there is no expiry/rotation logic here:
+# get_bot_token just reads the stored value.
+
+slack_ops_kv_path="secrets-external/data/platform/slack-ops"
+
+bao_login_slack_ops() {
+  local role_id secret_id resp token
+  role_id="${OPENBAO_APPROLE_SLACK_OPS_ROLE_ID:-}"
+  secret_id="${OPENBAO_APPROLE_SLACK_OPS_SECRET_ID:-}"
+  [ -n "${role_id}" ] && [ -n "${secret_id}" ] || \
+    die "OPENBAO_APPROLE_SLACK_OPS_ROLE_ID / OPENBAO_APPROLE_SLACK_OPS_SECRET_ID not in environment — run under 'doppler run'"
+  resp="$("${curl_bin}" -sf --max-time 10 -X POST \
+    -d "{\"role_id\":\"${role_id}\",\"secret_id\":\"${secret_id}\"}" \
+    "${bao_addr}/v1/auth/approle/login")" \
+    || die "AppRole login (SLACK_OPS) failed — verify OPENBAO_APPROLE_SLACK_OPS_ROLE_ID/_SECRET_ID are correct and the slack-ops AppRole exists in OpenBao"
+  token="$(jq -r '.auth.client_token // empty' <<<"${resp}")"
+  [ -n "${token}" ] || die "AppRole login (SLACK_OPS) returned no client_token"
+  printf '%s' "${token}"
+}
+
+get_bot_token() {
+  require_env
+  local bao_tok resp tok
+  bao_tok="$(bao_login_slack_ops)"
+  resp="$("${curl_bin}" -sf --max-time 10 -H "X-Vault-Token: ${bao_tok}" \
+    "${bao_addr}/v1/${slack_ops_kv_path}")" || die "reading ${slack_ops_kv_path} failed"
+  tok="$(jq -r '.data.data.bot_token // empty' <<<"${resp}")"
+  [ -n "${tok}" ] || die "${slack_ops_kv_path} response missing bot_token"
+  printf '%s' "${tok}"
+}
+
+# GET a Slack Web API method with the bot token. Dies on transport failure
+# or `.ok:false` — every caller gets the same missing_scope handling as
+# slack_post below.
+slack_get() {
+  local tok="$1" url="$2" resp
+  resp="$("${curl_bin}" -sf --max-time 15 -H "Authorization: Bearer ${tok}" "${url}")" \
+    || die "Slack request to ${url} failed"
+  slack_check_ok "${resp}" "${url}"
+  printf '%s' "${resp}"
+}
+
+# POST a JSON body to a Slack Web API method with the bot token.
+slack_post() {
+  local tok="$1" method="$2" body="$3" resp
+  resp="$("${curl_bin}" -sf --max-time 15 -X POST \
+    -H "Authorization: Bearer ${tok}" \
+    -H 'Content-Type: application/json; charset=utf-8' \
+    -d "${body}" \
+    "https://slack.com/api/${method}")" || die "Slack ${method} call failed"
+  slack_check_ok "${resp}" "${method}"
+  printf '%s' "${resp}"
+}
+
+# Shared `.ok` check for slack_get/slack_post. missing_scope gets a message
+# naming the specific scope Slack says is needed, since "missing_scope"
+# alone doesn't say which one.
+slack_check_ok() {
+  local resp="$1" what="$2" ok err
+  ok="$(jq -r '.ok // false' <<<"${resp}")"
+  [ "${ok}" = "true" ] && return 0
+  err="$(jq -r '.error // "unknown"' <<<"${resp}")"
+  if [ "${err}" = "missing_scope" ]; then
+    die "Slack ${what} rejected: missing_scope — needed '$(jq -r '.needed // "unknown"' <<<"${resp}")', bot token has '$(jq -r '.provided // "unknown"' <<<"${resp}")'"
+  fi
+  die "Slack ${what} rejected: ${err}"
+}
+
+# Resolves a channel ID or name to an ID. IDs (C...) pass through unchanged;
+# names are looked up via a paginated conversations.list scan. No match, or
+# more than one match, dies rather than guessing.
+resolve_channel() {
+  local tok="$1" input="$2"
+  case "${input}" in
+    C*) printf '%s' "${input}"; return 0 ;;
+  esac
+  local cursor="" url page ids matches=()
+  while :; do
+    url="https://slack.com/api/conversations.list?limit=200&types=public_channel,private_channel"
+    [ -n "${cursor}" ] && url="${url}&cursor=${cursor}"
+    page="$(slack_get "${tok}" "${url}")"
+    ids="$(jq -r --arg n "${input}" '.channels[] | select(.name == $n) | .id' <<<"${page}")"
+    if [ -n "${ids}" ]; then
+      while IFS= read -r id; do matches+=("${id}"); done <<<"${ids}"
+    fi
+    cursor="$(jq -r '.response_metadata.next_cursor // empty' <<<"${page}")"
+    [ -n "${cursor}" ] || break
+  done
+  case "${#matches[@]}" in
+    0) die "no channel named '${input}' found" ;;
+    1) printf '%s' "${matches[0]}" ;;
+    *) die "channel name '${input}' is ambiguous (matched ${#matches[@]} channels)" ;;
+  esac
+}
+
+# conversations.info, used by archive to log the name it resolved to.
+channel_name_of() {
+  local tok="$1" id="$2"
+  jq -r '.channel.name // "unknown"' <<<"$(slack_get "${tok}" "https://slack.com/api/conversations.info?channel=${id}")"
+}
+
+cmd_channel_list() {
+  local include_archived="" tok cursor="" url page
+  [ "${1:-}" = "--include-archived" ] && include_archived=1
+  tok="$(get_bot_token)"
+  while :; do
+    url="https://slack.com/api/conversations.list?limit=200&types=public_channel,private_channel"
+    if [ -n "${include_archived}" ]; then
+      url="${url}&exclude_archived=false"
+    else
+      url="${url}&exclude_archived=true"
+    fi
+    [ -n "${cursor}" ] && url="${url}&cursor=${cursor}"
+    page="$(slack_get "${tok}" "${url}")"
+    jq -r '.channels[] | [.id, .name, (.is_archived // false | tostring)] | @tsv' <<<"${page}"
+    cursor="$(jq -r '.response_metadata.next_cursor // empty' <<<"${page}")"
+    [ -n "${cursor}" ] || break
+  done
+}
+
+cmd_channel_create() {
+  local name="" private="" tok body resp id
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --private) private=1; shift ;;
+      *) name="$1"; shift ;;
+    esac
+  done
+  [ -n "${name}" ] || die "usage: openbao-slack-creds channel create <name> [--private]"
+  tok="$(get_bot_token)"
+  if [ -n "${private}" ]; then
+    body="$(jq -cn --arg n "${name}" '{name: $n, is_private: true}')"
+  else
+    body="$(jq -cn --arg n "${name}" '{name: $n}')"
+  fi
+  resp="$(slack_post "${tok}" "conversations.create" "${body}")"
+  id="$(jq -r '.channel.id // empty' <<<"${resp}")"
+  [ -n "${id}" ] || die "conversations.create response missing channel.id"
+  printf '%s\n' "${id}"
+}
+
+cmd_channel_rename() {
+  local id_or_name="${1:?usage: openbao-slack-creds channel rename <id-or-name> <new-name>}"
+  local new_name="${2:?usage: openbao-slack-creds channel rename <id-or-name> <new-name>}"
+  local tok id body
+  tok="$(get_bot_token)"
+  id="$(resolve_channel "${tok}" "${id_or_name}")"
+  body="$(jq -cn --arg c "${id}" --arg n "${new_name}" '{channel: $c, name: $n}')"
+  slack_post "${tok}" "conversations.rename" "${body}" >/dev/null
+}
+
+cmd_channel_topic() {
+  local id_or_name="${1:?usage: openbao-slack-creds channel topic <id-or-name> <text>}"
+  local text="${2:?usage: openbao-slack-creds channel topic <id-or-name> <text>}"
+  local tok id body
+  tok="$(get_bot_token)"
+  id="$(resolve_channel "${tok}" "${id_or_name}")"
+  body="$(jq -cn --arg c "${id}" --arg t "${text}" '{channel: $c, topic: $t}')"
+  slack_post "${tok}" "conversations.setTopic" "${body}" >/dev/null
+}
+
+cmd_channel_purpose() {
+  local id_or_name="${1:?usage: openbao-slack-creds channel purpose <id-or-name> <text>}"
+  local text="${2:?usage: openbao-slack-creds channel purpose <id-or-name> <text>}"
+  local tok id body
+  tok="$(get_bot_token)"
+  id="$(resolve_channel "${tok}" "${id_or_name}")"
+  body="$(jq -cn --arg c "${id}" --arg t "${text}" '{channel: $c, purpose: $t}')"
+  slack_post "${tok}" "conversations.setPurpose" "${body}" >/dev/null
+}
+
+cmd_channel_invite() {
+  local id_or_name="${1:?usage: openbao-slack-creds channel invite <id-or-name> <user-id>...}"
+  shift
+  [ "$#" -ge 1 ] || die "usage: openbao-slack-creds channel invite <id-or-name> <user-id>..."
+  local tok id users body
+  tok="$(get_bot_token)"
+  id="$(resolve_channel "${tok}" "${id_or_name}")"
+  users="$(IFS=,; echo "$*")"
+  body="$(jq -cn --arg c "${id}" --arg u "${users}" '{channel: $c, users: $u}')"
+  slack_post "${tok}" "conversations.invite" "${body}" >/dev/null
+}
+
+# Slack has no non-admin channel delete; archive is the closest equivalent
+# and does not destroy the channel. Logs id + resolved name before acting,
+# since this is the one channel op that's hard to undo non-interactively.
+cmd_channel_archive() {
+  local id_or_name="${1:?usage: openbao-slack-creds channel archive <id-or-name>}"
+  local tok id name body
+  tok="$(get_bot_token)"
+  id="$(resolve_channel "${tok}" "${id_or_name}")"
+  name="$(channel_name_of "${tok}" "${id}")"
+  echo "$prefix archiving channel ${id} (${name})" >&2
+  body="$(jq -cn --arg c "${id}" '{channel: $c}')"
+  slack_post "${tok}" "conversations.archive" "${body}" >/dev/null
+}
+
+cmd_channel_members() {
+  local id_or_name="${1:?usage: openbao-slack-creds channel members <id-or-name>}"
+  local tok id cursor="" url page
+  tok="$(get_bot_token)"
+  id="$(resolve_channel "${tok}" "${id_or_name}")"
+  while :; do
+    url="https://slack.com/api/conversations.members?channel=${id}&limit=200"
+    [ -n "${cursor}" ] && url="${url}&cursor=${cursor}"
+    page="$(slack_get "${tok}" "${url}")"
+    jq -r '.members[]' <<<"${page}"
+    cursor="$(jq -r '.response_metadata.next_cursor // empty' <<<"${page}")"
+    [ -n "${cursor}" ] || break
+  done
+}
+
+cmd_channel() {
+  local sub="${1:-}"
+  [ "$#" -gt 0 ] && shift
+  case "${sub}" in
+    list)    cmd_channel_list "$@" ;;
+    create)  cmd_channel_create "$@" ;;
+    rename)  cmd_channel_rename "$@" ;;
+    topic)   cmd_channel_topic "$@" ;;
+    purpose) cmd_channel_purpose "$@" ;;
+    invite)  cmd_channel_invite "$@" ;;
+    archive) cmd_channel_archive "$@" ;;
+    members) cmd_channel_members "$@" ;;
+    *) die "usage: openbao-slack-creds channel {list [--include-archived]|create <name> [--private]|rename <id-or-name> <new-name>|topic <id-or-name> <text>|purpose <id-or-name> <text>|invite <id-or-name> <user-id>...|archive <id-or-name>|members <id-or-name>} (archive is Slack's non-admin equivalent of delete — channels are not destroyed)" ;;
+  esac
+}
+
 self_check() {
   require_env
   echo "$prefix self-check: BAO_ADDR set" >&2
@@ -348,6 +604,7 @@ case "${1:-}" in
   rotate)            cmd_rotate ;;
   manifest-create)   shift; cmd_manifest_create "${1:-}" ;;
   manifest-validate) shift; cmd_manifest_validate "${1:-}" ;;
+  channel)           shift; cmd_channel "$@" ;;
   --self-check)      self_check ;;
-  *) die "usage: openbao-slack-creds {token|rotate|manifest-create <path>|manifest-validate <path>|--self-check}" ;;
+  *) die "usage: openbao-slack-creds {token|rotate|manifest-create <path>|manifest-validate <path>|channel <subcommand>|--self-check}" ;;
 esac

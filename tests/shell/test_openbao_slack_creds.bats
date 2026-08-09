@@ -39,11 +39,19 @@ setup() {
   MANIFEST_CALLS="$BATS_TEST_TMPDIR/manifest-calls"
   CREDS_WRITE_URLS="$BATS_TEST_TMPDIR/creds-write-urls"
   CREDS_WRITE_BODIES="$BATS_TEST_TMPDIR/creds-write-bodies"
+  CHANNELS_FILE="$BATS_TEST_TMPDIR/channels.json"
+  MEMBERS_FILE="$BATS_TEST_TMPDIR/members.json"
+  CHANNEL_CALLS="$BATS_TEST_TMPDIR/channel-calls"
+  CHANNEL_POST_BODIES="$BATS_TEST_TMPDIR/channel-post-bodies"
   : > "$ROTATE_CALLS"
   : > "$WRITE_ATTEMPTS"
   : > "$MANIFEST_CALLS"
   : > "$CREDS_WRITE_URLS"
   : > "$CREDS_WRITE_BODIES"
+  : > "$CHANNEL_CALLS"
+  : > "$CHANNEL_POST_BODIES"
+  echo '[]' > "$CHANNELS_FILE"
+  echo '[]' > "$MEMBERS_FILE"
 
   # This repo's OpenBao scripts target BSD `/bin/date` (macOS-only, by
   # design — these scripts only ever run on the user's Mac). That binary
@@ -81,6 +89,10 @@ done
 
 case "\$url" in
   */auth/approle/login)
+    role_id=\$(echo "\$data" | jq -r '.role_id')
+    if [ -n "\${SLACK_OPS_LOGIN_FAIL:-}" ] && [ "\$role_id" = "\$OPENBAO_APPROLE_SLACK_OPS_ROLE_ID" ]; then
+      exit 1
+    fi
     echo '{"auth":{"client_token":"stub-bao-token"}}'
     ;;
   */secrets-external/data/platform/slack-admin)
@@ -155,6 +167,74 @@ case "\$url" in
       *)   echo -n "500" ;;
     esac
     ;;
+  */secrets-external/data/platform/slack-ops)
+    jq -cn '{data: {data: {bot_token: "stub-bot-token"}}}'
+    ;;
+  https://slack.com/api/conversations.list*)
+    # Paginated over \$CHANNELS_FILE; CHANNEL_PAGE_SIZE controls page size
+    # (default large enough for one page) so pagination tests are explicit.
+    page_size=\${CHANNEL_PAGE_SIZE:-1000}
+    cursor=\$(printf '%s' "\$url" | sed -n 's/.*[?&]cursor=\([^&]*\).*/\1/p')
+    offset=\${cursor:-0}
+    all=\$(cat "$CHANNELS_FILE")
+    excl=\$(printf '%s' "\$url" | sed -n 's/.*[?&]exclude_archived=\([^&]*\).*/\1/p')
+    if [ "\$excl" = "true" ]; then
+      all=\$(jq -c '[.[] | select(.is_archived != true)]' <<<"\$all")
+    fi
+    total=\$(jq 'length' <<<"\$all")
+    end=\$((offset + page_size))
+    [ "\$end" -gt "\$total" ] && end=\$total
+    chans=\$(jq -c ".[\$offset:\$end]" <<<"\$all")
+    if [ "\$end" -lt "\$total" ]; then
+      jq -cn --argjson c "\$chans" --arg nc "\$end" '{ok:true, channels:\$c, response_metadata:{next_cursor:\$nc}}'
+    else
+      jq -cn --argjson c "\$chans" '{ok:true, channels:\$c, response_metadata:{next_cursor:""}}'
+    fi
+    ;;
+  https://slack.com/api/conversations.members*)
+    page_size=\${CHANNEL_PAGE_SIZE:-1000}
+    cursor=\$(printf '%s' "\$url" | sed -n 's/.*[?&]cursor=\([^&]*\).*/\1/p')
+    offset=\${cursor:-0}
+    all=\$(cat "$MEMBERS_FILE")
+    total=\$(jq 'length' <<<"\$all")
+    end=\$((offset + page_size))
+    [ "\$end" -gt "\$total" ] && end=\$total
+    mem=\$(jq -c ".[\$offset:\$end]" <<<"\$all")
+    if [ "\$end" -lt "\$total" ]; then
+      jq -cn --argjson m "\$mem" --arg nc "\$end" '{ok:true, members:\$m, response_metadata:{next_cursor:\$nc}}'
+    else
+      jq -cn --argjson m "\$mem" '{ok:true, members:\$m, response_metadata:{next_cursor:""}}'
+    fi
+    ;;
+  https://slack.com/api/conversations.info*)
+    chan_id=\$(printf '%s' "\$url" | sed -n 's/.*channel=\([^&]*\).*/\1/p')
+    name=\$(jq -r --arg id "\$chan_id" '.[] | select(.id==\$id) | .name' "$CHANNELS_FILE")
+    jq -cn --arg n "\${name:-unknown}" '{ok:true, channel:{name:\$n}}'
+    ;;
+  https://slack.com/api/conversations.create)
+    echo "1" >> "$CHANNEL_CALLS"
+    printf '%s\n' "\$data" >> "$CHANNEL_POST_BODIES"
+    if [ -n "\${FORCE_MISSING_SCOPE:-}" ]; then
+      echo '{"ok":false,"error":"missing_scope","needed":"groups:write","provided":"channels:write,chat:write,channels:manage"}'
+    else
+      name=\$(echo "\$data" | jq -r '.name')
+      jq -cn --arg n "\$name" '{ok:true, channel:{id:("C_NEW_" + \$n), name:\$n}}'
+    fi
+    ;;
+  https://slack.com/api/conversations.rename | https://slack.com/api/conversations.setTopic | https://slack.com/api/conversations.setPurpose | https://slack.com/api/conversations.archive)
+    echo "1" >> "$CHANNEL_CALLS"
+    printf '%s\n' "\$data" >> "$CHANNEL_POST_BODIES"
+    echo '{"ok":true}'
+    ;;
+  https://slack.com/api/conversations.invite)
+    echo "1" >> "$CHANNEL_CALLS"
+    printf '%s\n' "\$data" >> "$CHANNEL_POST_BODIES"
+    if [ "\${INVITE_MODE:-ok}" = "fail" ]; then
+      echo '{"ok":false,"error":"already_in_channel"}'
+    else
+      echo '{"ok":true}'
+    fi
+    ;;
   *)
     echo '{}'
     ;;
@@ -168,6 +248,24 @@ STUB
   export BAO_ADDR="https://stub.invalid"
   export OPENBAO_APPROLE_SLACK_ADMIN_ROLE_ID="stub-role"
   export OPENBAO_APPROLE_SLACK_ADMIN_SECRET_ID="stub-secret"
+  export OPENBAO_APPROLE_SLACK_OPS_ROLE_ID="stub-slack-ops-role"
+  export OPENBAO_APPROLE_SLACK_OPS_SECRET_ID="stub-slack-ops-secret"
+}
+
+# Seeds $CHANNELS_FILE from "id:name[:is_archived]" specs, e.g.
+# "C1:general" or "C2:old-project:true".
+seed_channels() {
+  local json="[]" spec id name archived
+  for spec in "$@"; do
+    IFS=: read -r id name archived <<<"$spec"
+    json="$(jq -c --arg id "$id" --arg n "$name" --argjson a "${archived:-false}" \
+      '. + [{id: $id, name: $n, is_archived: $a}]' <<<"$json")"
+  done
+  printf '%s' "$json" > "$CHANNELS_FILE"
+}
+
+seed_members() {  # $@ = user ids
+  printf '%s\n' "$@" | jq -R . | jq -cs . > "$MEMBERS_FILE"
 }
 
 seed_kv() {  # $1 expires_at (or "" for none), $2 safety margin seconds
@@ -354,4 +452,128 @@ run_creds() { run --separate-stderr bash -euo pipefail "$SCRIPTS/openbao-slack-c
   [ "$status" -ne 0 ]
   [[ "$stderr" == *"UNRECOVERABLE"* ]]
   [[ "$stderr" == *"500"* ]]
+}
+
+# --- channel management --------------------------------------------------
+# Uses the bot token (secrets-external/data/platform/slack-ops), not the app-config token
+# above — these tests never touch $KV_STATE.
+
+@test "a missing slack-ops AppRole credential dies naming the missing env vars, not a generic auth error" {
+  unset OPENBAO_APPROLE_SLACK_OPS_ROLE_ID
+  seed_channels "C1:general"
+  run_creds channel list
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"OPENBAO_APPROLE_SLACK_OPS_ROLE_ID"* ]]
+}
+
+@test "a slack-ops AppRole login failure names the AppRole, not a confusing generic auth error" {
+  seed_channels "C1:general"
+  SLACK_OPS_LOGIN_FAIL=1 run_creds channel list
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"SLACK_OPS"* ]]
+  [[ "$stderr" == *"slack-ops AppRole exists in OpenBao"* ]]
+}
+
+@test "channel list prints id, name and archived flag tab-separated, excluding archived by default" {
+  seed_channels "C1:general" "C2:old-project:true"
+  run_creds channel list
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"C1"$'\t'"general"$'\t'"false"* ]]
+  [[ "$output" != *"C2"* ]]
+}
+
+@test "channel list --include-archived also prints archived channels" {
+  seed_channels "C1:general" "C2:old-project:true"
+  run_creds channel list --include-archived
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"C1"* ]]
+  [[ "$output" == *"C2"$'\t'"old-project"$'\t'"true"* ]]
+}
+
+@test "a channel name resolves to its id on a single page" {
+  seed_channels "C1:general"
+  run_creds channel topic general "new topic"
+  [ "$status" -eq 0 ]
+  grep -q '"channel":"C1"' "$CHANNEL_POST_BODIES"
+  grep -q '"topic":"new topic"' "$CHANNEL_POST_BODIES"
+}
+
+@test "a channel name matching only on a second page still resolves, proving pagination is followed" {
+  seed_channels "C1:alpha" "C2:beta" "C3:target"
+  CHANNEL_PAGE_SIZE=1 run_creds channel topic target "hi"
+  [ "$status" -eq 0 ]
+  grep -q '"channel":"C3"' "$CHANNEL_POST_BODIES"
+}
+
+@test "an ambiguous channel name fails rather than guessing" {
+  seed_channels "C1:dup" "C2:dup"
+  run_creds channel topic dup "hi"
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"ambiguous"* ]]
+}
+
+@test "a channel name matching nothing fails" {
+  seed_channels "C1:general"
+  run_creds channel topic ghost "hi"
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"no channel named"* ]]
+}
+
+@test "channel create prints the new channel id to stdout" {
+  run_creds channel create newchan
+  [ "$status" -eq 0 ]
+  [ "$output" = "C_NEW_newchan" ]
+}
+
+@test "channel create --private succeeds and prints the new channel id to stdout" {
+  run_creds channel create secretchan --private
+  [ "$status" -eq 0 ]
+  [ "$output" = "C_NEW_secretchan" ]
+  grep -q '"is_private":true' "$CHANNEL_POST_BODIES"
+}
+
+@test "a missing_scope response fails with the specific message naming the missing scope (defensive branch)" {
+  FORCE_MISSING_SCOPE=1 run_creds channel create anychan
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"missing_scope"* ]]
+  [[ "$stderr" == *"groups:write"* ]]
+}
+
+@test "channel rename accepts a literal channel ID directly, with no name-resolution lookup" {
+  run_creds channel rename C999 new-name
+  [ "$status" -eq 0 ]
+  grep -q '"channel":"C999"' "$CHANNEL_POST_BODIES"
+  grep -q '"name":"new-name"' "$CHANNEL_POST_BODIES"
+}
+
+@test "channel invite passes multiple user ids as a comma-separated list" {
+  seed_channels "C1:general"
+  run_creds channel invite general U1 U2 U3
+  [ "$status" -eq 0 ]
+  grep -q '"users":"U1,U2,U3"' "$CHANNEL_POST_BODIES"
+}
+
+@test "a Slack .ok:false response fails loudly with Slack's error string, never silently" {
+  seed_channels "C1:general"
+  INVITE_MODE=fail run_creds channel invite general U1
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"already_in_channel"* ]]
+}
+
+@test "channel archive logs the id and resolved name to stderr before archiving" {
+  seed_channels "C1:general"
+  run_creds channel archive general
+  [ "$status" -eq 0 ]
+  [[ "$stderr" == *"archiving channel C1 (general)"* ]]
+  [ "$(wc -l < "$CHANNEL_CALLS")" -eq 1 ]
+}
+
+@test "channel members lists user ids, following pagination across pages" {
+  seed_channels "C1:general"
+  seed_members "U1" "U2" "U3"
+  CHANNEL_PAGE_SIZE=1 run_creds channel members general
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"U1"* ]]
+  [[ "$output" == *"U2"* ]]
+  [[ "$output" == *"U3"* ]]
 }
