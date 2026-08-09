@@ -73,6 +73,12 @@ in
     # This host only installs the provider; it holds no GitHub credential.
     openbao-github-creds.enable = true;
 
+    # --- OpenBao-backed Slack app configuration token provider ---
+    # Same wrapper the Studio ships (hosts/mac-studio): ambient secret-zero
+    # via `doppler run`, token pair held in OpenBao KV-v2, never on disk.
+    # See modules/darwin/apps/openbao-slack-creds.nix.
+    openbao-slack-creds.enable = true;
+
   };
 
   # ==========================================================================
