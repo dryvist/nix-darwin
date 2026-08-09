@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.34.0](https://github.com/dryvist/nix-darwin/compare/v2.33.1...v2.34.0) (2026-08-09)
+
+
+### Features
+
+* **openbao:** add openbao-slack-creds credential wrapper ([#2124](https://github.com/dryvist/nix-darwin/issues/2124)) ([425d8d8](https://github.com/dryvist/nix-darwin/commit/425d8d8d8210650e4a66a2eada4f943901dea843))
+* **openbao:** add Slack channel management subcommands ([#2125](https://github.com/dryvist/nix-darwin/issues/2125)) ([218198d](https://github.com/dryvist/nix-darwin/commit/218198dc7b56eab2319f905bd58fdb3c295d0f72))
+
 ## [2.33.1](https://github.com/dryvist/nix-darwin/compare/v2.33.0...v2.33.1) (2026-08-08)
 
 
