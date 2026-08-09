@@ -89,6 +89,10 @@ done
 
 case "\$url" in
   */auth/approle/login)
+    role_id=\$(echo "\$data" | jq -r '.role_id')
+    if [ -n "\${SLACK_OPS_LOGIN_FAIL:-}" ] && [ "\$role_id" = "\$OPENBAO_APPROLE_SLACK_OPS_ROLE_ID" ]; then
+      exit 1
+    fi
     echo '{"auth":{"client_token":"stub-bao-token"}}'
     ;;
   */secrets-external/data/platform/slack-admin)
@@ -163,8 +167,8 @@ case "\$url" in
       *)   echo -n "500" ;;
     esac
     ;;
-  */oauthapp/creds/slack-poc)
-    echo '{"data":{"access_token":"stub-bot-token"}}'
+  */secrets-external/data/platform/slack-ops)
+    jq -cn '{data: {data: {bot_token: "stub-bot-token"}}}'
     ;;
   https://slack.com/api/conversations.list*)
     # Paginated over \$CHANNELS_FILE; CHANNEL_PAGE_SIZE controls page size
@@ -210,8 +214,7 @@ case "\$url" in
   https://slack.com/api/conversations.create)
     echo "1" >> "$CHANNEL_CALLS"
     printf '%s\n' "\$data" >> "$CHANNEL_POST_BODIES"
-    is_private=\$(echo "\$data" | jq -r '.is_private // false')
-    if [ "\$is_private" = "true" ]; then
+    if [ -n "\${FORCE_MISSING_SCOPE:-}" ]; then
       echo '{"ok":false,"error":"missing_scope","needed":"groups:write","provided":"channels:write,chat:write,channels:manage"}'
     else
       name=\$(echo "\$data" | jq -r '.name')
@@ -245,8 +248,8 @@ STUB
   export BAO_ADDR="https://stub.invalid"
   export OPENBAO_APPROLE_SLACK_ADMIN_ROLE_ID="stub-role"
   export OPENBAO_APPROLE_SLACK_ADMIN_SECRET_ID="stub-secret"
-  export OPENBAO_APPROLE_OAUTHAPP_SLACK_POC_ROLE_ID="stub-oauthapp-role"
-  export OPENBAO_APPROLE_OAUTHAPP_SLACK_POC_SECRET_ID="stub-oauthapp-secret"
+  export OPENBAO_APPROLE_SLACK_OPS_ROLE_ID="stub-slack-ops-role"
+  export OPENBAO_APPROLE_SLACK_OPS_SECRET_ID="stub-slack-ops-secret"
 }
 
 # Seeds $CHANNELS_FILE from "id:name[:is_archived]" specs, e.g.
@@ -452,8 +455,24 @@ run_creds() { run --separate-stderr bash -euo pipefail "$SCRIPTS/openbao-slack-c
 }
 
 # --- channel management --------------------------------------------------
-# Uses the bot token (oauthapp/creds/slack-poc), not the app-config token
+# Uses the bot token (secrets-external/data/platform/slack-ops), not the app-config token
 # above — these tests never touch $KV_STATE.
+
+@test "a missing slack-ops AppRole credential dies naming the missing env vars, not a generic auth error" {
+  unset OPENBAO_APPROLE_SLACK_OPS_ROLE_ID
+  seed_channels "C1:general"
+  run_creds channel list
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"OPENBAO_APPROLE_SLACK_OPS_ROLE_ID"* ]]
+}
+
+@test "a slack-ops AppRole login failure names the AppRole, not a confusing generic auth error" {
+  seed_channels "C1:general"
+  SLACK_OPS_LOGIN_FAIL=1 run_creds channel list
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"SLACK_OPS"* ]]
+  [[ "$stderr" == *"slack-ops AppRole exists in OpenBao"* ]]
+}
 
 @test "channel list prints id, name and archived flag tab-separated, excluding archived by default" {
   seed_channels "C1:general" "C2:old-project:true"
@@ -506,8 +525,15 @@ run_creds() { run --separate-stderr bash -euo pipefail "$SCRIPTS/openbao-slack-c
   [ "$output" = "C_NEW_newchan" ]
 }
 
-@test "channel create --private fails with the specific missing_scope message naming the missing scope" {
+@test "channel create --private succeeds and prints the new channel id to stdout" {
   run_creds channel create secretchan --private
+  [ "$status" -eq 0 ]
+  [ "$output" = "C_NEW_secretchan" ]
+  grep -q '"is_private":true' "$CHANNEL_POST_BODIES"
+}
+
+@test "a missing_scope response fails with the specific message naming the missing scope (defensive branch)" {
+  FORCE_MISSING_SCOPE=1 run_creds channel create anychan
   [ "$status" -ne 0 ]
   [[ "$stderr" == *"missing_scope"* ]]
   [[ "$stderr" == *"groups:write"* ]]

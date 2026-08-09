@@ -29,12 +29,15 @@
 #                            AppRole: OPENBAO_APPROLE_SLACK_ADMIN_ROLE_ID /
 #                            OPENBAO_APPROLE_SLACK_ADMIN_SECRET_ID
 #   channel *                bot token (conversations.*/chat.* scopes)
-#                            oauthapp secrets engine at oauthapp/creds/slack-poc
-#                            AppRole: OPENBAO_APPROLE_OAUTHAPP_SLACK_POC_ROLE_ID /
-#                            OPENBAO_APPROLE_OAUTHAPP_SLACK_POC_SECRET_ID
+#                            KV-v2 at secrets-external/data/platform/slack-ops,
+#                            key `bot_token`. This app has token rotation
+#                            disabled, so the token does not expire — there
+#                            is no rotation logic for it, unlike slack-admin.
+#                            AppRole: OPENBAO_APPROLE_SLACK_OPS_ROLE_ID /
+#                            OPENBAO_APPROLE_SLACK_OPS_SECRET_ID
 #
 # BAO_ADDR (or legacy VAULT_ADDR) is shared by both. Injected by running
-# under `doppler run`. AppRole login (bao_login / bao_login_oauthapp) is the
+# under `doppler run`. AppRole login (bao_login / bao_login_slack_ops) is the
 # ONLY credential path in this file — there is no break-glass, no
 # root-token fallback, and no operator-supplied token; every code path that
 # needs a token gets it from get_valid_token() or get_bot_token(), which
@@ -64,6 +67,12 @@
 #
 # `pkgs.writeShellApplication` wraps this in `set -euo pipefail` and lints
 # it, so this file omits its own set line.
+
+# Without this, a die() (exit 1) inside a command substitution nested two
+# levels deep — e.g. tok="$(get_bot_token)" where get_bot_token itself does
+# bao_tok="$(bao_login_slack_ops)" — gets silently swallowed: `set -e` does
+# not propagate into `$()` subshells by default, only the outermost one.
+shopt -s inherit_errexit
 
 prefix="[openbao-slack-creds]"
 die() { echo "$prefix ERROR $*" >&2; exit 1; }
@@ -333,32 +342,37 @@ cmd_manifest_validate() {
 
 # --- Channel management ------------------------------------------------
 #
-# Uses the bot token from oauthapp/creds/slack-poc, NOT the app-config token
-# above — that token can only call apps.manifest.*. See the SECRET-ZERO
-# block at the top of this file.
+# Uses the bot token at slack_ops_kv_path, NOT the app-config token above —
+# that token can only call apps.manifest.*. See the SECRET-ZERO block at the
+# top of this file. This app has token rotation disabled, so unlike
+# slack-admin's app_config_token there is no expiry/rotation logic here:
+# get_bot_token just reads the stored value.
 
-bao_login_oauthapp() {
+slack_ops_kv_path="secrets-external/data/platform/slack-ops"
+
+bao_login_slack_ops() {
   local role_id secret_id resp token
-  role_id="${OPENBAO_APPROLE_OAUTHAPP_SLACK_POC_ROLE_ID:-}"
-  secret_id="${OPENBAO_APPROLE_OAUTHAPP_SLACK_POC_SECRET_ID:-}"
+  role_id="${OPENBAO_APPROLE_SLACK_OPS_ROLE_ID:-}"
+  secret_id="${OPENBAO_APPROLE_SLACK_OPS_SECRET_ID:-}"
   [ -n "${role_id}" ] && [ -n "${secret_id}" ] || \
-    die "OPENBAO_APPROLE_OAUTHAPP_SLACK_POC_ROLE_ID / OPENBAO_APPROLE_OAUTHAPP_SLACK_POC_SECRET_ID not in environment — run under 'doppler run'"
+    die "OPENBAO_APPROLE_SLACK_OPS_ROLE_ID / OPENBAO_APPROLE_SLACK_OPS_SECRET_ID not in environment — run under 'doppler run'"
   resp="$("${curl_bin}" -sf --max-time 10 -X POST \
     -d "{\"role_id\":\"${role_id}\",\"secret_id\":\"${secret_id}\"}" \
-    "${bao_addr}/v1/auth/approle/login")" || die "AppRole login (OAUTHAPP_SLACK_POC) failed"
+    "${bao_addr}/v1/auth/approle/login")" \
+    || die "AppRole login (SLACK_OPS) failed — verify OPENBAO_APPROLE_SLACK_OPS_ROLE_ID/_SECRET_ID are correct and the slack-ops AppRole exists in OpenBao"
   token="$(jq -r '.auth.client_token // empty' <<<"${resp}")"
-  [ -n "${token}" ] || die "AppRole login (OAUTHAPP_SLACK_POC) returned no client_token"
+  [ -n "${token}" ] || die "AppRole login (SLACK_OPS) returned no client_token"
   printf '%s' "${token}"
 }
 
 get_bot_token() {
   require_env
   local bao_tok resp tok
-  bao_tok="$(bao_login_oauthapp)"
+  bao_tok="$(bao_login_slack_ops)"
   resp="$("${curl_bin}" -sf --max-time 10 -H "X-Vault-Token: ${bao_tok}" \
-    "${bao_addr}/v1/oauthapp/creds/slack-poc")" || die "reading oauthapp/creds/slack-poc failed"
-  tok="$(jq -r '.data.access_token // empty' <<<"${resp}")"
-  [ -n "${tok}" ] || die "oauthapp/creds/slack-poc response missing access_token"
+    "${bao_addr}/v1/${slack_ops_kv_path}")" || die "reading ${slack_ops_kv_path} failed"
+  tok="$(jq -r '.data.data.bot_token // empty' <<<"${resp}")"
+  [ -n "${tok}" ] || die "${slack_ops_kv_path} response missing bot_token"
   printf '%s' "${tok}"
 }
 
