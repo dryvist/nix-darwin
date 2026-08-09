@@ -143,7 +143,10 @@ in
 
     launchd.user.agents.cluster-maintenance-window.serviceConfig = {
       Label = "dev.mlx-cluster.maintenance-window";
-      # /bin/bash rather than the Nix shebang — see docs/MACOS-LOCAL-NETWORK-TCC.md.
+      # /bin/bash rather than the Nix shebang: a user agent's Local Network
+      # verdict follows the responsible binary's signing identity, and a Nix
+      # binary's identity is its content hash — so every rebuild invalidates it.
+      # Apple's bash keeps that identity stable. Script must stay bash 3.2 safe.
       ProgramArguments = [
         "/bin/bash"
         (lib.getExe config.programs.openbao-run.package)

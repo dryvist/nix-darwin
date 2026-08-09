@@ -47,7 +47,7 @@ let
     # same port — reads as an outage, every hand-run probe says otherwise.
     # No MDM payload and no tccutil verb exist, so only a human can grant it.
     # greedy compounds it: each upgrade is a new bundle to TCC, revoking it.
-    # Terminal.app is exempt by design — see docs/MACOS-LOCAL-NETWORK-TCC.md.
+    # Apple-signed binaries are exempt by design; ad-hoc/Nix-signed ones are not.
     {
       name = "ghostty";
       greedy = true;
