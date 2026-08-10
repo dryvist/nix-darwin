@@ -257,7 +257,7 @@ in
     # Caddy exits and launchd retries on the ThrottleInterval.
     launchd.user.agents.llm-gate.serviceConfig = {
       Label = "com.nix-darwin.llm-gate";
-      # /bin/bash, not the Nix shebang — docs/MACOS-LOCAL-NETWORK-TCC.md
+      # /bin/bash, not the Nix shebang — see homebrew.nix on Local Network.
       ProgramArguments = [
         "/bin/bash"
         (lib.getExe config.programs.openbao-run.package)
