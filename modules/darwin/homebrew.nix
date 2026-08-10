@@ -41,16 +41,11 @@ let
     # replaces the bundle wholesale, and a delete-and-recreate is a new bundle to
     # TCC even at a stable path and even for a Developer-ID-signed app.
     # Local Network is a THIRD grant this app needs, and the one that fails
-    # silently. macOS gates same-subnet connections, exempts routed ones, and
-    # attaches the verdict to the responsible GUI app. Under this terminal a nix
-    # python cannot reach a same-subnet host that /usr/bin/curl reaches on the
-    # same port — reads as an outage, every hand-run probe says otherwise.
-    # No MDM payload and no tccutil verb exist, so only a human can grant it.
-    # greedy compounds it: each upgrade is a new bundle to TCC, revoking it.
-    # Two independent exemptions, either sufficient: the binary is an Apple
-    # platform binary, or the responsible app is exempt/granted. That is why
-    # /usr/bin/curl works here ungranted while a nix python does not, and why
-    # everything works under Apple's own Terminal.app.
+    # silently — but only while the machine is attached to a subnet it also
+    # talks to. macOS gates same-subnet connections and exempts routed ones, so
+    # on a client VLAN the grant is moot. No MDM payload and no tccutil verb
+    # exist, so only a human can grant it, and greedy compounds that: each
+    # upgrade is a new bundle to TCC, revoking it.
     {
       name = "ghostty";
       greedy = true;
