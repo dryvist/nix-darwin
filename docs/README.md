@@ -25,11 +25,6 @@ them.
   - GitHub Actions templates
   - Troubleshooting and maintenance
 
-- **[MACOS-LOCAL-NETWORK-TCC.md](MACOS-LOCAL-NETWORK-TCC.md)** - Why python fails where curl succeeds on the local subnet
-  - Terminal.app is exempt; third-party terminals are not
-  - Diagnosing it, and why a cask upgrade silently revokes the grant
-  - What cannot work: no MDM payload, no tccutil verb, no host route
-
 - **[LAUNCHD-SELF-HEAL.md](LAUNCHD-SELF-HEAL.md)** - Auto-reload of penalty-boxed critical KeepAlive daemons
   - The launchd penalty-box failure mode (loaded-but-not-running)
   - How the post-activation self-heal reloads dead daemons

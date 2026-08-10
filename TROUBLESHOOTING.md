@@ -355,9 +355,9 @@ This configuration uses multiple layers to ensure TCC permissions persist:
    paths at `~/Applications/Home Manager Apps/` that don't change across
    rebuilds (no wrapper scripts, unlike trampolines)
 
-2. **TCC-sensitive apps in home.packages**: Ghostty, Zoom, and OrbStack are in
-   `home.packages` (see `hosts/macbook-m4/home.nix`) (not system packages) to get
-   stable trampolines
+2. **TCC-sensitive apps as Homebrew casks**: Ghostty and OrbStack are installed
+   as casks (see `modules/darwin/homebrew.nix`), which put them at a fixed
+   `/Applications/<App>.app` that activation never rewrites
 
 3. **/bin/zsh fallback**: The system shell has a permanent path and can be granted Full Disk Access as a backup
 
@@ -365,10 +365,10 @@ This configuration uses multiple layers to ensure TCC permissions persist:
 
 After a fresh install or if permissions aren't working:
 
-1. **Grant Full Disk Access to Ghostty trampoline**:
+1. **Grant Full Disk Access to Ghostty**:
    - Open System Settings > Privacy & Security > Full Disk Access
    - Click the `+` button
-   - Navigate to `~/Applications/Home Manager Trampolines/Ghostty.app`
+   - Navigate to `/Applications/Ghostty.app`
    - Enable the toggle
 
 2. **Grant Full Disk Access to /bin/zsh** (fallback):
@@ -376,12 +376,14 @@ After a fresh install or if permissions aren't working:
    - Press `Cmd+Shift+G` and enter `/bin/zsh`
    - Enable the toggle
 
-3. **Verify trampolines exist**:
+3. **Verify app locations**:
 
 ```bash
-# Check Home Manager trampolines
-ls -la "~/Applications/Home Manager Trampolines/"
-# Should show Ghostty.app, Zoom.app, OrbStack.app
+# Cask-installed apps live at a fixed path
+ls -la /Applications/Ghostty.app
+
+# home-manager copyApps targets (stable across rebuilds)
+ls -la ~/Applications/Home\ Manager\ Apps/
 
 # Check system apps (these do NOT get stable TCC)
 ls -la /Applications/Nix\ Apps/
@@ -390,27 +392,30 @@ ls -la /Applications/Nix\ Apps/
 
 ### Why This Works
 
-- **Trampoline paths are stable**: `~/Applications/Home Manager Trampolines/Ghostty.app` never changes, even when the underlying Nix store path does
-- **TCC stores permissions by path**: Once Ghostty trampoline has Full Disk Access, it persists across rebuilds
+- **Cask paths are stable**: `/Applications/Ghostty.app` never changes, even when Nix store paths do
+- **TCC stores permissions by path**: Once Ghostty has Full Disk Access, it persists across rebuilds
 - **/bin/zsh is immutable**: Apple's system shell path never changes, providing a reliable fallback
+
+> A `greedy = true` cask replaces the bundle on upgrade, and a replaced bundle is
+> a new app to TCC. Expect to re-grant after a cask upgrade.
 
 ### Troubleshooting TCC Issues
 
 **darwin-rebuild fails with permission errors**:
 
 ```bash
-# Verify you're running from Ghostty (not Terminal.app)
+# Confirm which terminal is the responsible app for the grant you made
 echo $TERM_PROGRAM
-# Should show: Ghostty
-
-# If using Terminal.app, grant it Full Disk Access or switch to Ghostty
 ```
+
+Grant Full Disk Access to whichever terminal you actually run rebuilds from;
+the grant is per-app, so one granted terminal does not cover another.
 
 **Permissions revoked after macOS update**:
 
 macOS updates can sometimes reset TCC. Re-grant permissions to:
 
-- `~/Applications/Home Manager Trampolines/Ghostty.app`
+- `/Applications/Ghostty.app`
 - `/bin/zsh`
 
 ### GPG "unsafe ownership" Warning
