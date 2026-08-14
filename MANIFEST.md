@@ -110,7 +110,7 @@ Source: nix-home (`home.packages` via flake input)
 | Package | Description |
 | --- | --- |
 | bitwarden-cli | CLI for Bitwarden password manager (bw) |
-| bws | Bitwarden Secrets Manager CLI |
+| bws | Bitwarden Secrets Manager CLI, pinned from Bitwarden's official release to avoid nixpkgs' Rust source rebuild |
 | doppler | Doppler secrets manager CLI |
 
 ### Remote Shell
