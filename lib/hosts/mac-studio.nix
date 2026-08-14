@@ -46,21 +46,26 @@ in
     # Verified live: a request naming mlx-community/Qwen3.5-9B-OptiQ-4bit by
     # its own id was answered by the resident entry ("ROUTED").
     #
-    # 2026-08-14: switched to Qwen3.8-27B-4bit by operator decision — adopt the
-    # newest generation now, revert only on measured evidence.
+    # 2026-07-27 standalone bench winner on cumulative tok/s (115.2, and the
+    # smallest of the four candidates at 19.4 GB). Full method, results table
+    # and the disqualifications: ./mac-studio.md.
     #
-    # THIS OVERRIDES AN EXISTING BENCHMARK VERDICT, deliberately. The previous
-    # pin, mlx-community/Qwen3.6-35B-A3B-4bit, won the 2026-07-27 standalone
-    # bench on cumulative tok/s (115.2, smallest of four candidates at 19.4 GB;
-    # method and results table in ./mac-studio.md). That model is a 35B MoE with
-    # ~3B active parameters per token; Qwen3.8-27B activates all 27B, offset by
-    # hybrid attention (48 of 64 layers linear). Net throughput is therefore
-    # UNMEASURED on this host and could regress.
+    # 2026-08-14: Qwen3.8-27B-4bit was trialled here and REVERTED on measured
+    # evidence. Single-stream on this host, 4 runs, tight variance:
     #
-    # The throughput suite runs first in the mlx-benchmarks sweep specifically
-    # to produce that number. If it regresses materially, revert is this one
-    # line plus the AI_MODEL_LOCAL_LLM Doppler variable.
-    singleModel = "mlx-community/Qwen3.8-27B-4bit";
+    #   model                     cumulative   decode
+    #   Qwen3.6-35B-A3B-4bit          115.2      84.9
+    #   Qwen3.8-27B-4bit               37.1      27.7   <- ~3.1x slower
+    #
+    # Cause is architectural, not tuning: this entry is a 35B MoE activating
+    # ~3B parameters per token, while Qwen3.8-27B is dense and activates all
+    # 27B. Its hybrid attention (48 of 64 layers linear) does not close a gap
+    # that large. Quality was never measured — the throughput cost alone
+    # decided it, so a future re-trial should lead with a quality suite and
+    # accept the ~3x latency knowingly.
+    #
+    # Both Qwen3.8 quants stay cached on both Macs for that evaluation.
+    singleModel = "mlx-community/Qwen3.6-35B-A3B-4bit";
 
     # Small always-loadable 9B (~5.2 GB) for trivial local tasks (Gemini-CLI
     # path). singleModel would otherwise demote every non-resident to
@@ -108,12 +113,12 @@ in
     # every other non-resident entry — demoted to disabledModels by
     # singleModel rather than deleted.
     catalog = {
-      # Current-generation resident that every role resolves to; must stay in
-      # step with singleModel above (the role-coverage assertion enforces it).
-      # Thinking is off in its catalog entry, which matters for Hermes: a
-      # thinking variant spends hundreds of reasoning tokens before it emits a
-      # tool call, and Hermes pays that latency on every single action it takes.
-      qwen38-27b = {
+      # The resident every role resolves to; must stay in step with singleModel
+      # above (the role-coverage assertion enforces it). Thinking is off in its
+      # catalog entry, which matters for Hermes: a thinking variant spends
+      # hundreds of reasoning tokens before it emits a tool call, and Hermes
+      # pays that latency on every single action it takes.
+      qwen36-35b = {
         class = "resident";
         roles = [
           "default"
@@ -128,11 +133,10 @@ in
       };
       qwen3-next-80b-instruct.class = "swap";
       qwen3-coder-30b.class = "swap";
-      # Previous resident and 2026-07-27 throughput winner (115.2 tok/s
-      # cumulative). Kept swap-class as the revert target: if the Qwen3.8
-      # throughput measurement regresses, restore its roles here and repoint
-      # singleModel back at it.
-      qwen36-35b.class = "swap";
+      # Trialled as resident 2026-08-14 and reverted on throughput (see the
+      # singleModel note above). Swap-class so its weights stay registered and
+      # a quality-led re-trial needs only a class/roles change here.
+      qwen38-27b.class = "swap";
       qwen35-9b-optiq.class = "swap";
       # Small always-loadable 9B (5.2 GB) for trivial local tasks via the
       # Gemini-CLI path — on-demand swap tier, idle-unloaded. Addressable by its
