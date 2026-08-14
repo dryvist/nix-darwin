@@ -17,11 +17,9 @@
   ...
 }:
 let
-  # Referenced unconditionally: a nix-ai lock too old to carry these packages
-  # must fail the build loudly. Guarding the lookup would drop both launchers
-  # silently and leave `cribl`/`splunk` resolving to the uncredentialed
-  # binaries on PATH with nothing said about it.
-  inherit (nix-ai.packages.${pkgs.stdenv.hostPlatform.system}) vct-cribl-cli vct-splunk-cli;
+  # Referenced unconditionally: a nix-ai lock too old to carry this package
+  # must fail the build loudly instead of silently dropping the launcher.
+  inherit (nix-ai.packages.${pkgs.stdenv.hostPlatform.system}) vct-cribl-cli;
 in
 {
   programs.zsh = {
@@ -87,41 +85,34 @@ in
         source ${./gh-auth.zsh}
       ''}
 
-      # --- VisiCore operator CLI launchers ---
-      # Selectors come from the automation keychain at call time; Doppler
-      # injects the actual credentials only into the child process.
+      # --- Keychain-selected Doppler launcher ---
+      # Accepts any command. Doppler's standard project/config selectors come
+      # from the automation keychain at call time, and the selected project's
+      # credentials exist only in the child process.
       #
       # The keychain identity is interpolated at build time rather than read
       # from $_KC_AI_ACCOUNT/$_KC_AI_DB: those are unset at the end of this
       # file, so a call-time read of them resolves to the empty string and
       # every launch fails against the wrong keychain.
       ${lib.optionalString (!hostConfig.isServer) ''
-        _vct_with_doppler() {
-          local exe="$1"
-          shift
-
+        _with_keychain_doppler() {
           local doppler_project doppler_config
-          doppler_project="$(_get_keychain_secret 'VCT_DOPPLER_PROJECT' ${lib.escapeShellArg userConfig.keychain.aiAccount} ${lib.escapeShellArg userConfig.keychain.aiDb})"
-          doppler_config="$(_get_keychain_secret 'VCT_DOPPLER_CONFIG' ${lib.escapeShellArg userConfig.keychain.aiAccount} ${lib.escapeShellArg userConfig.keychain.aiDb})"
+          doppler_project="$(_get_keychain_secret DOPPLER_PROJECT ${lib.escapeShellArg userConfig.keychain.aiAccount} ${lib.escapeShellArg userConfig.keychain.aiDb})"
+          doppler_config="$(_get_keychain_secret DOPPLER_CONFIG ${lib.escapeShellArg userConfig.keychain.aiAccount} ${lib.escapeShellArg userConfig.keychain.aiDb})"
 
           if [ -z "$doppler_project" ] || [ -z "$doppler_config" ]; then
-            print -u2 "[vct-cli] ERROR missing Doppler selector keychain entries for VCT_DOPPLER_PROJECT or VCT_DOPPLER_CONFIG"
+            print -u2 "[doppler] ERROR missing DOPPLER_PROJECT or DOPPLER_CONFIG in the automation Keychain"
             return 1
           fi
 
-          doppler run -p "$doppler_project" -c "$doppler_config" -- "$exe" "$@"
+          DOPPLER_PROJECT="$doppler_project" DOPPLER_CONFIG="$doppler_config" doppler run -- "$@"
         }
 
         _vct_cribl() {
-          _vct_with_doppler ${lib.escapeShellArg (lib.getExe vct-cribl-cli)} "$@"
-        }
-
-        _vct_splunk() {
-          _vct_with_doppler ${lib.escapeShellArg (lib.getExe vct-splunk-cli)} "$@"
+          _with_keychain_doppler ${lib.escapeShellArg (lib.getExe vct-cribl-cli)} "$@"
         }
 
         alias cribl='_vct_cribl'
-        alias splunk='_vct_splunk'
       ''}
 
       unset _KC_USER _KC_AI_ACCOUNT _KC_AI_DB
