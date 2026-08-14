@@ -10,10 +10,17 @@
 # sources resolve from this directory.
 {
   lib,
+  nix-ai,
+  pkgs,
   userConfig,
   hostConfig,
   ...
 }:
+let
+  # Referenced unconditionally: a nix-ai lock too old to carry this package
+  # must fail the build loudly instead of silently dropping the launcher.
+  inherit (nix-ai.packages.${pkgs.stdenv.hostPlatform.system}) vct-cribl-cli;
+in
 {
   programs.zsh = {
     # mkBefore preserves the pre-split merge order (macos ahead of nix-home's
@@ -65,9 +72,6 @@
         export OPENAI_API_KEY=''${OPENAI_API_KEY:-"$(_get_keychain_secret 'OPENAI_API_KEY' "$_KC_AI_ACCOUNT" "$_KC_AI_DB")"}
       ''}
 
-      unset -f _get_keychain_secret  # No longer needed after init
-      unset _KC_USER _KC_AI_ACCOUNT _KC_AI_DB
-
       # --- GitHub authentication ---
       # GitHub tokens are minted on demand by OpenBao (ephemeral GitHub App
       # installation tokens) through the openbao-github-creds git credential
@@ -80,6 +84,38 @@
       ${lib.optionalString (!hostConfig.isServer) ''
         source ${./gh-auth.zsh}
       ''}
+
+      # --- Keychain-selected Doppler launcher ---
+      # Accepts any command. Doppler's standard project/config selectors come
+      # from the automation keychain at call time, and the selected project's
+      # credentials exist only in the child process.
+      #
+      # The keychain identity is interpolated at build time rather than read
+      # from $_KC_AI_ACCOUNT/$_KC_AI_DB: those are unset at the end of this
+      # file, so a call-time read of them resolves to the empty string and
+      # every launch fails against the wrong keychain.
+      ${lib.optionalString (!hostConfig.isServer) ''
+        _with_keychain_doppler() {
+          local doppler_project doppler_config
+          doppler_project="$(_get_keychain_secret DOPPLER_PROJECT ${lib.escapeShellArg userConfig.keychain.aiAccount} ${lib.escapeShellArg userConfig.keychain.aiDb})"
+          doppler_config="$(_get_keychain_secret DOPPLER_CONFIG ${lib.escapeShellArg userConfig.keychain.aiAccount} ${lib.escapeShellArg userConfig.keychain.aiDb})"
+
+          if [ -z "$doppler_project" ] || [ -z "$doppler_config" ]; then
+            print -u2 "[doppler] ERROR missing DOPPLER_PROJECT or DOPPLER_CONFIG in the automation Keychain"
+            return 1
+          fi
+
+          DOPPLER_PROJECT="$doppler_project" DOPPLER_CONFIG="$doppler_config" doppler run -- "$@"
+        }
+
+        _vct_cribl() {
+          _with_keychain_doppler ${lib.escapeShellArg (lib.getExe vct-cribl-cli)} "$@"
+        }
+
+        alias cribl='_vct_cribl'
+      ''}
+
+      unset _KC_USER _KC_AI_ACCOUNT _KC_AI_DB
 
       # --- Custom-auth launcher for `claude` ---
       # Defines av-claude <profile> (aws-vault exec <profile> -- claude).

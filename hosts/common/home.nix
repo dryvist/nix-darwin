@@ -62,13 +62,6 @@ in
     ./mlx-cluster-signing.nix
   ];
 
-  # Share system-level Homebrew taps with nix-ai's trust.json.
-  # homebrew.taps entries can be strings or submodule attrsets (nix-darwin
-  # normalizes to attrsets with a `name`); the nix-ai option takes strings.
-  programs.ai-homebrew.trustedTaps = map (
-    t: if builtins.isString t then t else t.name
-  ) osConfig.homebrew.taps;
-
   # ==========================================================================
   # macOS Application Management (copyApps for TCC stability)
   # ==========================================================================
@@ -118,6 +111,11 @@ in
   };
 
   programs = {
+    # Share system-level Homebrew taps with nix-ai's trust.json.
+    # homebrew.taps entries can be strings or submodule attrsets (nix-darwin
+    # normalizes to attrsets with a `name`); the nix-ai option takes strings.
+    ai-homebrew.trustedTaps = map (t: if builtins.isString t then t else t.name) osConfig.homebrew.taps;
+
     # --- GitHub credentials for git: OpenBao-minted, never keychain ---
     # git resolves GitHub HTTPS credentials through the OpenBao-backed wrapper
     # (modules/darwin/apps/openbao-github-creds.nix): ambient READ tokens per
@@ -191,6 +189,11 @@ in
       };
       sweepRoots = [ "${config.home.homeDirectory}/.local/share/uv/python" ];
     };
+
+    # VisiCore operator CLIs — workstation-only. Set unconditionally so a
+    # nix-ai lock predating the option fails the build instead of quietly
+    # dropping the feature.
+    vctCli.enable = !hostConfig.isServer;
   };
 
   # ==========================================================================
