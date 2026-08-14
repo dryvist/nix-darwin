@@ -38,36 +38,20 @@ in
   # model ids stay centralized in nix-ai's validated catalog.
 
   mlx = {
-    # TWO-RESIDENT MODE (2026-08-14, supersedes single-model mode). This host
-    # is the estate's INTELLIGENCE tier: a GPU is planned to take fast-and-small,
-    # so throughput stops being the objective here and both brains stay warm.
+    # TWO-RESIDENT MODE (2026-08-14, supersedes single-model mode). This host is
+    # the estate's INTELLIGENCE tier: a GPU is planned to take fast-and-small,
+    # so throughput stops being the objective and both brains stay warm. The
+    # 27B takes deliberate work, the 35B MoE routine work. Rationale, the vmmap
+    # fit, and the group semantics: ./mac-studio.md "Two warm brains".
     #
-    #   Qwen3.8-27B  — deliberate work. Dense 27B, thinking ON at
-    #                  reasoning_effort=medium (nix-ai#1627). Note that is a
-    #                  prompt string, NOT a budget: nothing here caps how long
-    #                  it thinks. Leaving the kwarg unset is the failure mode —
-    #                  the template then defaults to xhigh, which measured 0
-    #                  answer characters across 3 of 3 runs.
-    #   Qwen3.6-35B  — routine work. 35B MoE, ~3B active/token, thinking off,
-    #                  and 20 KiB/token of KV against the 27B's 64 KiB.
+    # singleModel and alwaysAvailableModels are GONE, not repointed — both only
+    # had meaning in single-model mode, and alwaysAvailableModels' group
+    # (swap=true, persistent=false) could never have carried a second brain.
     #
-    # singleModel is GONE, not repointed. It aliased every role onto one entry
-    # and demoted everything else to disabledModels, which is precisely what
-    # made a second warm brain impossible. Two resident-class entries land in
-    # the mlx-models group, which is swap=false + persistent=true at
-    # maxResidentWorkers = 2 — so they hold weights simultaneously and never
-    # evict one another (nix-ai llama-swap-topology.nix tieredGroups).
-    #
-    # alwaysAvailableModels is gone with it: it only ever had meaning in
-    # singleModel mode, and its group (swap=true, persistent=false) is the
-    # reason it could not have carried a second brain anyway — always-available
-    # models evict each other and idle-unload at ttl 900.
-    #
-    # Measured before switching (jevans-ms, vmmap, 2026-08-14): peaks 30.9 GB
-    # (35B) + 16.6 GB (27B) = 44.2 GiB against the 100 GiB ceiling, and 28.8 /
-    # 15.5 GiB steady against the 48 GiB per-worker budget. Weights are private
-    # per-process Metal buffers — nothing is shared between the two workers, so
-    # this is a straight sum, not an estimate.
+    # DO NOT drop the 27B's chat-template kwarg to "let it think". Unset, its
+    # template defaults reasoning_effort to xhigh, which measured 0 answer
+    # characters on 3 of 3 runs. The kwarg lives in the nix-ai catalog, and it
+    # is a prompt string, not a budget — nothing here caps thinking length.
 
     # RESIDENCY BUDGET — these two move together or the host over-commits.
     #
@@ -106,18 +90,11 @@ in
     # one worth asking often.
     #
     # `enable = false` on the rest is NOT a new restriction — it preserves
-    # exactly what singleModel did. Under singleModel every unlisted entry was
-    # demoted to disabledModels and a request naming its id 404'd. Without
-    # singleModel every compiled entry becomes servable again, so a stray
-    # physical-id request would cold-load 20-63 GB beside two residents.
-    # Disable-not-delete: they stay in the tree, ready to re-enable.
+    # exactly what singleModel did (those ids already 404'd). Without it every
+    # compiled entry becomes servable again, so a stray physical-id request
+    # would cold-load 20-63 GB beside two residents. Disable-not-delete.
     catalog = {
-      # Deliberate tier. Its chat-template kwarg lives in the nix-ai catalog,
-      # not here. Do not "fix" it by dropping the kwarg to let it think freely:
-      # unset, the template defaults reasoning_effort to xhigh, and at xhigh
-      # this model emitted 0 answer characters with finish_reason "length" on
-      # 3 of 3 measured runs. Bounded thinking (low) costs ~220 s per action,
-      # which is the trade this tier exists to make.
+      # Deliberate tier. See the kwarg warning above.
       qwen38-27b = {
         class = "resident";
         roles = [
