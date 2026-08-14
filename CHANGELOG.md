@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.35.0](https://github.com/dryvist/nix-darwin/compare/v2.34.0...v2.35.0) (2026-08-14)
+
+
+### Features
+
+* wire VCT CLI workstations ([#2132](https://github.com/dryvist/nix-darwin/issues/2132)) ([52a7335](https://github.com/dryvist/nix-darwin/commit/52a73350b3a93c4f60109eb228b531965b834b6d))
+
 ## [2.34.0](https://github.com/dryvist/nix-darwin/compare/v2.33.1...v2.34.0) (2026-08-09)
 
 
