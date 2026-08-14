@@ -18,10 +18,24 @@ unplugged, no cluster).
 Every candidate was measured on this host against a dedicated isolated worker on
 a scratch port, with the loaded checkpoint confirmed by
 `lsof -i :PORT` → pid → `ps -p <pid>` reading `--model`. **That step is
-mandatory, not ceremony**: single-model mode aliases every other model's
-physical id onto the resident entry and the server echoes the requested name
-back, so a model id in a request or a response proves nothing about which
-weights answered.
+mandatory, not ceremony**: the server echoes the requested name back, so a
+model id in a request or a response proves nothing about which weights
+answered.
+
+**Correction (2026-08-14).** This paragraph used to claim single-model mode
+"aliases every other model's physical id onto the resident entry". It does
+not, and believing it caused an outage. `nix-ai/modules/mlx/llama-swap-topology.nix`
+grafts **only the resident's own role aliases** (`default`, `tool-calling`,
+`goal-judge`, …); every other physical id is demoted to `disabledModels` and
+**returns 404**. That is deliberate — the banned alternative once made
+llama-swap answer a request naming model A with model B's weights, publishing
+one model's throughput under another's name.
+
+The consequence to plan for: **changing `singleModel` breaks every downstream
+consumer that names the outgoing physical id.** `ansible-proxmox-ai/llm-models.yml`
+is one such consumer (`hermes-default` → a physical id), so it must be
+repointed in the same change, or consumers must use a role alias instead of a
+physical id.
 
 Headline metric is cumulative tok/s — `(prompt + completion) / wall` — so
 prefill gains count. Identical 111–118 token prompt, 300 `max_tokens`, 3 timed
@@ -39,6 +53,39 @@ The 35B wins on throughput outright while being the smallest of the four
 tools it emits no call at all and stops on `length`. gpt-oss-120b is
 disqualified because mlx-lm ships no harmony parser, so `tool_calls` is null and
 raw `<|channel|>` markup leaks into content.
+
+### Qwen3.8-27B-4bit trial, 2026-08-14 — reverted
+
+Trialled as resident and reverted the same day on throughput. Measured with
+`mlx-benchmarks/scripts/run-suite.sh --suites throughput` (256 `max_tokens`,
+4 sequential runs after a discarded warmup) — a different harness from the
+table above, so **both rows below were re-measured with it, minutes apart, on
+this host**, rather than comparing across methods:
+
+| model | cumulative | decode | ttft |
+| --- | --- | --- | --- |
+| Qwen3.6-35B-A3B-4bit | **138.75** | **106.47** | 0.10s |
+| Qwen3.8-27B-4bit | 37.11 | 27.73 | 0.16s |
+
+**~3.7x cumulative, ~3.8x decode.** Variance was tight on both (Qwen3.8
+36.92–37.13 over 4 runs), so this is not noise.
+
+The control run matters more than the headline: the incumbent re-measures at
+138.75 here versus 115.2 in the table above, i.e. this harness reads *hot*
+relative to the older method. Comparing the challenger's 37.11 against the
+historical 115.2 would therefore have **understated** the gap. Always re-measure
+the incumbent with the same harness before trusting a cross-run delta.
+
+Cause is architectural rather than tuning: the incumbent is a 35B MoE
+activating ~3B parameters per token, while Qwen3.8-27B is dense and activates
+all 27B. Its hybrid attention (48 of 64 layers linear) does not close a gap
+that size.
+
+**Quality was never measured.** The throughput cost alone decided it, so a
+re-trial should lead with the coding/math/reasoning/agentic suites and accept
+the ~3.8x latency knowingly. Both Qwen3.8 quants (4bit, 8bit) stay cached on
+both hosts, and the catalog entry stays swap-class, so a re-trial is a
+class/roles change with no re-download.
 
 Thinking is off in its catalog entry, which matters for Hermes: a thinking
 variant spends hundreds of reasoning tokens before it emits a tool call, and
