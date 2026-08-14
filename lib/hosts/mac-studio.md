@@ -212,7 +212,7 @@ llama-swap's scheduler and never reaches the worker.
 
 ## Preload
 
-`preload = [ "default", "quickest" ]` — two genuinely different models since
+`preload = [ "default" "quickest" ]` — two genuinely different models since
 2026-08-14, where under single-model mode every role alias resolved to the same
 resident and the name was cosmetic. `default` (the 27B) is listed first because
 it is the slower of the two to warm. It used to read `[ "goal-judge" ]`,
@@ -221,6 +221,11 @@ host. That misreading cost a multi-hour misdiagnosis of a warmup-starvation
 incident on 2026-08-01; the actual cause was external (something kickstarting the
 warmup agent in a tight loop, force-reloading the same resident). See nix-ai's
 `mlx-warmup.py` re-invocation bound.
+
+The warmup deadline needs no adjustment for the second entry: nix-ai's
+`warmup-timeout.nix` derives it as `healthCheckTimeout * len(preload) + 60`,
+which is 180 × 2 + 60 = 420 s here. Restart *count* is bounded separately by
+`mlx-warmup.py`, which is the actual livelock fix.
 
 ## No serving watchdog on this host
 
