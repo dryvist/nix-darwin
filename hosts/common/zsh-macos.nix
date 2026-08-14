@@ -10,10 +10,24 @@
 # sources resolve from this directory.
 {
   lib,
+  nix-ai,
+  pkgs,
   userConfig,
   hostConfig,
   ...
 }:
+let
+  system = pkgs.stdenv.hostPlatform.system;
+  vctPackages =
+    if nix-ai ? packages && builtins.hasAttr system nix-ai.packages then
+      nix-ai.packages.${system}
+    else
+      { };
+  vctCriblPkg =
+    if builtins.hasAttr "vct-cribl-cli" vctPackages then vctPackages.vct-cribl-cli else null;
+  vctSplunkPkg =
+    if builtins.hasAttr "vct-splunk-cli" vctPackages then vctPackages.vct-splunk-cli else null;
+in
 {
   programs.zsh = {
     # mkBefore preserves the pre-split merge order (macos ahead of nix-home's
@@ -65,9 +79,6 @@
         export OPENAI_API_KEY=''${OPENAI_API_KEY:-"$(_get_keychain_secret 'OPENAI_API_KEY' "$_KC_AI_ACCOUNT" "$_KC_AI_DB")"}
       ''}
 
-      unset -f _get_keychain_secret  # No longer needed after init
-      unset _KC_USER _KC_AI_ACCOUNT _KC_AI_DB
-
       # --- GitHub authentication ---
       # GitHub tokens are minted on demand by OpenBao (ephemeral GitHub App
       # installation tokens) through the openbao-github-creds git credential
@@ -80,6 +91,40 @@
       ${lib.optionalString (!hostConfig.isServer) ''
         source ${./gh-auth.zsh}
       ''}
+
+      # --- VisiCore operator CLI launchers ---
+      # Selectors come from the automation keychain at call time; Doppler
+      # injects the actual credentials only into the child process.
+      ${lib.optionalString (!hostConfig.isServer && vctCriblPkg != null && vctSplunkPkg != null) ''
+        _vct_with_doppler() {
+          local exe="$1"
+          shift
+
+          local doppler_project doppler_config
+          doppler_project="$(_get_keychain_secret 'VCT_DOPPLER_PROJECT' "$_KC_AI_ACCOUNT" "$_KC_AI_DB")"
+          doppler_config="$(_get_keychain_secret 'VCT_DOPPLER_CONFIG' "$_KC_AI_ACCOUNT" "$_KC_AI_DB")"
+
+          if [ -z "$doppler_project" ] || [ -z "$doppler_config" ]; then
+            print -u2 "[vct-cli] ERROR missing Doppler selector keychain entries for VCT_DOPPLER_PROJECT or VCT_DOPPLER_CONFIG"
+            return 1
+          fi
+
+          doppler run -p "$doppler_project" -c "$doppler_config" -- "$exe" "$@"
+        }
+
+        _vct_cribl() {
+          _vct_with_doppler ${lib.escapeShellArg (lib.getExe vctCriblPkg)} "$@"
+        }
+
+        _vct_splunk() {
+          _vct_with_doppler ${lib.escapeShellArg (lib.getExe vctSplunkPkg)} "$@"
+        }
+
+        alias cribl='_vct_cribl'
+        alias splunk='_vct_splunk'
+      ''}
+
+      unset _KC_USER _KC_AI_ACCOUNT _KC_AI_DB
 
       # --- Custom-auth launcher for `claude` ---
       # Defines av-claude <profile> (aws-vault exec <profile> -- claude).
