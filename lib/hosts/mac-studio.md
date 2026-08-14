@@ -18,10 +18,11 @@ unplugged, no cluster).
 Every candidate was measured on this host against a dedicated isolated worker on
 a scratch port, with the loaded checkpoint confirmed by
 `lsof -i :PORT` → pid → `ps -p <pid>` reading `--model`. **That step is
-mandatory, not ceremony**: single-model mode aliases every other model's
-physical id onto the resident entry and the server echoes the requested name
-back, so a model id in a request or a response proves nothing about which
-weights answered.
+mandatory, not ceremony**: the server echoes the requested name back, so a
+model id in a request or a response proves nothing about which weights
+answered. It mattered doubly under the single-model mode this host ran until
+2026-08-14, which aliased every other model's physical id onto the one
+resident entry — but the response field was never evidence in either mode.
 
 Headline metric is cumulative tok/s — `(prompt + completion) / wall` — so
 prefill gains count. Identical 111–118 token prompt, 300 `max_tokens`, 3 timed
@@ -43,6 +44,50 @@ raw `<|channel|>` markup leaks into content.
 Thinking is off in its catalog entry, which matters for Hermes: a thinking
 variant spends hundreds of reasoning tokens before it emits a tool call, and
 Hermes pays that latency on every action it takes.
+
+## Two warm brains (2026-08-14) — supersedes single-model mode
+
+This host is the estate's **intelligence tier**; a GPU is planned to take
+fast-and-small. Throughput is no longer the objective here, so both brains stay
+warm and roles are split by cost rather than by preference:
+
+| Model | Roles | Shape | Thinking |
+| --- | --- | --- | --- |
+| Qwen3.8-27B-4bit | default, tool-calling, most-capable, oss, coding, goal-judge | dense 27B, 64 KiB/token KV | bounded on (`reasoning_effort=low`) |
+| Qwen3.6-35B-A3B-4bit | quickest, large-context | 35B MoE, ~3B active, 20 KiB/token KV | off |
+
+`large-context` sits on the MoE deliberately: its KV costs roughly a third of
+the dense model's per token.
+
+**`singleModel` is gone, not repointed.** It aliased every role onto one entry
+and demoted the rest to `disabledModels`, which is exactly what made a second
+warm brain impossible. `alwaysAvailableModels` went with it — it had meaning
+only in single-model mode, and its group (`swap=true, persistent=false`) could
+never have held a second brain: always-available models evict each other and
+idle-unload at ttl 900.
+
+Two resident-class entries land in the `mlx-models` group, which at k_max = 2 is
+`swap=false, persistent=true`, so they hold weights simultaneously. Verified
+from the rendered `llama-swap-config.json`, not inferred:
+
+```json
+"mlx-models":      { "swap": false, "persistent": true,  "exclusive": true,
+                     "members": ["…Qwen3.6-35B-A3B-4bit", "…Qwen3.8-27B-4bit"] }
+"mlx-swap-models": { "swap": true,  "persistent": false, "exclusive": false,
+                     "members": ["…Qwen3.5-9B-MLX-4bit"] }
+```
+
+Everything else is `enable = false` — **not a new restriction**. Under
+`singleModel` those ids already 404'd; without it every compiled entry becomes
+servable again, and a stray physical-id request would cold-load 20–63 GB beside
+two residents. The 9B stays enabled because an hourly note-capture pipe requests
+its exact physical id.
+
+Measured before the switch (`vmmap`, 2026-08-14): peaks 30.9 GB (35B) + 16.6 GB
+(27B) = 44.2 GiB against the 100 GiB ceiling; 28.8 / 15.5 GiB steady against the
+48 GiB per-worker budget. Weights are private per-process Metal buffers —
+dirty, non-volatile, no shared pages — so two workers is a straight sum, never a
+discount.
 
 ## Residency budget (k_max = 2 since 2026-08-05)
 
@@ -167,8 +212,10 @@ llama-swap's scheduler and never reaches the worker.
 
 ## Preload
 
-`preload = [ "default" ]`. Every role alias resolves to the same 35B resident in
-single-model mode, so the name is cosmetic — but it used to read `[ "goal-judge" ]`,
+`preload = [ "default", "quickest" ]` — two genuinely different models since
+2026-08-14, where under single-model mode every role alias resolved to the same
+resident and the name was cosmetic. `default` (the 27B) is listed first because
+it is the slower of the two to warm. It used to read `[ "goal-judge" ]`,
 which reads as "warm a separate, smaller judge model" that does not exist on this
 host. That misreading cost a multi-hour misdiagnosis of a warmup-starvation
 incident on 2026-08-01; the actual cause was external (something kickstarting the
