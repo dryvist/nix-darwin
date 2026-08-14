@@ -8,7 +8,6 @@
 {
   config,
   lib,
-  options,
   osConfig,
   pkgs,
   hostConfig,
@@ -190,8 +189,10 @@ in
       };
       sweepRoots = [ "${config.home.homeDirectory}/.local/share/uv/python" ];
     };
-  }
-  // lib.optionalAttrs (options.programs ? vctCli) {
+
+    # VisiCore operator CLIs — workstation-only. Set unconditionally so a
+    # nix-ai lock predating the option fails the build instead of quietly
+    # dropping the feature.
     vctCli.enable = !hostConfig.isServer;
   };
 
