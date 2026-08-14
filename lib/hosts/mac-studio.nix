@@ -42,10 +42,12 @@ in
     # is the estate's INTELLIGENCE tier: a GPU is planned to take fast-and-small,
     # so throughput stops being the objective here and both brains stay warm.
     #
-    #   Qwen3.8-27B  — deliberate work. Dense 27B. Thinking is off in the
-    #                  catalog entry at the currently pinned nix-ai; it becomes
-    #                  bounded-on (reasoning_effort=low, ~220 s/response) when
-    #                  the pin advances past nix-ai#1627.
+    #   Qwen3.8-27B  — deliberate work. Dense 27B, thinking ON at
+    #                  reasoning_effort=medium (nix-ai#1627). Note that is a
+    #                  prompt string, NOT a budget: nothing here caps how long
+    #                  it thinks. Leaving the kwarg unset is the failure mode —
+    #                  the template then defaults to xhigh, which measured 0
+    #                  answer characters across 3 of 3 runs.
     #   Qwen3.6-35B  — routine work. 35B MoE, ~3B active/token, thinking off,
     #                  and 20 KiB/token of KV against the 27B's 64 KiB.
     #
