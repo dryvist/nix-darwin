@@ -48,8 +48,12 @@ Two resident-class entries land in `mlx-models`, which at k_max = 2 is
 from the rendered `llama-swap-config.json`, not inferred:
 
 ```json
-"mlx-models":      { "swap": false, "persistent": true,  "members": [35B, 27B] }
-"mlx-swap-models": { "swap": true,  "persistent": false, "members": [9B] }
+{
+  "mlx-models":      { "swap": false, "persistent": true,
+                       "members": ["…Qwen3.6-35B-A3B-4bit", "…Qwen3.8-27B-4bit"] },
+  "mlx-swap-models": { "swap": true,  "persistent": false,
+                       "members": ["…Qwen3.5-9B-MLX-4bit"] }
+}
 ```
 
 Everything else is `enable = false` — **not a new restriction**, since those
