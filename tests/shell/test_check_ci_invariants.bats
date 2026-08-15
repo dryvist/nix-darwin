@@ -79,6 +79,38 @@ setup() {
   [[ "$output" == *"cold-builds the closure"* ]]
 }
 
+# Regression guards for the quota thrash. Purging looks like an optimisation
+# worth "simplifying away" — it is not. Without it one cache accumulates per
+# flake.lock hash until the repo exceeds its 15G quota and GitHub evicts entries
+# of its own choosing, cold-starting PRs for entirely unrelated reasons.
+@test "fails when purging is disabled" {
+  sed -i.bak '/^          purge: /d' "$WORK"
+  run bash "$SCRIPT" "$WORK"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"exceeds its quota"* ]]
+}
+
+@test "fails when purge is not gated to the saving branch" {
+  sed -i.bak 's|^          purge: .*|          purge: true|' "$WORK"
+  run bash "$SCRIPT" "$WORK"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"purge: must stay pinned"* ]]
+}
+
+@test "fails when the primary-key exemption is dropped" {
+  sed -i.bak '/purge-primary-key/d' "$WORK"
+  run bash "$SCRIPT" "$WORK"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"purge the very cache it just saved"* ]]
+}
+
+@test "fails when purge-created stops selecting every superseded cache" {
+  sed -i.bak 's|purge-created: 0|purge-created: 604800|' "$WORK"
+  run bash "$SCRIPT" "$WORK"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"re-creates the quota thrash"* ]]
+}
+
 @test "reports every broken invariant, not just the first" {
   sed -i.bak 's|timeout-minutes: .*|timeout-minutes: 30|' "$WORK"
   sed -i.bak '/restore-prefixes-first-match/d' "$WORK"

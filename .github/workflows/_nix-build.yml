@@ -100,6 +100,31 @@ jobs:
           # never matches and reintroduce this exact bug with no signal. If the
           # default branch ever changes, change this line with it.
           save: ${{ github.ref == 'refs/heads/develop' }}
+          # Delete superseded caches, or the quota silently thrashes.
+          #
+          # Nothing removed an old entry when flake.lock changed, so entries
+          # accumulated one per lock hash. Measured before this fix: five
+          # nix-macOS-* caches at ~3.13G each = 15.8G, plus 2.1G of nix-Linux-*,
+          # against a 15G org eviction limit. At ~3.13G per entry only four can
+          # coexist; the fifth evicts one and GitHub's LRU picks the victim, not
+          # us. Five lock changes landed in a single day (Renovate plus one PR
+          # chain), so this is the steady state, not a spike. PRs were already
+          # cold-starting because an unrelated lock bump evicted what they needed.
+          #
+          # Gated to the same condition as `save`: purge acts only on caches
+          # scoped to the current GITHUB_REF, so on a PR ref it would find
+          # nothing anyway. Keeping the conditions identical means the branch
+          # that writes is the only branch that deletes.
+          purge: ${{ github.ref == 'refs/heads/develop' }}
+          purge-prefixes: |
+            nix-${{ runner.os }}-
+          # `0` selects every matching cache created more than 0 seconds ago,
+          # i.e. all of them; `purge-primary-key: never` then exempts the entry
+          # this run just wrote. Net effect: keep exactly the newest, drop the
+          # rest. Without the `never` exemption a run can delete the cache it is
+          # about to reuse.
+          purge-created: 0
+          purge-primary-key: never
 
       # Warn if nixpkgs is not at the Hydra-evaluated channel HEAD — cold builds are slow.
       # Not a hard failure: channel service may lag briefly; warning is sufficient signal.
