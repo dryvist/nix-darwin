@@ -2,6 +2,7 @@
 # Build home-manager configuration with error detection
 # Usage: ./scripts/workflows/build-hm.sh [OUTPUT_LINK]
 # Exit codes: 0=success, 1=build failed or error detected
+# no-op touch: forces the ci-gate path filter to trigger the no-cache experiment
 
 set -euo pipefail
 
