@@ -5,22 +5,57 @@ name: _nix-build
 on:
   workflow_call:
 
-# Performance: Cancel in-progress builds when new commits arrive
+# Performance: cancel superseded builds — but NEVER on the default branch.
+#
+# `develop` pushes are the only runs that save the Nix store cache (see `save:`
+# below). This block used to set `cancel-in-progress: true` unconditionally,
+# which cancelled them: ci-nix.yml guards its own group with the same condition,
+# but the two groups have different names so both apply independently, and this
+# one still killed the run. Every develop merge that raced the next one threw
+# away the cache write, so PRs restored a stale cache and cold-built the tail.
 concurrency:
   group: nix-build-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/develop' }}
 
 jobs:
   build:
     name: Build
     runs-on: macos-latest
-    # Intentionally non-negotiable: a full activation build past 20 minutes is
-    # a dependency or closure regression, not a reason to spend more CI time.
-    # Do not raise this cap; remove the source-build cause (as with Goose/BWS)
-    # so the failed required check blocks the regression until it is fixed.
-    timeout-minutes: 20
+    # Intentionally non-negotiable: an activation build past this cap is a
+    # dependency or closure regression, not a reason to spend more CI time.
+    # Do not raise it; remove the source-build cause (as with Goose/BWS and the
+    # markitdown/arrow-cpp chain) so the failed required check blocks the
+    # regression until it is fixed.
+    #
+    # The number lives in the org variable so it can change org-wide without
+    # editing any repository. `vars` is permitted here — the context table allows
+    # github/needs/strategy/matrix/vars/inputs for job-level timeout-minutes
+    # (not env, not secrets).
+    #
+    # fromJSON is REQUIRED, not decoration: every `vars.*` value is typed as a
+    # STRING, while timeout-minutes demands a number. Without it, graph
+    # validation rejects the workflow and the job never starts — it reports as a
+    # failed check with no job and no logs, which reads like an infra flake.
+    # fromJSON parses the string to a number.
+    #
+    # The `|| '15'` literal is likewise required: an unset variable interpolates
+    # to an empty string, fromJSON('') is an error, and any silent fall-through
+    # to the 360-minute default would remove the cap with no signal. Fork PRs
+    # resolve org variables empty, so they take this path too.
+    timeout-minutes: ${{ fromJSON(vars.GH_ACTION_TIMEOUT_NIX || '15') }}
     permissions:
       contents: read
+      # Required by the cache step's `purge:` — deleting a cache entry goes
+      # through the Actions cache REST API, which `contents: read` cannot reach.
+      # Without this the purge fails with "Resource not accessible by
+      # integration" and, critically, the step still exits GREEN: entries keep
+      # accumulating and the only visible symptom is `gh cache list` growing
+      # until the repo exceeds quota and GitHub evicts at random.
+      #
+      # Safe on pull_request: fork PRs receive a read-only token regardless of
+      # what this block requests, so the elevated scope applies only to trusted
+      # branch runs.
+      actions: write
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -57,16 +92,63 @@ jobs:
           primary-key: nix-${{ runner.os }}-${{ hashFiles('flake.lock') }}
           restore-prefixes-first-match: |
             nix-${{ runner.os }}-
-          # The activation closure exceeds this cap, so the cache is partial by
-          # design; a partial warm store still beats substituting everything.
-          # GitHub evicts at a 10G per-repo quota, so raising this trades cache
-          # completeness against evicting the other caches in the repo.
-          gc-max-store-size-macos: 8G
+          # Sized against the org's cache quota, NOT GitHub's 10G default.
+          #
+          # dryvist sets the maximum cache size eviction limit to 15G and this
+          # repo is pinned at it (a repo cannot exceed the org maximum, so
+          # raising further is an org-level change). The activation closure
+          # measures ~14G, of which only ~4.2G is not substitutable from
+          # cache.nixos.org — mostly proprietary GUI app downloads plus this
+          # repo's own vendored Go/Rust modules.
+          #
+          # This was 12G, chosen for quota headroom, but quota was never the
+          # binding cost. Measured on an exact primary-key HIT: ~36s to download
+          # the resulting ~3.1G tarball, then 8m28s to `gtar -x` it, against a
+          # 55s build once the store was warm. Restoring cost 10x what it saved.
+          #
+          # A no-cache control run (disabling this step entirely) did NOT
+          # complete in 15 minutes: the ~4.2G non-substitutable tail (GUI apps,
+          # this repo's vendored Go/Rust modules) has to build from source with
+          # zero cache, and that alone exceeds the cap. So the cache is
+          # required — the question was never remove-vs-keep, only
+          # sized-right-vs-oversized.
+          #
+          # 6G leaves ~1.8G of headroom over that measured 4.2G tail. Evicting
+          # anything beyond the tail costs nothing: cache.nixos.org
+          # substitution is fast, parallel HTTP, so a smaller cache that misses
+          # on substitutable paths beats a larger one that hits but is slow to
+          # unpack. Optimise for total wall time, never for hit rate.
+          gc-max-store-size-macos: 6G
           # Literal, not `github.event.repository.default_branch`: that context is
           # empty on some triggers, which would silently evaluate to a ref that
           # never matches and reintroduce this exact bug with no signal. If the
           # default branch ever changes, change this line with it.
           save: ${{ github.ref == 'refs/heads/develop' }}
+          # Delete superseded caches, or the quota silently thrashes.
+          #
+          # Nothing removed an old entry when flake.lock changed, so entries
+          # accumulated one per lock hash. Measured before this fix: five
+          # nix-macOS-* caches at ~3.13G each = 15.8G, plus 2.1G of nix-Linux-*,
+          # against a 15G org eviction limit. At ~3.13G per entry only four can
+          # coexist; the fifth evicts one and GitHub's LRU picks the victim, not
+          # us. Five lock changes landed in a single day (Renovate plus one PR
+          # chain), so this is the steady state, not a spike. PRs were already
+          # cold-starting because an unrelated lock bump evicted what they needed.
+          #
+          # Gated to the same condition as `save`: purge acts only on caches
+          # scoped to the current GITHUB_REF, so on a PR ref it would find
+          # nothing anyway. Keeping the conditions identical means the branch
+          # that writes is the only branch that deletes.
+          purge: ${{ github.ref == 'refs/heads/develop' }}
+          purge-prefixes: |
+            nix-${{ runner.os }}-
+          # `0` selects every matching cache created more than 0 seconds ago,
+          # i.e. all of them; `purge-primary-key: never` then exempts the entry
+          # this run just wrote. Net effect: keep exactly the newest, drop the
+          # rest. Without the `never` exemption a run can delete the cache it is
+          # about to reuse.
+          purge-created: 0
+          purge-primary-key: never
 
       # Warn if nixpkgs is not at the Hydra-evaluated channel HEAD — cold builds are slow.
       # Not a hard failure: channel service may lag briefly; warning is sufficient signal.

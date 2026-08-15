@@ -5,8 +5,27 @@
 ### Current Approach
 
 We use `nix-community/cache-nix-action@v7` for Nix store caching. It is Nix-aware,
-free, and uses the `actions/cache` backend. PRs are configured as restore-only (`save: false`);
-cache saves happen only on main pushes. `gc-max-store-size` keeps the cache from growing unbounded.
+free, and uses the `actions/cache` backend. PRs are restore-only (`save: false`);
+saves happen on pushes to **the repository's default branch**, which is `develop` here.
+
+> **Say "default branch", never "main".** An earlier version of this file said saves
+> happen "on main pushes". GitHub scopes a cache to the writing branch, the default
+> branch, and a PR's base branch — so on a git-flow repo a main-scoped cache is
+> readable by nothing. That bug shipped once already. The symptom to recognize is a
+> "Cache Nix Store" step finishing in ~2s while multi-GB caches sit unused in
+> `gh cache list`.
+
+Two knobs bound cost, and they work as a pair:
+
+- `gc-max-store-size-macos` trims the store before it is tarred, so one entry stays
+  a bounded size.
+- `purge` deletes superseded entries, so entries do not accumulate one per
+  `flake.lock` hash. Without it the repo drifts over quota and GitHub evicts by LRU —
+  measured at five macOS entries totalling 15.8G against a 15G limit, which
+  cold-started PRs for unrelated reasons.
+
+Both are asserted by `scripts/workflows/check-ci-invariants.sh`, which runs as a
+`nix flake check` derivation. Prose did not hold the line last time; the check does.
 
 `cache-nix-action` does not require `id-token: write` — it uses `github.token` only.
 
@@ -41,5 +60,5 @@ Cache changes should be validated against the baseline (8-10min for Nix Build on
 First runs after a `flake.lock` change will be cold-cache and may take longer — that is normal,
 not a regression.
 
-PR runs are restore-only. Cache saving is deferred to main to avoid wasting CI minutes on
-branches that may never merge.
+PR runs are restore-only. Cache saving is deferred to the default branch (`develop`) to
+avoid wasting CI minutes on branches that may never merge.
