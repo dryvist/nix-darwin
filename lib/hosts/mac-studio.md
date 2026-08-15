@@ -157,3 +157,28 @@ nix-ai's `launchd-watchdog.nix` gates itself on
 `mlx-lm`, so the reap/kickstart/bootout recovery ladder never runs here. The
 brain watchdog on the Hermes guest is the only automated recovery path for a
 wedged model server.
+
+## Document OCR (Unlimited OCR)
+
+`unlimited-ocr` is the only vision-language entry in the catalog and the only
+one that is not a chat brain. It cannot run on this host's `mlx_lm.server` at
+all — that server has no image input path — so the catalog pins
+`backend = "mlx-vlm"` and it serves through nix-ai's mlx-vlm adapter instead.
+Nothing about the other entries changes.
+
+**Weights must already be cached on this host.** Workers run
+`HF_HUB_OFFLINE=1`, so an uncached id returns 502 for minutes rather than
+fetching. Note the near-miss names already on disk are different repos and do
+not satisfy the catalog's id.
+
+**`tweaks.ttl` is mandatory here, not a preference.** This host sets
+`proxy.idleTtl = 0`, so there is no host-wide idle eviction, and the mlx-vlm
+adapter has no worker-side idle unload of its own. Without a per-entry TTL the
+weights would stay resident until the proxy restarts. 600 s sits deliberately
+below the catalog's 900 s default: OCR is bursty, and a document that has been
+read should give its memory back sooner than a chat model does between turns.
+
+Swap class only, never resident — 6.7 GB of bf16 weights should not sit in the
+co-residency budget between documents. The catalog also pins
+`concurrencyLimit = 1`, because a full-page decode is a long single-stream job
+and an over-admitting proxy turns the surplus into 429s.
