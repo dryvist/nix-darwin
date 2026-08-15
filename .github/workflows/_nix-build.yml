@@ -87,6 +87,7 @@ jobs:
       # symptom is a "Cache Nix Store" step that completes in ~2s while three
       # multi-GB caches sit unused in the repo's cache list.
       - name: Cache Nix Store
+        if: false # EXPERIMENT ONLY - never merge; measures no-cache wall time
         uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7
         with:
           primary-key: nix-${{ runner.os }}-${{ hashFiles('flake.lock') }}
