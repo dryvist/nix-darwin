@@ -155,6 +155,12 @@ in
     # credentials remain injected by the shared Doppler wrapper.
     aiMcp.servers.vikunja.disabled = lib.mkForce false;
 
+    # nix-ai defaults to Codex's native ~/.codex/skills root. Dryvist shares
+    # the same catalog across every harness, so select the cross-tool standard
+    # ~/.agents/skills root instead. Codex discovers it natively; never create
+    # a ~/.codex/skills alias, which makes Codex scan the same catalog twice.
+    agentSkills.root = "agents";
+
     # cecli (nix-ai's Aider fork) is disabled — unused, and its
     # tree-sitter-language-pack<=0.13.0 pin fails to build on nixpkgs 26.05
     # (which ships 1.4.1). mkForce overrides nix-ai's unconditional enable
