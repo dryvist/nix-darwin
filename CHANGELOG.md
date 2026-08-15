@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.36.0](https://github.com/dryvist/nix-darwin/compare/v2.35.0...v2.36.0) (2026-08-15)
+
+
+### Features
+
+* **mlx:** enable resident judge model on jevans-mbp ([d3afa80](https://github.com/dryvist/nix-darwin/commit/d3afa80771bd3ee1963b80a69371ac824f89af7c))
+* **mlx:** enable resident judge model on jevans-mbp ([331d4a9](https://github.com/dryvist/nix-darwin/commit/331d4a9c0ca5828bef2b9ac5620e01cf58f03533))
+* **mlx:** keep two brains warm on the Studio, retire single-model mode ([#2140](https://github.com/dryvist/nix-darwin/issues/2140)) ([7ad5169](https://github.com/dryvist/nix-darwin/commit/7ad516974f2bc3625d2705d26b0fcf96a18aef26))
+* **mlx:** make Qwen3.8-27B-4bit the default model ([1aa8468](https://github.com/dryvist/nix-darwin/commit/1aa84683f1764a7091d0d87140830a109ba4d9d2))
+* **mlx:** make Qwen3.8-27B-4bit the default model ([2a9762e](https://github.com/dryvist/nix-darwin/commit/2a9762e8eb14d554a8e1a823de2728724d6d2687))
+
+
+### Bug Fixes
+
+* **mlx:** preload judge before default so it is warm after restart ([e84ac54](https://github.com/dryvist/nix-darwin/commit/e84ac540e1520c2e41f34f2540f9c0f654e1340f))
+
 ## [2.35.0](https://github.com/dryvist/nix-darwin/compare/v2.34.0...v2.35.0) (2026-08-14)
 
 
