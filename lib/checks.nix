@@ -82,9 +82,27 @@
       }
       ''
         cd ${src}
-        for f in test_bats_framework.bats test_check_file_sizes.bats test_cluster_maintenance_window.bats test_cluster_rebuild_gate.bats test_cribl_llm_classifier.bats test_openbao_slack_creds.bats test_verify_symlinks.bats; do
+        for f in test_bats_framework.bats test_check_ci_invariants.bats test_check_file_sizes.bats test_cluster_maintenance_window.bats test_cluster_rebuild_gate.bats test_cribl_llm_classifier.bats test_openbao_slack_creds.bats test_verify_symlinks.bats; do
           bats tests/shell/$f
         done
+        touch $out
+      '';
+
+  # Guard the macOS build workflow's cost-control invariants (cache scope, the
+  # timeout cap, develop-exempt cancellation, cache sizing, prefix restore).
+  #
+  # These held only as comments before, and a comment did not stop the
+  # cache-scoping regression from recurring in the very file that documented it.
+  # Asserting them here makes a violation a red required check instead of a
+  # silent multi-GB cold build. Rationale per invariant lives in the script.
+  ci-invariants =
+    pkgs.runCommand "check-ci-invariants"
+      {
+        nativeBuildInputs = [ pkgs.bash ];
+      }
+      ''
+        cd ${src}
+        bash scripts/workflows/check-ci-invariants.sh .github/workflows/_nix-build.yml
         touch $out
       '';
 

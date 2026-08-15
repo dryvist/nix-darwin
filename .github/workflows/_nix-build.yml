@@ -5,20 +5,39 @@ name: _nix-build
 on:
   workflow_call:
 
-# Performance: Cancel in-progress builds when new commits arrive
+# Performance: cancel superseded builds — but NEVER on the default branch.
+#
+# `develop` pushes are the only runs that save the Nix store cache (see `save:`
+# below). This block used to set `cancel-in-progress: true` unconditionally,
+# which cancelled them: ci-nix.yml guards its own group with the same condition,
+# but the two groups have different names so both apply independently, and this
+# one still killed the run. Every develop merge that raced the next one threw
+# away the cache write, so PRs restored a stale cache and cold-built the tail.
 concurrency:
   group: nix-build-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/develop' }}
 
 jobs:
   build:
     name: Build
     runs-on: macos-latest
-    # Intentionally non-negotiable: a full activation build past 20 minutes is
-    # a dependency or closure regression, not a reason to spend more CI time.
-    # Do not raise this cap; remove the source-build cause (as with Goose/BWS)
-    # so the failed required check blocks the regression until it is fixed.
-    timeout-minutes: 20
+    # Intentionally non-negotiable: an activation build past this cap is a
+    # dependency or closure regression, not a reason to spend more CI time.
+    # Do not raise it; remove the source-build cause (as with Goose/BWS and the
+    # markitdown/arrow-cpp chain) so the failed required check blocks the
+    # regression until it is fixed.
+    #
+    # The number lives in the org variable so it can change org-wide without
+    # editing any repository. `vars` IS allowed here — the context table permits
+    # github/needs/strategy/matrix/vars/inputs for job-level timeout-minutes
+    # (not env, not secrets).
+    #
+    # The `|| 15` literal is REQUIRED, not defensive style: an unset variable
+    # interpolates to an empty string, and GitHub does not document what the
+    # runner does with an empty timeout-minutes. A silent fall-through to the
+    # 360-minute default would remove the cap with no signal — the exact failure
+    # this cap exists to catch. It also covers fork PRs, where org vars are empty.
+    timeout-minutes: ${{ vars.GH_ACTION_TIMEOUT_NIX || 15 }}
     permissions:
       contents: read
     steps:
@@ -57,11 +76,20 @@ jobs:
           primary-key: nix-${{ runner.os }}-${{ hashFiles('flake.lock') }}
           restore-prefixes-first-match: |
             nix-${{ runner.os }}-
-          # The activation closure exceeds this cap, so the cache is partial by
-          # design; a partial warm store still beats substituting everything.
-          # GitHub evicts at a 10G per-repo quota, so raising this trades cache
-          # completeness against evicting the other caches in the repo.
-          gc-max-store-size-macos: 8G
+          # Sized against the org's cache quota, NOT GitHub's 10G default.
+          #
+          # dryvist sets the maximum cache size eviction limit to 15G and this
+          # repo is pinned at it (a repo cannot exceed the org maximum, so
+          # raising further is an org-level change). The activation closure
+          # measures ~14G, of which only ~4.2G is not substitutable from
+          # cache.nixos.org — mostly proprietary GUI app downloads plus this
+          # repo's own vendored Go/Rust modules.
+          #
+          # This was 8G, which truncated the cache well below a quota already
+          # paid for and evicted exactly the expensive tail worth keeping. 12G
+          # keeps headroom under the 15G limit so a save never trips eviction of
+          # the repo's other caches.
+          gc-max-store-size-macos: 12G
           # Literal, not `github.event.repository.default_branch`: that context is
           # empty on some triggers, which would silently evaluate to a ref that
           # never matches and reintroduce this exact bug with no signal. If the
