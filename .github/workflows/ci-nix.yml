@@ -53,6 +53,13 @@ concurrency:
 
 permissions:
   contents: read
+  # _nix-build.yml purges superseded Nix caches, which needs the Actions cache
+  # API. A called workflow can never exceed its caller's grant, so omitting this
+  # fails the run at graph validation — startup_failure, with no job and no logs
+  # to explain it. That is exactly how this shipped broken once: the PR passed
+  # because ci-gate.yml (the other caller) already grants actions: write, and
+  # only the push to develop went red.
+  actions: write
 
 jobs:
   build:
