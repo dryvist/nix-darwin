@@ -36,11 +36,15 @@ grep -q "save: \${{ github.ref == 'refs/heads/develop' }}" "$wf" ||
   die "cache 'save:' must stay pinned to refs/heads/develop (the default branch). Saving on main makes the cache unreadable to every PR."
 
 # The timeout is the detector for closure regressions. It reads the org variable
-# so the number is managed in one place, and the literal fallback is mandatory:
-# an unset variable interpolates to an empty string, which may silently mean
-# GitHub's 360-minute default — no cap at all, and no signal.
-grep -q 'timeout-minutes: \${{ vars.GH_ACTION_TIMEOUT_NIX || 15 }}' "$wf" ||
-  die "timeout-minutes must stay \${{ vars.GH_ACTION_TIMEOUT_NIX || 15 }} — the literal fallback is required, since an unset org variable yields an empty string."
+# so the number is managed in one place.
+#
+# Both wrappers are load-bearing. fromJSON: every `vars.*` value is typed as a
+# string while timeout-minutes demands a number, and without the conversion
+# graph validation rejects the workflow — the job never starts and reports as a
+# failed check with no job and no logs. `|| '15'`: an unset variable is an empty
+# string, fromJSON('') errors, and fork PRs resolve org variables empty.
+grep -q "timeout-minutes: \${{ fromJSON(vars.GH_ACTION_TIMEOUT_NIX || '15') }}" "$wf" ||
+  die "timeout-minutes must stay \${{ fromJSON(vars.GH_ACTION_TIMEOUT_NIX || '15') }} — fromJSON is required because vars.* is a string and timeout-minutes needs a number (without it the workflow fails graph validation), and the '15' literal covers an unset variable and fork PRs."
 
 # develop pushes are the only runs that save the cache, so cancelling them
 # throws the write away. Measured before this was fixed: develop 16 success /

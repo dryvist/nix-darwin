@@ -41,10 +41,21 @@ setup() {
 }
 
 @test "fails when the org-variable fallback is dropped" {
-  sed -i.bak 's|timeout-minutes: .*|timeout-minutes: ${{ vars.GH_ACTION_TIMEOUT_NIX }}|' "$WORK"
+  sed -i.bak 's|timeout-minutes: .*|timeout-minutes: ${{ fromJSON(vars.GH_ACTION_TIMEOUT_NIX) }}|' "$WORK"
   run bash "$SCRIPT" "$WORK"
   [ "$status" -eq 1 ]
-  [[ "$output" == *"literal fallback is required"* ]]
+  [[ "$output" == *"timeout-minutes must stay"* ]]
+}
+
+# Regression guard: dropping fromJSON is silently catastrophic. vars.* is typed
+# as a string and timeout-minutes requires a number, so the workflow fails graph
+# validation and the job never runs — surfacing as a failed required check with
+# no job and no logs, which is easily misread as an infrastructure flake.
+@test "fails when fromJSON is dropped from the timeout expression" {
+  sed -i.bak "s|timeout-minutes: .*|timeout-minutes: \${{ vars.GH_ACTION_TIMEOUT_NIX \|\| 15 }}|" "$WORK"
+  run bash "$SCRIPT" "$WORK"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"fromJSON is required"* ]]
 }
 
 @test "fails when cancel-in-progress stops exempting develop" {

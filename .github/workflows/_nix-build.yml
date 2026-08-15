@@ -28,16 +28,21 @@ jobs:
     # regression until it is fixed.
     #
     # The number lives in the org variable so it can change org-wide without
-    # editing any repository. `vars` IS allowed here — the context table permits
+    # editing any repository. `vars` is permitted here — the context table allows
     # github/needs/strategy/matrix/vars/inputs for job-level timeout-minutes
     # (not env, not secrets).
     #
-    # The `|| 15` literal is REQUIRED, not defensive style: an unset variable
-    # interpolates to an empty string, and GitHub does not document what the
-    # runner does with an empty timeout-minutes. A silent fall-through to the
-    # 360-minute default would remove the cap with no signal — the exact failure
-    # this cap exists to catch. It also covers fork PRs, where org vars are empty.
-    timeout-minutes: ${{ vars.GH_ACTION_TIMEOUT_NIX || 15 }}
+    # fromJSON is REQUIRED, not decoration: every `vars.*` value is typed as a
+    # STRING, while timeout-minutes demands a number. Without it, graph
+    # validation rejects the workflow and the job never starts — it reports as a
+    # failed check with no job and no logs, which reads like an infra flake.
+    # fromJSON parses the string to a number.
+    #
+    # The `|| '15'` literal is likewise required: an unset variable interpolates
+    # to an empty string, fromJSON('') is an error, and any silent fall-through
+    # to the 360-minute default would remove the cap with no signal. Fork PRs
+    # resolve org variables empty, so they take this path too.
+    timeout-minutes: ${{ fromJSON(vars.GH_ACTION_TIMEOUT_NIX || '15') }}
     permissions:
       contents: read
     steps:
