@@ -79,7 +79,7 @@ in
     #
     # suppressWiredLimit defaults true, so weights are pageable and overshoot
     # spills to swap rather than panicking. Rationale and the measurements
-    # behind the reserve: ./mac-studio.md.
+    # behind the reserve: ./mac-studio-residency.md.
     maxResidentWorkers = 2;
 
     # Validated catalog selections (profiles in nix-ai catalog-data.nix).
@@ -103,18 +103,23 @@ in
           "most-capable"
           "oss"
           "coding"
-          "goal-judge"
         ];
       };
       # Routine tier, and the 2026-07-27 throughput winner (115.2 tok/s
       # cumulative). Thinking off. Takes "large-context" as well as "quickest":
       # at 20 KiB/token of KV against the dense 27B's 64 KiB, a long context
       # costs roughly a third as much unified memory here.
+      #
+      # AND "goal-judge" since 2026-08-15 — a verdict is a short classification
+      # and must not run on the worker's own weights. KEEP IN STEP WITH THE
+      # ROUTER: llama-swap and LiteLLM resolve that alias independently and
+      # once named different models. Rationale: ./mac-studio.md "The judge".
       qwen36-35b = {
         class = "resident";
         roles = [
           "quickest"
           "large-context"
+          "goal-judge"
         ];
       };
       # Small on-demand 9B (5.2 GB) for trivial local tasks via the Gemini-CLI
