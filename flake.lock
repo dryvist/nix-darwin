@@ -848,11 +848,11 @@
     "jacobpevans-cc-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1786745907,
-        "narHash": "sha256-Ap2tl7ZQ35ecPUYjSYtoSb6ELchFAHk1otEfGU61jvw=",
+        "lastModified": 1786766031,
+        "narHash": "sha256-x5BXM1OtpSXlA7iPQMyz9caRCGjyj2n2F/09WeX6I34=",
         "owner": "dryvist",
         "repo": "claude-code-plugins",
-        "rev": "a60c354eb7efc31789feb95dfc226c74d400a556",
+        "rev": "346c999b94fd3e9cc06f52ac9f3d6a87b0439119",
         "type": "github"
       },
       "original": {
@@ -1003,11 +1003,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1786761314,
-        "narHash": "sha256-YKb53vkLuY7G5bPi+fauJbmyqk9yKIOFdCcbNIjzCcY=",
+        "lastModified": 1786768214,
+        "narHash": "sha256-gPXp0nbTGynW0kcYN9hCHxx1ETzS0HMlSMYFjGK8/WY=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "6f84ce7ac494fa981ebee47c484c8e77bec65d87",
+        "rev": "a8226b2eabcaafb18c00d25700f8ccdee83d4d0b",
         "type": "github"
       },
       "original": {
