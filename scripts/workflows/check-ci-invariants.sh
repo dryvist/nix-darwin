@@ -62,6 +62,24 @@ grep -qE 'gc-max-store-size-macos: 1[0-4]G' "$wf" ||
 grep -q 'restore-prefixes-first-match' "$wf" ||
   die "restore-prefixes-first-match must stay — without it every flake.lock change cold-builds the closure."
 
+# Nothing deleted superseded caches, so one accumulated per flake.lock hash.
+# Measured: five nix-macOS-* entries at ~3.13G each = 15.8G against a 15G org
+# eviction limit. Only four fit, so every fifth lock change evicted an entry
+# GitHub chose, not us, and PRs cold-started for unrelated reasons.
+grep -q "purge: \${{ github.ref == 'refs/heads/develop' }}" "$wf" ||
+  die "purge: must stay pinned to refs/heads/develop, matching save: — without purging, one cache accumulates per flake.lock hash until the repo exceeds its quota and GitHub evicts entries at random."
+
+# purge-primary-key: never exempts the entry this run just wrote. Dropping it
+# lets a run delete the cache it is about to reuse.
+grep -q 'purge-primary-key: never' "$wf" ||
+  die "purge-primary-key must stay 'never' — without it a run can purge the very cache it just saved."
+
+# purge-created: 0 selects every matching cache; combined with the exemption
+# above it keeps the newest and drops the rest. A non-zero value silently
+# retains older entries and lets the quota creep back up.
+grep -q 'purge-created: 0' "$wf" ||
+  die "purge-created must stay 0 — any other value retains superseded caches and re-creates the quota thrash."
+
 if [ "$fail" -ne 0 ]; then
   echo "check-ci-invariants: see the comments in $wf for why each invariant exists." >&2
   exit 1
