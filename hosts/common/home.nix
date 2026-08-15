@@ -46,6 +46,7 @@ in
     ./mlx-no-autodiscover.nix
     # Global git excludes seeded from the dryvist org-default (see module).
     ./git-global-excludes.nix
+    ./agent-skills.nix
     # Ghostty terminfo (package + ~/.terminfo) — split out for the byte cap.
     ./ghostty-terminfo.nix
     # macOS-specific zsh init (keychain reads, gh-token switching, launchers) —
