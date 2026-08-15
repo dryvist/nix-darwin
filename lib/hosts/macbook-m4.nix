@@ -18,36 +18,38 @@
   mlx = {
     # Every logical role resolves through the validated catalog entry; no
     # physical model id is repeated in deployed host configuration.
-    catalog.qwen3-coder-30b = {
-      class = "resident";
-      roles = [
-        "default"
-        "quickest"
-        "tool-calling"
-        "coding"
-        "large-context"
-        "most-capable"
-        "oss"
-      ];
+    catalog = {
+      qwen3-coder-30b = {
+        class = "resident";
+        roles = [
+          "default"
+          "quickest"
+          "tool-calling"
+          "coding"
+          "large-context"
+          "most-capable"
+          "oss"
+        ];
+      };
+      # Small always-loadable 9B (5.2 GB) for trivial local tasks via the
+      # Gemini-CLI path and the hourly Obsidian summarizer pipe, which requests
+      # this physical id directly. Swap-class with no roles compiles to a
+      # llama-swap models.<id> entry keyed by the physical id, so it loads on
+      # demand and routes without evicting the resident 30B.
+      qwen35-9b-mlx.class = "swap";
+      # Qwen3.8-27B — current small/midsize generation, servable here on demand.
+      #
+      # Deliberately swap-class, NOT resident: promoting it would demote
+      # qwen3-coder-30b, which is a ~3B-active MoE, in favour of a model that
+      # activates all 27B. On this machine — a laptop that is also a cluster peer
+      # under a shared memory cap — that trades the fast local coding path for an
+      # unmeasured one. Swap-class keeps it addressable by its physical id
+      # everywhere while the Studio carries the default-routing switch.
+      #
+      # To promote after the throughput numbers land: move the roles list from
+      # qwen3-coder-30b to the qwen38-27b entry and flip the classes.
+      qwen38-27b.class = "swap";
     };
-    # Small always-loadable 9B (5.2 GB) for trivial local tasks via the
-    # Gemini-CLI path and the hourly Obsidian summarizer pipe, which requests
-    # this physical id directly. Swap-class with no roles compiles to a
-    # llama-swap models.<id> entry keyed by the physical id, so it loads on
-    # demand and routes without evicting the resident 30B.
-    catalog.qwen35-9b-mlx.class = "swap";
-    # Qwen3.8-27B — current small/midsize generation, servable here on demand.
-    #
-    # Deliberately swap-class, NOT resident: promoting it would demote
-    # qwen3-coder-30b, which is a ~3B-active MoE, in favour of a model that
-    # activates all 27B. On this machine — a laptop that is also a cluster peer
-    # under a shared memory cap — that trades the fast local coding path for an
-    # unmeasured one. Swap-class keeps it addressable by its physical id
-    # everywhere while the Studio carries the default-routing switch.
-    #
-    # To promote after the throughput numbers land: move the roles list from
-    # qwen3-coder-30b to a catalog.qwen38-27b block and flip the classes.
-    catalog.qwen38-27b.class = "swap";
 
     # Resident judge model, in its own llama-swap group (nix-ai
     # programs.mlx.judge, modules/mlx/options-judge.nix). Bypasses the
