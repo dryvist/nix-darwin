@@ -101,11 +101,24 @@ jobs:
           # cache.nixos.org — mostly proprietary GUI app downloads plus this
           # repo's own vendored Go/Rust modules.
           #
-          # This was 8G, which truncated the cache well below a quota already
-          # paid for and evicted exactly the expensive tail worth keeping. 12G
-          # keeps headroom under the 15G limit so a save never trips eviction of
-          # the repo's other caches.
-          gc-max-store-size-macos: 12G
+          # This was 12G, chosen for quota headroom, but quota was never the
+          # binding cost. Measured on an exact primary-key HIT: ~36s to download
+          # the resulting ~3.1G tarball, then 8m28s to `gtar -x` it, against a
+          # 55s build once the store was warm. Restoring cost 10x what it saved.
+          #
+          # A no-cache control run (disabling this step entirely) did NOT
+          # complete in 15 minutes: the ~4.2G non-substitutable tail (GUI apps,
+          # this repo's vendored Go/Rust modules) has to build from source with
+          # zero cache, and that alone exceeds the cap. So the cache is
+          # required — the question was never remove-vs-keep, only
+          # sized-right-vs-oversized.
+          #
+          # 6G leaves ~1.8G of headroom over that measured 4.2G tail. Evicting
+          # anything beyond the tail costs nothing: cache.nixos.org
+          # substitution is fast, parallel HTTP, so a smaller cache that misses
+          # on substitutable paths beats a larger one that hits but is slow to
+          # unpack. Optimise for total wall time, never for hit rate.
+          gc-max-store-size-macos: 6G
           # Literal, not `github.event.repository.default_branch`: that context is
           # empty on some triggers, which would silently evaluate to a ref that
           # never matches and reintroduce this exact bug with no signal. If the
