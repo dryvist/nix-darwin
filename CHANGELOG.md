@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.37.3](https://github.com/dryvist/nix-darwin/compare/v2.37.2...v2.37.3) (2026-08-15)
+
+
+### Bug Fixes
+
+* **ci:** exempt develop from cancellation, resize cache, cap nix build at 15m ([#2167](https://github.com/dryvist/nix-darwin/issues/2167)) ([69b77a5](https://github.com/dryvist/nix-darwin/commit/69b77a56fa49f5b81c894408ad2df6b9162c2d50))
+* **ci:** grant actions:write on the caller of the nix build workflow ([#2171](https://github.com/dryvist/nix-darwin/issues/2171)) ([9243ada](https://github.com/dryvist/nix-darwin/commit/9243ada96a42aa61f789db7dd72cec6166b9779b))
+* **ci:** grant actions:write on the ci-gate job that builds nix ([#2174](https://github.com/dryvist/nix-darwin/issues/2174)) ([57cff49](https://github.com/dryvist/nix-darwin/commit/57cff4952acb56f417e4105a67c6f07258d969a0))
+* **ci:** grant actions:write so cache purging can actually delete ([#2170](https://github.com/dryvist/nix-darwin/issues/2170)) ([2ef34b6](https://github.com/dryvist/nix-darwin/commit/2ef34b6f85f0114c948480a0657fa3dc432a6be8))
+* **ci:** purge superseded Nix caches to stop quota thrashing ([#2169](https://github.com/dryvist/nix-darwin/issues/2169)) ([d61fd8c](https://github.com/dryvist/nix-darwin/commit/d61fd8cd8af14035c033523371d37eda403f40c3))
+* **ci:** shrink the macOS Nix cache to the tail it needs to cover ([#2175](https://github.com/dryvist/nix-darwin/issues/2175)) ([c2e1fe7](https://github.com/dryvist/nix-darwin/commit/c2e1fe7b7f6a8febe6a1ac91449febfde3d253a3))
+
 ## [2.37.2](https://github.com/dryvist/nix-darwin/compare/v2.37.1...v2.37.2) (2026-08-15)
 
 
