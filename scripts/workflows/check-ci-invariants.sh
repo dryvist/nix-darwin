@@ -80,6 +80,13 @@ grep -q 'purge-primary-key: never' "$wf" ||
 grep -q 'purge-created: 0' "$wf" ||
   die "purge-created must stay 0 — any other value retains superseded caches and re-creates the quota thrash."
 
+# Deleting a cache entry uses the Actions cache REST API, which contents:read
+# cannot reach. Shipped once without this: purge failed with "Resource not
+# accessible by integration" and the step STILL EXITED GREEN, so the caches kept
+# accumulating with no signal anywhere except `gh cache list`.
+grep -q 'actions: write' "$wf" ||
+  die "the build job needs 'actions: write' or purge cannot delete caches — it fails with 'Resource not accessible by integration' while the step still reports success."
+
 if [ "$fail" -ne 0 ]; then
   echo "check-ci-invariants: see the comments in $wf for why each invariant exists." >&2
   exit 1
