@@ -16,6 +16,24 @@ on:
       - 'flake.lock'
       - 'modules/**'
       - 'scripts/**'
+  # Keep the cache alive through quiet weeks.
+  #
+  # GitHub deletes any cache not accessed within the retention window
+  # regardless of size — dryvist sets that to 10 days (the org maximum). Without
+  # a heartbeat, a fortnight with no nix-touching merge silently expires every
+  # entry and the next PR cold-builds the whole closure.
+  #
+  # Weekly leaves 3 days of margin. Scheduled runs execute on the default
+  # branch, so `save:` in _nix-build.yml already matches and this refreshes the
+  # cache rather than merely reading it.
+  #
+  # Friday early-UTC deliberately: most development here lands Friday through
+  # Sunday, so this warms the cache immediately BEFORE the busy window rather
+  # than after it. A Monday run would refresh a cache that the weekend had
+  # already been forced to cold-build against.
+  schedule:
+    - cron: '0 9 * * 5' # Fridays 09:00 UTC (early morning US)
+  workflow_dispatch:
 
 # Never cancel a run on a cache-saving branch.
 #
