@@ -14,6 +14,11 @@ jobs:
   build:
     name: Build
     runs-on: macos-latest
+    # Intentionally non-negotiable: a full activation build past 20 minutes is
+    # a dependency or closure regression, not a reason to spend more CI time.
+    # Do not raise this cap; remove the source-build cause (as with Goose/BWS)
+    # so the failed required check blocks the regression until it is fixed.
+    timeout-minutes: 20
     permissions:
       contents: read
     steps:

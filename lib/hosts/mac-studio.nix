@@ -38,27 +38,20 @@ in
   # model ids stay centralized in nix-ai's validated catalog.
 
   mlx = {
-    # SINGLE-MODEL MODE (2026-07-23, supersedes the earlier
-    # single-resident-brain-group posture): only one model is servable.
-    # Every alias — every logical role below AND every other catalog
-    # model's own physical id — routes to it (programs.mlx.singleModel
-    # aliases every other compiled model's id onto the resident entry).
-    # Verified live: a request naming mlx-community/Qwen3.5-9B-OptiQ-4bit by
-    # its own id was answered by the resident entry ("ROUTED").
+    # TWO-RESIDENT MODE (2026-08-14, supersedes single-model mode). This host is
+    # the estate's INTELLIGENCE tier: a GPU is planned to take fast-and-small,
+    # so throughput stops being the objective and both brains stay warm. The
+    # 27B takes deliberate work, the 35B MoE routine work. Rationale, the vmmap
+    # fit, and the group semantics: ./mac-studio.md "Two warm brains".
     #
-    # 2026-07-27 standalone bench winner on cumulative tok/s (115.2, and the
-    # smallest of the four candidates at 19.4 GB). Full method, results table
-    # and the disqualifications: ./mac-studio.md.
-    singleModel = "mlx-community/Qwen3.6-35B-A3B-4bit";
-
-    # Small always-loadable 9B (~5.2 GB) for trivial local tasks (Gemini-CLI
-    # path). singleModel would otherwise demote every non-resident to
-    # disabledModels; this keeps it servable as a swap tier (nix-ai
-    # alwaysAvailableModels; no alias onto its roles).
+    # singleModel and alwaysAvailableModels are GONE, not repointed — both only
+    # had meaning in single-model mode, and alwaysAvailableModels' group
+    # (swap=true, persistent=false) could never have carried a second brain.
     #
-    # It no longer evicts the resident: that was the k_max = 1 collapsed-group
-    # behaviour, corrected below. See ./mac-studio.md "Residency budget".
-    alwaysAvailableModels = [ "mlx-community/Qwen3.5-9B-MLX-4bit" ];
+    # DO NOT drop the 27B's chat-template kwarg to "let it think". Unset, its
+    # template defaults reasoning_effort to xhigh, which measured 0 answer
+    # characters on 3 of 3 runs. The kwarg lives in the nix-ai catalog, and it
+    # is a prompt string, not a budget — nothing here caps thinking length.
 
     # RESIDENCY BUDGET — these two move together or the host over-commits.
     #
@@ -90,44 +83,73 @@ in
     maxResidentWorkers = 2;
 
     # Validated catalog selections (profiles in nix-ai catalog-data.nix).
-    # Every logical role resolves to the 35B — required so it's the only entry
-    # the module's role-coverage assertion needs satisfied in single-model
-    # mode. The Coder-30B, the 80B and the 27B judge are configured but carry
-    # no roles (disable-not-delete): swap-class, kept in the tree, and — like
-    # every other non-resident entry — demoted to disabledModels by
-    # singleModel rather than deleted.
+    #
+    # ROLES SPLIT ACROSS THE TWO RESIDENTS, and a role may be assigned only
+    # once (options-catalog.nix asserts uniqueness). The split follows cost,
+    # not preference: the dense 27B is the one worth waiting on, the MoE is the
+    # one worth asking often.
+    #
+    # `enable = false` on the rest is NOT a new restriction — it preserves
+    # exactly what singleModel did (those ids already 404'd). Without it every
+    # compiled entry becomes servable again, so a stray physical-id request
+    # would cold-load 20-63 GB beside two residents. Disable-not-delete.
     catalog = {
-      # 2026-07-27 standalone bench winner on cumulative throughput, and the
-      # resident that every role resolves to. Thinking is off in its catalog
-      # entry, which matters for Hermes: a thinking variant spends hundreds
-      # of reasoning tokens before it emits a tool call, and Hermes pays that
-      # latency on every single action it takes.
-      qwen36-35b = {
+      # Deliberate tier. See the kwarg warning above.
+      qwen38-27b = {
         class = "resident";
         roles = [
           "default"
-          "quickest"
           "tool-calling"
-          "large-context"
           "most-capable"
           "oss"
           "coding"
           "goal-judge"
         ];
       };
-      qwen3-next-80b-instruct.class = "swap";
-      qwen3-coder-30b.class = "swap";
-      qwen36-27b-mxfp4.class = "swap";
-      qwen35-9b-optiq.class = "swap";
-      # Small always-loadable 9B (5.2 GB) for trivial local tasks via the
-      # Gemini-CLI path — on-demand swap tier, idle-unloaded. Addressable by its
-      # physical id (mlx-community/Qwen3.5-9B-MLX-4bit). It DOES evict the
-      # resident at k_max = 1 — see the alwaysAvailableModels note above.
+      # Routine tier, and the 2026-07-27 throughput winner (115.2 tok/s
+      # cumulative). Thinking off. Takes "large-context" as well as "quickest":
+      # at 20 KiB/token of KV against the dense 27B's 64 KiB, a long context
+      # costs roughly a third as much unified memory here.
+      qwen36-35b = {
+        class = "resident";
+        roles = [
+          "quickest"
+          "large-context"
+        ];
+      };
+      # Small on-demand 9B (5.2 GB) for trivial local tasks via the Gemini-CLI
+      # path. STAYS ENABLED: an hourly note-capture pipe requests this exact
+      # physical id, and disabling it would 404 that pipe. Swap tier, so it
+      # loads beside the residents rather than evicting one (k_max = 2).
       qwen35-9b-mlx.class = "swap";
-      qwen36-optiq.class = "swap";
-      gpt-oss-120b.class = "swap";
+
+      # Configured, compiled, and not servable. Re-enable deliberately, one at
+      # a time, with the residency budget re-checked.
+      qwen3-next-80b-instruct = {
+        class = "swap";
+        enable = false;
+      };
+      qwen3-coder-30b = {
+        class = "swap";
+        enable = false;
+      };
+      qwen35-9b-optiq = {
+        class = "swap";
+        enable = false;
+      };
+      qwen36-optiq = {
+        class = "swap";
+        enable = false;
+      };
+      gpt-oss-120b = {
+        class = "swap";
+        enable = false;
+      };
       # Thinking sibling: the deep-analysis escalation tier, on demand.
-      qwen3-next-80b.class = "swap";
+      qwen3-next-80b = {
+        class = "swap";
+        enable = false;
+      };
     };
 
     cacheMemoryMb = 8192;
@@ -150,12 +172,18 @@ in
       concurrencyLimit = serveConcurrency;
     };
 
-    # Resident brain warmed at boot. Every role alias resolves to the same 35B
-    # in singleModel mode, so this name is cosmetic — but it must not name a
-    # role that reads as a separate model. It used to say `[ "goal-judge" ]`,
-    # which cost a multi-hour misdiagnosis on 2026-08-01; see ./mac-studio.md
-    # "Preload". "default" says what actually happens here.
-    preload = [ "default" ];
+    # Both residents warmed at boot — these now name two genuinely different
+    # models, where in singleModel mode every role alias resolved to the same
+    # weights and the name was cosmetic. Order matters: "default" is the
+    # deliberate 27B and takes longest to warm, so it goes first.
+    #
+    # A preload entry must name a role, not a model that reads as one. This
+    # used to say `[ "goal-judge" ]`, which cost a multi-hour misdiagnosis on
+    # 2026-08-01; see ./mac-studio.md "Preload".
+    preload = [
+      "default"
+      "quickest"
+    ];
 
     # Clustered mode: this Mac is rank 0 (coordinator) of the two-Mac JACCL
     # brain when the Thunderbolt cable is in — it binds the cluster endpoint on

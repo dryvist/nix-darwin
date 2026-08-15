@@ -10,39 +10,58 @@ Serving detail that is not host-scoped lives in nix-ai's validated model catalog
 (`modules/mlx/catalog-data.nix`): parser stacks, chat-template kwargs, and
 per-class flag profiles. Add or fix serve args there, not here.
 
-## Resident model selection (2026-07-27)
+## Resident model selection
 
-Promoted from the Coder-30B to the 35B for standalone operation (MacBook
-unplugged, no cluster).
+Superseded by "Two warm brains" below. The 2026-07-27 candidate bench that
+promoted the 35B — method, the four-model throughput table, and why
+GLM-4.7-Flash and gpt-oss-120b were disqualified on tool calls — is kept in
+[mac-studio-model-history.md](./mac-studio-model-history.md).
 
-Every candidate was measured on this host against a dedicated isolated worker on
-a scratch port, with the loaded checkpoint confirmed by
-`lsof -i :PORT` → pid → `ps -p <pid>` reading `--model`. **That step is
-mandatory, not ceremony**: single-model mode aliases every other model's
-physical id onto the resident entry and the server echoes the requested name
-back, so a model id in a request or a response proves nothing about which
-weights answered.
+One rule from it still governs every measurement on this host: confirm the
+loaded checkpoint from the worker's own command line
+(`lsof -i :PORT` -> pid -> `ps -p <pid>` reading `--model`). The server echoes
+the requested name back, so a model id in a request or a response proves
+nothing about which weights answered.
 
-Headline metric is cumulative tok/s — `(prompt + completion) / wall` — so
-prefill gains count. Identical 111–118 token prompt, 300 `max_tokens`, 3 timed
-runs after a discarded warmup, decode-concurrency 1:
+## Two warm brains (2026-08-14) — supersedes single-model mode
 
-| model | cumulative | decode | ttft | tools |
-| --- | --- | --- | --- | --- |
-| Qwen3.6-35B-A3B-4bit | **115.2** | 84.9 | 0.12s | PASS |
-| Qwen3-Next-80B-A3B-Instruct-4bit | 97.5 | 71.5 | 0.08s | PASS |
-| GLM-4.7-Flash-4bit | 95.8 | — | — | FAIL |
-| gpt-oss-120b-MXFP4-Q8 (peer-measured) | 51–54 | 40–43 | 0.23s | FAIL |
+This host is the estate's **intelligence tier**; a GPU is planned to take
+fast-and-small, so throughput is no longer the objective and both brains stay
+warm. Roles split by cost, not preference:
 
-The 35B wins on throughput outright while being the smallest of the four
-(19.4 GB). GLM-4.7-Flash is disqualified on tool calls, not speed: given two
-tools it emits no call at all and stops on `length`. gpt-oss-120b is
-disqualified because mlx-lm ships no harmony parser, so `tool_calls` is null and
-raw `<|channel|>` markup leaks into content.
+| Model | Roles | Shape | Thinking |
+| --- | --- | --- | --- |
+| Qwen3.8-27B-4bit | default, tool-calling, most-capable, oss, coding, goal-judge | dense 27B, 64 KiB/token KV | on, `reasoning_effort=medium` |
+| Qwen3.6-35B-A3B-4bit | quickest, large-context | 35B MoE, ~3B active, 20 KiB/token KV | off |
 
-Thinking is off in its catalog entry, which matters for Hermes: a thinking
-variant spends hundreds of reasoning tokens before it emits a tool call, and
-Hermes pays that latency on every action it takes.
+`large-context` sits on the MoE deliberately: its KV costs roughly a third of
+the dense model's per token.
+
+**`singleModel` is gone, not repointed.** It aliased every role onto one entry
+and demoted the rest to `disabledModels` — exactly what made a second warm brain
+impossible. `alwaysAvailableModels` went with it: its group is
+`swap=true, persistent=false`, so those models evict each other and idle-unload
+at ttl 900, and it could never have held a brain.
+
+Two resident-class entries land in `mlx-models`, which at k_max = 2 is
+`swap=false, persistent=true`, so they hold weights simultaneously. Read back
+from the rendered `llama-swap-config.json`, not inferred:
+
+```json
+"mlx-models":      { "swap": false, "persistent": true,  "members": [35B, 27B] }
+"mlx-swap-models": { "swap": true,  "persistent": false, "members": [9B] }
+```
+
+Everything else is `enable = false` — **not a new restriction**, since those
+ids already 404'd under `singleModel`. Without it every compiled entry becomes
+servable again and a stray physical-id request would cold-load 20–63 GB beside
+two residents. The 9B stays enabled: an hourly note-capture pipe requests its
+exact physical id.
+
+Fit measured before switching (`vmmap`, 2026-08-14), not estimated: peaks
+30.9 + 16.6 = 44.2 GiB against the 100 GiB ceiling; 28.8 / 15.5 GiB steady
+against the 48 GiB per-worker budget. Weights are private per-process Metal
+buffers with no shared pages, so two workers is a straight sum.
 
 ## Residency budget (k_max = 2 since 2026-08-05)
 
@@ -167,13 +186,20 @@ llama-swap's scheduler and never reaches the worker.
 
 ## Preload
 
-`preload = [ "default" ]`. Every role alias resolves to the same 35B resident in
-single-model mode, so the name is cosmetic — but it used to read `[ "goal-judge" ]`,
+`preload = [ "default" "quickest" ]` — two genuinely different models since
+2026-08-14, where under single-model mode every role alias resolved to the same
+resident and the name was cosmetic. `default` (the 27B) is listed first because
+it is the slower of the two to warm. It used to read `[ "goal-judge" ]`,
 which reads as "warm a separate, smaller judge model" that does not exist on this
 host. That misreading cost a multi-hour misdiagnosis of a warmup-starvation
 incident on 2026-08-01; the actual cause was external (something kickstarting the
 warmup agent in a tight loop, force-reloading the same resident). See nix-ai's
 `mlx-warmup.py` re-invocation bound.
+
+The warmup deadline needs no adjustment for the second entry: nix-ai's
+`warmup-timeout.nix` derives it as `healthCheckTimeout * len(preload) + 60`,
+which is 180 × 2 + 60 = 420 s here. Restart *count* is bounded separately by
+`mlx-warmup.py`, which is the actual livelock fix.
 
 ## No serving watchdog on this host
 

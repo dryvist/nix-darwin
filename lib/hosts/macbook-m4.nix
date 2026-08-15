@@ -18,27 +18,75 @@
   mlx = {
     # Every logical role resolves through the validated catalog entry; no
     # physical model id is repeated in deployed host configuration.
-    catalog.qwen3-coder-30b = {
-      class = "resident";
-      roles = [
-        "default"
-        "quickest"
-        "tool-calling"
-        "coding"
-        "large-context"
-        "most-capable"
-        "oss"
-      ];
+    catalog = {
+      qwen3-coder-30b = {
+        class = "resident";
+        roles = [
+          "default"
+          "quickest"
+          "tool-calling"
+          "coding"
+          "large-context"
+          "most-capable"
+          "oss"
+        ];
+      };
+      # Small always-loadable 9B (5.2 GB) for trivial local tasks via the
+      # Gemini-CLI path and the hourly Obsidian summarizer pipe, which requests
+      # this physical id directly. Swap-class with no roles compiles to a
+      # llama-swap models.<id> entry keyed by the physical id, so it loads on
+      # demand and routes without evicting the resident 30B.
+      qwen35-9b-mlx.class = "swap";
+      # Qwen3.8-27B — current small/midsize generation, servable here on demand.
+      #
+      # Deliberately swap-class, NOT resident: promoting it would demote
+      # qwen3-coder-30b, which is a ~3B-active MoE, in favour of a model that
+      # activates all 27B. On this machine — a laptop that is also a cluster peer
+      # under a shared memory cap — that trades the fast local coding path for an
+      # unmeasured one. Swap-class keeps it addressable by its physical id
+      # everywhere while the Studio carries the default-routing switch.
+      #
+      # To promote after the throughput numbers land: move the roles list from
+      # qwen3-coder-30b to the qwen38-27b entry and flip the classes.
+      qwen38-27b.class = "swap";
     };
-    # Small always-loadable 9B (5.2 GB) for trivial local tasks via the
-    # Gemini-CLI path and the hourly Obsidian summarizer pipe, which requests
-    # this physical id directly. Swap-class with no roles compiles to a
-    # llama-swap models.<id> entry keyed by the physical id, so it loads on
-    # demand and routes without evicting the resident 30B.
-    catalog.qwen35-9b-mlx.class = "swap";
+
+    # Resident judge model, in its own llama-swap group (nix-ai
+    # programs.mlx.judge, modules/mlx/options-judge.nix). Bypasses the
+    # catalog/maxResidentWorkers topology entirely: persistent + non-exclusive
+    # means it is never evicted by the main brain's exclusive group and never
+    # evicts that group itself, so it answers even while the main brain is
+    # busy serving a long request. Physical id is already cached under
+    # HF_HOME (2.1 GB weights) — see hosts/common/residency-budget.nix for the
+    # memoryHardLimitGb halving this needs.
+    judge = {
+      enable = true;
+      model = "mlx-community/Qwen3-4B-Instruct-2507-4bit";
+    };
+
+    # persistent:true only protects the judge from eviction — it does NOT
+    # preload it. The warmup LaunchAgent (native to nix-ai, mlx-warmup.py)
+    # is the actual preload mechanism: it sends a real completion to every
+    # role in this list right after llama-swap comes up, so the first REAL
+    # request never pays the cold-load cost. "judge" listed BEFORE "default":
+    # the list warms sequentially and the judge (2.1 GB, seconds to load)
+    # must not sit queued behind the 30B's slower cold load.
+    preload = [
+      "judge"
+      "default"
+    ];
 
     cacheMemoryMb = 8192;
     prefillBatchSize = 2048;
+
+    # Two workers can be resident at once now (the catalog brain plus the
+    # judge above), so the single-worker budget hosts/common/residency-budget.nix
+    # derives (kMax still 1 there — the judge sits outside maxResidentWorkers)
+    # must be halved by hand: (100 GiB ceiling - 4 GiB baseline reserve) / 2
+    # workers = 48 GiB, rounded down for cushion. Applies to every worker
+    # equally (MLX_L1_MEMORY_LIMIT_BYTES is one shared wrapper-level export),
+    # including the judge, whose real usage (~2-3 GiB) sits nowhere near it.
+    memoryHardLimitGb = 46;
 
     # MLX retained free-buffer pool. The host wired-memory ceiling is the
     # Metal guardrail; this limits reclaimable framework buffers below it.
