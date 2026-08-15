@@ -3,11 +3,11 @@
     "ai-assistant-instructions": {
       "flake": false,
       "locked": {
-        "lastModified": 1785771201,
-        "narHash": "sha256-W86Kp917XJrqMSdyUAxl0VEvLPbltkRKq1il44pZkq0=",
+        "lastModified": 1786834605,
+        "narHash": "sha256-DfM8CDQWRRyo+HeN+nYHlfVzaI+t22u8hNZwCn3jOEw=",
         "owner": "dryvist",
         "repo": "ai-assistant-instructions",
-        "rev": "64121d08cdf35780be372cf5962172aaa1d5a047",
+        "rev": "f0b8cb055b653b40c8b38399414c9a2e0d308f6a",
         "type": "github"
       },
       "original": {
@@ -163,11 +163,11 @@
     "brew-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1786805095,
-        "narHash": "sha256-BCE0c5R8H58tGLNaqft87M54ucJgISeAHUJ8IXBIB4U=",
+        "lastModified": 1786831956,
+        "narHash": "sha256-Ycjg/Krw+U2tz3A41QMFSChBy6JlA2nkEQv2ZrgjMnE=",
         "owner": "Homebrew",
         "repo": "brew",
-        "rev": "ff4c18d4001f4ad60b4c620d4a51af5c569e903f",
+        "rev": "6c0fcdcdd7d992fe7695884ac481a7d6461e2ffb",
         "type": "github"
       },
       "original": {
