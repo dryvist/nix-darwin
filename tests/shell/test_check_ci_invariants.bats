@@ -152,8 +152,19 @@ YAML
   [[ "$output" == *"only branch that saves"* ]]
 }
 
-@test "fails when the cache is shrunk back below the org quota" {
-  sed -i.bak 's|gc-max-store-size-macos: .*|gc-max-store-size-macos: 8G|' "$WORK"
+@test "fails when the cache is shrunk below the non-substitutable tail" {
+  sed -i.bak 's|gc-max-store-size-macos: .*|gc-max-store-size-macos: 2G|' "$WORK"
+  run bash "$SCRIPT" "$WORK" "$GOOD_CALLER"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"gc-max-store-size-macos"* ]]
+}
+
+# Regression guard for the opposite mistake: raising this back up looks like a
+# safe, generous choice, but measured extraction time scales with cache size —
+# 12G cost 8m28s to unpack for a 55s build. Bigger is not better past the size
+# of the tail the cache needs to cover.
+@test "fails when the cache is raised back past the tail it needs to cover" {
+  sed -i.bak 's|gc-max-store-size-macos: .*|gc-max-store-size-macos: 12G|' "$WORK"
   run bash "$SCRIPT" "$WORK" "$GOOD_CALLER"
   [ "$status" -eq 1 ]
   [[ "$output" == *"gc-max-store-size-macos"* ]]

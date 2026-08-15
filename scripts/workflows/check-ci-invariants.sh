@@ -100,11 +100,16 @@ grep -q "timeout-minutes: \${{ fromJSON(vars.GH_ACTION_TIMEOUT_NIX || '15') }}" 
 grep -q "cancel-in-progress: \${{ github.ref != 'refs/heads/develop' }}" "$wf" ||
   die "cancel-in-progress must exempt develop — it is the only branch that saves the Nix cache."
 
-# The org caps the cache size eviction limit at 15G and this repo sits at that
-# ceiling. Smaller values evict exactly the expensive, non-substitutable tail
-# the cache exists to hold; larger risks evicting the repo's other caches.
-grep -qE 'gc-max-store-size-macos: 1[0-4]G' "$wf" ||
-  die "gc-max-store-size-macos must stay within 10G-14G: below wastes the org's 15G quota, at/above 15G risks evicting the repo's other caches."
+# Sized to the measured ~4.2G non-substitutable tail (GUI apps, this repo's
+# vendored Go/Rust modules), not to the org's 15G quota. Measured: restoring a
+# 12G-capped store (a ~3.1G tarball) cost 8m28s of extraction against a 55s
+# build. Smaller than this band risks evicting the tail itself, which forces a
+# source build; larger wastes extraction time on content cache.nixos.org would
+# substitute anyway. Quota headroom is no longer the binding constraint here —
+# a no-cache control run did not finish in 15 minutes, so some cache is
+# mandatory, but bigger is not better past the size of the tail.
+grep -qE 'gc-max-store-size-macos: [5-8]G' "$wf" ||
+  die "gc-max-store-size-macos must stay within 5G-8G: below risks evicting the ~4.2G non-substitutable tail (forces a source build), above wastes extraction time on content cache.nixos.org would substitute anyway."
 
 # Without a prefix restore, any flake.lock change means a fully cold build.
 grep -q 'restore-prefixes-first-match' "$wf" ||
