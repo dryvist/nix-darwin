@@ -105,7 +105,7 @@ in
             return 1
           fi
 
-          DOPPLER_PROJECT="$doppler_project" DOPPLER_CONFIG="$doppler_config" doppler run -- "$@"
+          DOPPLER_PROJECT="$doppler_project" DOPPLER_CONFIG="$doppler_config" ${lib.getExe pkgs.doppler} run -- "$@"
         }
 
         _vct_cribl() {
