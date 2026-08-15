@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.37.2](https://github.com/dryvist/nix-darwin/compare/v2.37.1...v2.37.2) (2026-08-15)
+
+
+### Bug Fixes
+
+* **cribl:** resolve Doppler from Nix store ([#2162](https://github.com/dryvist/nix-darwin/issues/2162)) ([55a366d](https://github.com/dryvist/nix-darwin/commit/55a366d6508b9289dc87f96771128d31a6416245))
+
 ## [2.37.1](https://github.com/dryvist/nix-darwin/compare/v2.37.0...v2.37.1) (2026-08-15)
 
 
