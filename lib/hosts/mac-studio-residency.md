@@ -86,4 +86,3 @@ the host wired ceiling" (`options-residency.nix`, `mlx-lm-launch.py`). That
 contradicts upstream semantics — failure arrives at RAM+swap exhaustion, which is
 *behind* the ceiling, not ahead of it. Pre-existing defect in that repo, tracked
 separately; docs-starlight already states it correctly.
-
