@@ -111,6 +111,17 @@ setup() {
   [[ "$output" == *"re-creates the quota thrash"* ]]
 }
 
+# Shipped once without this permission. The purge selected the right caches,
+# then failed to delete them with "Resource not accessible by integration" — and
+# the step still exited green, so the only symptom was `gh cache list` refusing
+# to shrink. A silent failure is exactly what a guard is for.
+@test "fails when actions: write is dropped" {
+  sed -i.bak '/actions: write/d' "$WORK"
+  run bash "$SCRIPT" "$WORK"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Resource not accessible by integration"* ]]
+}
+
 @test "reports every broken invariant, not just the first" {
   sed -i.bak 's|timeout-minutes: .*|timeout-minutes: 30|' "$WORK"
   sed -i.bak '/restore-prefixes-first-match/d' "$WORK"

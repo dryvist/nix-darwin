@@ -45,6 +45,17 @@ jobs:
     timeout-minutes: ${{ fromJSON(vars.GH_ACTION_TIMEOUT_NIX || '15') }}
     permissions:
       contents: read
+      # Required by the cache step's `purge:` — deleting a cache entry goes
+      # through the Actions cache REST API, which `contents: read` cannot reach.
+      # Without this the purge fails with "Resource not accessible by
+      # integration" and, critically, the step still exits GREEN: entries keep
+      # accumulating and the only visible symptom is `gh cache list` growing
+      # until the repo exceeds quota and GitHub evicts at random.
+      #
+      # Safe on pull_request: fork PRs receive a read-only token regardless of
+      # what this block requests, so the elevated scope applies only to trusted
+      # branch runs.
+      actions: write
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
