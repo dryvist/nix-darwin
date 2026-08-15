@@ -163,11 +163,11 @@
     "brew-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1786779609,
-        "narHash": "sha256-ckvMi5l/ZM0u2uSmM1Au1y++zR7C6+OVReZ/KC5A0ng=",
+        "lastModified": 1786805095,
+        "narHash": "sha256-BCE0c5R8H58tGLNaqft87M54ucJgISeAHUJ8IXBIB4U=",
         "owner": "Homebrew",
         "repo": "brew",
-        "rev": "78e05bb56f78e2f9f21d08890efff202d16eeaa3",
+        "rev": "ff4c18d4001f4ad60b4c620d4a51af5c569e903f",
         "type": "github"
       },
       "original": {
@@ -471,11 +471,11 @@
     "dotgithub": {
       "flake": false,
       "locked": {
-        "lastModified": 1786731839,
-        "narHash": "sha256-yKUCLg9cncWW5cZWhGf0ae53dbIaEqXRnrkvDqNsQSM=",
+        "lastModified": 1786805377,
+        "narHash": "sha256-igw4SYT8KcI0/Gi1XfGBtMQdUCiTZAQPKBhgwWgO3Sk=",
         "owner": "dryvist",
         "repo": ".github",
-        "rev": "3b4dde15d69b77abcea3eb8dd4433df8ad84695d",
+        "rev": "fce3b39405a42cf935a1a4892e1137ceb946d837",
         "type": "github"
       },
       "original": {
@@ -1223,11 +1223,11 @@
         "orbstack-kubernetes": "orbstack-kubernetes"
       },
       "locked": {
-        "lastModified": 1786805407,
-        "narHash": "sha256-dsvnlwuZ4Z2ZyzZoSUvgPA+h83CTbIlbsKeFm0DdYfI=",
+        "lastModified": 1786817485,
+        "narHash": "sha256-EwX5oHsBaEmV7oEpAtF+lI3E4e2QribU4r0aqLZeo+w=",
         "owner": "dryvist",
         "repo": "nix-home",
-        "rev": "704c95012bf15bb274a611d630c14ce7345c700b",
+        "rev": "b1864eba2e2bd1eca5415f9668e631ee0f147658",
         "type": "github"
       },
       "original": {
