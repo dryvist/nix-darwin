@@ -46,6 +46,7 @@ in
     ./mlx-no-autodiscover.nix
     # Global git excludes seeded from the dryvist org-default (see module).
     ./git-global-excludes.nix
+    ./agent-skills.nix
     # Ghostty terminfo (package + ~/.terminfo) — split out for the byte cap.
     ./ghostty-terminfo.nix
     # macOS-specific zsh init (keychain reads, gh-token switching, launchers) —
@@ -154,12 +155,6 @@ in
     # Claude, Codex, and the other local clients on every host. Vikunja's
     # credentials remain injected by the shared Doppler wrapper.
     aiMcp.servers.vikunja.disabled = lib.mkForce false;
-
-    # nix-ai defaults to Codex's native ~/.codex/skills root. Dryvist shares
-    # the same catalog across every harness, so select the cross-tool standard
-    # ~/.agents/skills root instead. Codex discovers it natively; never create
-    # a ~/.codex/skills alias, which makes Codex scan the same catalog twice.
-    agentSkills.root = "agents";
 
     # cecli (nix-ai's Aider fork) is disabled — unused, and its
     # tree-sitter-language-pack<=0.13.0 pin fails to build on nixpkgs 26.05
