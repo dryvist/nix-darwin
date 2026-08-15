@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.37.1](https://github.com/dryvist/nix-darwin/compare/v2.37.0...v2.37.1) (2026-08-15)
+
+
+### Bug Fixes
+
+* **agent-skills:** use shared discovery root ([c9ae36c](https://github.com/dryvist/nix-darwin/commit/c9ae36cc03ac79e9368a1b321c22243052724e8c))
+
 ## [2.37.0](https://github.com/dryvist/nix-darwin/compare/v2.36.0...v2.37.0) (2026-08-15)
 
 
