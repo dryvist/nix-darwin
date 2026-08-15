@@ -41,3 +41,24 @@ raw `<|channel|>` markup leaks into content.
 Thinking is off in its catalog entry, which matters for Hermes: a thinking
 variant spends hundreds of reasoning tokens before it emits a tool call, and
 Hermes pays that latency on every action it takes.
+
+## Serving concurrency: why the 2026-07-27 4× override was harmful
+
+Kept because it is the measurement that makes the current `serveConcurrency = 2`
+defensible, and it is easy to misread as evidence against concurrency itself.
+
+That test was 4-way *admission* against a worker whose `--decode-concurrency`
+was still hard-coded 1 (pre-unification). The proxy time-sliced one serialized
+GPU: 12.5 tok/s per stream, gate p90 194s with a 1298s tail, 429 to 52% of
+requests, and a wedged worker.
+
+Since the unification, admission and served width derive from one number, and
+mlx-lm 0.31.3's `--decode-concurrency` feeds a real batch scheduler
+(`BatchGenerator`; upstream defaults are 32 decode / 8 prompt, so 2 is
+conservative). The resident `qwen3_5_moe` is batchable in 0.31.3: no draft
+model, and both cache classes its `make_cache` returns (`KVCache`,
+`ArraysCache`) implement `merge`.
+
+The note that once lived in `mac-studio.md` — "`mlx_lm.server` serializes decode
+internally regardless" — described that hard-coded-1 state, not 0.31.3 with the
+flag set.
