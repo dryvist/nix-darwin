@@ -10,14 +10,24 @@
 # If you are reading this because the check failed: the fix is almost never to
 # relax the assertion. Find the closure or dependency regression instead.
 #
-# Usage: check-ci-invariants.sh [path/to/_nix-build.yml]
+# Usage: check-ci-invariants.sh [path/to/_nix-build.yml] [path/to/ci-nix.yml]
+#
+# The second argument is the CALLER. Some invariants can only hold there: a
+# called workflow can never exceed its caller's permission grant, so a scope the
+# callee needs must also be granted by every workflow that calls it.
 
 set -euo pipefail
 
 wf="${1:-.github/workflows/_nix-build.yml}"
+caller="${2:-.github/workflows/ci-nix.yml}"
 
 if [ ! -f "$wf" ]; then
   echo "check-ci-invariants: workflow not found: $wf" >&2
+  exit 1
+fi
+
+if [ ! -f "$caller" ]; then
+  echo "check-ci-invariants: caller workflow not found: $caller" >&2
   exit 1
 fi
 
@@ -86,6 +96,18 @@ grep -q 'purge-created: 0' "$wf" ||
 # accumulating with no signal anywhere except `gh cache list`.
 grep -q 'actions: write' "$wf" ||
   die "the build job needs 'actions: write' or purge cannot delete caches — it fails with 'Resource not accessible by integration' while the step still reports success."
+
+# A called workflow can never exceed its caller's grant, so the scope above must
+# also be granted by every caller. Omitting it fails at graph validation:
+# startup_failure, no job, no logs. That shipped once — the PR was green because
+# ci-gate.yml already grants actions: write, and only the push to develop broke.
+grep -q 'actions: write' "$caller" ||
+  die "$caller must also grant 'actions: write': a called workflow cannot exceed its caller's permissions, and without it the run dies at graph validation with startup_failure and no logs."
+
+# develop pushes are the only runs that save the cache, and this caller defines
+# its own concurrency group, so its cancel rule is as load-bearing as the callee's.
+grep -q "github.ref != 'refs/heads/develop'" "$caller" ||
+  die "$caller must exempt develop from cancel-in-progress — it is the only branch that saves the Nix cache."
 
 if [ "$fail" -ne 0 ]; then
   echo "check-ci-invariants: see the comments in $wf for why each invariant exists." >&2
