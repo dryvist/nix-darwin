@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.37.0](https://github.com/dryvist/nix-darwin/compare/v2.36.0...v2.37.0) (2026-08-15)
+
+
+### Features
+
+* **mac-studio:** move the goal-judge role to the routine tier ([#2147](https://github.com/dryvist/nix-darwin/issues/2147)) ([4eb842f](https://github.com/dryvist/nix-darwin/commit/4eb842f02718750c7f0a23fa29459f3a1d51ebad))
+
 ## [2.36.0](https://github.com/dryvist/nix-darwin/compare/v2.35.0...v2.36.0) (2026-08-15)
 
 
