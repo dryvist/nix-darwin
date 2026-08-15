@@ -15,6 +15,11 @@ setup() {
   CALLER="$BATS_TEST_TMPDIR/caller.yml"
   cp "$GOOD" "$WORK"
   cp "$GOOD_CALLER" "$CALLER"
+  # `cp` preserves mode, and under `nix flake check` the sources are read-only
+  # store paths (444). `sed -i` still works there because it only needs a
+  # writable directory, but a `>` redirect needs a writable file — so tests that
+  # rewrite a fixture wholesale fail in the sandbox while passing locally.
+  chmod u+w "$WORK" "$CALLER"
 }
 
 @test "passes on the real workflow" {
