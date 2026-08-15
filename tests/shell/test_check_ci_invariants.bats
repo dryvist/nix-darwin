@@ -36,17 +36,72 @@ setup() {
 }
 
 # A called workflow can never exceed its caller's grant. Omitting this on the
-# caller kills the run at graph validation -- startup_failure, no job, no logs.
-# It shipped that way once: the PR was green because ci-gate.yml already grants
-# actions: write, so only the push to develop went red.
+# caller kills the run at graph validation -- startup_failure, no job, no logs,
+# and no check-runs at all, so the PR shows a CLEAN merge state with nothing red.
 @test "fails when the caller does not grant actions: write" {
   sed -i.bak '/actions: write/d' "$CALLER"
   run bash "$SCRIPT" "$GOOD" "$CALLER"
   [ "$status" -eq 1 ]
-  [[ "$output" == *"cannot exceed its caller"* ]]
+  [[ "$output" == *"without 'actions: write'"* ]]
 }
 
-@test "fails when the caller stops exempting develop from cancellation" {
+# The false-pass that a whole-file grep allows, and the one that actually
+# happened: ci-gate.yml DID contain "actions: write" -- on its shared-gate job,
+# not on the nix-build job that calls _nix-build.yml. Permissions are per-job,
+# so the run still died. The guard must read the calling job, not the file.
+@test "fails when actions: write is on a different job than the caller" {
+  cat >"$CALLER" <<'YAML'
+name: fake
+permissions:
+  contents: read
+jobs:
+  other-job:
+    permissions:
+      contents: read
+      actions: write
+    uses: ./.github/workflows/_something-else.yml
+  nix-build:
+    uses: ./.github/workflows/_nix-build.yml
+YAML
+  run bash "$SCRIPT" "$GOOD" "$CALLER"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"permissions are per-job"* ]]
+}
+
+@test "accepts a workflow-level actions: write grant" {
+  cat >"$CALLER" <<'YAML'
+name: fake
+permissions:
+  contents: read
+  actions: write
+jobs:
+  build:
+    uses: ./.github/workflows/_nix-build.yml
+YAML
+  run bash "$SCRIPT" "$GOOD" "$CALLER"
+  [ "$status" -eq 0 ]
+}
+
+# Prose naming the workflow is not a call site. ci-nix.yml discusses
+# _nix-build.yml in its header comments, which a substring match misread as a
+# job that calls it.
+@test "does not treat a comment mentioning _nix-build.yml as a call site" {
+  cat >"$CALLER" <<'YAML'
+name: fake
+# This workflow pairs with _nix-build.yml and its save: condition.
+permissions:
+  contents: read
+jobs:
+  unrelated:
+    runs-on: ubuntu-latest
+    steps:
+      - run: 'true'
+YAML
+  run bash "$SCRIPT" "$GOOD" "$CALLER"
+  [ "$status" -eq 0 ]
+}
+
+@test "fails when ci-nix stops exempting develop from cancellation" {
   sed -i.bak "s|github.ref != 'refs/heads/develop'|true|" "$CALLER"
   run bash "$SCRIPT" "$GOOD" "$CALLER"
   [ "$status" -eq 1 ]

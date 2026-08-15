@@ -133,6 +133,17 @@ jobs:
     name: Nix Build
     needs: changes
     if: needs.changes.outputs.nix == 'true' && (needs.changes.outputs.is-deps-only == 'false' || needs.changes.outputs.is-flake-lock-change == 'true')
+    permissions:
+      contents: read
+      # _nix-build.yml's cache step purges superseded entries through the
+      # Actions cache API. A called workflow can never exceed its caller's
+      # grant, and this job inherits the workflow-level block above, which does
+      # not include actions:write — so without this the whole run dies at graph
+      # validation. That failure produces NO check-runs at all, so a PR shows
+      # mergeStateStatus CLEAN with no failing check while nothing has run.
+      # The actions:write on the shared-gate job does not cover this one;
+      # permissions are per-job.
+      actions: write
     uses: ./.github/workflows/_nix-build.yml
 
   nix-validate:

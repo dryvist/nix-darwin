@@ -104,7 +104,8 @@
         cd ${src}
         bash scripts/workflows/check-ci-invariants.sh \
           .github/workflows/_nix-build.yml \
-          .github/workflows/ci-nix.yml
+          .github/workflows/ci-nix.yml \
+          .github/workflows/ci-gate.yml
         touch $out
       '';
 
