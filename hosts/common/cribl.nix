@@ -519,6 +519,21 @@ in
         # Model-server logs: the manager (Go) and its workers (Python) share
         # the same two files. Keep the worker sourcetype backend-neutral so a
         # selected MLX server change does not require downstream rewrites.
+        # in_cluster_logs (rank/watcher/peer-liveness) shares this same
+        # pipeline but is a third, unrelated event shape — discriminate on
+        # __inputId FIRST (same pattern as os_events below), or its lines
+        # fall through the content regex and land mislabeled as
+        # mlx:model-server, indistinguishable from real worker output
+        # (verified live: thousands of cluster-watcher decision lines tagged
+        # mlx:model-server before this fix).
+        #
+        # None of the three source formats carries a timestamp Cribl can
+        # reliably parse at the line start (llama-swap's own `[INFO] Request
+        # ...` access lines and the cluster-watcher lines have no leading
+        # timestamp at all), so _time for llamaswap and mlx:cluster is
+        # arrival/index time — same honest, already-documented pattern used
+        # for firewall_logs below. Only the Python worker lines (mlx:model-server)
+        # carry a real per-line timestamp, which Cribl parses natively.
         "pipelines/llm_logs/conf.yml" = ''
           output: default
           functions:
@@ -529,7 +544,7 @@ in
                   - name: index
                     value: "'llm'"
                   - name: sourcetype
-                    value: "_raw.match(/^(\\[(DEBUG|INFO|WARN|ERROR)\\] |time=[^ ]+ level=(DEBUG|INFO|WARN|ERROR) |[0-9]{4}[/][0-9]{2}[/][0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})/) ? 'llamaswap' : 'mlx:model-server'"
+                    value: "String(__inputId).includes('cluster') ? 'mlx:cluster' : _raw.match(/^(\\[(DEBUG|INFO|WARN|ERROR)\\] |time=[^ ]+ level=(DEBUG|INFO|WARN|ERROR) |[0-9]{4}[/][0-9]{2}[/][0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})/) ? 'llamaswap' : 'mlx:model-server'"
         '';
         "pipelines/bench_events/conf.yml" = ''
           output: default
