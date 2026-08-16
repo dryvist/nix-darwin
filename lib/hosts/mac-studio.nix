@@ -128,6 +128,13 @@ in
       # loads beside the residents rather than evicting one (k_max = 2).
       qwen35-9b-mlx.class = "swap";
 
+      # Document OCR, on demand — the one vision-language entry. The ttl and
+      # pre-cached weights are both mandatory: ./mac-studio.md "Document OCR".
+      unlimited-ocr = {
+        class = "swap";
+        tweaks.ttl = 600;
+      };
+
       # Configured, compiled, and not servable. Re-enable deliberately, one at
       # a time, with the residency budget re-checked.
       qwen3-next-80b-instruct = {
