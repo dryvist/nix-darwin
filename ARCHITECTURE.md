@@ -105,12 +105,19 @@ flake.nix
 | Host | Machine-specific | `hosts/<name>/` | Both |
 | Shared | Variables, defaults | `lib/` | Imported |
 
-## Getting a nix-ai (or nix-home) change onto a Mac: the promotion contract
+## Getting a nix-ai change onto a Mac: the promotion contract
 
 This repo's `nix-ai` input tracks nix-ai's **`main`** branch, not `develop`
 (`github:dryvist/nix-ai/main` in `flake.nix`). Merging a PR into nix-ai's
 `develop` does not make that change reachable by any Mac here — three
 separate steps have to happen, in order:
+
+**This is `nix-ai`-specific, not a general flake-input rule.** The
+`nix-home` input (`github:dryvist/nix-home`, no `/main` suffix) tracks
+whatever GitHub reports as that repo's default branch — currently
+`develop` — so a nix-home change needs only step 2 and step 3 below, never
+a develop→main promotion of its own. Check an input's `flake.lock` entry
+for a `ref` before assuming either contract applies.
 
 1. **Promote nix-ai `develop` → `main`.** Only commits on nix-ai's `main`
    exist as far as this repo's `nix-ai` input is concerned.
