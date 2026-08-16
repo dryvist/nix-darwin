@@ -103,15 +103,16 @@ override on either resident; `qwen35-9b-mlx` keeps its own catalog
 `concurrencyLimit = 1` (40B+ single-slot policy, flake-check enforced) and
 does **not** inherit `serveConcurrency`, so this raise never touches the 9B.
 
-**Why 4, measured.** The proxy's request log shows a sustained 47.5% rejection
-rate at `concurrencyLimit = 2` (12,075 429s of 25,435 requests, 47.2% in the
-last 500 — not a burst); accepted requests took minutes. The arithmetic below
-shows the cache budget covers four streams for free, so the limit alone
-turned away traffic the host could already serve.
+**Why 4, measured.** Split by source, the request log shows production
+traffic rejected at a sustained 66% at `concurrencyLimit = 2` (11,829/17,794
+requests; 66% in the most recent window too) vs. 25% on local test traffic.
+Accepted requests took over a minute. The arithmetic below shows the cache
+budget covers four streams for free, so the limit alone turned away
+production traffic the host could already serve.
 
 **Why 4 is safe.** Hybrid attention only grows a KV cache
 on `full_attention` layers — `linear_attention` layers carry fixed-size
-recurrent state — confirmed from each model's own `config.json` on jevans-ms:
+recurrent state — confirmed from each model's own `config.json`:
 
 - 27B (`qwen38-27b`, `qwen3_5_text`): 64 layers, `full_attention_interval=4`
   → 16 full-attention, `kvHeads=4`, `headDim=256`. KV/token =
@@ -122,21 +123,20 @@ recurrent state — confirmed from each model's own `config.json` on jevans-ms:
 
 Both carry `cacheMemoryMb = 16384` (16 GiB `--prompt-cache-bytes`).
 `mlx_lm.server` trims stored cache to `prompt-cache-bytes − active batch KV`,
-so worst case stays at 16 GiB as long as active-batch KV alone doesn't exceed
-it. 27B (binding constraint): active-batch KV(N) = `N × 65536 × 64 KiB` =
+so worst case stays at 16 GiB unless active-batch KV exceeds it. 27B (binding
+constraint): active-batch KV(N) = `N × 65536 × 64 KiB` =
 **N × 4 GiB** — N=2→8, N=3→12, N=4→16 (exactly saturates the budget), N=5→20
 (first overflow). **N=2/3/4 share an identical worst-case peak**:
 `16.1 (weights) + 16 (cache) + ~0.3 (state) ≈ 32.4 GB`. 35B's KV(N) =
 `N × 1.25 GiB`, never binding below N≈13. Raising 2→4 costs nothing extra;
 N=5 is the first genuinely new territory.
 
-**Cross-checked against measured `footprint` peaks**, all three models
-loaded (9B's `concurrencyLimit=1` keeps it a fixed ~13.4 GB worst case: 5.2
-weights + 8 GiB cache + ~0.15 state): 27B 34 GB observed peak (~32.4 GB
-theoretical, close), 35B 30 GB observed. System-wide worst case against the
-real `iogpu.wired_limit_mb=100 GiB` (one shared pool): `32.4 + 35.65 (35B) +
-13.4 (9B) + 3.4 (baseline) ≈ 84.85 GB` → **~15.15 GB margin**, identical at
-N=2 and N=4.
+**Cross-checked against measured `footprint` peaks**, all three loaded (9B's
+`concurrencyLimit=1` keeps it a fixed ~13.4 GB worst case: 5.2 weights + 8
+GiB cache + ~0.15 state): 27B 34 GB observed (~32.4 GB theoretical, close),
+35B 30 GB observed. System-wide worst case against the real
+`iogpu.wired_limit_mb=100 GiB` (one shared pool): `32.4 + 35.65 (35B) + 13.4
+(9B) + 3.4 (baseline) ≈ 84.85 GB` → **~15.15 GB margin**, same at N=2 and N=4.
 
 **nix-ai#915 (hybrid-attention batching crash) verified not to apply, not
 just read.** The bug (`mlx_lm/models/qwen3_5.py`'s
@@ -144,15 +144,15 @@ just read.** The bug (`mlx_lm/models/qwen3_5.py`'s
 aborting every in-flight request) is specific to vllm-mlx's scheduler;
 `modules/mlx/assertions.nix` hard-fails eval unless `mlx-lm` is the sole
 backend (`docs/architecture/mlx-stack.md`). Tested directly too: the
-production-pinned `mlx-lm-server` binary on a side port serving
+production-pinned `mlx-lm-server` binary, side port, serving
 `Qwen3.5-9B-MLX-4bit` (same `qwen3_5` family), 4 truly concurrent requests
 plus a staggered-length round to force batch composition to change
 mid-generation — the bug's actual trigger. Zero crashes either run.
 
 Distinct from residency: `maxResidentWorkers` counts workers, not in-flight
-requests. A fifth request per resident is parked or 429'd by llama-swap's
-scheduler, never reaching the worker. (Older 0.31.3-era rejection-rate
-figures, predating admission/served-width unification, are in
+requests. A fifth request per resident is parked or 429'd by the scheduler,
+never reaching the worker. (Older 0.31.3-era rejection-rate figures, predating
+admission/served-width unification, are in
 [mac-studio-model-history.md](./mac-studio-model-history.md).)
 
 ## Preload
