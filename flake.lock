@@ -163,11 +163,11 @@
     "brew-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1786850139,
-        "narHash": "sha256-Kms3g8wm1CfQM4GeY12zRBu3DIP1apZJ4ZrKqVC7ql8=",
+        "lastModified": 1786876971,
+        "narHash": "sha256-b4RezkyuCfxWGq2oOy5mCGZcBU2GKmGpen9RTHv5oVQ=",
         "owner": "Homebrew",
         "repo": "brew",
-        "rev": "bfae037b20df2be17177cec7bbbfdd4b65c11a81",
+        "rev": "78dc68a15f167a973207437a4454381641a2f82f",
         "type": "github"
       },
       "original": {
@@ -1054,11 +1054,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1786877092,
-        "narHash": "sha256-2g3o5k4PJX2EEfVUlPHYjobbYKokBWJxjpvbYEBijEg=",
+        "lastModified": 1786883384,
+        "narHash": "sha256-c3YemP170j/7A+gmJAyyJVJX+uiuj4k3htqMVwp5VuY=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "10e8e5ea55322db54d7ce36e180d652f4300a2b5",
+        "rev": "f68e176ead3232a3ba3ef8336d9b1fe7842ef7b3",
         "type": "github"
       },
       "original": {
