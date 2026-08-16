@@ -96,14 +96,21 @@ Moved to [mac-studio-residency.md](./mac-studio-residency.md): the
 per-worker figures behind 48 GiB, why the cushion is ~0.6 GiB rather than 4,
 and why the limit sheds cache rather than refusing allocations.
 
-## Serving concurrency (4 since 2026-08-16)
+## Serving concurrency
 
-`proxy.concurrencyLimit` inherits `serveConcurrency = 4`. No per-model
+`proxy.concurrencyLimit` inherits `serveConcurrency = 2`. No per-model
 override on either resident; `qwen35-9b-mlx` keeps its own catalog
 `concurrencyLimit = 1` (40B+ single-slot policy, flake-check enforced) and
-does **not** inherit `serveConcurrency`, so this raise never touches the 9B.
+does **not** inherit `serveConcurrency`.
 
-**Why 4, derived from architecture.** Hybrid attention only grows a KV cache
+**Why not higher, despite memory headroom.** The arithmetic below shows
+`serveConcurrency` up to 4 is memory-safe. A 2026-08-16 raise to 4 tested
+that in production and was reverted the same day: MLX batches concurrent
+sequences on shared GPU compute, so on a compute-bound dense model more
+slots stretches latency instead of adding throughput. Memory was never the
+binding constraint.
+
+**KV-cache arithmetic, still valid.** Hybrid attention only grows a KV cache
 on `full_attention` layers — `linear_attention` layers carry fixed-size
 recurrent state — confirmed from each model's own `config.json` on jevans-ms:
 
