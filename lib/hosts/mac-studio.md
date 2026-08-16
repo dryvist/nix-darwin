@@ -96,36 +96,58 @@ Moved to [mac-studio-residency.md](./mac-studio-residency.md): the
 per-worker figures behind 48 GiB, why the cushion is ~0.6 GiB rather than 4,
 and why the limit sheds cache rather than refusing allocations.
 
-## Serving concurrency (2 since 2026-08-06)
+## Serving concurrency (4 since 2026-08-16)
 
-`proxy.concurrencyLimit` inherits `serveConcurrency = 2`. The host sets no
-per-model override; catalog pins hold the 9B and every 40B+ entry at
-`concurrencyLimit = 1` (nix-ai's 40B+ single-slot policy, flake-check
-enforced), so only the resident 35B serves two-wide. Raised from 1 because a
-single slot serializes every caller: with several uncoordinated callers,
-queueing delay — not failure rate — dominated the latency tail. Two in-flight
-requests let the server batch-decode them instead of queueing one behind the
-other.
+`proxy.concurrencyLimit` inherits `serveConcurrency = 4`. No per-model
+override on either resident; `qwen35-9b-mlx` keeps its own catalog
+`concurrencyLimit = 1` (40B+ single-slot policy, flake-check enforced) and
+does **not** inherit `serveConcurrency`, so this raise never touches the 9B.
 
-**Why 2 is safe where the 2026-07-27 4× override was harmful** — that
-measurement predates the admission/served-width unification and ran against a
-worker hard-coded to serialize decode. Figures and the batchability check for
-0.31.3 are in
-[mac-studio-model-history.md](./mac-studio-model-history.md). Still true:
-concurrency is not the lever for *rejection* rates.
+**Why 4, derived from architecture.** Hybrid attention only grows a KV cache
+on `full_attention` layers — `linear_attention` layers carry fixed-size
+recurrent state — confirmed from each model's own `config.json` on jevans-ms:
 
-**Memory cost of the second stream.** The 35B is hybrid-attention
-(config.json: 10 of 40 layers full attention, 2 KV heads, head_dim 256), so
-KV costs `2 × 10 × 2 × 256 × 2 B = 20 KiB/token` — 1.25 GiB per
-65,536-token stream, 5.0 GiB at the architectural max 262,144. The second
-in-flight stream therefore adds ~1.3–5 GiB plus ~0.25 GiB of fixed
-linear-attention state. `mlx_lm.server` trims the stored prompt cache to
-`prompt-cache-bytes − active batch KV`, so stored + in-flight KV stays inside
-the 16 GiB cache budget. Worst constructible worker at 2 is ~21.3 (weights) +
-≤16 (KV + prompt cache) + ~0.5 (state) + ≤12 (shedable buffer cache) ≈ 50 GiB
-against the 48 GiB per-worker budget — sheds cache rather than failing, and
-the residency invariant is untouched: `maxResidentWorkers` counts workers,
-not in-flight requests. A third request per model is parked or 429'd by
+- 27B (`qwen38-27b`, `qwen3_5_text`): 64 layers, `full_attention_interval=4`
+  → 16 full-attention, `kvHeads=4`, `headDim=256`. KV/token =
+  `2 × 16 × 4 × 256 × 2 B = 64 KiB`.
+- 35B (`qwen36-35b`, `qwen3_5_moe_text`): 40 layers → 10 full-attention,
+  `kvHeads=2`, `headDim=256`. KV/token = `2 × 10 × 2 × 256 × 2 B = 20 KiB`
+  (independently re-derived, matches the prior generation's figure).
+
+Both carry `cacheMemoryMb = 16384` (16 GiB `--prompt-cache-bytes`).
+`mlx_lm.server` trims stored cache to `prompt-cache-bytes − active batch KV`,
+so worst case stays at 16 GiB as long as active-batch KV alone doesn't exceed
+it. 27B (binding constraint): active-batch KV(N) = `N × 65536 × 64 KiB` =
+**N × 4 GiB** — N=2→8, N=3→12, N=4→16 (exactly saturates the budget), N=5→20
+(first overflow). **N=2/3/4 share an identical worst-case peak**:
+`16.1 (weights) + 16 (cache) + ~0.3 (state) ≈ 32.4 GB`. 35B's KV(N) =
+`N × 1.25 GiB`, never binding below N≈13. Raising 2→4 costs nothing extra;
+N=5 is the first genuinely new territory.
+
+**Cross-checked against measured `footprint` peaks**, all three models
+loaded (9B's `concurrencyLimit=1` keeps it a fixed ~13.4 GB worst case: 5.2
+weights + 8 GiB cache + ~0.15 state): 27B 34 GB observed peak (~32.4 GB
+theoretical, close), 35B 30 GB observed. System-wide worst case against the
+real `iogpu.wired_limit_mb=100 GiB` (one shared pool): `32.4 + 35.65 (35B) +
+13.4 (9B) + 3.4 (baseline) ≈ 84.85 GB` → **~15.15 GB margin**, identical at
+N=2 and N=4.
+
+**nix-ai#915 (hybrid-attention batching crash) verified not to apply, not
+just read.** The bug (`mlx_lm/models/qwen3_5.py`'s
+`mx.concatenate([conv_state, qkv], ...)` throwing on a batch-size mismatch,
+aborting every in-flight request) is specific to vllm-mlx's scheduler;
+`modules/mlx/assertions.nix` hard-fails eval unless `mlx-lm` is the sole
+backend (`docs/architecture/mlx-stack.md`). Tested directly too: the
+production-pinned `mlx-lm-server` binary on a side port serving
+`Qwen3.5-9B-MLX-4bit` (same `qwen3_5` family), 4 truly concurrent requests
+plus a staggered-length round to force batch composition to change
+mid-generation — the bug's actual trigger. Zero crashes either run.
+
+Older context, still true: concurrency is not the lever for *rejection*
+rates; figures for 0.31.3 predating the admission/served-width unification
+are in [mac-studio-model-history.md](./mac-studio-model-history.md). The
+residency invariant is untouched: `maxResidentWorkers` counts workers, not
+in-flight requests. A fifth request per resident is parked or 429'd by
 llama-swap's scheduler and never reaches the worker.
 
 ## Preload
