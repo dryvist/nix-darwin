@@ -112,7 +112,9 @@ in
               interval: 10
               path: ${userConfig.user.homeDir}/.local/state/mlx-benchmarks/
               filenames:
-                - "*/bench-events.jsonl"
+                # Flat file directly under path (see comment above), not
+                # nested in a subdirectory — a "*/…" glob never matches it.
+                - "bench-events.jsonl"
               tailOnly: false
               sendToRoutes: false
               connections:
