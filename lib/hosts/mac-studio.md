@@ -103,7 +103,13 @@ override on either resident; `qwen35-9b-mlx` keeps its own catalog
 `concurrencyLimit = 1` (40B+ single-slot policy, flake-check enforced) and
 does **not** inherit `serveConcurrency`, so this raise never touches the 9B.
 
-**Why 4, derived from architecture.** Hybrid attention only grows a KV cache
+**Why 4, measured.** The proxy's request log shows a sustained 47.5% rejection
+rate at `concurrencyLimit = 2` (12,075 429s of 25,435 requests, 47.2% in the
+last 500 — not a burst); accepted requests took minutes. The arithmetic below
+shows the cache budget covers four streams for free, so the limit alone
+turned away traffic the host could already serve.
+
+**Why 4 is safe.** Hybrid attention only grows a KV cache
 on `full_attention` layers — `linear_attention` layers carry fixed-size
 recurrent state — confirmed from each model's own `config.json` on jevans-ms:
 
@@ -143,12 +149,11 @@ production-pinned `mlx-lm-server` binary on a side port serving
 plus a staggered-length round to force batch composition to change
 mid-generation — the bug's actual trigger. Zero crashes either run.
 
-Older context, still true: concurrency is not the lever for *rejection*
-rates; figures for 0.31.3 predating the admission/served-width unification
-are in [mac-studio-model-history.md](./mac-studio-model-history.md). The
-residency invariant is untouched: `maxResidentWorkers` counts workers, not
-in-flight requests. A fifth request per resident is parked or 429'd by
-llama-swap's scheduler and never reaches the worker.
+Distinct from residency: `maxResidentWorkers` counts workers, not in-flight
+requests. A fifth request per resident is parked or 429'd by llama-swap's
+scheduler, never reaching the worker. (Older 0.31.3-era rejection-rate
+figures, predating admission/served-width unification, are in
+[mac-studio-model-history.md](./mac-studio-model-history.md).)
 
 ## Preload
 
