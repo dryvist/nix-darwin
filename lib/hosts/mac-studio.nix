@@ -24,7 +24,7 @@ let
   # fetches dryvist/tofu-proxmox's published constant and fails the build
   # when it disagrees with the value below. Raise both together; the check
   # enforces that now, not this comment.
-  serveConcurrency = 4;
+  serveConcurrency = 2;
 in
 {
   # Network identity. `system` omitted (mkHost defaults to aarch64-darwin).
