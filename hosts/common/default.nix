@@ -159,7 +159,10 @@ in
     # by accident of machine class, and deriving role here from a DIFFERENT
     # source than the one nix-ai's rank env reads let this pin the Thunderbolt
     # static IPs to the wrong Mac the moment anyone changed just one of the two.
-    clusterLinkPrep = {
+    # Attribute-existence gate (repo convention, matches cluster-quiesce.nix):
+    # non-inference hosts have no `mlx` at all, so a bare `hostConfig.mlx.…`
+    # read would crash eval on them.
+    clusterLinkPrep = lib.mkIf (hostConfig ? mlx && hostConfig.mlx ? clusterMode) {
       enable = true;
       role = hostConfig.mlx.clusterMode.role;
       # Clustered wired ceilings, applied around rank start/stop by the cluster
