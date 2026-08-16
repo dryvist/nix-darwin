@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.38.1](https://github.com/dryvist/nix-darwin/compare/v2.38.0...v2.38.1) (2026-08-16)
+
+
+### Bug Fixes
+
+* **cluster:** derive clusterLinkPrep.role from mlx.clusterMode.role ([#2190](https://github.com/dryvist/nix-darwin/issues/2190)) ([b5c06e8](https://github.com/dryvist/nix-darwin/commit/b5c06e882ce3b460bac5ec2860a91f00ea5695b8))
+* **mac-studio:** raise LLM serving concurrency ceiling to 4 ([#2192](https://github.com/dryvist/nix-darwin/issues/2192)) ([d51a7ab](https://github.com/dryvist/nix-darwin/commit/d51a7ab0147dd93e1262a6ff916e54fb8555d50e))
+* **mac-studio:** revert LLM serving concurrency ceiling to 2 ([#2193](https://github.com/dryvist/nix-darwin/issues/2193)) ([d7bd77c](https://github.com/dryvist/nix-darwin/commit/d7bd77c7cacd0a1498063b41027c3d573325d291))
+
 ## [2.38.0](https://github.com/dryvist/nix-darwin/compare/v2.37.3...v2.38.0) (2026-08-16)
 
 
