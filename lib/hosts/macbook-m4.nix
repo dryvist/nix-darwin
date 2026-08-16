@@ -33,10 +33,18 @@
       };
       # Small always-loadable 9B (5.2 GB) for trivial local tasks via the
       # Gemini-CLI path and the hourly Obsidian summarizer pipe, which requests
-      # this physical id directly. Swap-class with no roles compiles to a
-      # llama-swap models.<id> entry keyed by the physical id, so it loads on
-      # demand and routes without evicting the resident 30B.
-      qwen35-9b-mlx.class = "swap";
+      # this physical id directly. Swap-class, so it loads on demand and routes
+      # without evicting the resident 30B.
+      #
+      # It also claims `small`: nix-ai added that size-class role to the
+      # registry with no host assigning it, and the role-resolution assertion
+      # requires every registry role to compile into a backend alias, so the
+      # first lock bump past it fails to evaluate until an entry takes it. This
+      # is the size class the role names on both Macs.
+      qwen35-9b-mlx = {
+        class = "swap";
+        roles = [ "small" ];
+      };
       # Qwen3.8-27B — current small/midsize generation, servable here on demand.
       #
       # Deliberately swap-class, NOT resident: promoting it would demote

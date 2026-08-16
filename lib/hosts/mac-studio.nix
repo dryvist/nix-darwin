@@ -122,11 +122,10 @@ in
           "goal-judge"
         ];
       };
-      # Small on-demand 9B (5.2 GB) for trivial local tasks via the Gemini-CLI
-      # path. STAYS ENABLED: an hourly note-capture pipe requests this exact
-      # physical id, and disabling it would 404 that pipe. Swap tier, so it
-      # loads beside the residents rather than evicting one (k_max = 2).
+      # Small on-demand 9B, and the `small` role. STAYS ENABLED, and the role
+      # has to resolve somewhere: ./mac-studio.md "The small tier".
       qwen35-9b-mlx.class = "swap";
+      qwen35-9b-mlx.roles = [ "small" ];
 
       # Document OCR, on demand — the one vision-language entry. The ttl and
       # pre-cached weights are both mandatory: ./mac-studio.md "Document OCR".

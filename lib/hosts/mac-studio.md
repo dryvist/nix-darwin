@@ -182,3 +182,21 @@ Swap class only, never resident — 6.7 GB of bf16 weights should not sit in the
 co-residency budget between documents. The catalog also pins
 `concurrencyLimit = 1`, because a full-page decode is a long single-stream job
 and an over-admitting proxy turns the surplus into 429s.
+
+## The small tier
+
+`qwen35-9b-mlx` is the small on-demand 9B (5.2 GB) for trivial local tasks via
+the Gemini-CLI path. **It stays enabled**: an hourly note-capture pipe requests
+this exact physical id, and disabling it would 404 that pipe. Swap tier, so it
+loads beside the residents rather than evicting one (k_max = 2).
+
+It also carries the `small` role, on both Macs. nix-ai added that
+size-class role to the AI-stack registry with no host assigning it, and
+`modules/mlx/assertions.nix` requires every registry role to resolve to a
+physical model AND appear in that model's compiled llama-swap aliases. So the
+first `flake.lock` bump past that commit fails to evaluate until some entry
+takes the role — on either Mac, since both carry a catalog.
+
+The 9B is the size class the role names rather than an arbitrary pick, and the
+router-side registry already carries the same model as `serving_role: small`.
+The two agree instead of inventing a second notion of "small".
