@@ -152,11 +152,19 @@ in
     # the module defaults already match the laptop.
     # Both hosts are cluster-mode nodes: keep every RDMA-capable Thunderbolt
     # port out of bridge0 and converge the role link address onto whichever
-    # port the cable is in. Role follows machine class: the headless desktop
-    # is the coordinator (rank 0), the laptop the worker.
-    clusterLinkPrep = {
+    # port the cable is in. Read from hostConfig.mlx.clusterMode.role (the same
+    # field nix-ai's programs.mlx.clusterMode.role is spliced from — see
+    # hosts/common/cluster-quiesce.nix's identical `hostConfig.mlx.clusterMode.role
+    # or null` read) rather than re-deriving from isServer: they coincided only
+    # by accident of machine class, and deriving role here from a DIFFERENT
+    # source than the one nix-ai's rank env reads let this pin the Thunderbolt
+    # static IPs to the wrong Mac the moment anyone changed just one of the two.
+    # Attribute-existence gate (repo convention, matches cluster-quiesce.nix):
+    # non-inference hosts have no `mlx` at all, so a bare `hostConfig.mlx.…`
+    # read would crash eval on them.
+    clusterLinkPrep = lib.mkIf (hostConfig ? mlx && hostConfig.mlx ? clusterMode) {
       enable = true;
-      role = if hostConfig.isServer then "coordinator" else "worker";
+      role = hostConfig.mlx.clusterMode.role;
       # Clustered wired ceilings, applied around rank start/stop by the cluster
       # watcher (standalone value restored at link-down). Raised 2026-07-19 per
       # user decision: the old 90000/80000 caps were low enough to force swap
