@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.38.0](https://github.com/dryvist/nix-darwin/compare/v2.37.3...v2.38.0) (2026-08-16)
+
+
+### Features
+
+* **mac-studio:** serve Unlimited OCR on demand with a 600s idle unload ([#2181](https://github.com/dryvist/nix-darwin/issues/2181)) ([332e333](https://github.com/dryvist/nix-darwin/commit/332e333e42e32c239ecd29499777be9062095716))
+
 ## [2.37.3](https://github.com/dryvist/nix-darwin/compare/v2.37.2...v2.37.3) (2026-08-15)
 
 
