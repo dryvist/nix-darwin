@@ -60,6 +60,18 @@ let
     text = builtins.readFile ./scripts/cribl-edge-deploy-pack.sh;
   };
 
+  # ponytail: temporary evidence-gathering for Vikunja nix-ai#1603. Delete
+  # this derivation and the launchd.daemons entry below once that ticket is
+  # resolved — see the script's own header for what it answers and why.
+  bootRaceProbeScript = pkgs.writeShellApplication {
+    name = "cribl-edge-boot-race-probe";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.perl
+    ];
+    text = builtins.readFile ./scripts/cribl-edge-boot-race-probe.sh;
+  };
+
   startScript = pkgs.writeShellApplication {
     name = "cribl-edge-start";
     runtimeInputs = [ pkgs.coreutils ];
@@ -252,6 +264,26 @@ in
           CODEX_HOME = "${userConfig.user.homeDir}/.codex";
           GEMINI_HOME = userConfig.user.homeDir;
         };
+      };
+    };
+
+    # ponytail: temporary, see bootRaceProbeScript's definition above and its
+    # own header. Gated on the SAME KeepAlive.PathState the fixed cribl-edge
+    # daemon uses, so this probe launches under identical conditions and
+    # measures the thing the ticket actually needs: once that gate fires, how
+    # long (if any) until the specific store path resolves? RunAtLoad with no
+    # extra KeepAlive beyond the path gate, so it fires once and never again.
+    launchd.daemons.cribl-edge-boot-race-probe = {
+      serviceConfig = {
+        Label = "com.nix-darwin.cribl-edge-boot-race-probe";
+        ProgramArguments = [
+          "${bootRaceProbeScript}/bin/cribl-edge-boot-race-probe"
+          "${startScript}/bin/cribl-edge-start"
+        ];
+        RunAtLoad = true;
+        KeepAlive.PathState."/nix/store" = true;
+        StandardOutPath = "/var/log/cribl-boot-race-probe.log";
+        StandardErrorPath = "/var/log/cribl-boot-race-probe.log";
       };
     };
 
