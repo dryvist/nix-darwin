@@ -163,11 +163,11 @@
     "brew-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1786831956,
-        "narHash": "sha256-Ycjg/Krw+U2tz3A41QMFSChBy6JlA2nkEQv2ZrgjMnE=",
+        "lastModified": 1786850139,
+        "narHash": "sha256-Kms3g8wm1CfQM4GeY12zRBu3DIP1apZJ4ZrKqVC7ql8=",
         "owner": "Homebrew",
         "repo": "brew",
-        "rev": "6c0fcdcdd7d992fe7695884ac481a7d6461e2ffb",
+        "rev": "bfae037b20df2be17177cec7bbbfdd4b65c11a81",
         "type": "github"
       },
       "original": {
@@ -880,11 +880,11 @@
     "jacobpevans-cc-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1786844204,
-        "narHash": "sha256-TV5LCQX6wIKiEM/oEx0H6XpTBQYbyJJFAxOp0/6NcGg=",
+        "lastModified": 1786857872,
+        "narHash": "sha256-4YMnVluBxvc38k1w7+6oE4rKFHp6iTmQW0pgS/KLx+M=",
         "owner": "dryvist",
         "repo": "claude-code-plugins",
-        "rev": "092ae41637afc750d1483de93f788e38d95f7e21",
+        "rev": "a4ced7b2a81ee0451587c870169a37459b56c285",
         "type": "github"
       },
       "original": {
@@ -1054,11 +1054,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1786850927,
-        "narHash": "sha256-gyT2fwjKE5Dk9yvoI0nnuzwnbVtonHcSZpA2WIz7JG4=",
+        "lastModified": 1786877092,
+        "narHash": "sha256-2g3o5k4PJX2EEfVUlPHYjobbYKokBWJxjpvbYEBijEg=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "199ee2a6bc6fe9231fe8b4a6dc33269a58ac3a6e",
+        "rev": "10e8e5ea55322db54d7ce36e180d652f4300a2b5",
         "type": "github"
       },
       "original": {
