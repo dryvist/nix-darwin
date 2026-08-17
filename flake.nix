@@ -276,25 +276,7 @@
       formatter.aarch64-darwin = nixpkgs.legacyPackages.aarch64-darwin.nixfmt-tree;
 
       # Quality checks for `nix flake check` (DRY principle).
-      #
-      # Scoped to x86_64-linux only so `nix flake check --all-systems` succeeds
-      # from a single linux runner. All checks in lib/checks.nix are source-only
-      # (formatting, statix, deadnix, shell-tests) — they operate
-      # on the same source files regardless of target system, so running once
-      # on the CI system is sufficient and equivalent. Other systems
-      # intentionally have no `checks` entries.
-      #
-      # Cross-platform breakage (e.g. darwin-only `meta.broken` in nixpkgs) is
-      # still caught by `--all-systems` evaluating `packages.aarch64-darwin`,
-      # `devShells.aarch64-darwin`, `formatter.aarch64-darwin`, and the
-      # `darwinConfigurations.*.system` derivations during flake evaluation.
-      #
-      # The darwin module-eval (only populated when `darwinConfigurations` is
-      # non-empty) was previously gated on `system == aarch64-darwin`; combined
-      # with the prior `all_systems: false` workaround, it never actually ran
-      # in CI. Dropping it here is therefore no regression. If on-runner darwin
-      # module-eval coverage is desired, run it as a post-merge job on a darwin
-      # runner or via a dedicated workflow.
+      # Scoped to x86_64-linux: source-only checks run once on CI runner.
       checks =
         let
           system = "x86_64-linux";
