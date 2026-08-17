@@ -1054,11 +1054,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1786883384,
-        "narHash": "sha256-c3YemP170j/7A+gmJAyyJVJX+uiuj4k3htqMVwp5VuY=",
+        "lastModified": 1786974826,
+        "narHash": "sha256-AZPVkOCGCSeDC7NiF+7Y1OHI4htrCljSPW+64SJO3/w=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "f68e176ead3232a3ba3ef8336d9b1fe7842ef7b3",
+        "rev": "b0cb903a6afc5cef3ea3afb7c0d27f7cfdc1c3e7",
         "type": "github"
       },
       "original": {
@@ -1256,6 +1256,29 @@
         "type": "github"
       }
     },
+    "nix-openwhispr": {
+      "inputs": {
+        "home-manager": [
+          "home-manager"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1786662609,
+        "narHash": "sha256-yJKpkTRnQEl9jYwBH2APJD5oK0BGHj3yVS8L5ueBXD8=",
+        "owner": "dryvist",
+        "repo": "nix-openwhispr",
+        "rev": "c2725eb05c4b3601c97c1a84a9d52ffb92302a46",
+        "type": "github"
+      },
+      "original": {
+        "owner": "dryvist",
+        "repo": "nix-openwhispr",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1784160687,
@@ -1443,6 +1466,7 @@
         "nix-ai-open-harness": "nix-ai-open-harness",
         "nix-home": "nix-home",
         "nix-homebrew": "nix-homebrew",
+        "nix-openwhispr": "nix-openwhispr",
         "nixpkgs": "nixpkgs_3",
         "sops-nix": "sops-nix",
         "systems": "systems_3"

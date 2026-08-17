@@ -63,19 +63,7 @@ in
     ./mlx-cluster-signing.nix
   ];
 
-  # ==========================================================================
-  # macOS Application Management (copyApps for TCC stability)
-  # ==========================================================================
-  # Use copyApps instead of linkApps to create REAL copies of apps at stable
-  # paths in ~/Applications/Home Manager Apps/. This allows macOS TCC
-  # (Transparency, Consent, Control) permissions to persist across rebuilds.
-  #
-  # With linkApps (default), apps symlink to /nix/store paths which change on
-  # every rebuild, invalidating TCC permissions (camera, mic, screen recording).
-  #
-  # Trade-off: Uses more disk space (~100MB per app) but TCC permissions persist.
-  #
-  # See: https://github.com/nix-community/home-manager/issues/8336
+  # macOS Application Management: copyApps gives stable paths for TCC persistence.
   targets.darwin = {
     copyApps.enable = true;
     linkApps.enable = false;
@@ -155,6 +143,7 @@ in
     # Claude, Codex, and the other local clients on every host. Vikunja's
     # credentials remain injected by the shared Doppler wrapper.
     aiMcp.servers.vikunja.disabled = lib.mkForce false;
+    aiMcp.servers.openrouter.disabled = lib.mkForce false;
 
     # cecli (nix-ai's Aider fork) is disabled — unused, and its
     # tree-sitter-language-pack<=0.13.0 pin fails to build on nixpkgs 26.05
