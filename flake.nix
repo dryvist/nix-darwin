@@ -87,6 +87,12 @@
       inputs.home-manager.follows = "home-manager";
     };
 
+    nix-openwhispr = {
+      url = "github:dryvist/nix-openwhispr";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
+
     # Official Determinate Nix module; automated updates are tracked by Renovate.
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
 
@@ -117,6 +123,7 @@
       home-manager,
       nix-ai,
       nix-ai-open-harness,
+      nix-openwhispr,
       nix-home,
       determinate,
       sops-nix,
@@ -211,6 +218,7 @@
                     dotgithub
                     hostConfig
                     nix-ai
+                    nix-openwhispr
                     ;
                 };
                 users.${userConfig.user.name} = import ./hosts/${label}/home.nix;
@@ -227,6 +235,7 @@
                 ]
                 ++ lib.optionals (label == "macbook-m4") [
                   nix-ai-open-harness.homeManagerModules.default
+                  nix-openwhispr.homeManagerModules.default
                 ];
               };
             }
