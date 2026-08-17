@@ -29,6 +29,14 @@ in
   # a name with no DNS record, which every harness surfaces as a connection
   # failure rather than as a configuration error.
   programs = {
+    openwhispr = {
+      enable = true;
+      autoStart = true;
+      modelBootstrap = true;
+      localTranscriptionProvider = "whisper";
+      whisperModel = "base";
+    };
+
     openHarness = {
       enable = true;
       endpoint = "https://llm.${userConfig.internalDomain}/v1";

@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.39.0](https://github.com/dryvist/nix-darwin/compare/v2.38.1...v2.39.0) (2026-08-17)
+
+
+### Features
+
+* add OpenWhispr to nix-darwin and Home Manager ([#2205](https://github.com/dryvist/nix-darwin/issues/2205)) ([213b54f](https://github.com/dryvist/nix-darwin/commit/213b54f1959fb5ad449f6acb5754525210ccc1f4))
+* **profile:** enable OpenRouter MCP server for user profile ([715242a](https://github.com/dryvist/nix-darwin/commit/715242a8f2c7b7b45ff34e334bbe7689fc396af3))
+
+
+### Bug Fixes
+
+* **cribl:** split cluster-watcher/rank logs into their own sourcetype ([#2201](https://github.com/dryvist/nix-darwin/issues/2201)) ([d4be003](https://github.com/dryvist/nix-darwin/commit/d4be00378cc715a19041e0df1278a0d6a5aedae8))
+* streamline flake.nix comments and add file-size override ([#2207](https://github.com/dryvist/nix-darwin/issues/2207)) ([373ca81](https://github.com/dryvist/nix-darwin/commit/373ca81f52fa66abb0d7546e2bb782498154eeef))
+* streamline hosts/common/home.nix comments and add file-size override ([#2208](https://github.com/dryvist/nix-darwin/issues/2208)) ([48609a4](https://github.com/dryvist/nix-darwin/commit/48609a4df22d1846ec7adfd5c683e6f8253456dd))
+
 ## [2.38.1](https://github.com/dryvist/nix-darwin/compare/v2.38.0...v2.38.1) (2026-08-16)
 
 
