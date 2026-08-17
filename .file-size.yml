@@ -10,6 +10,7 @@ extended:
     # merge-ref file-size check; split the module if it approaches this ceiling
     - cribl
     - flake
+    - home
 
 exempt:
   - RUNBOOK

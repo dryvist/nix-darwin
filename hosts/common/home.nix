@@ -63,19 +63,7 @@ in
     ./mlx-cluster-signing.nix
   ];
 
-  # ==========================================================================
-  # macOS Application Management (copyApps for TCC stability)
-  # ==========================================================================
-  # Use copyApps instead of linkApps to create REAL copies of apps at stable
-  # paths in ~/Applications/Home Manager Apps/. This allows macOS TCC
-  # (Transparency, Consent, Control) permissions to persist across rebuilds.
-  #
-  # With linkApps (default), apps symlink to /nix/store paths which change on
-  # every rebuild, invalidating TCC permissions (camera, mic, screen recording).
-  #
-  # Trade-off: Uses more disk space (~100MB per app) but TCC permissions persist.
-  #
-  # See: https://github.com/nix-community/home-manager/issues/8336
+  # macOS Application Management: copyApps gives stable paths for TCC persistence.
   targets.darwin = {
     copyApps.enable = true;
     linkApps.enable = false;
