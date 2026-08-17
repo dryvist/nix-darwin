@@ -155,6 +155,7 @@ in
     # Claude, Codex, and the other local clients on every host. Vikunja's
     # credentials remain injected by the shared Doppler wrapper.
     aiMcp.servers.vikunja.disabled = lib.mkForce false;
+    aiMcp.servers.openwhispr.disabled = lib.mkForce false;
 
     # cecli (nix-ai's Aider fork) is disabled — unused, and its
     # tree-sitter-language-pack<=0.13.0 pin fails to build on nixpkgs 26.05
