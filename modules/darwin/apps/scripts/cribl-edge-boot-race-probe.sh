@@ -13,22 +13,21 @@
 # launchd.daemons.cribl-edge-boot-race-probe entry once the ticket is
 # resolved.
 
-log="/var/log/cribl-boot-race-probe.log"
-cribl_path="$1"
+cribl_path="${1:?cribl_path required}"
 
 store_seen=""
 cribl_seen=""
-deadline=$(($(date +%s) + 60))
+deadline=$((SECONDS + 60))
 
-while [ "$(date +%s)" -lt "$deadline" ]; do
-  now="$(/usr/bin/perl -MTime::HiRes=time -e 'printf "%.3f", time')"
+while [ "$SECONDS" -lt "$deadline" ]; do
+  now="${EPOCHREALTIME:0:-3}"
   if [ -z "$store_seen" ] && [ -e /nix/store ]; then
     store_seen="$now"
-    echo "store_visible=$now" >> "$log"
+    echo "store_visible=$now"
   fi
   if [ -z "$cribl_seen" ] && [ -x "$cribl_path" ]; then
     cribl_seen="$now"
-    echo "cribl_resolvable=$now" >> "$log"
+    echo "cribl_resolvable=$now"
   fi
   if [ -n "$store_seen" ] && [ -n "$cribl_seen" ]; then
     break
@@ -37,5 +36,5 @@ while [ "$(date +%s)" -lt "$deadline" ]; do
 done
 
 if [ -z "$store_seen" ] || [ -z "$cribl_seen" ]; then
-  echo "timed_out store_seen=${store_seen:-never} cribl_seen=${cribl_seen:-never}" >> "$log"
+  echo "timed_out store_seen=${store_seen:-never} cribl_seen=${cribl_seen:-never}"
 fi
