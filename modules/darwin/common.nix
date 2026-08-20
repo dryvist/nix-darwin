@@ -85,9 +85,8 @@ in
     sox # Audio recording, conversion, and effects (Sound eXchange)
     portaudio # Cross-platform audio I/O library
   ];
-  # GUI apps (Raycast, SwiftBar, etc.) are user-level via home-manager
-  # copyApps (hosts/macbook-m4/home.nix) for TCC-stable paths — not
-  # system packages. bitwarden-desktop is a Homebrew cask (see homebrew.nix).
+  # GUI apps: SwiftBar via home-manager copyApps (hosts/macbook-m4/home.nix);
+  # Raycast / Bitwarden / Ghostty / etc. are Homebrew casks (see homebrew.nix).
 
   # --- Homebrew Configuration ---
   # See ./homebrew.nix for casks, brews, and masApps
