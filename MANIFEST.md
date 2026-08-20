@@ -148,7 +148,6 @@ copies them to `~/Applications/Home Manager Apps/` at TCC-stable paths.
 | ffmpeg | Audio/video recording, conversion, streaming |
 | ghostty-bin | Terminal emulator |
 | rapidapi | Full-featured HTTP client |
-| raycast | Productivity launcher (replaces Spotlight) |
 | swiftbar | Menu bar customization |
 
 Note: OrbStack installed via Homebrew cask (`greedy = true`) in `modules/darwin/homebrew.nix` for TCC permission stability.
@@ -175,6 +174,7 @@ All casks use `greedy = true` so that `brew upgrade --greedy` always installs th
 
 | Package | greedy | Description |
 | --- | --- | --- |
+| raycast | yes | Productivity launcher (moved from nixpkgs — version lag) |
 | obsidian | yes | Knowledge base / note-taking |
 | bitwarden | yes | Password manager desktop app (moved from nixpkgs — EOL electron_39) |
 | wispr-flow | yes | AI-powered voice dictation |
