@@ -16,6 +16,7 @@ _:
     ./auto-update-prevention.nix
     ./claude-continuity.nix
     ./cribl-edge.nix
+    ./cribl-edge-boot-race-probe.nix
     ./cribl-stream.nix
     ./git-apfs-volume.nix
     ./github-runner-container.nix
