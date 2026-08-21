@@ -152,9 +152,9 @@ jobs:
     if: needs.changes.outputs.nix == 'true'
     uses: dryvist/.github/.github/workflows/_nix-validate.yml@main
     with:
-      # Linux `nix flake check --all-systems` needs more disk/RAM for
-      # darwin-source substitution; m7+c7 family with s3-cache fits.
-      # Fork PRs fall back to ubuntu-latest (see header comment on `changes`).
+      # Darwin check derivations require darwin binaries; all_systems: false
+      # prevents platform-mismatch errors on the Linux validator.
+      all_systems: false
       runner_label: ${{ github.event.pull_request.head.repo.full_name == github.repository && format('runs-on={0}/cpu=4/ram=16/family=m7+c7/extras=s3-cache', github.run_id) || 'ubuntu-latest' }}
 
   claude-settings:
