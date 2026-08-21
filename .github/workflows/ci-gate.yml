@@ -113,6 +113,7 @@ jobs:
       file_size: true
       dependency_review: false
       zizmor: false
+      queue_timeout_minutes: 30
       runner_label: ${{ github.event.pull_request.head.repo.full_name == github.repository && format('runs-on={0}/runner=2cpu-linux-x64', github.run_id) || 'ubuntu-latest' }}
       filters: |
         nix:
