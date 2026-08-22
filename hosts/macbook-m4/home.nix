@@ -126,9 +126,8 @@ in
     discord # Voice/video chat - copyApps gives TCC-stable path for camera/mic permissions
     # zoom-us # DISABLED - no longer using Zoom
 
-    # Productivity / menu bar (moved from system-level; copyApps gives the same
-    # TCC-stable paths the darwin mac-app-util trampolines used to provide)
-    raycast # Productivity launcher (replaces Spotlight)
+    # Productivity / menu bar
+    # raycast: moved to homebrew.nix cask (greedy) — nixpkgs lags upstream.
     swiftbar # Menu bar customization
 
     # CLI / Media tools (non-GUI, no .app bundle)

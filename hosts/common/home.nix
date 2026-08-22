@@ -144,6 +144,15 @@ in
     # credentials remain injected by the shared Doppler wrapper.
     aiMcp.servers.vikunja.disabled = lib.mkForce false;
     aiMcp.servers.openrouter.disabled = lib.mkForce false;
+    # openwhispr is deliberately NOT listed. `aiMcp.servers` is an
+    # attrsOf submodule, so naming a server the pinned nix-ai does not define
+    # does not enable anything — it CREATES one from submodule defaults
+    # (type = "stdio", command = null), and that phantom then fails the
+    # "stdio servers must have a command" assertion, taking the whole
+    # darwinConfiguration eval down with it.
+    #
+    # The pinned nix-ai revision has no openwhispr entry. Restore this line
+    # in the same change that relocks nix-ai to a revision that defines it.
 
     # cecli (nix-ai's Aider fork) is disabled — unused, and its
     # tree-sitter-language-pack<=0.13.0 pin fails to build on nixpkgs 26.05

@@ -52,6 +52,12 @@ let
     } # Terminal emulator — needs Full Disk Access + App Management + Local Network
 
     # --- Productivity / Communication ---
+    # nixpkgs trails upstream releases past the 2-week threshold; greedy cask
+    # keeps /Applications current (Homebrew cask versions are not pin-able here).
+    {
+      name = "raycast";
+      greedy = true;
+    } # Productivity launcher (replaces Spotlight)
     {
       name = "obsidian";
       greedy = true;
