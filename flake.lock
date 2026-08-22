@@ -1223,11 +1223,11 @@
         "orbstack-kubernetes": "orbstack-kubernetes"
       },
       "locked": {
-        "lastModified": 1787346985,
-        "narHash": "sha256-uAKzTvUIecT1eKrHil2MuaYh4lESh+N4h/uclnkOwq8=",
+        "lastModified": 1787406742,
+        "narHash": "sha256-0UXAXToN4fgoNTaDCsF6FDBicHXFR0sfRwcSpege1EY=",
         "owner": "dryvist",
         "repo": "nix-home",
-        "rev": "7988b2312681d9331cf7d6e27a339d2cc8adeaa0",
+        "rev": "20c3f2f9ff1c5e4fed3abb84b608ea6a0c2d49a5",
         "type": "github"
       },
       "original": {
