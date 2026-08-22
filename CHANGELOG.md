@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.40.0](https://github.com/dryvist/nix-darwin/compare/v2.39.0...v2.40.0) (2026-08-22)
+
+
+### Features
+
+* **homebrew:** install Raycast via greedy workstation cask ([f1e93eb](https://github.com/dryvist/nix-darwin/commit/f1e93ebfb3cfe79adc4b59a3a4a3df5837210774))
+* **homebrew:** install Raycast via greedy workstation cask ([a125db9](https://github.com/dryvist/nix-darwin/commit/a125db9ce33930e100ad7f50c765bf79dd3e46ec))
+* **home:** enable OpenWhispr MCP in shared AI profile ([eac46a5](https://github.com/dryvist/nix-darwin/commit/eac46a5b48e60572218ac703611177d1e56ae665))
+* **home:** enable OpenWhispr MCP in shared AI profile ([07038cd](https://github.com/dryvist/nix-darwin/commit/07038cd52716859dc86bfa3071e626c2d4a00a13))
+
+
+### Bug Fixes
+
+* **cribl:** temporary boot-time probe for the cribl-edge store-path race ([e923b81](https://github.com/dryvist/nix-darwin/commit/e923b81e0aca53b2e685eb00bd4fe3e0b540f926))
+* **home:** drop the aiMcp override that manufactures a phantom server ([#2220](https://github.com/dryvist/nix-darwin/issues/2220)) ([288a291](https://github.com/dryvist/nix-darwin/commit/288a291df4cae4058e83d9e30556e14bd9b287da))
+
 ## [2.39.0](https://github.com/dryvist/nix-darwin/compare/v2.38.1...v2.39.0) (2026-08-17)
 
 
