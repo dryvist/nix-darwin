@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.40.1](https://github.com/dryvist/nix-darwin/compare/v2.40.0...v2.40.1) (2026-08-22)
+
+
+### Bug Fixes
+
+* **deps:** bump nix-openwhispr for the app-install build fix ([5840a67](https://github.com/dryvist/nix-darwin/commit/5840a67980fb8630c5ebfe026e41773110407973))
+* **deps:** bump nix-openwhispr to include the app-install build fix ([87c7994](https://github.com/dryvist/nix-darwin/commit/87c7994fe470d955df07f1e5088d3c50f6ffe784))
+
 ## [2.40.0](https://github.com/dryvist/nix-darwin/compare/v2.39.0...v2.40.0) (2026-08-22)
 
 
