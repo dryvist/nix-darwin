@@ -67,12 +67,16 @@
             - name: sourcetype
               value: "'mlx:metrics'"
   '';
-  # Critical macOS event telemetry -> index=os. sourcetype is derived
-  # from __inputId, one explicit branch per wired Source. The fallback is
-  # a visible sentinel and NOT 'macos:unifiedlog': the old unguarded
-  # chain silently relabelled anything unmatched as unified-log data, so
-  # a mis-wired Source looked correct in Splunk. An unmatched event now
-  # shows up as unmatched.
+  # Critical macOS event telemetry -> index=os. sourcetype is derived from
+  # __inputId, one explicit branch per wired Source. The fallback is a visible
+  # sentinel and NOT a real sourcetype: an unguarded chain used to relabel
+  # anything unmatched as unified-log data, so a mis-wired Source looked
+  # correct in Splunk. An unmatched event now shows up as unmatched.
+  #
+  # Names are the cc-edge-the-mac-pack-io namespaced set, not the flat ones
+  # this host shipped before. The Splunk TA keys its props to the namespaced
+  # names and two published pack releases announced them as breaking, so the
+  # flat names were arriving under a name no props matched. Do not flatten.
   "pipelines/os_events/conf.yml" = ''
     output: default
     functions:
@@ -83,32 +87,7 @@
             - name: index
               value: "'os'"
             - name: sourcetype
-              value: "String(__inputId).includes('unified_logs') ? 'macos:unifiedlog' : String(__inputId).includes('crashreports') ? 'macos:crashreport' : String(__inputId).includes('thermal') ? 'macos:thermal' : 'macos:unmatched'"
-      # Crash reports carry their own event time. Without this, _time is
-      # whenever Edge happened to read the file: accurate when it reads live,
-      # but hours to a day late whenever a report is picked up on restart or
-      # backfill -- which is what happens whenever Edge is not running for
-      # the first stretch after a reboot. Alerting on arrival still works;
-      # correlating a report against host state at the moment it was written
-      # does not.
-      #
-      # Two header shapes cover .ips (JSON header line, "timestamp") and
-      # .spin/.diag (plain-text "Date/Time:" header). .shutdownStall is a
-      # base64 spindump with no in-band timestamp and always takes the
-      # fallback. An event is never dropped for a missing timestamp -- an
-      # imprecise crash report beats a lost one -- but crash_time_source
-      # records which branch ran, so a search can separate exact times from
-      # approximate ones instead of trusting all of them equally.
-      - id: eval
-        filter: "sourcetype === 'macos:crashreport'"
-        conf:
-          add:
-            - name: __crash_time
-              value: "Date.parse(String((/(?:\"timestamp\"\\s*:\\s*\"|Date\\/Time:\\s+)(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d+ [+-]\\d{4})/.exec(_raw) || [])[1]).replace(' ', 'T').replace(' ', ''')) / 1000"
-            - name: crash_time_source
-              value: "__crash_time > 0 ? 'report' : 'arrival'"
-            - name: _time
-              value: "__crash_time > 0 ? __crash_time : _time"
+              value: "String(__inputId).includes('unified_logs') ? 'macos:unified_log' : String(__inputId).includes('crashreports') ? 'macos:crashreport' : String(__inputId).includes('thermal') ? 'macos:system:thermal' : 'macos:unmatched'"
   '';
   # Host performance sampling (powermetrics, wired memory) -> index
   # mac_perf, kept out of the os event index so a sampling cadence change
@@ -124,7 +103,7 @@
             - name: index
               value: "'mac_perf'"
             - name: sourcetype
-              value: "String(__inputId).includes('powermetrics') ? 'macos:powermetrics' : String(__inputId).includes('wired_memory') ? 'macos:wiredmemory' : 'macos:unmatched'"
+              value: "String(__inputId).includes('powermetrics') ? 'macos:perf:powermetrics' : String(__inputId).includes('wired_memory') ? 'macos:perf:wired_memory' : 'macos:unmatched'"
   '';
   "pipelines/firewall_logs/conf.yml" = ''
     output: default
@@ -176,25 +155,36 @@
           eventBreakerRegex: /[\n\r]+/
           name: jsonl
       tags: ai
-    # Crash/diagnostic reports run 2-3 MB per .ips body. Without this
-    # they fell through to the stock `fallback` ruleset at 51200 bytes
-    # and every single one was silently truncated.
+    # One event per crash report, timestamp taken at break time.
+    #
+    # The lookahead anchors on the three report-header forms and does not
+    # consume them, so the header stays inside its own event and the auto
+    # timestamp (length 400 -- longest observed header line is 356 bytes)
+    # reads the report's own time there. Deliberately no pipeline-level _time
+    # eval: two mechanisms writing _time is worse than either alone.
+    #
+    # maxEventBytes stays at 4 MiB and is load-bearing -- not because whole
+    # files were truncated (under the previous per-line breaker only one line
+    # in one sampled file exceeded 51200) but because that one line IS the
+    # payload: the WindowServer .ips carries 240559 bytes on a single line,
+    # cut to 21% of itself at the stock ceiling. Largest artifact measured on
+    # this host is 3627478 bytes, so the headroom is about 13%.
     MacOS Crash Reports:
       lib: custom
-      description: macOS .ips/.crash/.panic/.diag/.hang/.spin/.shutdownStall diagnostic reports; .ips bodies run 2-3 MB, far exceeding the 51200-byte default maxEventBytes that silently truncated every one of them
+      description: macOS .ips/.crash/.panic/.diag/.hang/.spin/.shutdownStall diagnostic reports; one event per report, header retained by lookahead so the auto timestamp reads the report's own time instead of Cribl arrival time
       rules:
         - condition: "true"
           type: regex
           timestampAnchorRegex: /^/
           timestamp:
             type: auto
-            length: 150
+            length: 400
           timestampTimezone: local
           timestampEarliest: -420weeks
           timestampLatest: +1week
           maxEventBytes: 4194304
           disabled: false
-          eventBreakerRegex: /[\n\r]+/
+          eventBreakerRegex: /(?=^\{"|^Date\/Time:|^Use spindump)/m
           name: crashreport
       tags: macos,crashreport
   '';
