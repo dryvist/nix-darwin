@@ -21,5 +21,10 @@
   # without recovery — this is intentional. Previous HM generations can restore
   # managed symlinks but cannot restore pre-existing conflicting content.
   # `--` ensures paths starting with `-` are never treated as flags.
+  #
+  # This covers regular files only. Upstream gates both this branch and the
+  # backupFileExtension branch on `! -L`, so an unmanaged SYMLINK at a managed
+  # path still aborts checkLinkTargets — hosts/common/hm-collision-clear.nix
+  # clears those before the collision check runs.
   backupCommand = "rm -rf --";
 }

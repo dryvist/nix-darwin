@@ -61,6 +61,9 @@ in
     # Durable code-signing identity for the cluster executables, so their macOS
     # privacy grants survive a rebuild instead of dying with the store path.
     ./mlx-cluster-signing.nix
+    # Unmanaged symlinks at managed paths abort checkLinkTargets and no backup
+    # option covers them; clear them before the collision check runs.
+    ./hm-collision-clear.nix
   ];
 
   # macOS Application Management: copyApps gives stable paths for TCC persistence.
