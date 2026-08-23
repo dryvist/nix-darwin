@@ -193,12 +193,12 @@ All casks use `greedy = true` so that `brew upgrade --greedy` always installs th
 | orbstack | yes | Container/Linux VM runtime — cask for TCC permission stability |
 | microsoft-teams | yes | Teams desktop app (not available on Mac App Store) |
 | firefox | yes | Mozilla Firefox browser — cask for TCC permission stability |
+| timemator | yes | Automatic time tracking (replaces Toggl Track) |
 
 ### Mac App Store
 
 | App | ID |
 | --- | --- |
-| Toggl Track | 1291898086 |
 | Monarch Money Tweaks | 6753774259 |
 | Windows App | 1295203466 |
 | Microsoft Word | 462054704 |
@@ -207,6 +207,11 @@ All casks use `greedy = true` so that `brew upgrade --greedy` always installs th
 | Microsoft Outlook | 985367838 |
 | Microsoft OneNote | 784801555 |
 | OneDrive | 823766827 |
+
+Toggl Track (1291898086) is disabled via `togglTrackDisabled` in
+`modules/darwin/homebrew.nix` — the vendor pushes Enterprise/paid tiers hard
+and gates core features behind an expensive paywall; Timemator (Casks, above)
+replaces it.
 
 ---
 

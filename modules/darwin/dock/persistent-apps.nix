@@ -46,7 +46,10 @@ in
       "/Applications/Ghostty.app"
     ]
     ++ lib.optionals enableWorkstationApps [
-      "/Applications/Toggl Track.app"
+      # "/Applications/Toggl Track.app" # DISABLED - togglTrackDisabled in
+      # homebrew.nix gates the masApps install only; re-enabling it there does
+      # NOT restore this line automatically, uncomment it too.
+      "/Applications/Timemator.app"
 
       # Knowledge & Notes
       "/Applications/Obsidian.app"
