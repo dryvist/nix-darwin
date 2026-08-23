@@ -90,3 +90,15 @@ run_sweep() {
   [ -L "$HOME/.local/bin/agent" ]
   [[ "$output" == *"clearing unmanaged symlink"* ]]
 }
+
+@test "a missing home-files symlink does not abort activation" {
+  # home-manager's real activation script runs under `set -eu -o pipefail`
+  # (modules/home-environment.nix). A bare `readlink` failure here would
+  # otherwise abort the ENTIRE home-manager activation, not just skip the
+  # sweep.
+  rm "$newGenPath/home-files"
+
+  run bash -euo pipefail -c "$SWEEP_SCRIPT"
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
+}
