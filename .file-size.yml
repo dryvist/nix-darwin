@@ -7,7 +7,30 @@ extended:
     - ANTHROPIC-ECOSYSTEM
     - TROUBLESHOOTING
     # cribl.nix crossed the 12KB error limit on develop, failing every PR's
-    # merge-ref file-size check; split the module if it approaches this ceiling
+    # merge-ref file-size check.
+    #
+    # IF cribl.nix FAILS THIS GATE, SPLIT IT. DO NOT RAISE THIS LIMIT.
+    # It sits at ~30 bytes of headroom deliberately, so the next comment
+    # anyone adds trips CI and lands them here, at the moment raising the
+    # number looks like the one-character fix. It is not.
+    #
+    # The split is NOT mechanical, so budget for it. hosts/common/
+    # cribl-pipelines.nix was carved out easily because pipelines and
+    # breakers are attrset keys — self-contained values that merge back
+    # with //, where indentation does not matter. The bulk that remains is
+    # the macOS telemetry inputs, and those are a FRAGMENT INSIDE the single
+    # inputs.yml indented string, where 12 spaces of YAML indentation are
+    # semantic. Nix strips the minimum common indentation from an indented
+    # string, so an extracted fragment comes back dedented and its keys stop
+    # being siblings under `inputs:`. Moving it needs an indent helper, i.e.
+    # a change to how the string is produced.
+    #
+    # Prerequisite before writing that helper: the lib.optionalString
+    # llm-gate append in cribl.nix already shows this mechanism misbehaving
+    # — its comments sit at 10 and its key at 12, so after stripping the key
+    # lands at 2 while its siblings are at 12. It parses, and nobody has
+    # established why. Resolve that first; do not build a string helper on
+    # top of an unexplained instance of that helper's own failure mode.
     - cribl
     - flake
     - home

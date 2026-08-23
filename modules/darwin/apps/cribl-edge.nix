@@ -5,22 +5,10 @@
 # packages/cribl-edge.nix and is immutable in the Nix store. Mutable state
 # (config, queues, logs) lives under cfg.dataDir (default /opt/cribl-data).
 #
-# Two management modes (mode option):
-#
-#   managed    — Fleet enrollment at first start via `cribl mode-managed-edge`
-#                using credentials from the configured secrets file; Cribl
-#                Cloud owns runtime configuration after enrollment.
-#                FLEET POLICY: Cribl Cloud fleets are reserved for Linux
-#                machines (VMs/containers/servers). Do not enroll macOS hosts.
-#
-#   standalone — GitOps: this module owns the node's configuration. Declarative
-#                config files (standalone.configFiles) are rendered from the
-#                Nix store into <dataDir>/local/edge/ on every activation —
-#                the Edge-mode config tree (inputs.yml, outputs.yml,
-#                pipelines/<name>/conf.yml); Edge merges it over default/edge/
-#                and ignores Stream's local/cribl/ tree for I/O config. Any
-#                stale fleet enrollment state is retired at startup. See
-#                docs/CRIBL-GITOPS.md.
+# Two management modes — see the `mode` option below for the contract and
+# docs/CRIBL-GITOPS.md for the standalone (GitOps) config tree. In standalone
+# mode the declarative files render into <dataDir>/local/edge/ on every
+# activation, and any stale fleet enrollment state is retired at startup.
 #
 # Managed mode accepts a root-only (0400) KEY=value file from the caller's
 # secret provider. The startScript parses it line-by-line — no `source`, no
@@ -60,18 +48,25 @@ let
     text = builtins.readFile ./scripts/cribl-edge-deploy-pack.sh;
   };
 
+  # Same shape as deployPackScript above: the .sh IS the program, not a payload
+  # a second store script execs. writeShellApplication supplies bash + a
+  # coreutils PATH and runs shellcheck over it; arguments come from the launchd
+  # argv below.
   startScript = pkgs.writeShellApplication {
     name = "cribl-edge-start";
     runtimeInputs = [ pkgs.coreutils ];
-    text = ''
-      exec ${./scripts/cribl-edge-start.sh} \
-        "${if cfg.cloud.secretsFile != null then cfg.cloud.secretsFile else "/dev/null"}" \
-        "${cfg.dataDir}" \
-        "${cfg.package}/opt/cribl" \
-        "${cfg.cloud.group}" \
-        "${cfg.mode}"
-    '';
+    text = builtins.readFile ./scripts/cribl-edge-start.sh;
   };
+
+  startArgs = lib.concatStringsSep " " (
+    map (a: ''"${a}"'') [
+      (if cfg.cloud.secretsFile != null then cfg.cloud.secretsFile else "/dev/null")
+      cfg.dataDir
+      "${cfg.package}/opt/cribl"
+      cfg.cloud.group
+      cfg.mode
+    ]
+  );
 
   # Render each declarative standalone config file into the Nix store; the
   # activation script installs them under <dataDir>/local/edge/.
@@ -222,17 +217,31 @@ in
     launchd.daemons.cribl-edge = {
       serviceConfig = {
         Label = "com.nix-darwin.cribl-edge";
-        ProgramArguments = [ "${startScript}/bin/cribl-edge-start" ];
-        RunAtLoad = true;
-        # Plain `KeepAlive = true` races the Nix store mount at cold boot:
         # /nix is a separate APFS volume mounted by the async RunAtLoad
-        # `systems.determinate.nix-store` daemon, so ProgramArguments'
-        # /nix/store/... path can be missing when launchd first spawns this
-        # daemon, crashing it into the penalty box for the rest of the
-        # uptime (observed both Macs, 2026-08-08 reboot). PathState makes
-        # launchd itself wait for /nix/store to exist before spawning, and
-        # keeps watching it — no reboot-dependent recovery needed.
-        KeepAlive.PathState."/nix/store" = true;
+        # `systems.determinate.nix-store` daemon, so a bare
+        # /nix/store/... argv0 is missing when launchd first spawns this
+        # daemon at cold boot: launchd logs "Missing executable detected",
+        # marks the service inactive, and never re-arms it (observed both
+        # Macs, and again on the reboot that produced this fix). What
+        # revived it 3m31s later was activation's
+        # launchd-self-heal, which only runs postActivation — so absent a
+        # darwin-rebuild the daemon stays dead for the rest of the uptime.
+        #
+        # `KeepAlive.PathState` does NOT fix this, despite two prior attempts
+        # resting on the belief that it does. PathState governs
+        # restart-after-exit only: it gates neither the RunAtLoad spawn nor
+        # any re-arm after a spawn that failed with ENOENT. Do not re-add it.
+        #
+        # /bin/sh and /bin/wait4path live on the System volume and are always
+        # present pre-mount. This is the same idiom nix-darwin already
+        # generates for org.nixos.activate-system on this host.
+        ProgramArguments = [
+          "/bin/sh"
+          "-c"
+          "/bin/wait4path /nix/store && exec ${startScript}/bin/cribl-edge-start ${startArgs}"
+        ];
+        RunAtLoad = true;
+        KeepAlive = true;
         ThrottleInterval = 10;
         UserName = cfg.serviceUser;
         GroupName = cfg.serviceGroup;
