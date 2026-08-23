@@ -75,7 +75,7 @@ in
         (~84% of RAM). This is the L1 wired ceiling; the mlx-lm serving stack
         sets an in-process L2 cap (programs.mlx.memoryHardLimitGb) just below it.
         The old gpuMemoryUtilization pairing was vllm-mlx-only and is retired.
-        https://docs.jacobpevans.com/local-llm/memory-ceilings
+        https://docs.jacobpevans.com/d/hosts/ai/apple-silicon-memory-model/
       '';
     };
 

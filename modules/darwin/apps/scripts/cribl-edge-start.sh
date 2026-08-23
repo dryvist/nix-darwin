@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Cribl Edge startup script.
 #
-# Arguments (set by the Nix wrapper in cribl-edge.nix):
+# Arguments (appended to the launchd argv in cribl-edge.nix; this file is
+# the program itself, wrapped by writeShellApplication for bash + PATH):
 #   $1 = path to a KEY=value secrets file (root-only 0400; /dev/null in
 #        standalone mode)
 #   $2 = CRIBL_VOLUME_DIR (mutable state / data dir)

@@ -5,6 +5,19 @@
   src,
   darwinConfigurations ? { },
 }:
+let
+  # The stray-symlink sweep (../hosts/common/hm-collision-clear.nix) is inlined
+  # into that module rather than a standalone .sh file. Extracting the text
+  # here, at ordinary Nix evaluation time, lets the bats test below exercise it
+  # without needing `nix eval` (and therefore recursive-nix) inside the
+  # sandboxed check derivation. `lib.hm.dag.entryBefore` is the only `lib`
+  # function that module calls; a stand-in returning its `text` argument
+  # unwrapped is enough to evaluate it standalone.
+  hmCollisionClearSweep =
+    (import ../hosts/common/hm-collision-clear.nix {
+      lib.hm.dag.entryBefore = _: text: text;
+    }).home.activation.clearStrayLinkTargets;
+in
 {
   # Check Nix formatting with nixfmt
   # Uses treefmt configured with nixfmt formatter
@@ -79,10 +92,11 @@
           jq
           yq-go
         ];
+        HM_COLLISION_CLEAR_SWEEP = hmCollisionClearSweep;
       }
       ''
         cd ${src}
-        for f in test_bats_framework.bats test_check_ci_invariants.bats test_check_file_sizes.bats test_cluster_maintenance_window.bats test_cluster_rebuild_gate.bats test_cribl_llm_classifier.bats test_openbao_slack_creds.bats test_verify_symlinks.bats; do
+        for f in test_bats_framework.bats test_check_ci_invariants.bats test_check_file_sizes.bats test_cluster_maintenance_window.bats test_cluster_rebuild_gate.bats test_cribl_llm_classifier.bats test_hm_collision_clear.bats test_openbao_slack_creds.bats test_verify_symlinks.bats; do
           bats tests/shell/$f
         done
         touch $out
