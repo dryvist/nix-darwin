@@ -180,11 +180,11 @@
     "browser-use-skills": {
       "flake": false,
       "locked": {
-        "lastModified": 1786649293,
-        "narHash": "sha256-H2Py3qwaiHn2jWARSIsGSdSSlqUWyJocN2Iq/2nmxiI=",
+        "lastModified": 1787160920,
+        "narHash": "sha256-WA98EWn7S2J6emRTBLYL++3Ys00TsvXXXW1j6O5RzBs=",
         "owner": "browser-use",
         "repo": "browser-use",
-        "rev": "6c73fced2f6d45a11d88622fe56365a5fe18f28b",
+        "rev": "85ddbfedf609166b2d2c76c3d80506649fee82a9",
         "type": "github"
       },
       "original": {
@@ -361,11 +361,11 @@
     "context-engineering-kit": {
       "flake": false,
       "locked": {
-        "lastModified": 1786130450,
-        "narHash": "sha256-FTifVQGQbTqxBHOdJc/MVs7wdrJSxNZ2fzQr2/uvFjc=",
+        "lastModified": 1787259058,
+        "narHash": "sha256-6pEnwBNd4KRJRw4cstxoHc+bWv6Pt/nyZXJs2Kd9f4w=",
         "owner": "NeoLabHQ",
         "repo": "context-engineering-kit",
-        "rev": "8539779375f4e24b80f61476cfeaef330fa2d318",
+        "rev": "c346eeea5afac55c0845e48ffe9df6fdb82e69d5",
         "type": "github"
       },
       "original": {
@@ -928,11 +928,11 @@
     "last30days-skill": {
       "flake": false,
       "locked": {
-        "lastModified": 1786139466,
-        "narHash": "sha256-aU0+GboMsmtpoOhJqQfe63EpLHcpuh00Q8ERbTdL3BM=",
+        "lastModified": 1787349541,
+        "narHash": "sha256-rVIzLV4CTBl9tSxuRG2TX8SLFyCzMlb3ODg/HsPUAYI=",
         "owner": "mvanhorn",
         "repo": "last30days-skill",
-        "rev": "1004324ad35a3ba656e6df0faabd54749e398455",
+        "rev": "d05389d39b2ce09a13f71b01e68562f077c766df",
         "type": "github"
       },
       "original": {
@@ -1054,11 +1054,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1787319864,
-        "narHash": "sha256-/c+/T1ac4BNp1Cv9lFM9v7x7fYjr6fg6Ic/tGVh0l6c=",
+        "lastModified": 1787451087,
+        "narHash": "sha256-0qODw+G5U+hpjBPvlZW2kHreIleqzfVOMD5yGID1KP4=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "9b4ae734c240947a891827dc49cb132ec2e924ae",
+        "rev": "7b34fe9fdb58cdc1d9aa9bb77f1a8daabdee1179",
         "type": "github"
       },
       "original": {
@@ -1174,11 +1174,11 @@
         "wakatime": "wakatime"
       },
       "locked": {
-        "lastModified": 1785937024,
-        "narHash": "sha256-xxYbOA5SjggwWoZHiIoeG/49wOPTGSACr/H2+EYYV1A=",
+        "lastModified": 1786941869,
+        "narHash": "sha256-8Zbda1JncMmlIvaVWKaeuCKbi4/otDB5CKsqwjyLZ+w=",
         "owner": "dryvist",
         "repo": "nix-claude-code",
-        "rev": "c98043ee9c792ba8a6b2743bb8f3661a3b08db5c",
+        "rev": "afc82cb7da94ac3578ca8176ced546d9f0c7e5fe",
         "type": "github"
       },
       "original": {
@@ -1327,11 +1327,11 @@
     },
     "nixpkgs-unstable": {
       "locked": {
-        "lastModified": 1786593342,
-        "narHash": "sha256-smTKQXMLLStzc8zJevMCckbk3My7SvbbLmPYZUJJKW4=",
+        "lastModified": 1787209939,
+        "narHash": "sha256-WvvHR4kSQLAbtouMC/ruZ5UpLwlUcY3K4FAllMN+yGk=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "6b5e5b7a6631f065bf6908986990b37d845f847f",
+        "rev": "391b592eb44808b3bd0cb80bb71b63a5a118b8bb",
         "type": "github"
       },
       "original": {
@@ -1656,11 +1656,11 @@
     "vct-splunk-cli": {
       "flake": false,
       "locked": {
-        "lastModified": 1785935386,
-        "narHash": "sha256-5/mijd0hHb4uZWMJa6jGmMjqpvxyHpWC8YGpk1G1bKs=",
+        "lastModified": 1787049325,
+        "narHash": "sha256-EyWeuRPNVvEZRfv0b3kqJVflyU+XAMyxUiaTA2Yi94U=",
         "owner": "VisiCore",
         "repo": "vct-splunk-cli",
-        "rev": "2e47882fb77de2833e01f10a365f00376d80228f",
+        "rev": "6012b13ead000c01da8e58a9c00cf89612967bdd",
         "type": "github"
       },
       "original": {
