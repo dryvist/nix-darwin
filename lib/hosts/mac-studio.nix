@@ -114,12 +114,20 @@ in
       # and must not run on the worker's own weights. KEEP IN STEP WITH THE
       # ROUTER: llama-swap and LiteLLM resolve that alias independently and
       # once named different models. Rationale: ./mac-studio.md "The judge".
+      #
+      # AND "judge" since 2026-08-23, so the publish-boundary gate resolves one
+      # alias on every host. gh-guard (nix-home modules/home-manager/gh) judges
+      # against whatever "judge" names and talks to llama-swap directly, so the
+      # alias must exist here too; the macbook carries it on its own resident
+      # judge model. Without it the gate has to name a swap-class model, which
+      # is evicted or TTL-expired mid-scan and fails the gate closed.
       qwen36-35b = {
         class = "resident";
         roles = [
           "quickest"
           "large-context"
           "goal-judge"
+          "judge"
         ];
       };
       # Small on-demand 9B, and the `small` role. STAYS ENABLED, and the role
