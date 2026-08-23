@@ -163,7 +163,33 @@ in
             in_macos_unified_logs:
               type: apple_unified_logs
               disabled: false
-              predicate: '(process == "kernel" AND (eventMessage CONTAINS[c] "jetsam" OR eventMessage CONTAINS[c] "memorystatus" OR eventMessage CONTAINS[c] "low swap" OR eventMessage CONTAINS[c] "memory pressure" OR eventMessage CONTAINS[c] "panic" OR eventMessage CONTAINS[c] "IOGPU" OR eventMessage CONTAINS[c] "AGX" OR eventMessage CONTAINS[c] "thermal")) OR process == "DumpPanic" OR process == "ReportCrash" OR process == "thermalmonitord" OR subsystem == "com.apple.thermalmonitord" OR eventMessage CONTAINS[c] "userspace watchdog timeout" OR eventMessage CONTAINS[c] "GPU restart" OR eventMessage CONTAINS[c] "gpu hang"'
+              #
+              # "memory pressure" is deliberately OUTSIDE the kernel group.
+              # The kernel does not use that phrasing -- every real hit is
+              # userspace -- so scoping it to process == "kernel" made the
+              # clause unmatchable. Measured over a 5.4h window: 73 events
+              # unscoped, 0 kernel-scoped. Among the 73 is modelmanagerd
+              # "Critical Memory Pressure Event Loop", from a process directly
+              # implicated in memory exhaustion, which the scoped form
+              # dropped. Cost of unscoping is ~73 events per 5.4h, about
+              # 0.5%; the 21x narrowing survives.
+              #
+              # "low swap" stays kernel-scoped and currently matches nothing.
+              # That is a real signal that fires on swap exhaustion, which has
+              # not occurred here -- quiet, not malformed.
+              #
+              # UNVERIFIED, do not read as coverage: "GPU restart" and
+              # "gpu hang" have never matched, and there is no evidence macOS
+              # emits either string. Rare and invented cannot be told apart
+              # without a window containing a real GPU reset. Do not assume
+              # GPU resets are handled.
+              #
+              # KNOWN GAP: "Metal" and "SkyLight" are deliberately absent.
+              # They would add ~26% volume for streams sampled as routine
+              # chatter, and the compositor starvation that mattered surfaced
+              # through DumpPanic and "userspace watchdog timeout", both of
+              # which are present and both of which caught the real event.
+              predicate: '(process == "kernel" AND (eventMessage CONTAINS[c] "jetsam" OR eventMessage CONTAINS[c] "memorystatus" OR eventMessage CONTAINS[c] "low swap" OR eventMessage CONTAINS[c] "panic" OR eventMessage CONTAINS[c] "IOGPU" OR eventMessage CONTAINS[c] "AGX" OR eventMessage CONTAINS[c] "thermal")) OR eventMessage CONTAINS[c] "memory pressure" OR process == "DumpPanic" OR process == "ReportCrash" OR process == "thermalmonitord" OR subsystem == "com.apple.thermalmonitord" OR eventMessage CONTAINS[c] "userspace watchdog timeout" OR eventMessage CONTAINS[c] "GPU restart" OR eventMessage CONTAINS[c] "gpu hang"'
               sendToRoutes: false
               connections:
                 - pipeline: os_events
