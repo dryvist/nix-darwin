@@ -302,3 +302,5 @@
       };
     };
 }
+
+# ci-probe: exercises the non-main allowed-skips arm; PR is a draft and will be closed
