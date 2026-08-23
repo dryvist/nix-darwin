@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.42.0](https://github.com/dryvist/nix-darwin/compare/v2.41.0...v2.42.0) (2026-08-23)
+
+
+### Features
+
+* **homebrew:** add Timemator, disable Toggl Track and neat casks ([a5d6a76](https://github.com/dryvist/nix-darwin/commit/a5d6a76f738f3a88f3c642b919117e430fbf941b))
+* **homebrew:** add Timemator, disable Toggl Track and neat casks ([3cb2867](https://github.com/dryvist/nix-darwin/commit/3cb2867668cb2eecaf061fa212945913fa3799db))
+* **mlx:** give the Studio's resident model the judge alias ([#2244](https://github.com/dryvist/nix-darwin/issues/2244)) ([2667e73](https://github.com/dryvist/nix-darwin/commit/2667e73a9c3366da5b7fe7646049c9c1667ba631))
+
+
+### Bug Fixes
+
+* **activation:** fail the rebuild when home-manager does not apply ([#2231](https://github.com/dryvist/nix-darwin/issues/2231)) ([178c5b9](https://github.com/dryvist/nix-darwin/commit/178c5b9dd0446cda9b1f733790e32f1b1309a329))
+* **activation:** treat DRY_RUN/dryRun as booleans, not mere presence ([cc71357](https://github.com/dryvist/nix-darwin/commit/cc71357116392686a925300ce3310bc266b34545))
+* **cribl:** repair the macOS Edge lane end to end ([#2247](https://github.com/dryvist/nix-darwin/issues/2247)) ([4585925](https://github.com/dryvist/nix-darwin/commit/45859255138353002e7fc2637ece44ae6f2b0c4b))
+
+
+### Performance
+
+* **ci:** run the full macOS Nix Build only on PRs targeting main ([#2241](https://github.com/dryvist/nix-darwin/issues/2241)) ([90789c1](https://github.com/dryvist/nix-darwin/commit/90789c136e07b9213629fde0f348e2b723bba66a))
+
 ## [2.41.0](https://github.com/dryvist/nix-darwin/compare/v2.40.1...v2.41.0) (2026-08-23)
 
 
