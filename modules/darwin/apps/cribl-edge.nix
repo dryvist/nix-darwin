@@ -203,7 +203,7 @@ in
     # restart came up on the previous generation's config, and a config-only
     # change never reached the running daemon at all until the next reboot.
     system.activationScripts.extraActivation.text = ''
-      ${./scripts/cribl-edge-activate.sh} "${cfg.dataDir}" "${cfg.serviceUser}:${cfg.serviceGroup}"
+      ${./scripts/cribl-edge-activate.sh} "${cfg.dataDir}" "${cfg.serviceUser}:${cfg.serviceGroup}" "${cfg.mode}"
       ${lib.optionalString (cfg.mode == "standalone") standaloneConfigInstall}
       ${lib.optionalString (cfg.packs != { }) (
         lib.concatStringsSep "\n" (
@@ -235,10 +235,31 @@ in
         # /bin/sh and /bin/wait4path live on the System volume and are always
         # present pre-mount. This is the same idiom nix-darwin already
         # generates for org.nixos.activate-system on this host.
+        #
+        # STANDALONE EXECS CRIBL DIRECTLY. There is nothing left for a wrapper
+        # to decide here: the data directories are created in activation, the
+        # declarative config is installed in activation, and the managed-state
+        # retirement is a one-shot migration that also moved to activation. All
+        # the wrapper did on this path was re-derive a mode that is known at
+        # build time and then exec the same binary. The remaining `/bin/sh -c`
+        # is the mount-wait above, not a wrapper.
+        #
+        # MANAGED KEEPS THE WRAPPER, because enrolment genuinely needs run-time
+        # work: reading a secrets file, parsing the leader URL into token, host,
+        # port and group, and enrolling before the server starts. None of that
+        # is expressible in a plist. No host here sets mode = "managed", so this
+        # branch is untested by any live converge — treat it as legacy support
+        # rather than a supported path, and if it ever gains a user, exercise it
+        # before trusting it.
         ProgramArguments = [
           "/bin/sh"
           "-c"
-          "/bin/wait4path /nix/store && exec ${startScript}/bin/cribl-edge-start ${startArgs}"
+          (
+            if cfg.mode == "standalone" then
+              "/bin/wait4path /nix/store && exec ${cfg.package}/opt/cribl/bin/cribl server"
+            else
+              "/bin/wait4path /nix/store && exec ${startScript}/bin/cribl-edge-start ${startArgs}"
+          )
         ];
         RunAtLoad = true;
         KeepAlive = true;
@@ -260,6 +281,14 @@ in
           # $CODEX_HOME/$GEMINI_HOME transcript paths from the Edge process env.
           CODEX_HOME = "${userConfig.user.homeDir}/.codex";
           GEMINI_HOME = userConfig.user.homeDir;
+        }
+        // lib.optionalAttrs (cfg.mode == "standalone") {
+          # Exported by the wrapper until now. `cribl server` reads both from
+          # its environment, so with the wrapper gone they have to be declared
+          # here or the daemon starts against the package's own default paths
+          # and writes its state into the store path instead of dataDir.
+          CRIBL_VOLUME_DIR = cfg.dataDir;
+          CRIBL_HOME = "${cfg.package}/opt/cribl";
         };
       };
     };
