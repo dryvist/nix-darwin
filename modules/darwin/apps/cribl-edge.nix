@@ -5,22 +5,10 @@
 # packages/cribl-edge.nix and is immutable in the Nix store. Mutable state
 # (config, queues, logs) lives under cfg.dataDir (default /opt/cribl-data).
 #
-# Two management modes (mode option):
-#
-#   managed    — Fleet enrollment at first start via `cribl mode-managed-edge`
-#                using credentials from the configured secrets file; Cribl
-#                Cloud owns runtime configuration after enrollment.
-#                FLEET POLICY: Cribl Cloud fleets are reserved for Linux
-#                machines (VMs/containers/servers). Do not enroll macOS hosts.
-#
-#   standalone — GitOps: this module owns the node's configuration. Declarative
-#                config files (standalone.configFiles) are rendered from the
-#                Nix store into <dataDir>/local/edge/ on every activation —
-#                the Edge-mode config tree (inputs.yml, outputs.yml,
-#                pipelines/<name>/conf.yml); Edge merges it over default/edge/
-#                and ignores Stream's local/cribl/ tree for I/O config. Any
-#                stale fleet enrollment state is retired at startup. See
-#                docs/CRIBL-GITOPS.md.
+# Two management modes — see the `mode` option below for the contract and
+# docs/CRIBL-GITOPS.md for the standalone (GitOps) config tree. In standalone
+# mode the declarative files render into <dataDir>/local/edge/ on every
+# activation, and any stale fleet enrollment state is retired at startup.
 #
 # Managed mode accepts a root-only (0400) KEY=value file from the caller's
 # secret provider. The startScript parses it line-by-line — no `source`, no

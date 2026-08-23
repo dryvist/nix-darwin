@@ -145,28 +145,65 @@ in
             # cc-edge-the-mac-pack-io pack. Edge runs as root here, so
             # powermetrics/ioreg/DiagnosticReports reads succeed.
             #
-            # Unified Logging Subsystem, native Source. TIGHT predicate: only
-            # memory-pressure/jetsam/watchdog/thermal/panic signals, not the
-            # firehose. readMode lastEntry = only new entries after (re)start.
+            # Unified Logging Subsystem, native Source.
+            #
+            # readMode is DELIBERATELY ABSENT. "lastEntry" is not a valid enum
+            # value (the validator accepts oldest|newest only), so Cribl
+            # rejected this whole input with CrudEntityInvalidError on every
+            # restart -- it had never once initialized. Do not re-add it; the
+            # default ("from last entry") is what was wanted anyway.
+            #
+            # The predicate is narrowed to the panic/thermal/jetsam signal
+            # path. The previous one matched bare "watchdog"/"thermal" from
+            # runningboardd/WallpaperAgent and measured 165,891 events over 3h
+            # (~1.33M/day), burying the DumpPanic line that mattered; this one
+            # measured 7,901 over the same window (~63k/day, 21x less) and
+            # still catches it. Shipping it together with the readMode fix is
+            # not optional: fixing readMode alone floods the destination.
             in_macos_unified_logs:
               type: apple_unified_logs
               disabled: false
-              readMode: lastEntry
-              predicate: 'eventMessage CONTAINS[c] "jetsam" OR eventMessage CONTAINS[c] "memory pressure" OR eventMessage CONTAINS[c] "memorystatus" OR eventMessage CONTAINS[c] "watchdog" OR eventMessage CONTAINS[c] "thermal" OR eventMessage CONTAINS[c] "panic" OR eventMessage CONTAINS[c] "low swap"'
+              predicate: '(process == "kernel" AND (eventMessage CONTAINS[c] "jetsam" OR eventMessage CONTAINS[c] "memorystatus" OR eventMessage CONTAINS[c] "low swap" OR eventMessage CONTAINS[c] "memory pressure" OR eventMessage CONTAINS[c] "panic" OR eventMessage CONTAINS[c] "IOGPU" OR eventMessage CONTAINS[c] "AGX" OR eventMessage CONTAINS[c] "thermal")) OR process == "DumpPanic" OR process == "ReportCrash" OR process == "thermalmonitord" OR subsystem == "com.apple.thermalmonitord" OR eventMessage CONTAINS[c] "userspace watchdog timeout" OR eventMessage CONTAINS[c] "GPU restart" OR eventMessage CONTAINS[c] "gpu hang"'
               sendToRoutes: false
               connections:
                 - pipeline: os_events
                   output: cribl_stream
             # powermetrics: the only path to per-process energy + CPU/GPU/ANE
             # power. Exec, 300s (expensive sampler). One JSON doc per sample.
+            # Performance sampling, not event telemetry -> index=mac_perf.
+            #
+            # The `-replace timestamp -string ""` hop is load-bearing:
+            # `plutil -convert json` cannot represent the <date> plist type and
+            # powermetrics' fixed per-sample header always emits
+            # <key>timestamp</key><date>, so every sample failed to convert.
+            # `-replace` and not `-remove`: -remove hard-fails with "No value
+            # to remove at key path timestamp" whenever the key is absent,
+            # while -replace creates it and cannot fail.
             in_macos_powermetrics:
               type: exec
               disabled: false
               interval: 300
-              command: "powermetrics --samplers tasks,battery,cpu_power,gpu_power,ane_power,thermal --show-process-energy -f plist -n 1 -i 5000 | /usr/bin/plutil -convert json -o - -"
+              command: "powermetrics --samplers tasks,battery,cpu_power,gpu_power,ane_power,thermal --show-process-energy -f plist -n 1 -i 5000 | /usr/bin/plutil -replace timestamp -string \"\" -o - - | /usr/bin/plutil -convert json -o - -"
               sendToRoutes: false
               connections:
-                - pipeline: os_events
+                - pipeline: mac_perf
+                  output: cribl_stream
+            # Wired memory + the GPU wired ceiling (iogpu.wired_limit_mb):
+            # system_metrics exposes memory_percent only, neither of these. At
+            # wired has been observed at 91.3 GiB against a 100 GiB ceiling,
+            # which is the signal that predicts exhaustion. Command taken VERBATIM from
+            # cc-edge-the-mac-pack-io (stock binaries chained, no script file);
+            # it also emits wired_ceiling_bytes on top of the four headline
+            # fields. Named in_* to match this instance's inputs -- the pack
+            # calls it macos-wired-memory.
+            in_macos_wired_memory:
+              type: exec
+              disabled: false
+              interval: 60
+              command: "/bin/bash -c 'wp=$(/usr/bin/vm_stat | /usr/bin/awk \"/Pages wired down/{gsub(/[^0-9]/,\\\"\\\",\\$4);print \\$4}\"); pgsz=$(/usr/sbin/sysctl -n hw.pagesize); cm=$(/usr/sbin/sysctl -n iogpu.wired_limit_mb); rk=$(/bin/ps -A -o rss= | /usr/bin/awk \"{s+=\\$1} END{print s+0}\"); /usr/bin/awk -v wp=\"$wp\" -v pgsz=\"$pgsz\" -v cm=\"$cm\" -v rk=\"$rk\" \"BEGIN{wb=wp*pgsz; cb=cm*1024*1024; printf \\\"{\\\\\\\"wired_bytes\\\\\\\":%d,\\\\\\\"wired_ceiling_mb\\\\\\\":%d,\\\\\\\"wired_ceiling_bytes\\\\\\\":%d,\\\\\\\"wired_ratio\\\\\\\":%.4f,\\\\\\\"resident_bytes\\\\\\\":%d}\\\\n\\\", wb, cm, cb, wb/cb, rk*1024}\"'"
+              sendToRoutes: false
+              connections:
+                - pipeline: mac_perf
                   output: cribl_stream
             # Thermal/perf pressure levels (pmset -g therm) — not in the native
             # System Metrics Source on macOS. Exec, 60s.
@@ -201,8 +238,15 @@ in
                 - "*/*.crash"
                 - "*/*.diag"
                 - "*/*.hang"
+                # .spin = blocked-thread stacks, the single most diagnostic
+                # artifact for a WindowServer-watchdog panic; .shutdownStall
+                # marks an unclean shutdown (3 in one week, unrecorded before).
+                - "*/*.spin"
+                - "*/*.shutdownStall"
               tailOnly: true
               sendToRoutes: false
+              breakerRulesets:
+                - MacOS Crash Reports
               connections:
                 - pipeline: os_events
                   output: cribl_stream
@@ -218,8 +262,15 @@ in
                 - "*/*.crash"
                 - "*/*.diag"
                 - "*/*.hang"
+                # .spin = blocked-thread stacks, the single most diagnostic
+                # artifact for a WindowServer-watchdog panic; .shutdownStall
+                # marks an unclean shutdown (3 in one week, unrecorded before).
+                - "*/*.spin"
+                - "*/*.shutdownStall"
               tailOnly: true
               sendToRoutes: false
+              breakerRulesets:
+                - MacOS Crash Reports
               connections:
                 - pipeline: os_events
                   output: cribl_stream
@@ -516,132 +567,8 @@ in
               port: 10311
               pqEnabled: true
         '';
-        # Model-server logs: the manager (Go) and its workers (Python) share
-        # the same two files. Keep the worker sourcetype backend-neutral so a
-        # selected MLX server change does not require downstream rewrites.
-        # in_cluster_logs (rank/watcher/peer-liveness) shares this same
-        # pipeline but is a third, unrelated event shape — discriminate on
-        # __inputId FIRST (same pattern as os_events below), or its lines
-        # fall through the content regex and land mislabeled as
-        # mlx:model-server, indistinguishable from real worker output
-        # (verified live: thousands of cluster-watcher decision lines tagged
-        # mlx:model-server before this fix).
-        #
-        # None of the three source formats carries a timestamp Cribl can
-        # reliably parse at the line start (llama-swap's own `[INFO] Request
-        # ...` access lines and the cluster-watcher lines have no leading
-        # timestamp at all), so _time for llamaswap and mlx:cluster is
-        # arrival/index time — same honest, already-documented pattern used
-        # for firewall_logs below. Only the Python worker lines (mlx:model-server)
-        # carry a real per-line timestamp, which Cribl parses natively.
-        "pipelines/llm_logs/conf.yml" = ''
-          output: default
-          functions:
-            - id: eval
-              filter: "true"
-              conf:
-                add:
-                  - name: index
-                    value: "'llm'"
-                  - name: sourcetype
-                    value: "String(__inputId).includes('cluster') ? 'mlx:cluster' : _raw.match(/^(\\[(DEBUG|INFO|WARN|ERROR)\\] |time=[^ ]+ level=(DEBUG|INFO|WARN|ERROR) |[0-9]{4}[/][0-9]{2}[/][0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})/) ? 'llamaswap' : 'mlx:model-server'"
-        '';
-        "pipelines/bench_events/conf.yml" = ''
-          output: default
-          functions:
-            - id: eval
-              filter: "true"
-              conf:
-                add:
-                  - name: index
-                    value: "'llm'"
-                  - name: sourcetype
-                    value: "'mlx:bench'"
-        '';
-        # system_metrics -> index=llm (EVENT), sourcetype mlx:metrics. INTERIM
-        # (see in_system_metrics above): the os_metrics METRIC-index route was
-        # reverted because this S2S path ships event-format data that a metric
-        # index rejects. Restore os_metrics here once the Stream side formats
-        # these as Splunk metrics via a per-index os_metrics token.
-        "pipelines/llm_metrics/conf.yml" = ''
-          output: default
-          functions:
-            - id: eval
-              filter: "true"
-              conf:
-                add:
-                  - name: index
-                    value: "'llm'"
-                  - name: sourcetype
-                    value: "'mlx:metrics'"
-        '';
-        # Critical macOS logs + power/thermal/crash telemetry -> index=os
-        # (event). One pipeline for every macos:* event Source; sourcetype is
-        # derived from __inputId so each Source lands its own sourcetype.
-        "pipelines/os_events/conf.yml" = ''
-          output: default
-          functions:
-            - id: eval
-              filter: "true"
-              conf:
-                add:
-                  - name: index
-                    value: "'os'"
-                  - name: sourcetype
-                    value: "String(__inputId).includes('powermetrics') ? 'macos:powermetrics' : String(__inputId).includes('thermal') ? 'macos:thermal' : String(__inputId).includes('crashreports') ? 'macos:crashreport' : 'macos:unifiedlog'"
-        '';
-        "pipelines/firewall_logs/conf.yml" = ''
-          output: default
-          functions:
-            - id: eval
-              filter: "true"
-              conf:
-                add:
-                  - name: index
-                    value: "'firewall'"
-                  - name: sourcetype
-                    value: "'macos:firewall'"
-        '';
-        # AI-CLI transcript pipelines, taken VERBATIM from the released pack
-        # derivations (see the let block at the top) and installed as
-        # worker-level pipelines. Why not run them inside the packs: on this
-        # standalone Edge the pack-internal routing layer never loads — the
-        # live API serves every pack a fallback `filter:true -> pipeline:main`
-        # route (a pipeline none of the packs define), so events QuickConnected
-        # into `pack:<id>` pass through UNPROCESSED (verified in Splunk:
-        # port-stamped sourcetype, no llm.* fields). Worker-level pipelines +
-        # QuickConnect are the proven path (llm_logs/firewall_logs above).
-        "pipelines/codex_sessions/conf.yml" =
-          builtins.readFile "${codexPack}/default/pipelines/codex_sessions/conf.yml";
-        "pipelines/codex_history/conf.yml" =
-          builtins.readFile "${codexPack}/default/pipelines/codex_history/conf.yml";
-        "pipelines/llm_normalize/conf.yml" =
-          builtins.readFile "${geminiPack}/default/pipelines/llm_normalize/conf.yml";
-        # Transcript JSONL lines regularly exceed the stock 51200-byte
-        # maxEventBytes (codex rollouts observed >110 KB), which silently
-        # splits one JSON line into unparseable fragments. Dedicated newline
-        # breaker with a 1 MiB ceiling, attached to the transcript file inputs.
-        "breakers.yml" = ''
-          AI CLI JSONL:
-            lib: custom
-            description: Newline-delimited AI-CLI transcript JSON; single lines can far exceed the 51200-byte default maxEventBytes (codex lines >1 MiB observed)
-            rules:
-              - condition: "true"
-                type: regex
-                timestampAnchorRegex: /^/
-                timestamp:
-                  type: auto
-                  length: 150
-                timestampTimezone: local
-                timestampEarliest: -420weeks
-                timestampLatest: +1week
-                maxEventBytes: 4194304
-                disabled: false
-                eventBreakerRegex: /[\n\r]+/
-                name: jsonl
-            tags: ai
-        '';
-      };
+      }
+      // import ./cribl-pipelines.nix { inherit codexPack geminiPack; };
       # Claude Code transcripts ship via the native in_claude_logs input ->
       # cribl_claude (:10311) above; the cc-edge-claude-code pack is not
       # deployed by this module (its /home/$CLAUDE_USER path never matched
