@@ -203,7 +203,7 @@ in
     # restart came up on the previous generation's config, and a config-only
     # change never reached the running daemon at all until the next reboot.
     system.activationScripts.extraActivation.text = ''
-      ${./scripts/cribl-edge-activate.sh} "${cfg.dataDir}" "${cfg.serviceUser}:${cfg.serviceGroup}"
+      ${./scripts/cribl-edge-activate.sh} "${cfg.dataDir}" "${cfg.serviceUser}:${cfg.serviceGroup}" "${cfg.mode}"
       ${lib.optionalString (cfg.mode == "standalone") standaloneConfigInstall}
       ${lib.optionalString (cfg.packs != { }) (
         lib.concatStringsSep "\n" (
@@ -214,54 +214,15 @@ in
       )}
     '';
 
-    launchd.daemons.cribl-edge = {
-      serviceConfig = {
-        Label = "com.nix-darwin.cribl-edge";
-        # /nix is a separate APFS volume mounted by the async RunAtLoad
-        # `systems.determinate.nix-store` daemon, so a bare
-        # /nix/store/... argv0 is missing when launchd first spawns this
-        # daemon at cold boot: launchd logs "Missing executable detected",
-        # marks the service inactive, and never re-arms it (observed both
-        # Macs, and again on the reboot that produced this fix). What
-        # revived it 3m31s later was activation's
-        # launchd-self-heal, which only runs postActivation — so absent a
-        # darwin-rebuild the daemon stays dead for the rest of the uptime.
-        #
-        # `KeepAlive.PathState` does NOT fix this, despite two prior attempts
-        # resting on the belief that it does. PathState governs
-        # restart-after-exit only: it gates neither the RunAtLoad spawn nor
-        # any re-arm after a spawn that failed with ENOENT. Do not re-add it.
-        #
-        # /bin/sh and /bin/wait4path live on the System volume and are always
-        # present pre-mount. This is the same idiom nix-darwin already
-        # generates for org.nixos.activate-system on this host.
-        ProgramArguments = [
-          "/bin/sh"
-          "-c"
-          "/bin/wait4path /nix/store && exec ${startScript}/bin/cribl-edge-start ${startArgs}"
-        ];
-        RunAtLoad = true;
-        KeepAlive = true;
-        ThrottleInterval = 10;
-        UserName = cfg.serviceUser;
-        GroupName = cfg.serviceGroup;
-        WorkingDirectory = cfg.dataDir;
-        StandardOutPath = "${cfg.dataDir}/logs/cribl-stdout.log";
-        StandardErrorPath = "${cfg.dataDir}/logs/cribl-stderr.log";
-        # Cribl does not hot-reload config written from outside its own API
-        # (see the extraActivation note above), so a config-only generation
-        # left the running daemon on stale config until reboot. Hashing the
-        # declared config into the plist makes nix-darwin's launchd phase
-        # restart the daemon exactly when config content changes — the env
-        # var itself is inert to Cribl.
-        EnvironmentVariables = {
-          CRIBL_DECLARED_CONFIG_SHA256 = declaredConfigSha;
-          # Let the codex/gemini pack file inputs resolve their
-          # $CODEX_HOME/$GEMINI_HOME transcript paths from the Edge process env.
-          CODEX_HOME = "${userConfig.user.homeDir}/.codex";
-          GEMINI_HOME = userConfig.user.homeDir;
-        };
-      };
+    launchd.daemons.cribl-edge = import ./cribl-edge-daemon.nix {
+      inherit
+        lib
+        cfg
+        startScript
+        startArgs
+        declaredConfigSha
+        userConfig
+        ;
     };
 
     # Edge ships all Mac-origin telemetry; if it crash-loops into launchd's
