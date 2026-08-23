@@ -144,7 +144,10 @@ let
 
   # Toggl Track: DISABLED. The vendor is pushing Enterprise/paid tiers hard
   # and gating core features behind an expensive paywall; Timemator
-  # (workstationCasks, above) replaces it. Flip to false to reinstall.
+  # (workstationCasks, above) replaces it. Flip to false to stop excluding it
+  # from masApps, then also uncomment its entry in
+  # modules/darwin/dock/persistent-apps.nix — that Dock entry does not read
+  # this flag.
   togglTrackDisabled = true;
 
   # Mac App Store apps; requires a signed-in App Store account.
