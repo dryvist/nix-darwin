@@ -84,6 +84,31 @@
               value: "'os'"
             - name: sourcetype
               value: "String(__inputId).includes('unified_logs') ? 'macos:unifiedlog' : String(__inputId).includes('crashreports') ? 'macos:crashreport' : String(__inputId).includes('thermal') ? 'macos:thermal' : 'macos:unmatched'"
+      # Crash reports carry their own event time. Without this, _time is
+      # whenever Edge happened to read the file: accurate when it reads live,
+      # but hours to a day late whenever a report is picked up on restart or
+      # backfill -- which is what happens whenever Edge is not running for
+      # the first stretch after a reboot. Alerting on arrival still works;
+      # correlating a report against host state at the moment it was written
+      # does not.
+      #
+      # Two header shapes cover .ips (JSON header line, "timestamp") and
+      # .spin/.diag (plain-text "Date/Time:" header). .shutdownStall is a
+      # base64 spindump with no in-band timestamp and always takes the
+      # fallback. An event is never dropped for a missing timestamp -- an
+      # imprecise crash report beats a lost one -- but crash_time_source
+      # records which branch ran, so a search can separate exact times from
+      # approximate ones instead of trusting all of them equally.
+      - id: eval
+        filter: "sourcetype === 'macos:crashreport'"
+        conf:
+          add:
+            - name: __crash_time
+              value: "Date.parse(String((/(?:\"timestamp\"\\s*:\\s*\"|Date\\/Time:\\s+)(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d+ [+-]\\d{4})/.exec(_raw) || [])[1]).replace(' ', 'T').replace(' ', ''')) / 1000"
+            - name: crash_time_source
+              value: "__crash_time > 0 ? 'report' : 'arrival'"
+            - name: _time
+              value: "__crash_time > 0 ? __crash_time : _time"
   '';
   # Host performance sampling (powermetrics, wired memory) -> index
   # mac_perf, kept out of the os event index so a sampling cadence change
