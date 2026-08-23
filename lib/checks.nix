@@ -5,6 +5,19 @@
   src,
   darwinConfigurations ? { },
 }:
+let
+  # The stray-symlink sweep (../hosts/common/hm-collision-clear.nix) is inlined
+  # into that module rather than a standalone .sh file. Extracting the text
+  # here, at ordinary Nix evaluation time, lets the bats test below exercise it
+  # without needing `nix eval` (and therefore recursive-nix) inside the
+  # sandboxed check derivation. `lib.hm.dag.entryBefore` is the only `lib`
+  # function that module calls; a stand-in returning its `text` argument
+  # unwrapped is enough to evaluate it standalone.
+  hmCollisionClearSweep =
+    (import ../hosts/common/hm-collision-clear.nix {
+      lib.hm.dag.entryBefore = _: text: text;
+    }).home.activation.clearStrayLinkTargets;
+in
 {
   # Check Nix formatting with nixfmt
   # Uses treefmt configured with nixfmt formatter
@@ -79,6 +92,7 @@
           jq
           yq-go
         ];
+        HM_COLLISION_CLEAR_SWEEP = hmCollisionClearSweep;
       }
       ''
         cd ${src}
