@@ -80,10 +80,15 @@ let
       greedy = true;
     } # Voice-to-text app (local whisper)
     # GitHub and Linear menu-bar notifications.
+    # DISABLED - delete this cask entirely on or after 2026-09-01.
+    # {
+    #   name = "neat";
+    #   greedy = true;
+    # }
     {
-      name = "neat";
+      name = "timemator";
       greedy = true;
-    }
+    } # Automatic time tracking (Toggl Track replacement, see togglTrackDisabled)
 
     # --- Local Inference ---
     # Local LLM inference UI and OpenAI-compatible API server.
@@ -137,18 +142,26 @@ let
     }
   ];
 
+  # Toggl Track: DISABLED. The vendor is pushing Enterprise/paid tiers hard
+  # and gating core features behind an expensive paywall; Timemator
+  # (workstationCasks, above) replaces it. Flip to false to reinstall.
+  togglTrackDisabled = true;
+
   # Mac App Store apps; requires a signed-in App Store account.
-  workstationMasApps = {
-    "Toggl Track" = 1291898086; # Time tracking
-    "Monarch Money Tweaks" = 6753774259; # Personal finance enhancements
-    "Windows App" = 1295203466; # Microsoft Remote Desktop / Windows 365 / AVD client
-    # Microsoft 365 applications.
-    "Microsoft Word" = 462054704;
-    "Microsoft Excel" = 462058435;
-    "Microsoft PowerPoint" = 462062816;
-    "Microsoft Outlook" = 985367838;
-    "Microsoft OneNote" = 784801555;
-  };
+  workstationMasApps =
+    lib.optionalAttrs (!togglTrackDisabled) {
+      "Toggl Track" = 1291898086; # Time tracking
+    }
+    // {
+      "Monarch Money Tweaks" = 6753774259; # Personal finance enhancements
+      "Windows App" = 1295203466; # Microsoft Remote Desktop / Windows 365 / AVD client
+      # Microsoft 365 applications.
+      "Microsoft Word" = 462054704;
+      "Microsoft Excel" = 462058435;
+      "Microsoft PowerPoint" = 462062816;
+      "Microsoft Outlook" = 985367838;
+      "Microsoft OneNote" = 784801555;
+    };
 in
 {
   homebrew = {

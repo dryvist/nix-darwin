@@ -46,7 +46,8 @@ in
       "/Applications/Ghostty.app"
     ]
     ++ lib.optionals enableWorkstationApps [
-      "/Applications/Toggl Track.app"
+      # "/Applications/Toggl Track.app" # DISABLED - see togglTrackDisabled in homebrew.nix
+      "/Applications/Timemator.app"
 
       # Knowledge & Notes
       "/Applications/Obsidian.app"
