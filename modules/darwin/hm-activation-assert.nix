@@ -35,7 +35,11 @@ in
     hmGenLink="${homeDir}/.local/state/home-manager/gcroots/current-home"
     hmParentArgs="$(ps -p "$PPID" -ww -o args= || true)"
 
-    if [[ -v DRY_RUN || -v dryRun || "$hmParentArgs" == *" --dry-run"* ]]; then
+    isDryRunFlag() {
+      [ -n "$1" ] && [ "$1" != "false" ] && [ "$1" != "0" ]
+    }
+
+    if isDryRunFlag "''${DRY_RUN-}" || isDryRunFlag "''${dryRun-}" || [[ "$hmParentArgs" == *" --dry-run"* ]]; then
       echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] dry run — skipping home-manager generation check"
     elif [ "$(readlink "$hmGenLink" 2>/dev/null)" = "${hmGeneration}" ]; then
       echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] ✓ home-manager generation verified: ${hmGeneration}"
