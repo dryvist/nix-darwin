@@ -243,6 +243,22 @@ in
                 # marks an unclean shutdown (3 in one week, unrecorded before).
                 - "*/*.spin"
                 - "*/*.shutdownStall"
+              # Explicit, not a behaviour change: the "*/"-led globs already
+              # match at any depth (Cribl matches them against the full path),
+              # so Retired/ -- where macOS moves a report once submitted or
+              # aged out -- was already being read without this. Verified in
+              # the live collector state: 7 entries point under Retired/,
+              # every one read to EOF. Set anyway
+              # so reaching that directory does not silently depend on a
+              # wildcard spanning path separators.
+              #
+              # No duplication either way. Cribl keys file state on headHash,
+              # a sha256 of the first 256 bytes, carrying iNode and fileName
+              # as attributes -- so a moved report keeps its key and its
+              # readPosition rather than re-ingesting. 141/141 live entries
+              # are keyed that way, with 0 head-hash collisions across 180
+              # artifacts.
+              recurse: true
               tailOnly: true
               sendToRoutes: false
               breakerRulesets:
