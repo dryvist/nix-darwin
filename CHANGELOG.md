@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.41.0](https://github.com/dryvist/nix-darwin/compare/v2.40.1...v2.41.0) (2026-08-23)
+
+
+### Features
+
+* **power:** restart servers automatically after a power failure ([#2228](https://github.com/dryvist/nix-darwin/issues/2228)) ([ef49120](https://github.com/dryvist/nix-darwin/commit/ef4912083bd651fb3cff45778ee204fbafe7672e))
+
+
+### Bug Fixes
+
+* **cluster-quiesce:** drop the Apple-events dependency from the GUI quit sweep ([#2232](https://github.com/dryvist/nix-darwin/issues/2232)) ([f756e58](https://github.com/dryvist/nix-darwin/commit/f756e5874f19552d3e00570949cc9944838fde73))
+
 ## [2.40.1](https://github.com/dryvist/nix-darwin/compare/v2.40.0...v2.40.1) (2026-08-22)
 
 
