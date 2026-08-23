@@ -88,6 +88,26 @@
               value: "'os'"
             - name: sourcetype
               value: "String(__inputId).includes('unified_logs') ? 'macos:unified_log' : String(__inputId).includes('crashreports') ? 'macos:crashreport' : String(__inputId).includes('thermal') ? 'macos:system:thermal' : 'macos:unmatched'"
+      # Does THIS event carry a report timestamp of its own? Deliberately not
+      # named for provenance: the breaker writes _time, and this pipeline
+      # cannot see whether the breaker's auto-timestamp actually parsed, so a
+      # name asserting where _time came from would claim knowledge that is not
+      # available here. This is a content test on the bytes in front of it,
+      # true regardless of what the breaker did.
+      #
+      # A positive test, with the failure falling out rather than being
+      # special-cased: anything that is neither a quoted-JSON-timestamp header
+      # nor a Date/Time: line reads false. That is exactly .shutdownStall, a
+      # base64 spindump with no in-band time. Regex taken verbatim from the
+      # pack so two hand-written equivalents cannot drift apart; only the
+      # filter differs, because this instance has no datatype field and keys
+      # on sourcetype instead.
+      - id: eval
+        filter: "sourcetype === 'macos:crashreport'"
+        conf:
+          add:
+            - name: crash_time_in_band
+              value: "/^(?:\\{[^\\n]{0,119}\"timestamp\":\"|Date\\/Time:)/.test(_raw)"
   '';
   # Host performance sampling (powermetrics, wired memory) -> index
   # mac_perf, kept out of the os event index so a sampling cadence change
@@ -163,12 +183,24 @@
     # reads the report's own time there. Deliberately no pipeline-level _time
     # eval: two mechanisms writing _time is worse than either alone.
     #
-    # maxEventBytes stays at 4 MiB and is load-bearing -- not because whole
-    # files were truncated (under the previous per-line breaker only one line
-    # in one sampled file exceeded 51200) but because that one line IS the
-    # payload: the WindowServer .ips carries 240559 bytes on a single line,
-    # cut to 21% of itself at the stock ceiling. Largest artifact measured on
-    # this host is 3627478 bytes, so the headroom is about 13%.
+    # maxEventBytes is load-bearing -- not because whole files were truncated
+    # (under the earlier per-line breaker only one line in one sampled file
+    # exceeded 51200) but because that one line IS the payload: the
+    # WindowServer .ips carries 240559 bytes on a single line, cut to 21% of
+    # itself at the stock ceiling. Largest artifact measured on
+    # this host is 3627478 bytes; at 4 MiB that was 13% headroom, which is
+    # not headroom for a class whose size tracks thread count -- the two
+    # .spin samples of one event on one day differ by 14%. 16 MiB is 4.6x.
+    #
+    # The lookahead requires the timestamp's OPENING QUOTE, which separates a
+    # report header from a report body by JSON type rather than by vocabulary:
+    # a header timestamp is always a quoted date string, a body timestamp
+    # always a bare epoch float. Without that one quote the pattern breaks
+    # SFA-*.json*.diag into two events -- those have a compact body starting
+    # at column 0, unlike a pretty-printed .ips body -- and the payload half
+    # lands at break time. Verified 172/172 one break; the same pattern minus
+    # the quote scores 171/172, which is the more dangerous number because it
+    # does not announce itself.
     MacOS Crash Reports:
       lib: custom
       description: macOS .ips/.crash/.panic/.diag/.hang/.spin/.shutdownStall diagnostic reports; one event per report, header retained by lookahead so the auto timestamp reads the report's own time instead of Cribl arrival time
@@ -182,9 +214,9 @@
           timestampTimezone: local
           timestampEarliest: -420weeks
           timestampLatest: +1week
-          maxEventBytes: 4194304
+          maxEventBytes: 16777216
           disabled: false
-          eventBreakerRegex: /(?=^\{"|^Date\/Time:|^Use spindump)/m
+          eventBreakerRegex: /^(?=(?:\{[^\n]{0,119}"timestamp":"|Date\/Time:|Use spindump))/m
           name: crashreport
       tags: macos,crashreport
   '';
