@@ -149,7 +149,6 @@ in
       # This ensures optimal power state transition on battery (Safe Sleep requires this)
       disksleep = 10; # Disk optimizes power after 10 minutes (before system sleep at 60)
       wakeOnMagicPacket = true;
-      autoRestartOnPowerLoss = true;
     };
   };
 }

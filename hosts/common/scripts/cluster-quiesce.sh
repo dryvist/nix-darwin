@@ -33,53 +33,55 @@ fi
 #    set by the module from programs.clusterQuiesce.terminalAllowlist) so a
 #    session in any other terminal can be protected without editing this file.
 #
-# QUIT BY BUNDLE ID, NEVER BY NAME. `tell application <name>` resolves the name
-# through CFURLCreateFromApplicationNameAndContainer, and when no bundle matches
-# — routine, because `name of every application process` yields PROCESS names,
-# which are not always application names — AppleScript falls back to
-# PromptUserForApplication: the "Where is…?" chooser, an NSApplication modal.
-# Under launchd there is no one to answer it and no window to see, so the sweep
-# parks forever. `with timeout` cannot save it; the block is in name resolution,
-# before the timeout-guarded event send. Measured 2026-08-07: this wedged the
-# worker's link-up for 14+ minutes between the rank-start boundary and the
-# kickstart, so the coordinator struck out on peer-rendezvous and stood the pair
-# down. `tell application id <bundleID>` resolves through LaunchServices, which
-# returns an error instead of opening UI.
+# NO APPLE EVENTS TO OTHER APPS — NSWorkspace/NSRunningApplication ONLY.
+# `tell application "System Events"` and `tell application id <bid> to quit`
+# both send Apple Events, which need per-target automation consent. Consent is
+# keyed to the exact executable path of the responsible process, and that path
+# changes across system generations — so a sweep that worked can start
+# prompting again after a rebuild, and under launchd there is no one to answer
+# the prompt and no window to see it: the send parks until the wall-clock bound
+# kills it, reclaiming nothing (observed repeatedly, most recently 2026-08-22).
+# NSWorkspace.runningApplications enumerates without consent, and
+# NSRunningApplication.terminate() posts the same polite quit request the Dock
+# sends — no consent, and it returns immediately instead of waiting for the
+# app's reply, so an app sitting at a save prompt cannot stall the sweep.
 #
-# SIGTERM instead of AppleScript was considered and rejected: quit events honor
-# unsaved-work prompts and a signal does not, so the cheaper sweep is the one
-# that loses a user's open documents.
+# SIGTERM was considered and rejected: a polite quit honors unsaved-work
+# prompts and a signal does not, so the cheaper sweep is the one that loses a
+# user's open documents. terminate() keeps that property.
 default_terminals=$'Finder\nGhostty\nTerminal\niTerm2\nWezTerm\nAlacritty\nkitty'
 terminals="${CLUSTER_QUIESCE_TERMINALS:-$default_terminals}"
 
-# Belt to the bundle-id braces above. Quitting GUI apps is best-effort memory
-# reclaim and is never worth blocking a rank start, so bound the whole sweep on
-# the wall clock: a modal in a headless process is a CLASS of failure, not one
-# bug, and the next member of it must cost a logged timeout rather than a window.
+# Belt to the consent-free design above: a modal or blocked send in a headless
+# process is a CLASS of failure, so any future member of it must cost a logged
+# timeout rather than a wedged rank start. The sweep is best-effort memory
+# reclaim and is never worth blocking on.
 gui_timeout="${CLUSTER_QUIESCE_GUI_TIMEOUT:-30}"
 rc=0
-timeout -k 5 "$gui_timeout" /usr/bin/osascript - "$terminals" <<'EOF' || rc=$?
+quit_log="$(timeout -k 5 "$gui_timeout" /usr/bin/osascript - "$terminals" <<'EOF'
+use framework "AppKit"
 on run argv
     set AppleScript's text item delimiters to linefeed
     set keepList to text items of (item 1 of argv)
-    tell application "System Events"
-        set quitIds to {}
-        repeat with p in (every application process whose background only is false)
-            set bid to bundle identifier of p
-            if (name of p) is not in keepList and bid is not missing value then
-                set end of quitIds to bid
+    set quitNames to {}
+    set apps to current application's NSWorkspace's sharedWorkspace()'s runningApplications()
+    repeat with a in apps
+        -- activationPolicy 0 = regular (visible, Dock) apps only
+        if (a's activationPolicy() as integer) is 0 then
+            set n to a's localizedName()
+            if n is not missing value and (n as text) is not in keepList then
+                a's terminate()
+                set end of quitNames to (n as text)
             end if
-        end repeat
-    end tell
-    repeat with bid in quitIds
-        try
-            with timeout of 15 seconds
-                tell application id (bid as text) to quit
-            end timeout
-        end try
+        end if
     end repeat
+    set AppleScript's text item delimiters to ", "
+    return quitNames as text
 end run
 EOF
+)" || rc=$?
+# Log every quit decision: a sweep that reclaims nothing must say so.
+echo "cluster-quiesce: GUI quit requested for: ${quit_log:-<none>}" >&2
 # 124 = timeout fired, 137 = the -k KILL that followed it.
 if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
   echo "cluster-quiesce: GUI quit sweep exceeded ${gui_timeout}s and was killed; continuing without it (rank start must not block on it)" >&2
