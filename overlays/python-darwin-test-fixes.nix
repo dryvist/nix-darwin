@@ -46,6 +46,14 @@ prev.lib.optionalAttrs prev.stdenv.isDarwin {
         doCheck = false;
         nativeCheckInputs = [ ];
       });
+
+      # a2a-sdk — e2e push-notification tests fork a FastAPI test server with
+      # multiprocessing; the darwin spawn start method cannot pickle the
+      # locally-defined openapi closure, so setup errors on every run.
+      a2a-sdk = pprev.a2a-sdk.overridePythonAttrs (_: {
+        doCheck = false;
+        nativeCheckInputs = [ ];
+      });
     })
   ];
 }
