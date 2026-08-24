@@ -19,6 +19,21 @@ in
 {
   imports = [ ../common/home.nix ];
 
+  # Router endpoint for the proxy's non-Anthropic model group. The bearer file
+  # is materialized outside the store (user-owned 0600); the module's launchd
+  # wrapper reads it at exec time.
+  services.aiStack = {
+    llmEndpoint = "router";
+    llmRouterEndpoint = "https://llm.${userConfig.internalDomain}/v1";
+    llmEndpointTokenFile = "${userConfig.user.homeDir}/.config/ai-stack/router-bearer";
+    # Serving hosts answer across this estate's own domain, not on loopback,
+    # so a role target based there keeps its traffic inside. Stated once here,
+    # from the same configured base as every other name: a consumer that let a
+    # module infer it from an endpoint could land on a public suffix and treat
+    # hosts it does not control as internal.
+    internalDomains = [ userConfig.baseDomain ];
+  };
+
   # Open local-LLM fallback harness (Crush / MiMoCode / Goose). Workstation-only:
   # flake.nix imports the module on macbook-m4 alone. The runtime bearer token
   # OPENAI_API_KEY is exported from the automation keychain in ../common/home.nix
@@ -41,6 +56,13 @@ in
       enable = true;
       endpoint = "https://llm.${userConfig.internalDomain}/v1";
     };
+
+    # Loopback LiteLLM proxy (nix-ai): every CLI names a stable role
+    # (`lead`/`subagent`/`judge`/`cheap`) and the shared router decides which
+    # model a role means. Claude Code's own OAuth credential is forwarded only
+    # on the `claude-*` group; the router leg authenticates with the bearer
+    # file below. Same internal-FQDN composition rule as openHarness above.
+    litellmLocal.enable = true;
 
     # Token Meter is deliberately OFF on the laptop, overriding the tier.
     #

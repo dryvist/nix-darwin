@@ -31,10 +31,24 @@ name: CI Gate
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  # The Nix store cache is saved only when the ref is the default branch, and
+  # a pull_request run's ref is never that — it is refs/pull/N/merge. With this
+  # workflow triggered on pull_request alone, the save condition could not be
+  # true on any run, so that cache was never written once: every build started
+  # from an empty store and the required build eventually stopped fitting in
+  # its budget. Running on the push that lands each merge is what the rest of
+  # this configuration already assumes ("develop pushes are the only runs that
+  # save the Nix store cache"); this makes that true.
+  push:
+    branches: [develop]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # Exempt the default branch: its pushes are the only runs that write the Nix
+  # store cache, and cancelling one throws away the store it had built without
+  # leaving anything behind for the next run. Superseding a pull request's run
+  # is still free.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/develop' }}
 
 permissions:
   contents: read
