@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.43.0](https://github.com/dryvist/nix-darwin/compare/v2.42.0...v2.43.0) (2026-08-24)
+
+
+### Features
+
+* **macbook:** declare which domains are self-hosted ([#2265](https://github.com/dryvist/nix-darwin/issues/2265)) ([6a442aa](https://github.com/dryvist/nix-darwin/commit/6a442aa9a5b9ef3d92b405c16ce964f19eef85ba))
+* **macbook:** route CLIs through the loopback LiteLLM proxy by role ([#2259](https://github.com/dryvist/nix-darwin/issues/2259)) ([02d1264](https://github.com/dryvist/nix-darwin/commit/02d12644cbbef8d4d4b482be8ef207279889f494))
+
+
+### Bug Fixes
+
+* **ci:** run the gate on the push that lands each merge ([#2269](https://github.com/dryvist/nix-darwin/issues/2269)) ([6c8fe6e](https://github.com/dryvist/nix-darwin/commit/6c8fe6e6805c29f16a1ba1bf51efbc568618fe13))
+* **ci:** state the build step timeout as a literal ([#2267](https://github.com/dryvist/nix-darwin/issues/2267)) ([033e7be](https://github.com/dryvist/nix-darwin/commit/033e7be63f22879b89f7604ffd89a7f9ea91d78a))
+* **overlays:** skip a2a-sdk darwin-incompatible e2e tests ([#2263](https://github.com/dryvist/nix-darwin/issues/2263)) ([946655f](https://github.com/dryvist/nix-darwin/commit/946655f94cb1fe8d8e4ad0c6bd6adcb8a59b3732))
+
 ## [2.42.0](https://github.com/dryvist/nix-darwin/compare/v2.41.0...v2.42.0) (2026-08-23)
 
 
