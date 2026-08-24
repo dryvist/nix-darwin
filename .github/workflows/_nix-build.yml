@@ -159,8 +159,27 @@ jobs:
         id: build-timer
         run: echo "start=$(date +%s)" >> "$GITHUB_OUTPUT"
 
+      # Five minutes inside the job's own budget, so a build that runs long
+      # FAILS this step instead of letting the job hit its ceiling. The
+      # difference matters: a job cancelled at its ceiling skips every post
+      # step, so the cache is never written and the next run starts just as
+      # cold — a cold build can then never warm itself, which is exactly the
+      # loop this repository fell into. A failed step still runs the save
+      # below, so each attempt keeps what it managed to build. The required
+      # check still fails until the build genuinely completes; nothing here
+      # widens the budget.
       - name: Build Home Manager
+        timeout-minutes: ${{ fromJSON(vars.GH_ACTION_TIMEOUT_NIX || '15') - 5 }}
         run: ./scripts/workflows/build-hm.sh result-hm
+
+      # Only on failure: the action above already saves on a successful run,
+      # and this keeps a partial store from an attempt that ran out of time.
+      - name: Cache Nix Store (partial, after a failed build)
+        if: failure() && github.ref == 'refs/heads/develop'
+        uses: nix-community/cache-nix-action/save@7df957e333c1e5da7721f60227dbba6d06080569 # v7
+        with:
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('flake.lock') }}
+          gc-max-store-size-macos: 6G
 
       - name: Verify Nix Symlinks
         run: ./scripts/workflows/verify-symlinks.sh result-hm/home-files
