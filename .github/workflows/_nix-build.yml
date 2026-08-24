@@ -169,7 +169,14 @@ jobs:
       # check still fails until the build genuinely completes; nothing here
       # widens the budget.
       - name: Build Home Manager
-        timeout-minutes: ${{ fromJSON(vars.GH_ACTION_TIMEOUT_NIX || '15') - 5 }}
+        # A literal, deliberately. Deriving this from the org variable the way
+        # the job-level timeout does made the whole workflow fail graph
+        # validation: the run reported failure with no jobs and no logs, which
+        # is the same signature the comment on that job-level line warns about.
+        # Keep this a few minutes under whatever that variable holds, so the
+        # step fails before the job is cancelled; if the variable changes,
+        # change this with it.
+        timeout-minutes: 30
         run: ./scripts/workflows/build-hm.sh result-hm
 
       # Only on failure: the action above already saves on a successful run,
