@@ -163,11 +163,11 @@
     "brew-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1787526284,
-        "narHash": "sha256-WznXtpZNCghY+CJDcI/9nOAlqiIuLEMIzc31S9vCsC0=",
+        "lastModified": 1787557438,
+        "narHash": "sha256-jltkMWciR9q20eNDdXVbzXDuG/mSn1CbeDhXoX9+ATE=",
         "owner": "Homebrew",
         "repo": "brew",
-        "rev": "0942cac2eda7648d4857f4e5da60f1de303b6818",
+        "rev": "533246d16f6f04d0d4daa2cf9963c0de2143d77c",
         "type": "github"
       },
       "original": {
@@ -1054,11 +1054,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1787543065,
-        "narHash": "sha256-I3Vn3rwuBgVuKlR8unkos7OTXjtuyYn/Xp3aQ9npqFg=",
+        "lastModified": 1787557481,
+        "narHash": "sha256-Pel2bCvRWiqCF+KfxfZ0Np/v8V89OQ/t/3ZnDf3NCQ4=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "cf00deb838201ff837b50f53bca5cafeca2f564d",
+        "rev": "0ea85dd0ca6e65a15f51385c193a8f7d94571b19",
         "type": "github"
       },
       "original": {
@@ -1174,11 +1174,11 @@
         "wakatime": "wakatime"
       },
       "locked": {
-        "lastModified": 1786941869,
-        "narHash": "sha256-8Zbda1JncMmlIvaVWKaeuCKbi4/otDB5CKsqwjyLZ+w=",
+        "lastModified": 1787535531,
+        "narHash": "sha256-Y9I45/ZZklJlUbAuKJWU2ek7qT20vbEvUdnnwCcuSxU=",
         "owner": "dryvist",
         "repo": "nix-claude-code",
-        "rev": "afc82cb7da94ac3578ca8176ced546d9f0c7e5fe",
+        "rev": "55b82768cf8eae73f22e95ea0c266540f14189e3",
         "type": "github"
       },
       "original": {
