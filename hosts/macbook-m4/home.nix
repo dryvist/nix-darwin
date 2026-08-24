@@ -26,6 +26,12 @@ in
     llmEndpoint = "router";
     llmRouterEndpoint = "https://llm.${userConfig.internalDomain}/v1";
     llmEndpointTokenFile = "${userConfig.user.homeDir}/.config/ai-stack/router-bearer";
+    # Serving hosts answer across this estate's own domain, not on loopback,
+    # so a role target based there keeps its traffic inside. Stated once here,
+    # from the same configured base as every other name: a consumer that let a
+    # module infer it from an endpoint could land on a public suffix and treat
+    # hosts it does not control as internal.
+    internalDomains = [ userConfig.baseDomain ];
   };
 
   # Open local-LLM fallback harness (Crush / MiMoCode / Goose). Workstation-only:
