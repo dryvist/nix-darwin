@@ -62,7 +62,7 @@ in
     # model a role means. Claude Code's own OAuth credential is forwarded only
     # on the `claude-*` group; the router leg authenticates with the bearer
     # file below. Same internal-FQDN composition rule as openHarness above.
-    litellmLocal.enable = true;
+    litellmLocal.enable = false;
 
     # Token Meter is deliberately OFF on the laptop, overriding the tier.
     #
