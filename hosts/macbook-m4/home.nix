@@ -61,8 +61,11 @@ in
     # (`lead`/`subagent`/`judge`/`cheap`) and the shared router decides which
     # model a role means. Claude Code's own OAuth credential is forwarded only
     # on the `claude-*` group; the router leg authenticates with the bearer
-    # file below. Same internal-FQDN composition rule as openHarness above.
-    litellmLocal.enable = false;
+    # file below. The proxy takes no credential of its own, and everything
+    # Claude Code needs to reach it is rendered into settings.json (see the
+    # module header in nix-ai). Same internal-FQDN composition rule as
+    # openHarness above.
+    litellmLocal.enable = true;
 
     # Token Meter is deliberately OFF on the laptop, overriding the tier.
     #
