@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.44.0](https://github.com/dryvist/nix-darwin/compare/v2.43.0...v2.44.0) (2026-08-25)
+
+
+### Features
+
+* **claude:** re-enable the local LiteLLM proxy on the nix-ai fix ([#2276](https://github.com/dryvist/nix-darwin/issues/2276)) ([1cc188f](https://github.com/dryvist/nix-darwin/commit/1cc188f4bf86cb54060079d3a223e6e445340400))
+
+
+### Bug Fixes
+
+* **claude:** disable broken local proxy ([#2275](https://github.com/dryvist/nix-darwin/issues/2275)) ([5783cd3](https://github.com/dryvist/nix-darwin/commit/5783cd35a19659903c8eaf970838f02ced331007))
+
 ## [2.43.0](https://github.com/dryvist/nix-darwin/compare/v2.42.0...v2.43.0) (2026-08-24)
 
 
