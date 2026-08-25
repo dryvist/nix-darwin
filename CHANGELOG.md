@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.44.1](https://github.com/dryvist/nix-darwin/compare/v2.44.0...v2.44.1) (2026-08-25)
+
+
+### Bug Fixes
+
+* **ci:** give the partial cache save a real window ([#2274](https://github.com/dryvist/nix-darwin/issues/2274)) ([80a8526](https://github.com/dryvist/nix-darwin/commit/80a8526f6dca0c65ed74d4a67ea1710381e6167f))
+
 ## [2.44.0](https://github.com/dryvist/nix-darwin/compare/v2.43.0...v2.44.0) (2026-08-25)
 
 
