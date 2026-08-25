@@ -1054,11 +1054,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1787660126,
-        "narHash": "sha256-WfDHncSsj3JHxb79F5UbQZYse2FtyXhr/5sZNzWHdvs=",
+        "lastModified": 1787663206,
+        "narHash": "sha256-caI3JZ+V1Vn8fPPB1IvbeTeZS/N6kiqiIkyrgdZZx/E=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "50bc71b059bbe7a9db1016992281bf800f17ad40",
+        "rev": "b0559e1231276b480f21b25c6ef9f6b4add5d483",
         "type": "github"
       },
       "original": {
@@ -1174,11 +1174,11 @@
         "wakatime": "wakatime"
       },
       "locked": {
-        "lastModified": 1787577939,
-        "narHash": "sha256-xuPuiy/ga5SGd6VHLU5f6w1LMIIGgANxPe+9XPd/h5E=",
+        "lastModified": 1787661629,
+        "narHash": "sha256-a099I2GsDxI7d2HRNIOiPYLej5dHHPVnOrBZ6Ukp3UE=",
         "owner": "dryvist",
         "repo": "nix-claude-code",
-        "rev": "bd66034269e6966c83c8c4df41891ad96c73f20c",
+        "rev": "2423379182826f346686ed772e2c55b56e6d57de",
         "type": "github"
       },
       "original": {
