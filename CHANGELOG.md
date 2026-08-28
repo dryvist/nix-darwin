@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.45.0](https://github.com/dryvist/nix-darwin/compare/v2.44.1...v2.45.0) (2026-08-28)
+
+
+### Features
+
+* **telemetry:** wire Claude Code spans to the collector ([#2288](https://github.com/dryvist/nix-darwin/issues/2288)) ([a5d7ab7](https://github.com/dryvist/nix-darwin/commit/a5d7ab7c4a0d826f5f97343e8efc84db8c6b7ed9))
+
 ## [2.44.1](https://github.com/dryvist/nix-darwin/compare/v2.44.0...v2.44.1) (2026-08-25)
 
 
