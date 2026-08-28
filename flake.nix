@@ -178,7 +178,7 @@
           # host-specific: without host.name every Mac reporting to the shared
           # collector is indistinguishable in the backend.
           hostUserConfig = userConfig // {
-            telemetry = userConfig.telemetry // {
+            telemetry = (userConfig.telemetry or { }) // {
               resourceAttributes = (userConfig.telemetry.resourceAttributes or { }) // {
                 "host.name" = hostConfig.hostName;
               };
