@@ -174,6 +174,16 @@
               isServer = class == "server";
             }
           );
+          # Telemetry resource attributes are the one part of userConfig that is
+          # host-specific: without host.name every Mac reporting to the shared
+          # collector is indistinguishable in the backend.
+          hostUserConfig = userConfig // {
+            telemetry = userConfig.telemetry // {
+              resourceAttributes = (userConfig.telemetry.resourceAttributes or { }) // {
+                "host.name" = hostConfig.hostName;
+              };
+            };
+          };
         in
         darwin.lib.darwinSystem {
           # nix-darwin is Darwin-only and every host is Apple Silicon, so the
@@ -214,12 +224,13 @@
                 # `hostConfig` threads the per-host attrset to home-manager modules.
                 extraSpecialArgs = {
                   inherit
-                    userConfig
                     dotgithub
                     hostConfig
                     nix-ai
                     nix-openwhispr
                     ;
+                  # Host-stamped: see hostUserConfig above.
+                  userConfig = hostUserConfig;
                 };
                 users.${userConfig.user.name} = import ./hosts/${label}/home.nix;
 
