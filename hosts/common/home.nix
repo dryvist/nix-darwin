@@ -90,15 +90,11 @@ in
   monitoring = {
     enable = true;
     kubernetes.enable = true;
-    otel = {
-      enable = true;
-      # endpoint defaults to http://localhost:30317 (NodePort gRPC)
-      logPrompts = true;
-      logToolDetails = true;
-      resourceAttributes = {
-        "host.name" = hostConfig.hostName;
-      };
-    };
+    # Claude Code's OTEL variables come from nix-ai (userConfig.telemetry),
+    # which owns AI-tool configuration. This module would set the same
+    # variables a second time through the login shell, and two sources for one
+    # set of variables drift. Left off so there is exactly one.
+    otel.enable = false;
     cribl.enable = true;
   };
 
