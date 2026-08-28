@@ -167,9 +167,35 @@ in
     ];
   };
 
-  # Claude Code OpenTelemetry → local OrbStack k8s OTEL collector. nix-ai
-  # resolves the endpoint port from its registry (nodeports.otel_grpc).
-  telemetry.enable = true;
+  # Claude Code OpenTelemetry. Endpoints compose from internalDomain, never
+  # re-spelled — see the let-binding above.
+  #
+  # Traces only. The collector behind that name extracts spans and forwards
+  # them on; it does not extract metrics or logs, so pointing those signals at
+  # it would hand over data the pipeline discards. nix-ai gates each signal on
+  # its own endpoint and pins the unused exporters to `none`, so leaving
+  # otlpEndpoint unset means metrics and logs are not emitted at all rather
+  # than emitted to a conventional default address.
+  #
+  # Spans are also the signal worth having: session transcripts already carry
+  # per-message token counts, while latency, tool duration, and subagent
+  # structure exist nowhere else.
+  telemetry = {
+    enable = true;
+
+    # Signal-specific, so it carries the full path — nothing is appended.
+    # Setting it is also what turns span emission on at all.
+    tracesEndpoint = "https://otel.${internalDomain}/v1/traces";
+
+    serviceName = "claude-code";
+    # host.name is per-host, so flake.nix's mkHost merges it in — this file is
+    # host-agnostic and every host would otherwise report the same identity.
+
+    # Ships full prompt and tool content. Deliberate, and only sound because
+    # the collector and every hop past it are self-hosted on the internal zone.
+    logUserPrompts = true;
+    logToolDetails = true;
+  };
 
   # Personal directories Claude Code may read without per-prompt approval.
   extraTrustedPaths = [ "~/.claude/skills/retrospecting/reports/" ];
