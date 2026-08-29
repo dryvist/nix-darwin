@@ -32,6 +32,27 @@ in
     # module infer it from an endpoint could land on a public suffix and treat
     # hosts it does not control as internal.
     internalDomains = [ userConfig.baseDomain ];
+
+    # Pin the roles that must resolve on BOTH the local server and the shared
+    # router. Measured 2026-08-28: seven of eight roles named a model llama-swap
+    # serves but the router does not, so a local caller worked and every routed
+    # delegation 404'd for the same role — an asymmetry nothing reported,
+    # because a registry id had never been compared against what any endpoint
+    # actually serves. `ai-stack-drift-check` now does that comparison.
+    #
+    # Both endpoints serve these two, so a role pinned here resolves either way.
+    # `small` keeps the 9B: it is a size class, and a consumer that asks for
+    # small must not be handed a 27B.
+    roleOverrides = {
+      default = "mlx-community/Qwen3.8-27B-4bit";
+      quickest = "mlx-community/Qwen3.5-9B-MLX-4bit";
+      small = "mlx-community/Qwen3.5-9B-MLX-4bit";
+      tool-calling = "mlx-community/Qwen3.8-27B-4bit";
+      coding = "mlx-community/Qwen3.8-27B-4bit";
+      large-context = "mlx-community/Qwen3.8-27B-4bit";
+      most-capable = "mlx-community/Qwen3.8-27B-4bit";
+      oss = "mlx-community/Qwen3.8-27B-4bit";
+    };
   };
 
   # Open local-LLM fallback harness (Crush / MiMoCode / Goose). Workstation-only:
@@ -65,7 +86,24 @@ in
     # Claude Code needs to reach it is rendered into settings.json (see the
     # module header in nix-ai). Same internal-FQDN composition rule as
     # openHarness above.
-    litellmLocal.enable = true;
+    litellmLocal = {
+      enable = true;
+
+      # Re-rank the subagent fallback tier against the live catalog and the
+      # router's served set, daily. The job only rewrites tier-candidates.json
+      # in the checkout below and logs whether the selection moved — nothing
+      # reaches the running proxy until the next rebuild, so a re-rank is a
+      # proposal a human converges, never a silent swap of the model serving
+      # live subagent traffic.
+      #
+      # Machine-specific because it names a working copy: the Nix store copy is
+      # read-only, so the job must be pointed at a checkout or it fails after
+      # both network fetches rather than before them.
+      tierRefresh = {
+        enable = true;
+        checkout = "${userConfig.user.homeDir}/git/public/nix/nix-ai";
+      };
+    };
 
     # Token Meter is deliberately OFF on the laptop, overriding the tier.
     #
