@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.46.0](https://github.com/dryvist/nix-darwin/compare/v2.45.0...v2.46.0) (2026-08-31)
+
+
+### Features
+
+* enable langgraph-cli on AI host profiles ([99de4e6](https://github.com/dryvist/nix-darwin/commit/99de4e6d83e9f04cc7de2388e55dfeac37f332d9))
+* enable langgraph-cli on AI host profiles ([06b8fb2](https://github.com/dryvist/nix-darwin/commit/06b8fb2110d9cec0347d0bd800a503fc130ecdfd))
+* **monitoring:** run the coding-agent usage collector on a schedule ([#2297](https://github.com/dryvist/nix-darwin/issues/2297)) ([e52066f](https://github.com/dryvist/nix-darwin/commit/e52066f2c3aec36c844747fc812fb73a0628717e))
+* **telemetry:** send Claude Code metrics to the metrics store ([#2299](https://github.com/dryvist/nix-darwin/issues/2299)) ([067c243](https://github.com/dryvist/nix-darwin/commit/067c243657b22cf6bd462708e8f3ffe6ea7e6da8))
+
 ## [2.45.0](https://github.com/dryvist/nix-darwin/compare/v2.44.1...v2.45.0) (2026-08-28)
 
 
