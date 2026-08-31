@@ -170,22 +170,29 @@ in
   # Claude Code OpenTelemetry. Endpoints compose from internalDomain, never
   # re-spelled — see the let-binding above.
   #
-  # Traces only. The collector behind that name extracts spans and forwards
-  # them on; it does not extract metrics or logs, so pointing those signals at
-  # it would hand over data the pipeline discards. nix-ai gates each signal on
-  # its own endpoint and pins the unused exporters to `none`, so leaving
-  # otlpEndpoint unset means metrics and logs are not emitted at all rather
-  # than emitted to a conventional default address.
+  # Each signal goes to the service that actually stores it, and no signal is
+  # aimed at one that does not. The span collector extracts spans only, so
+  # metrics pointed at it would be discarded; the metrics store ingests OTLP
+  # metrics and serves no logs route, so logs pointed at it would fail every
+  # export interval. nix-ai gates each signal on its own endpoint and pins the
+  # unused exporters to `none`, so an unset endpoint means that signal is not
+  # emitted at all rather than emitted to a conventional default address.
   #
-  # Spans are also the signal worth having: session transcripts already carry
-  # per-message token counts, while latency, tool duration, and subagent
-  # structure exist nowhere else.
+  # Logs stay off for that reason: no service here ingests them, and the
+  # content worth having is already on the span path.
   telemetry = {
     enable = true;
 
     # Signal-specific, so it carries the full path — nothing is appended.
     # Setting it is also what turns span emission on at all.
     tracesEndpoint = "https://otel.${internalDomain}/v1/traces";
+
+    # Also signal-specific and full-path. The metrics store resolves at the
+    # public apex rather than the internal zone, and is reached directly on its
+    # own port — there is no ingress vhost in front of it. Its OTLP route is
+    # under /opentelemetry, and it runs with Prometheus naming on, so the
+    # counters land under the names the vendored dashboard queries.
+    metricsEndpoint = "http://grafana.${baseDomain}:8428/opentelemetry/v1/metrics";
 
     serviceName = "claude-code";
     # host.name is per-host, so flake.nix's mkHost merges it in — this file is
