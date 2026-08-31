@@ -22,7 +22,7 @@ fi
 
 # Fail on errors (warnings are logged but don't fail the build)
 if grep -qE "^error:" "$BUILD_OUTPUT"; then
-  matched_line=$(grep -E "^error:" "$BUILD_OUTPUT" | head -1)
+  matched_line=$(grep -m 1 -E "^error:" "$BUILD_OUTPUT")
   echo "::error::Build failed: $matched_line"
   exit 1
 fi
@@ -45,9 +45,13 @@ fetched=$(grep -cE "^copying path|^downloading" "$BUILD_OUTPUT" || true)
 echo "::notice::Realised locally: ${built} derivation(s); substituted: ${fetched} path(s)"
 if [ "${built:-0}" -gt 0 ]; then
   echo "Top source-built derivations:"
+  # Truncate inside awk, never with `head`. `sort` buffers its whole input, so a
+  # `head` that closes the pipe after N lines SIGPIPEs it; under `set -o
+  # pipefail` that propagates and `set -e` aborts the script — here that would
+  # kill the build after a successful nix build but before it reports success.
   grep -E "^building '" "$BUILD_OUTPUT" |
     sed -E "s/^building '(.*)\.drv'.*/\1/; s@.*/[a-z0-9]{32}-@@" |
-    sort | uniq -c | sort -rn | head -15
+    sort | uniq -c | sort -rn | awk 'NR <= 15'
 fi
 
 echo "Build completed successfully: $OUTPUT_LINK"
