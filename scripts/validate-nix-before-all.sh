@@ -10,6 +10,12 @@ if ! command -v nix &> /dev/null; then
   exit 1
 fi
 
+JQ=$(command -v jq || true)
+if [ -z "$JQ" ]; then
+  echo "ERROR: jq is required to read nix --json output"
+  exit 1
+fi
+
 # Known false positives: Same name, different apps, or intentional overrides
 # Format: "package-name:reason"
 EXCLUSIONS=(
@@ -24,31 +30,58 @@ EXCLUSIONS=(
   "postman:Nixpkgs version lags significantly behind upstream, causing Squirrel/ShipIt schema mismatch errors"
 )
 
-HOMEBREW_FILE="modules/darwin/homebrew.nix"
-
-if [[ ! -f "$HOMEBREW_FILE" ]]; then
-  echo "ERROR: $HOMEBREW_FILE not found"
+# Read the EVALUATED config, never the Nix source text.
+#
+# This previously scraped `brews = [` / `casks = [` out of homebrew.nix with awk.
+# The moment those stopped being literal lists — `brews =` with its value on the
+# next line, `casks` built with `++ lib.optionals ...` — the pattern stopped
+# matching, and the script reported "No homebrew packages to validate" and
+# exited 0. It was validating NOTHING while passing, which is worse than not
+# existing. Measured at the time of this fix: the text parse found 0 packages
+# where evaluation finds 29.
+#
+# Evaluation cannot drift from the config this way: computed lists, conditionals
+# and values merged from several modules all resolve before we see them.
+host="${DARWIN_HOST:-}"
+if [ -z "$host" ]; then
+  host=$(nix eval --json '.#darwinConfigurations' --apply 'builtins.attrNames' 2>/dev/null |
+    "$JQ" -r '.[0] // empty')
+fi
+if [ -z "$host" ]; then
+  echo "ERROR: could not determine a darwinConfiguration to evaluate"
   exit 1
 fi
 
-# Extract brew packages (brews = [...])
-brews=$(awk '
-  /brews = \[/ {in_brews=1; next}
-  /^[[:space:]]*\][[:space:]]*(;|$|\+\+)/ && in_brews {in_brews=0; next}
-  in_brews && ! /^[[:space:]]*#/ {print}
-' "$HOMEBREW_FILE" | grep '"' | sed 's/.*"\([^"]*\)".*/\1/' || true)
+eval_names() {
+  nix eval --json ".#darwinConfigurations.${host}.config.homebrew.$1" 2>/dev/null |
+    "$JQ" -r '.[].name' || true
+}
 
-# Extract cask packages (casks = [...])
-casks=$(awk '
-  /casks = \[/ {in_casks=1; next}
-  /^[[:space:]]*\][[:space:]]*(;|$|\+\+)/ && in_casks {in_casks=0; next}
-  in_casks && ! /^[[:space:]]*#/ {print}
-' "$HOMEBREW_FILE" | grep '"' | sed 's/.*"\([^"]*\)".*/\1/' || true)
+brews=$(eval_names brews)
+casks=$(eval_names casks)
+
+# One search for every candidate, not one per package.
+#
+# `nix search` costs about 3.2s warmed, so the old per-package loop paid that
+# for each of the 29 entries. The regex is an anchored alternation of every
+# name, so a single invocation answers the whole question with identical
+# semantics — still nixpkgs-wide, still exact-name, so nested attributes are
+# found exactly as before. Names are pre-validated against [A-Za-z0-9._@-],
+# which contains no regex metacharacter.
+search_nixpkgs_batch() {
+  local names="$1" pattern
+  [ -z "$names" ] && return 0
+  pattern=$(printf '%s' "$names" | tr '\n' '|' | sed 's/|$//')
+  nix search --json nixpkgs "^(${pattern})\$" 2>/dev/null |
+    "$JQ" -r 'to_entries[] | .value.pname // (.key | split(".") | last)' || true
+}
 
 if [[ -z "$brews" ]] && [[ -z "$casks" ]]; then
   echo "No homebrew packages to validate"
   exit 0
 fi
+
+in_nixpkgs=$(search_nixpkgs_batch "$(printf '%s\n%s' "$brews" "$casks" | grep -v '^$' | sort -u)")
 
 echo "Checking if homebrew packages are available in nixpkgs..."
 failed=0
@@ -84,7 +117,7 @@ while IFS= read -r package; do
   if ! [[ "$package" =~ ^[a-zA-Z0-9._@-]+$ ]]; then
     echo "✗ INVALID: '$package' (brew) contains unsafe characters"
     violations+="  - $package (brew) - invalid characters\n"
-    ((failed++))
+    failed=$((failed + 1))
     continue
   fi
 
@@ -95,12 +128,14 @@ while IFS= read -r package; do
     continue
   fi
 
-  # Search nixpkgs (suppress warnings to stderr, check if any results)
-  # Note: package is validated to contain only [a-zA-Z0-9._-] characters above, preventing injection
-  if nix search nixpkgs "^${package}\$" 2>/dev/null | grep -q "legacyPackages"; then
+  # Membership test against the single batched search below. The previous form
+  # ran `nix search` once per package (measured ~3.2s each, warmed) and decided
+  # the result by grepping its human-readable output for the word
+  # "legacyPackages" — coupled to a display format that carries no such promise.
+  if printf '%s\n' "$in_nixpkgs" | grep -qxF "$package"; then
     echo "✗ VIOLATION: '$package' (brew) is available in nixpkgs - use nixpkgs instead"
     violations+="  - $package (brew)\n"
-    ((failed++))
+    failed=$((failed + 1))
   else
     echo "✓ OK: '$package' (brew) not in nixpkgs"
   fi
@@ -114,7 +149,7 @@ while IFS= read -r package; do
   if ! [[ "$package" =~ ^[a-zA-Z0-9._@-]+$ ]]; then
     echo "✗ INVALID: '$package' (cask) contains unsafe characters"
     violations+="  - $package (cask) - invalid characters\n"
-    ((failed++))
+    failed=$((failed + 1))
     continue
   fi
 
@@ -125,12 +160,14 @@ while IFS= read -r package; do
     continue
   fi
 
-  # Search nixpkgs (suppress warnings to stderr, check if any results)
-  # Note: package is validated to contain only [a-zA-Z0-9._-] characters above, preventing injection
-  if nix search nixpkgs "^${package}\$" 2>/dev/null | grep -q "legacyPackages"; then
+  # Membership test against the single batched search below. The previous form
+  # ran `nix search` once per package (measured ~3.2s each, warmed) and decided
+  # the result by grepping its human-readable output for the word
+  # "legacyPackages" — coupled to a display format that carries no such promise.
+  if printf '%s\n' "$in_nixpkgs" | grep -qxF "$package"; then
     echo "✗ VIOLATION: '$package' (cask) is available in nixpkgs - use nixpkgs instead"
     violations+="  - $package (cask)\n"
-    ((failed++))
+    failed=$((failed + 1))
   else
     echo "✓ OK: '$package' (cask) not in nixpkgs"
   fi
