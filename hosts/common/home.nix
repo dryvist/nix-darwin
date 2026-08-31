@@ -12,6 +12,7 @@
   pkgs,
   hostConfig,
   nix-ai,
+  userConfig,
   ...
 }:
 let
@@ -99,6 +100,16 @@ in
   };
 
   programs = {
+    # Coding-agent usage metrics. The transcripts carry the 5m-vs-1h cache
+    # split, thinking tokens, and injected-context sizes that the OTEL exporter
+    # does not emit, so this reads them directly and posts counters. Reached
+    # over plain HTTP on the store's own port: the metrics store sits at the
+    # public apex with no ingress vhost in front of it.
+    claudeUsageCollector = {
+      enable = true;
+      endpoint = "http://grafana.${userConfig.baseDomain}:8428/api/v1/import/prometheus";
+    };
+
     # Share system-level Homebrew taps with nix-ai's trust.json.
     # homebrew.taps entries can be strings or submodule attrsets (nix-darwin
     # normalizes to attrsets with a `name`); the nix-ai option takes strings.
