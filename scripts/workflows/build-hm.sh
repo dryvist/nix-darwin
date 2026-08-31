@@ -17,7 +17,7 @@ build_exit_code=${PIPESTATUS[0]}
 
 if [ "$build_exit_code" -ne 0 ]; then
   echo "::error::nix build failed with exit code $build_exit_code"
-  exit $build_exit_code
+  exit "$build_exit_code"
 fi
 
 # Fail on errors (warnings are logged but don't fail the build)
@@ -32,6 +32,22 @@ if grep -qE "^warning:" "$BUILD_OUTPUT"; then
   grep -E "^warning:" "$BUILD_OUTPUT" | while read -r line; do
     echo "::warning::$line"
   done
+fi
+
+# Source-build vs substitution breakdown.
+#
+# When this job runs long, the actionable question is always "what did we build
+# from source instead of fetching?" — without this the log shows only that it
+# was slow. Counts derivations nix chose to realise locally against paths it
+# fetched, and names the worst offenders so the fix targets a real derivation.
+built=$(grep -cE "^building '" "$BUILD_OUTPUT" || true)
+fetched=$(grep -cE "^copying path|^downloading" "$BUILD_OUTPUT" || true)
+echo "::notice::Realised locally: ${built} derivation(s); substituted: ${fetched} path(s)"
+if [ "${built:-0}" -gt 0 ]; then
+  echo "Top source-built derivations:"
+  grep -E "^building '" "$BUILD_OUTPUT" |
+    sed -E "s/^building '(.*)\.drv'.*/\1/; s@.*/[a-z0-9]{32}-@@" |
+    sort | uniq -c | sort -rn | head -15
 fi
 
 echo "Build completed successfully: $OUTPUT_LINK"
