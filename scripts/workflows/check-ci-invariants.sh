@@ -175,6 +175,22 @@ grep -qE "vars.GH_ACTION_TIMEOUT_NIX \|\| '(1[0-9]|20)'" "$wf" ||
 grep -q 'check-closure-health.sh' "$wf" ||
   die "the closure health check must stay in the build job — without it a duplicated dependency or a new multi-hundred-MB payload lands silently and every later run pays for it."
 
+# A workflow step that runs a script as `./path` needs that script executable in
+# the index. The mode is easy to lose — a rewrite that recreates the file drops
+# it, and nothing local complains because the working copy still runs. It
+# surfaces only on a runner, as "Permission denied" from a step that looks
+# correct, and it has bitten this estate before.
+while IFS= read -r script; do
+  [ -n "$script" ] || continue
+  [ -f "$script" ] || continue
+  mode=$(git ls-files -s -- "$script" 2>/dev/null | awk '{print $1}')
+  [ -n "$mode" ] || continue
+  [ "$mode" = "100755" ] ||
+    die "$wf runs ./$script but it is mode $mode in the index. The step will fail on a runner with 'Permission denied'. Fix with: git update-index --chmod=+x $script"
+done <<EOF
+$(grep -oE 'run: \./[A-Za-z0-9_./-]+\.sh' "$wf" | sed 's@^run: \./@@' | sort -u)
+EOF
+
 if [ "$fail" -ne 0 ]; then
   echo "check-ci-invariants: see the comments in $wf for why each invariant exists." >&2
   exit 1
