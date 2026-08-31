@@ -114,12 +114,15 @@ in
       # and must not run on the worker's own weights. KEEP IN STEP WITH THE
       # ROUTER: llama-swap and LiteLLM resolve that alias independently and
       # once named different models. Rationale: ./mac-studio.md "The judge".
+      # AND "judge" (2026-08-23): the publish gate needs one alias on every
+      # host, never a swap-class model.
       qwen36-35b = {
         class = "resident";
         roles = [
           "quickest"
           "large-context"
           "goal-judge"
+          "judge"
         ];
       };
       # Small on-demand 9B, and the `small` role. STAYS ENABLED, and the role

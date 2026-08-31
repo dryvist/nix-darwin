@@ -1,5 +1,103 @@
 # Changelog
 
+## [2.45.0](https://github.com/dryvist/nix-darwin/compare/v2.44.1...v2.45.0) (2026-08-28)
+
+
+### Features
+
+* **telemetry:** wire Claude Code spans to the collector ([#2288](https://github.com/dryvist/nix-darwin/issues/2288)) ([a5d7ab7](https://github.com/dryvist/nix-darwin/commit/a5d7ab7c4a0d826f5f97343e8efc84db8c6b7ed9))
+
+## [2.44.1](https://github.com/dryvist/nix-darwin/compare/v2.44.0...v2.44.1) (2026-08-25)
+
+
+### Bug Fixes
+
+* **ci:** give the partial cache save a real window ([#2274](https://github.com/dryvist/nix-darwin/issues/2274)) ([80a8526](https://github.com/dryvist/nix-darwin/commit/80a8526f6dca0c65ed74d4a67ea1710381e6167f))
+
+## [2.44.0](https://github.com/dryvist/nix-darwin/compare/v2.43.0...v2.44.0) (2026-08-25)
+
+
+### Features
+
+* **claude:** re-enable the local LiteLLM proxy on the nix-ai fix ([#2276](https://github.com/dryvist/nix-darwin/issues/2276)) ([1cc188f](https://github.com/dryvist/nix-darwin/commit/1cc188f4bf86cb54060079d3a223e6e445340400))
+
+
+### Bug Fixes
+
+* **claude:** disable broken local proxy ([#2275](https://github.com/dryvist/nix-darwin/issues/2275)) ([5783cd3](https://github.com/dryvist/nix-darwin/commit/5783cd35a19659903c8eaf970838f02ced331007))
+
+## [2.43.0](https://github.com/dryvist/nix-darwin/compare/v2.42.0...v2.43.0) (2026-08-24)
+
+
+### Features
+
+* **macbook:** declare which domains are self-hosted ([#2265](https://github.com/dryvist/nix-darwin/issues/2265)) ([6a442aa](https://github.com/dryvist/nix-darwin/commit/6a442aa9a5b9ef3d92b405c16ce964f19eef85ba))
+* **macbook:** route CLIs through the loopback LiteLLM proxy by role ([#2259](https://github.com/dryvist/nix-darwin/issues/2259)) ([02d1264](https://github.com/dryvist/nix-darwin/commit/02d12644cbbef8d4d4b482be8ef207279889f494))
+
+
+### Bug Fixes
+
+* **ci:** run the gate on the push that lands each merge ([#2269](https://github.com/dryvist/nix-darwin/issues/2269)) ([6c8fe6e](https://github.com/dryvist/nix-darwin/commit/6c8fe6e6805c29f16a1ba1bf51efbc568618fe13))
+* **ci:** state the build step timeout as a literal ([#2267](https://github.com/dryvist/nix-darwin/issues/2267)) ([033e7be](https://github.com/dryvist/nix-darwin/commit/033e7be63f22879b89f7604ffd89a7f9ea91d78a))
+* **overlays:** skip a2a-sdk darwin-incompatible e2e tests ([#2263](https://github.com/dryvist/nix-darwin/issues/2263)) ([946655f](https://github.com/dryvist/nix-darwin/commit/946655f94cb1fe8d8e4ad0c6bd6adcb8a59b3732))
+
+## [2.42.0](https://github.com/dryvist/nix-darwin/compare/v2.41.0...v2.42.0) (2026-08-23)
+
+
+### Features
+
+* **homebrew:** add Timemator, disable Toggl Track and neat casks ([a5d6a76](https://github.com/dryvist/nix-darwin/commit/a5d6a76f738f3a88f3c642b919117e430fbf941b))
+* **homebrew:** add Timemator, disable Toggl Track and neat casks ([3cb2867](https://github.com/dryvist/nix-darwin/commit/3cb2867668cb2eecaf061fa212945913fa3799db))
+* **mlx:** give the Studio's resident model the judge alias ([#2244](https://github.com/dryvist/nix-darwin/issues/2244)) ([2667e73](https://github.com/dryvist/nix-darwin/commit/2667e73a9c3366da5b7fe7646049c9c1667ba631))
+
+
+### Bug Fixes
+
+* **activation:** fail the rebuild when home-manager does not apply ([#2231](https://github.com/dryvist/nix-darwin/issues/2231)) ([178c5b9](https://github.com/dryvist/nix-darwin/commit/178c5b9dd0446cda9b1f733790e32f1b1309a329))
+* **activation:** treat DRY_RUN/dryRun as booleans, not mere presence ([cc71357](https://github.com/dryvist/nix-darwin/commit/cc71357116392686a925300ce3310bc266b34545))
+* **cribl:** repair the macOS Edge lane end to end ([#2247](https://github.com/dryvist/nix-darwin/issues/2247)) ([4585925](https://github.com/dryvist/nix-darwin/commit/45859255138353002e7fc2637ece44ae6f2b0c4b))
+
+
+### Performance
+
+* **ci:** run the full macOS Nix Build only on PRs targeting main ([#2241](https://github.com/dryvist/nix-darwin/issues/2241)) ([90789c1](https://github.com/dryvist/nix-darwin/commit/90789c136e07b9213629fde0f348e2b723bba66a))
+
+## [2.41.0](https://github.com/dryvist/nix-darwin/compare/v2.40.1...v2.41.0) (2026-08-23)
+
+
+### Features
+
+* **power:** restart servers automatically after a power failure ([#2228](https://github.com/dryvist/nix-darwin/issues/2228)) ([ef49120](https://github.com/dryvist/nix-darwin/commit/ef4912083bd651fb3cff45778ee204fbafe7672e))
+
+
+### Bug Fixes
+
+* **cluster-quiesce:** drop the Apple-events dependency from the GUI quit sweep ([#2232](https://github.com/dryvist/nix-darwin/issues/2232)) ([f756e58](https://github.com/dryvist/nix-darwin/commit/f756e5874f19552d3e00570949cc9944838fde73))
+
+## [2.40.1](https://github.com/dryvist/nix-darwin/compare/v2.40.0...v2.40.1) (2026-08-22)
+
+
+### Bug Fixes
+
+* **deps:** bump nix-openwhispr for the app-install build fix ([5840a67](https://github.com/dryvist/nix-darwin/commit/5840a67980fb8630c5ebfe026e41773110407973))
+* **deps:** bump nix-openwhispr to include the app-install build fix ([87c7994](https://github.com/dryvist/nix-darwin/commit/87c7994fe470d955df07f1e5088d3c50f6ffe784))
+
+## [2.40.0](https://github.com/dryvist/nix-darwin/compare/v2.39.0...v2.40.0) (2026-08-22)
+
+
+### Features
+
+* **homebrew:** install Raycast via greedy workstation cask ([f1e93eb](https://github.com/dryvist/nix-darwin/commit/f1e93ebfb3cfe79adc4b59a3a4a3df5837210774))
+* **homebrew:** install Raycast via greedy workstation cask ([a125db9](https://github.com/dryvist/nix-darwin/commit/a125db9ce33930e100ad7f50c765bf79dd3e46ec))
+* **home:** enable OpenWhispr MCP in shared AI profile ([eac46a5](https://github.com/dryvist/nix-darwin/commit/eac46a5b48e60572218ac703611177d1e56ae665))
+* **home:** enable OpenWhispr MCP in shared AI profile ([07038cd](https://github.com/dryvist/nix-darwin/commit/07038cd52716859dc86bfa3071e626c2d4a00a13))
+
+
+### Bug Fixes
+
+* **cribl:** temporary boot-time probe for the cribl-edge store-path race ([e923b81](https://github.com/dryvist/nix-darwin/commit/e923b81e0aca53b2e685eb00bd4fe3e0b540f926))
+* **home:** drop the aiMcp override that manufactures a phantom server ([#2220](https://github.com/dryvist/nix-darwin/issues/2220)) ([288a291](https://github.com/dryvist/nix-darwin/commit/288a291df4cae4058e83d9e30556e14bd9b287da))
+
 ## [2.39.0](https://github.com/dryvist/nix-darwin/compare/v2.38.1...v2.39.0) (2026-08-17)
 
 

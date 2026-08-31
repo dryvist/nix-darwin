@@ -130,10 +130,15 @@ jobs:
   # ==========================================================================
   # CONDITIONAL CHECKS (repo-local — reusable workflows the shared gate can't host)
   # ==========================================================================
+  # Full-build placement: the ~20-27 min macOS system build runs pre-merge
+  # only on PRs targeting main — i.e. the develop->main promotion PR, the
+  # guaranteed end-to-end sweep. develop PRs take the fast path (Nix
+  # Validate, ~2 min); coverage between promotions is ci-nix.yml's build on
+  # every develop push (post-merge, and the only cache-saving run).
   nix-build:
     name: Nix Build
     needs: changes
-    if: needs.changes.outputs.nix == 'true' && (needs.changes.outputs.is-deps-only == 'false' || needs.changes.outputs.is-flake-lock-change == 'true')
+    if: github.base_ref == 'main' && needs.changes.outputs.nix == 'true' && (needs.changes.outputs.is-deps-only == 'false' || needs.changes.outputs.is-flake-lock-change == 'true')
     permissions:
       contents: read
       # _nix-build.yml's cache step purges superseded entries through the
@@ -184,15 +189,19 @@ jobs:
     runs-on: ${{ github.event.pull_request.head.repo.full_name == github.repository && format('runs-on={0}/runner=2cpu-linux-x64', github.run_id) || 'ubuntu-latest' }}
     steps:
       - name: Check all results
-        uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # release/v1
+        uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # release/v1
         with:
           # For deps-only commits: nix-build and nix-validate can be skipped
           # For non-Nix changes: nix-build and nix-validate can be skipped
-          # For Nix changes: only nix-validate can be skipped, nix-build must pass
+          # For Nix changes to a non-main base (develop/feature PRs):
+          # nix-build is base-gated off, so it may skip
+          # For Nix changes targeting main: only nix-validate can be skipped,
+          # nix-build must pass — the fallback arm deliberately omits
+          # nix-build so an unexpectedly-skipped build fails the gate there.
           # claude-settings is intentionally NOT skippable for deps-only: a
           # flake.lock bump can change the rendered settings, so it must validate.
           # llm-concurrency-parity shares nix-validate's `if:` (any nix change),
           # so it is skippable in exactly the same cases nix-validate is.
           # shared-gate is never skippable — it always reports.
-          allowed-skips: ${{ (needs.changes.outputs.is-deps-only == 'true' && 'nix-build, nix-validate, llm-concurrency-parity') || (needs.changes.outputs.nix == 'false' && 'nix-build, nix-validate, claude-settings, llm-concurrency-parity') || 'nix-validate, claude-settings, llm-concurrency-parity' }}
+          allowed-skips: ${{ (needs.changes.outputs.is-deps-only == 'true' && 'nix-build, nix-validate, llm-concurrency-parity') || (needs.changes.outputs.nix == 'false' && 'nix-build, nix-validate, claude-settings, llm-concurrency-parity') || (github.base_ref != 'main' && 'nix-build, nix-validate, claude-settings, llm-concurrency-parity') || 'nix-validate, claude-settings, llm-concurrency-parity' }}
           jobs: ${{ toJSON(needs) }}

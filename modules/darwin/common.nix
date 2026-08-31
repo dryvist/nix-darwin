@@ -36,6 +36,7 @@ in
     ./trackpad.nix
     ./system-ui.nix
     ./activation-error-tracking.nix
+    ./hm-activation-assert.nix # Fail the rebuild when home-manager did not apply
     ./llm-gate.nix
     ./nix-storage.nix
     ./ws-monitor.nix

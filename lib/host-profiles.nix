@@ -23,6 +23,7 @@ let
         codexDesktop = false;
         goose = false;
         qwenCode = false;
+        langgraphCli = false;
       };
     };
   };
@@ -43,6 +44,7 @@ let
       codex = true;
       goose = true;
       qwenCode = true;
+      langgraphCli = true;
     };
   };
 

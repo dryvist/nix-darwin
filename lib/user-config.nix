@@ -167,9 +167,42 @@ in
     ];
   };
 
-  # Claude Code OpenTelemetry → local OrbStack k8s OTEL collector. nix-ai
-  # resolves the endpoint port from its registry (nodeports.otel_grpc).
-  telemetry.enable = true;
+  # Claude Code OpenTelemetry. Endpoints compose from internalDomain, never
+  # re-spelled — see the let-binding above.
+  #
+  # Each signal goes to the service that actually stores it, and no signal is
+  # aimed at one that does not. The span collector extracts spans only, so
+  # metrics pointed at it would be discarded; the metrics store ingests OTLP
+  # metrics and serves no logs route, so logs pointed at it would fail every
+  # export interval. nix-ai gates each signal on its own endpoint and pins the
+  # unused exporters to `none`, so an unset endpoint means that signal is not
+  # emitted at all rather than emitted to a conventional default address.
+  #
+  # Logs stay off for that reason: no service here ingests them, and the
+  # content worth having is already on the span path.
+  telemetry = {
+    enable = true;
+
+    # Signal-specific, so it carries the full path — nothing is appended.
+    # Setting it is also what turns span emission on at all.
+    tracesEndpoint = "https://otel.${internalDomain}/v1/traces";
+
+    # Also signal-specific and full-path. The metrics store resolves at the
+    # public apex rather than the internal zone, and is reached directly on its
+    # own port — there is no ingress vhost in front of it. Its OTLP route is
+    # under /opentelemetry, and it runs with Prometheus naming on, so the
+    # counters land under the names the vendored dashboard queries.
+    metricsEndpoint = "http://grafana.${baseDomain}:8428/opentelemetry/v1/metrics";
+
+    serviceName = "claude-code";
+    # host.name is per-host, so flake.nix's mkHost merges it in — this file is
+    # host-agnostic and every host would otherwise report the same identity.
+
+    # Ships full prompt and tool content. Deliberate, and only sound because
+    # the collector and every hop past it are self-hosted on the internal zone.
+    logUserPrompts = true;
+    logToolDetails = true;
+  };
 
   # Personal directories Claude Code may read without per-prompt approval.
   extraTrustedPaths = [ "~/.claude/skills/retrospecting/reports/" ];

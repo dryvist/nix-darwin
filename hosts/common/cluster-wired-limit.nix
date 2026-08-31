@@ -108,9 +108,10 @@ in
       shardMemoryMb = 56000;
 
       # wiredCeilingMb (dryvist/nix-ai#1481) is DELIBERATELY LEFT UNSET (0 =
-      # disabled). Any value here must come from the layered-ceiling model in
-      # the private docs repo, never from an ad-hoc estimate: a ceiling derived
-      # without it reaps healthy ranks.
+      # disabled). Any value here must come from the layered-ceiling model at
+      # https://docs.jacobpevans.com/d/hosts/ai/apple-silicon-memory-model/,
+      # never from an ad-hoc estimate: a ceiling derived without it reaps
+      # healthy ranks.
       #
       # From the definition sites, per that page's clustered formula:
       #   F_rank(N) = W_shard + L1_buf + B_cache + N * C_seq

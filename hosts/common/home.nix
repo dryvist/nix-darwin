@@ -12,6 +12,7 @@
   pkgs,
   hostConfig,
   nix-ai,
+  userConfig,
   ...
 }:
 let
@@ -61,6 +62,9 @@ in
     # Durable code-signing identity for the cluster executables, so their macOS
     # privacy grants survive a rebuild instead of dying with the store path.
     ./mlx-cluster-signing.nix
+    # Unmanaged symlinks at managed paths abort checkLinkTargets and no backup
+    # option covers them; clear them before the collision check runs.
+    ./hm-collision-clear.nix
   ];
 
   # macOS Application Management: copyApps gives stable paths for TCC persistence.
@@ -87,19 +91,25 @@ in
   monitoring = {
     enable = true;
     kubernetes.enable = true;
-    otel = {
-      enable = true;
-      # endpoint defaults to http://localhost:30317 (NodePort gRPC)
-      logPrompts = true;
-      logToolDetails = true;
-      resourceAttributes = {
-        "host.name" = hostConfig.hostName;
-      };
-    };
+    # Claude Code's OTEL variables come from nix-ai (userConfig.telemetry),
+    # which owns AI-tool configuration. This module would set the same
+    # variables a second time through the login shell, and two sources for one
+    # set of variables drift. Left off so there is exactly one.
+    otel.enable = false;
     cribl.enable = true;
   };
 
   programs = {
+    # Coding-agent usage metrics. The transcripts carry the 5m-vs-1h cache
+    # split, thinking tokens, and injected-context sizes that the OTEL exporter
+    # does not emit, so this reads them directly and posts counters. Reached
+    # over plain HTTP on the store's own port: the metrics store sits at the
+    # public apex with no ingress vhost in front of it.
+    claudeUsageCollector = {
+      enable = true;
+      endpoint = "http://grafana.${userConfig.baseDomain}:8428/api/v1/import/prometheus";
+    };
+
     # Share system-level Homebrew taps with nix-ai's trust.json.
     # homebrew.taps entries can be strings or submodule attrsets (nix-darwin
     # normalizes to attrsets with a `name`); the nix-ai option takes strings.
@@ -144,7 +154,15 @@ in
     # credentials remain injected by the shared Doppler wrapper.
     aiMcp.servers.vikunja.disabled = lib.mkForce false;
     aiMcp.servers.openrouter.disabled = lib.mkForce false;
-    aiMcp.servers.openwhispr.disabled = lib.mkForce false;
+    # openwhispr is deliberately NOT listed. `aiMcp.servers` is an
+    # attrsOf submodule, so naming a server the pinned nix-ai does not define
+    # does not enable anything — it CREATES one from submodule defaults
+    # (type = "stdio", command = null), and that phantom then fails the
+    # "stdio servers must have a command" assertion, taking the whole
+    # darwinConfiguration eval down with it.
+    #
+    # The pinned nix-ai revision has no openwhispr entry. Restore this line
+    # in the same change that relocks nix-ai to a revision that defines it.
 
     # cecli (nix-ai's Aider fork) is disabled — unused, and its
     # tree-sitter-language-pack<=0.13.0 pin fails to build on nixpkgs 26.05

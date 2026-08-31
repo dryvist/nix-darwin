@@ -14,7 +14,6 @@
 #   sleep N          - System sleep timer (minutes, 0 = never)
 #   disksleep N      - Disk spindown timer (minutes, 0 = never)
 #   womp 0/1         - Wake on Magic Packet (Ethernet)
-#   autorestart 0/1  - Restart after power failure
 #   lidwake 0/1      - Wake on lid open (laptops)
 #   acwake 0/1       - Wake on AC power connect
 
@@ -65,11 +64,11 @@ in
       description = "Wake on Magic Packet (Wake-on-LAN)";
     };
 
-    autoRestartOnPowerLoss = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "Automatically restart after power failure";
-    };
+    # Restart-after-power-failure is NOT here: it is nix-darwin's native
+    # `power.restartAfterPowerFailure`, set by host class in
+    # hosts/common/default.nix. Carrying it as a `pmset -a autorestart` flag
+    # bundled into the invocation below meant one knob that a portable rejects
+    # could take the other three down with it.
   };
 
   config = lib.mkIf cfg.enable {
@@ -80,8 +79,7 @@ in
       if sudo pmset -a \
         displaysleep ${toString cfg.displaysleep} \
         disksleep ${toString cfg.disksleep} \
-        womp ${if cfg.wakeOnMagicPacket then "1" else "0"} \
-        autorestart ${if cfg.autoRestartOnPowerLoss then "1" else "0"}; then
+        womp ${if cfg.wakeOnMagicPacket then "1" else "0"}; then
         echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Common energy settings applied"
       else
         echo "$(date '+%Y-%m-%d %H:%M:%S') [WARN] Failed to apply common energy settings (attempted: display ${toString cfg.displaysleep}m, disk ${toString cfg.disksleep}m)" >&2

@@ -56,6 +56,14 @@ in
   # trip to the physical console. See modules/darwin/apps/screen-sharing.nix.
   programs.screenSharing.enable = true;
 
+  # Restart automatically once mains power returns, so an always-on host needs
+  # no console visit after an outage. Servers only, and deliberately left null
+  # (not false) elsewhere: portables report "Not supported" for
+  # `systemsetup -getRestartPowerFailure`, and nix-darwin's own preflight check
+  # aborts the activation whenever this is set on such a machine — so setting
+  # it either way on a laptop breaks every rebuild there.
+  power.restartAfterPowerFailure = lib.mkIf hostConfig.isServer (lib.mkDefault true);
+
   # Application firewall on every host. The MBP had this enabled by hand; the
   # Studio shipped disabled, which left the firewall-log-shipping feed with
   # nothing to say (its `log stream` daemon was alive but the ALF subsystem

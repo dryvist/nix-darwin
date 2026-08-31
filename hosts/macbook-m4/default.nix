@@ -117,7 +117,7 @@ in
       # util-fraction trip pairing (gpuMemoryUtilization) was vllm-mlx-only and
       # could never sit below the ceiling; it is retired under mlx-lm.
       # Interactive box, LLM-first.
-      # https://docs.jacobpevans.com/local-llm/memory-ceilings
+      # https://docs.jacobpevans.com/d/hosts/ai/apple-silicon-memory-model/
       maxLocalLlmGb = 100;
       # Set explicitly rather than relying on the module default: a list option
       # drops its default once any config value is set, so the generic excludes
@@ -149,7 +149,6 @@ in
       # This ensures optimal power state transition on battery (Safe Sleep requires this)
       disksleep = 10; # Disk optimizes power after 10 minutes (before system sleep at 60)
       wakeOnMagicPacket = true;
-      autoRestartOnPowerLoss = true;
     };
   };
 }

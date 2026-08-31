@@ -54,7 +54,7 @@ repos:
   # Runs security-audit rules on all supported languages
   # See: https://semgrep.dev/docs/extensions/pre-commit
   - repo: https://github.com/semgrep/pre-commit
-    rev: v1.172.0
+    rev: v1.174.0
     hooks:
       - id: semgrep
         args: ['--config', 'p/security-audit', '--skip-unknown-extensions']
