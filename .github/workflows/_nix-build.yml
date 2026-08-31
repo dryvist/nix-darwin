@@ -204,13 +204,20 @@ jobs:
       - name: Verify Nix Symlinks
         run: ./scripts/workflows/verify-symlinks.sh result-hm/home-files
 
-      # Closure size is what this job's wall time is actually made of, and both
-      # ways it regresses (a dependency landing twice, a large opaque payload
-      # arriving) produce a valid closure that no evaluation check can see.
-      # Measure it here, where a regression turns a required check red instead
-      # of quietly adding minutes to every run from now on.
-      - name: Check Closure Health
-        run: ./scripts/workflows/check-closure-health.sh result-hm
+      # Closure size is what this job's wall time is actually made of, and a
+      # regression produces a perfectly valid closure that no evaluation check
+      # can see. Report it with nix's own commands; only the one thing nix has
+      # no command for gets a script.
+      # nix's own documented idiom (see `nix path-info --help`). Note `./`:
+      # a bare relative name is parsed as a flake reference and fails with
+      # "cannot find flake". Sorted numerically on bytes rather than with
+      # `sort -h`, because the human-readable form puts a space before the unit
+      # and sorts wrong.
+      - name: Report Closure Size
+        run: nix path-info --recursive --size ./result-hm | sort -nk2 | tail -20
+
+      - name: Check Closure Duplicates
+        run: ./scripts/workflows/check-closure-health.sh ./result-hm
 
       - name: Build Timing
         if: always()
