@@ -180,6 +180,12 @@ grep -q 'check-closure-health.sh' "$wf" ||
 # it, and nothing local complains because the working copy still runs. It
 # surfaces only on a runner, as "Permission denied" from a step that looks
 # correct, and it has bitten this estate before.
+# Anchored at line start so a commented-out `# run: ./old.sh` is not treated as
+# a live invocation — an unanchored match reports a script the workflow does not
+# actually run. Whitespace-tolerant around `run:` for the same reason.
+#
+# `while read` rather than `for ... in $(...)`: the latter trips SC2013, and the
+# repo does not carry lint suppressions.
 while IFS= read -r script; do
   [ -n "$script" ] || continue
   [ -f "$script" ] || continue
@@ -188,7 +194,8 @@ while IFS= read -r script; do
   [ "$mode" = "100755" ] ||
     die "$wf runs ./$script but it is mode $mode in the index. The step will fail on a runner with 'Permission denied'. Fix with: git update-index --chmod=+x $script"
 done <<EOF
-$(grep -oE 'run: \./[A-Za-z0-9_./-]+\.sh' "$wf" | sed 's@^run: \./@@' | sort -u)
+$(grep -oE '^[[:space:]]*run:[[:space:]]*\./[A-Za-z0-9_./-]+\.sh' "$wf" |
+  sed -E 's@^[[:space:]]*run:[[:space:]]*\./@@' | sort -u)
 EOF
 
 if [ "$fail" -ne 0 ]; then
