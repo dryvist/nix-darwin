@@ -204,6 +204,14 @@ jobs:
       - name: Verify Nix Symlinks
         run: ./scripts/workflows/verify-symlinks.sh result-hm/home-files
 
+      # Closure size is what this job's wall time is actually made of, and both
+      # ways it regresses (a dependency landing twice, a large opaque payload
+      # arriving) produce a valid closure that no evaluation check can see.
+      # Measure it here, where a regression turns a required check red instead
+      # of quietly adding minutes to every run from now on.
+      - name: Check Closure Health
+        run: ./scripts/workflows/check-closure-health.sh result-hm
+
       - name: Build Timing
         if: always()
         run: |

@@ -163,6 +163,18 @@ for c in "${callers[@]}"; do
     die "$c runs on push and sets its own concurrency group, so it must exempt develop from cancel-in-progress — develop is the only branch that saves the Nix cache."
 done
 
+# The build budget is the pressure that keeps this job fast. Raising it converts
+# a slow build into a slow build nobody is required to fix, and that has already
+# happened once: the default was moved 15 -> 30 while the underlying closure
+# regression went untouched. A run over budget is a closure to shrink.
+grep -qE "vars.GH_ACTION_TIMEOUT_NIX \|\| '(1[0-9]|20)'" "$wf" ||
+  die "the nix build timeout default must stay at or below 20 minutes — it is the only thing forcing closure regressions to get fixed rather than absorbed. A build that exceeds it is a closure to shrink, never a budget to raise."
+
+# Closure size is this job's wall time. Both regressions that recur here produce
+# a valid closure, so nothing else in CI can see them.
+grep -q 'check-closure-health.sh' "$wf" ||
+  die "the closure health check must stay in the build job — without it a duplicated dependency or a new multi-hundred-MB payload lands silently and every later run pays for it."
+
 if [ "$fail" -ne 0 ]; then
   echo "check-ci-invariants: see the comments in $wf for why each invariant exists." >&2
   exit 1
