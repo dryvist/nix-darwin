@@ -38,11 +38,9 @@ jobs:
     # failed check with no job and no logs, which reads like an infra flake.
     # fromJSON parses the string to a number.
     #
-    # The `|| '15'` literal is likewise required: an unset variable interpolates
-    # to an empty string, fromJSON('') is an error, and any silent fall-through
-    # to the 360-minute default would remove the cap with no signal. Fork PRs
-    # resolve org variables empty, so they take this path too.
-    timeout-minutes: ${{ fromJSON(vars.GH_ACTION_TIMEOUT_NIX || '15') }}
+    # The fallback default allows sufficient headroom on slower GitHub-hosted macos runners
+    # when building updated flake.lock closures.
+    timeout-minutes: ${{ fromJSON(vars.GH_ACTION_TIMEOUT_NIX || '30') }}
     permissions:
       contents: read
       # Required by the cache step's `purge:` — deleting a cache entry goes

@@ -113,6 +113,7 @@ jobs:
       file_size: true
       dependency_review: false
       zizmor: false
+      queue_timeout_minutes: 30
       runner_label: ${{ github.event.pull_request.head.repo.full_name == github.repository && format('runs-on={0}/runner=2cpu-linux-x64', github.run_id) || 'ubuntu-latest' }}
       filters: |
         nix:
@@ -154,12 +155,13 @@ jobs:
   nix-validate:
     name: Nix Validate
     needs: changes
-    if: needs.changes.outputs.nix == 'true'
+    # nix-darwin targets darwin systems only (systems = default-darwin).
+    # Linux nix flake check fails because x86_64-linux is not a declared system.
+    # The macOS native builder (nix-build on mac-fleet) is the authoritative gate.
+    if: false
     uses: dryvist/.github/.github/workflows/_nix-validate.yml@main
     with:
-      # Linux `nix flake check --all-systems` needs more disk/RAM for
-      # darwin-source substitution; m7+c7 family with s3-cache fits.
-      # Fork PRs fall back to ubuntu-latest (see header comment on `changes`).
+      all_systems: false
       runner_label: ${{ github.event.pull_request.head.repo.full_name == github.repository && format('runs-on={0}/cpu=4/ram=16/family=m7+c7/extras=s3-cache', github.run_id) || 'ubuntu-latest' }}
 
   claude-settings:
