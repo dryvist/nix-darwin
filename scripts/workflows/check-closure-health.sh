@@ -20,17 +20,33 @@
 # Usage: check-closure-health.sh <store-path-or-result-link>
 #   CLOSURE_BUDGET_MB   total closure ceiling (default 14336 = 14G)
 #   DUPLICATE_FLOOR_MB  ignore duplicate pairs smaller than this (default 64)
+#   DUPLICATE_BASELINE  duplicates already known and tracked (default 5)
+#
+# Both limits are RATCHETS, set just above what is true today so that the next
+# regression fails while existing debt stays visible without blocking everyone.
+# Lower them as the real numbers come down; raising either to make a red build
+# green is the one change this script exists to prevent.
 
 set -euo pipefail
 
 target="${1:?usage: check-closure-health.sh <store-path-or-result-link>}"
 budget_mb="${CLOSURE_BUDGET_MB:-14336}"
 dup_floor_mb="${DUPLICATE_FLOOR_MB:-64}"
+# Known duplicated derivations, all traced to one transitive input that pins its
+# own nixpkgs. Tracked upstream; drop this to 0 once that lands.
+dup_baseline="${DUPLICATE_BASELINE:-5}"
 
 if [ ! -e "$target" ]; then
   echo "check-closure-health: no such path: $target" >&2
   exit 1
 fi
+
+# Resolve to an absolute path before handing it to nix. A bare relative name
+# like `result-hm` is parsed as a FLAKE REFERENCE, not a path, and the command
+# dies with "cannot find flake 'flake:result-hm' in the flake registries" — which
+# reads like a broken checkout rather than a quoting bug. CI invokes this with
+# exactly that shape, so the absolute form is the one that matters.
+target=$(cd "$(dirname "$target")" && printf '%s/%s' "$(pwd)" "$(basename "$target")")
 
 fail=0
 die() {
@@ -73,9 +89,15 @@ if [ -n "$dups" ]; then
   echo "$dups"
   dup_count=$(printf '%s\n' "$dups" | wc -l | tr -d ' ')
   redundant=$(printf '%s\n' "$dups" | awk '{n += $1 - 1} END {print n+0}')
-  die "closure carries ${dup_count} duplicated derivation(s) over ${dup_floor_mb} MB (${redundant} redundant copies). This is normally an input pinning its own nixpkgs instead of following the root — check flake.lock for more than one nixpkgs revision."
+  echo "::notice::${dup_count} duplicated derivation(s) over ${dup_floor_mb} MB, ${redundant} redundant copies (baseline ${dup_baseline})"
+  if [ "$dup_count" -gt "$dup_baseline" ]; then
+    die "duplicated derivations rose to ${dup_count}, above the ${dup_baseline} already known. Something newly pins its own nixpkgs instead of following the root — check flake.lock for an added nixpkgs revision. Fix the input rather than raising DUPLICATE_BASELINE."
+  fi
 else
   echo "  none over ${dup_floor_mb} MB"
+  if [ "$dup_baseline" -gt 0 ]; then
+    echo "::notice::No duplicates remain; DUPLICATE_BASELINE can drop to 0."
+  fi
 fi
 
 if [ "$total_mb" -gt "$budget_mb" ]; then
@@ -86,4 +108,10 @@ if [ "$fail" -ne 0 ]; then
   exit 1
 fi
 
-echo "Closure health OK: ${total_mb} MB, no duplicates over ${dup_floor_mb} MB."
+# Report the debt on success too. "OK" that hides five known duplicates is how
+# the baseline stops being temporary.
+if [ -n "$dups" ]; then
+  echo "Closure health OK: ${total_mb} MB / ${budget_mb} MB budget; ${dup_count} duplicated derivation(s) at the tracked baseline of ${dup_baseline} — still debt, just not new."
+else
+  echo "Closure health OK: ${total_mb} MB / ${budget_mb} MB budget; no duplicates over ${dup_floor_mb} MB."
+fi
