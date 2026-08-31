@@ -848,11 +848,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786384856,
-        "narHash": "sha256-pQyLTJvR2/0JmTiqWtC6dNu4uJkGPcabfQ6NuxjL3s4=",
+        "lastModified": 1787397958,
+        "narHash": "sha256-knkcFfrDp7EeoSrQnd4aMYb+Axv98L+5im4fXm4cJOA=",
         "owner": "dryvist",
         "repo": "homelab-contracts",
-        "rev": "dca7b4f36ceb643e7177bf8dff95ed948ccc2488",
+        "rev": "7721e3c7457f6dab094ac01d56d878baf68323d6",
         "type": "github"
       },
       "original": {
@@ -1223,11 +1223,11 @@
         "orbstack-kubernetes": "orbstack-kubernetes"
       },
       "locked": {
-        "lastModified": 1787911814,
-        "narHash": "sha256-oEhK6hPQmj6inZSpDrzUGkH45bpItB9YMcOZVxR2TxU=",
+        "lastModified": 1788127348,
+        "narHash": "sha256-9i63/eHqolrL78BcWLfOYqHDcmjthEBIVc+DTsGefvU=",
         "owner": "dryvist",
         "repo": "nix-home",
-        "rev": "50e03dcc15b79fd0f031300dc0ba783f7e53406f",
+        "rev": "bfeb884b46cb7e1b95eb72816a5568c0482fde7b",
         "type": "github"
       },
       "original": {
@@ -1343,11 +1343,11 @@
     },
     "nixpkgs-unstable_2": {
       "locked": {
-        "lastModified": 1787172299,
-        "narHash": "sha256-PShzS87awOlE5XWkxUGBd/58/F+AtE2ZMgFffKj4r8s=",
+        "lastModified": 1787814960,
+        "narHash": "sha256-PYZq1qzCJXC2zGI0mH07vrZBsw6DRBAOX0jN1pPtqOQ=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "07e1d92cdc0ed416cfa11ff3ca40d17e61cfba7a",
+        "rev": "c27cdad491a991b11ed731760aa2ef8db0cb0410",
         "type": "github"
       },
       "original": {
