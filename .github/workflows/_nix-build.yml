@@ -38,9 +38,15 @@ jobs:
     # failed check with no job and no logs, which reads like an infra flake.
     # fromJSON parses the string to a number.
     #
-    # The fallback default allows sufficient headroom on slower GitHub-hosted macos runners
-    # when building updated flake.lock closures.
-    timeout-minutes: ${{ fromJSON(vars.GH_ACTION_TIMEOUT_NIX || '30') }}
+    # The cap is deliberate and is the pressure that keeps this build fast: a run
+    # that exceeds it is a build to fix, never a budget to raise. Restored to 15
+    # after a raise to 30 went the wrong way.
+    #
+    # This default is overridden by repository variable GH_ACTION_TIMEOUT_NIX,
+    # currently set well above it, so editing this line alone changes nothing at
+    # runtime. Bring the variable down to match once build duration is proven to
+    # fit under it; the file and the variable must be reconciled together.
+    timeout-minutes: ${{ fromJSON(vars.GH_ACTION_TIMEOUT_NIX || '15') }}
     permissions:
       contents: read
       # Required by the cache step's `purge:` — deleting a cache entry goes
@@ -197,6 +203,21 @@ jobs:
 
       - name: Verify Nix Symlinks
         run: ./scripts/workflows/verify-symlinks.sh result-hm/home-files
+
+      # Closure size is what this job's wall time is actually made of, and a
+      # regression produces a perfectly valid closure that no evaluation check
+      # can see. Report it with nix's own commands; only the one thing nix has
+      # no command for gets a script.
+      # nix's own documented idiom (see `nix path-info --help`). Note `./`:
+      # a bare relative name is parsed as a flake reference and fails with
+      # "cannot find flake". Sorted numerically on bytes rather than with
+      # `sort -h`, because the human-readable form puts a space before the unit
+      # and sorts wrong.
+      - name: Report Closure Size
+        run: nix path-info --recursive --size ./result-hm | sort -nk2 | tail -20
+
+      - name: Check Closure Duplicates
+        run: ./scripts/workflows/check-closure-health.sh ./result-hm
 
       - name: Build Timing
         if: always()
