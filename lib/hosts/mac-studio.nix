@@ -70,10 +70,12 @@ in
     # measurements behind the reserve: ./mac-studio-residency.md.
     maxResidentWorkers = 2;
 
-    # Serving implementation for every standalone worker on this host.
+    # DEFAULT serving implementation here. A catalog entry that pins its own
+    # backend still wins (modelBackends beats this) — the OCR entry does. So
+    # this covers the three language models, not literally every worker.
     # vllm-mlx brings continuous batching and the prefix cache; nix-ai derives
     # programs.mlx.continuousBatching from this selection. mlx-lm stays listed
-    # so the mlx-lm server package remains available to the closure.
+    # so its server package remains in the closure.
     enabledBackends = [
       "mlx-lm"
       "vllm-mlx"
