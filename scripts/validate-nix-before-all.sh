@@ -52,9 +52,22 @@ if [ -z "$host" ]; then
   exit 1
 fi
 
+# An evaluation that FAILS and one that succeeds with an empty list are not the
+# same answer, and the earlier form could not tell them apart: it discarded
+# stderr and ended with `|| true`, so a failed eval produced empty output, both
+# lists came back empty, and the script printed "No homebrew packages to
+# validate" and exited 0. That is the same validating-nothing-while-passing
+# failure the comment above describes, reintroduced one line below it.
+#
+# So: let the error through, and refuse to answer at all when it happens. An
+# empty-but-successful list is still a legitimate no-op and still exits 0.
 eval_names() {
-  nix eval --json ".#darwinConfigurations.${host}.config.homebrew.$1" 2>/dev/null |
-    "$JQ" -r '.[].name' || true
+  local out
+  if ! out=$(nix eval --json ".#darwinConfigurations.${host}.config.homebrew.$1"); then
+    echo "ERROR: could not evaluate homebrew.$1 for '${host}' — refusing to report a clean run" >&2
+    return 1
+  fi
+  printf '%s' "$out" | "$JQ" -r '.[].name'
 }
 
 brews=$(eval_names brews)
