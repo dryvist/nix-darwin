@@ -106,16 +106,42 @@ require_env() {
   [ -n "${bao_addr}" ] || die "BAO_ADDR not set — run under 'doppler run'"
 }
 
+# Resolve the env-var NAMES secret-zero lives in for one AppRole prefix, into
+# the caller's role_id_var / secret_id_var. Derived in exactly ONE place because
+# it has three readers that must never disagree: bao_login reads the values,
+# bao_login_configured tests them, and the self-check has to tell "never
+# configured on this machine" apart from "configured, and the login failed".
+bao_login_var_names() {
+  role_id_var="OPENBAO_APPROLE_${1}_ROLE_ID"
+  secret_id_var="OPENBAO_APPROLE_${1}_SECRET_ID"
+}
+
+# True when this machine was given secret-zero for the prefix. Says nothing
+# about whether a login would SUCCEED — that distinction is the whole point.
+bao_login_configured() {
+  local role_id_var secret_id_var
+  bao_login_var_names "$1"
+  [ -n "${!role_id_var:-}" ] && [ -n "${!secret_id_var:-}" ]
+}
+
 # AppRole login for the given env prefix (GITHUB_READ / GITHUB_WRITE); prints the
 # client_token. Secret-zero comes from OPENBAO_APPROLE_<prefix>_ROLE_ID/_SECRET_ID.
+#
+# NEVER SUPPRESS A FAILURE FROM THIS FUNCTION WITH `||`. Every call site is a
+# command substitution, so die()'s `exit 1` ends only that SUBSHELL; what
+# actually aborts the caller is the `set -o errexit` that writeShellApplication
+# wraps this file in (see the header note). A plain assignment is therefore
+# safe. Attaching `|| ...` to one turns errexit OFF for that command, and the
+# caller then continues with an EMPTY token — so a login that could not
+# complete becomes a request made with an empty X-Vault-Token, and whatever
+# the caller reports afterwards is reported as though the credential were fine.
 bao_login() {
   local approle_prefix="$1" role_id_var secret_id_var role_id secret_id resp token
-  role_id_var="OPENBAO_APPROLE_${approle_prefix}_ROLE_ID"
-  secret_id_var="OPENBAO_APPROLE_${approle_prefix}_SECRET_ID"
-  role_id="${!role_id_var:-}"
-  secret_id="${!secret_id_var:-}"
-  [ -n "${role_id}" ] && [ -n "${secret_id}" ] || \
+  bao_login_var_names "${approle_prefix}"
+  bao_login_configured "${approle_prefix}" || \
     die "${role_id_var} / ${secret_id_var} not in environment — run under 'doppler run'"
+  role_id="${!role_id_var}"
+  secret_id="${!secret_id_var}"
   resp="$(curl -sf --max-time 10 -X POST \
     -d "{\"role_id\":\"${role_id}\",\"secret_id\":\"${secret_id}\"}" \
     "${bao_addr}/v1/auth/approle/login")" || die "AppRole login (${approle_prefix}) failed"
@@ -469,7 +495,21 @@ self_check_write_realms() {
 # while reporting a race against another agent. Exercised on a throwaway key.
 self_check_lock_reacquire() {
   local bao_tok base d m code ver
-  bao_tok="$(bao_login GITHUB_WRITE)" || { echo "self-check SKIP: no GITHUB_WRITE login"; return 0; }
+  # A SKIP is honest ONLY when this machine was never given the credential.
+  # Ask that question directly, before attempting anything: it is the one case
+  # where having no token is expected rather than a fault.
+  if ! bao_login_configured GITHUB_WRITE; then
+    echo "self-check SKIP: GITHUB_WRITE AppRole not configured on this machine"
+    return 0
+  fi
+  # Past this point the credential EXISTS, so a login that fails is a fault,
+  # not an absence. The previous form attached `|| ... return 0` to the login
+  # itself, which both disabled errexit and rewrote the verdict: the run
+  # printed an error, then "SKIP", then "self-check OK", and exited 0. A check
+  # whose entire purpose is to notice an unusable credential must never answer
+  # OK to one.
+  bao_tok="$(bao_login GITHUB_WRITE)" \
+    || { echo "self-check FAIL: GITHUB_WRITE is configured but its AppRole login failed"; return 1; }
   base="${bao_addr}/v1/secret"
   d="${base}/data/locks/github-write/147266792/zz-self-check"
   m="${base}/metadata/locks/github-write/147266792/zz-self-check"
