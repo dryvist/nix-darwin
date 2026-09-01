@@ -53,8 +53,7 @@ in
     # characters on 3 of 3 runs. The kwarg lives in the nix-ai catalog, and it
     # is a prompt string, not a budget — nothing here caps thinking length.
 
-    # RESIDENCY BUDGET — these two move together or the host over-commits. They
-    # stay in sync on their own: only k_max is set here, and the other derives.
+    # RESIDENCY BUDGET — only k_max is set here; the rest derives.
     #
     #   maxResidentWorkers * memoryHardLimitGb <= wired ceiling (100 GiB here,
     #   from appleSiliconTunables.maxLocalLlmGb in hosts/mac-studio/default.nix)
