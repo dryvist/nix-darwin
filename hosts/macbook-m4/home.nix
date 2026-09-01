@@ -5,6 +5,7 @@
 # This file adds only the host-unique bits — the TCC-sensitive GUI app list.
 
 {
+  config,
   pkgs,
   userConfig,
   ...
@@ -89,20 +90,27 @@ in
     litellmLocal = {
       enable = true;
 
-      # Re-rank the subagent fallback tier against the live catalog and the
-      # router's served set, daily. The job only rewrites tier-candidates.json
-      # in the checkout below and logs whether the selection moved — nothing
-      # reaches the running proxy until the next rebuild, so a re-rank is a
-      # proposal a human converges, never a silent swap of the model serving
-      # live subagent traffic.
+      # Serve this laptop's OWN model first, with the shared router as the one
+      # rung behind it. Replaces the daily re-ranked cloud tier: that enumerated
+      # specific cloud models here while the shared router already owned which
+      # cloud model, in what order, at what price — so the choice existed twice
+      # and drifted, and every subagent call left the machine even when a local
+      # model could serve it.
       #
-      # Machine-specific because it names a working copy: the Nix store copy is
-      # read-only, so the job must be pointed at a checkout or it fails after
-      # both network fetches rather than before them.
-      tierRefresh = {
-        enable = true;
-        checkout = "${userConfig.user.homeDir}/git/public/nix/nix-ai";
-      };
+      # The id is the role-resolved physical id, never a literal: this repo
+      # writes no physical model id in host configuration, and the mlx catalog
+      # is what decides which weights `default` means on this host. The context
+      # window is omitted deliberately — nix-ai derives it from that same
+      # catalog, so the serving limit is stated in exactly one place.
+      #
+      # `subagent` is load-bearing as a NAME: consumers address that string
+      # forever, so what sits behind it may change but the name may not.
+      localModels = [
+        {
+          name = "subagent";
+          id = config.services.aiStack.models.default;
+        }
+      ];
     };
 
     # Token Meter is deliberately OFF on the laptop, overriding the tier.
