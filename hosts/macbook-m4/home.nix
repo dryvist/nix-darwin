@@ -111,6 +111,16 @@ in
           id = config.services.aiStack.models.default;
         }
       ];
+
+      # The group the shared router serves, which the terminal rung forwards
+      # to. Needed because that rung is a passthrough: without it LiteLLM
+      # forwards this host's own rung name upstream, the router has no such
+      # group, and the last rung 404s — both as a fallback and when addressed
+      # directly. Verified by completion against the router before setting it.
+      #
+      # A group name only. No provider, model id, or price is named here; what
+      # the router does behind this group stays the router's business.
+      routerEntryModel = "hermes-default";
     };
 
     # Token Meter is deliberately OFF on the laptop, overriding the tier.
