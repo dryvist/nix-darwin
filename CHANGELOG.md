@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.48.0](https://github.com/dryvist/nix-darwin/compare/v2.47.0...v2.48.0) (2026-09-01)
+
+
+### Features
+
+* **mac-studio:** serve the tier under vllm-mlx with nix-ai 4.38.1 ([#2323](https://github.com/dryvist/nix-darwin/issues/2323)) ([b1b2ba4](https://github.com/dryvist/nix-darwin/commit/b1b2ba48599dce6b282c155153211060a735ec9b))
+
 ## [2.47.0](https://github.com/dryvist/nix-darwin/compare/v2.46.0...v2.47.0) (2026-09-01)
 
 
