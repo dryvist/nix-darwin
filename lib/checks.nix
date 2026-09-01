@@ -83,6 +83,19 @@ in
 
   # Run the BATS (Bash Automated Testing System) test suite
   # Runs specific shell integration tests from tests/shell/
+  #
+  # THIS LIST DRIFTS, AND THE DRIFT IS SILENT. It is maintained by hand while
+  # the files it names live in a directory anyone can add to, so a new test is
+  # inert until someone remembers this line — nothing fails, nothing warns, the
+  # check just quietly covers less than it appears to. As of this commit four
+  # files on disk were absent from it, one of which is currently failing; that
+  # failure had gone unnoticed precisely because it never ran.
+  #
+  # The real fix is to glob tests/shell/*.bats so the list cannot disagree with
+  # the directory. That is deliberately NOT done here: globbing immediately
+  # turns those pre-existing failures red, which belongs in its own change with
+  # the failures actually fixed — not smuggled into an unrelated one, and
+  # certainly not "fixed" by excluding the file that fails.
   shell-tests =
     pkgs.runCommand "check-shell-tests"
       {
@@ -96,7 +109,7 @@ in
       }
       ''
         cd ${src}
-        for f in test_bats_framework.bats test_check_ci_invariants.bats test_check_file_sizes.bats test_cluster_maintenance_window.bats test_cluster_rebuild_gate.bats test_cribl_llm_classifier.bats test_hm_collision_clear.bats test_openbao_slack_creds.bats test_verify_symlinks.bats; do
+        for f in test_bats_framework.bats test_check_ci_invariants.bats test_check_file_sizes.bats test_cluster_maintenance_window.bats test_cluster_rebuild_gate.bats test_cribl_llm_classifier.bats test_hm_collision_clear.bats test_openbao_github_creds.bats test_openbao_slack_creds.bats test_verify_symlinks.bats; do
           bats tests/shell/$f
         done
         touch $out
