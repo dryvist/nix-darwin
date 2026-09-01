@@ -163,6 +163,41 @@ for c in "${callers[@]}"; do
     die "$c runs on push and sets its own concurrency group, so it must exempt develop from cancel-in-progress — develop is the only branch that saves the Nix cache."
 done
 
+# The build budget is the pressure that keeps this job fast. Raising it converts
+# a slow build into a slow build nobody is required to fix, and that has already
+# happened once: the default was moved 15 -> 30 while the underlying closure
+# regression went untouched. A run over budget is a closure to shrink.
+grep -qE "vars.GH_ACTION_TIMEOUT_NIX \|\| '(1[0-9]|20)'" "$wf" ||
+  die "the nix build timeout default must stay at or below 20 minutes — it is the only thing forcing closure regressions to get fixed rather than absorbed. A build that exceeds it is a closure to shrink, never a budget to raise."
+
+# Closure size is this job's wall time. Both regressions that recur here produce
+# a valid closure, so nothing else in CI can see them.
+grep -q 'check-closure-health.sh' "$wf" ||
+  die "the closure health check must stay in the build job — without it a duplicated dependency or a new multi-hundred-MB payload lands silently and every later run pays for it."
+
+# A workflow step that runs a script as `./path` needs that script executable in
+# the index. The mode is easy to lose — a rewrite that recreates the file drops
+# it, and nothing local complains because the working copy still runs. It
+# surfaces only on a runner, as "Permission denied" from a step that looks
+# correct, and it has bitten this estate before.
+# Anchored at line start so a commented-out `# run: ./old.sh` is not treated as
+# a live invocation — an unanchored match reports a script the workflow does not
+# actually run. Whitespace-tolerant around `run:` for the same reason.
+#
+# `while read` rather than `for ... in $(...)`: the latter trips SC2013, and the
+# repo does not carry lint suppressions.
+while IFS= read -r script; do
+  [ -n "$script" ] || continue
+  [ -f "$script" ] || continue
+  mode=$(git ls-files -s -- "$script" 2>/dev/null | awk '{print $1}')
+  [ -n "$mode" ] || continue
+  [ "$mode" = "100755" ] ||
+    die "$wf runs ./$script but it is mode $mode in the index. The step will fail on a runner with 'Permission denied'. Fix with: git update-index --chmod=+x $script"
+done <<EOF
+$(grep -oE '^[[:space:]]*run:[[:space:]]*\./[A-Za-z0-9_./-]+\.sh' "$wf" |
+  sed -E 's@^[[:space:]]*run:[[:space:]]*\./@@' | sort -u)
+EOF
+
 if [ "$fail" -ne 0 ]; then
   echo "check-ci-invariants: see the comments in $wf for why each invariant exists." >&2
   exit 1

@@ -99,7 +99,11 @@ in
     runnerGroup = lib.mkOption {
       type = lib.types.str;
       default = "Default";
-      description = "Org runner group (use a restricted group scoped to selected repos).";
+      description = ''
+        Org runner group. The Mac Studio fleet's human name is mac-fleet;
+        GitHub still uses llm-runners until that group is renamed in org
+        settings together with this value.
+      '';
     };
 
     cpus = lib.mkOption {

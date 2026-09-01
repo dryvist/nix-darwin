@@ -5,6 +5,7 @@
 # This file adds only the host-unique bits — the TCC-sensitive GUI app list.
 
 {
+  config,
   pkgs,
   userConfig,
   ...
@@ -32,6 +33,27 @@ in
     # module infer it from an endpoint could land on a public suffix and treat
     # hosts it does not control as internal.
     internalDomains = [ userConfig.baseDomain ];
+
+    # Pin the roles that must resolve on BOTH the local server and the shared
+    # router. Measured 2026-08-28: seven of eight roles named a model llama-swap
+    # serves but the router does not, so a local caller worked and every routed
+    # delegation 404'd for the same role — an asymmetry nothing reported,
+    # because a registry id had never been compared against what any endpoint
+    # actually serves. `ai-stack-drift-check` now does that comparison.
+    #
+    # Both endpoints serve these two, so a role pinned here resolves either way.
+    # `small` keeps the 9B: it is a size class, and a consumer that asks for
+    # small must not be handed a 27B.
+    roleOverrides = {
+      default = "mlx-community/Qwen3.8-27B-4bit";
+      quickest = "mlx-community/Qwen3.5-9B-MLX-4bit";
+      small = "mlx-community/Qwen3.5-9B-MLX-4bit";
+      tool-calling = "mlx-community/Qwen3.8-27B-4bit";
+      coding = "mlx-community/Qwen3.8-27B-4bit";
+      large-context = "mlx-community/Qwen3.8-27B-4bit";
+      most-capable = "mlx-community/Qwen3.8-27B-4bit";
+      oss = "mlx-community/Qwen3.8-27B-4bit";
+    };
   };
 
   # Open local-LLM fallback harness (Crush / MiMoCode / Goose). Workstation-only:
@@ -65,7 +87,41 @@ in
     # Claude Code needs to reach it is rendered into settings.json (see the
     # module header in nix-ai). Same internal-FQDN composition rule as
     # openHarness above.
-    litellmLocal.enable = true;
+    litellmLocal = {
+      enable = true;
+
+      # Serve this laptop's OWN model first, with the shared router as the one
+      # rung behind it. Replaces the daily re-ranked cloud tier: that enumerated
+      # specific cloud models here while the shared router already owned which
+      # cloud model, in what order, at what price — so the choice existed twice
+      # and drifted, and every subagent call left the machine even when a local
+      # model could serve it.
+      #
+      # The id is the role-resolved physical id, never a literal: this repo
+      # writes no physical model id in host configuration, and the mlx catalog
+      # is what decides which weights `default` means on this host. The context
+      # window is omitted deliberately — nix-ai derives it from that same
+      # catalog, so the serving limit is stated in exactly one place.
+      #
+      # `subagent` is load-bearing as a NAME: consumers address that string
+      # forever, so what sits behind it may change but the name may not.
+      localModels = [
+        {
+          name = "subagent";
+          id = config.services.aiStack.models.default;
+        }
+      ];
+
+      # The group the shared router serves, which the terminal rung forwards
+      # to. Needed because that rung is a passthrough: without it LiteLLM
+      # forwards this host's own rung name upstream, the router has no such
+      # group, and the last rung 404s — both as a fallback and when addressed
+      # directly. Verified by completion against the router before setting it.
+      #
+      # A group name only. No provider, model id, or price is named here; what
+      # the router does behind this group stays the router's business.
+      routerEntryModel = "hermes-default";
+    };
 
     # Token Meter is deliberately OFF on the laptop, overriding the tier.
     #

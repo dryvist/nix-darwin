@@ -57,6 +57,53 @@ let
 
   perWorkerGb = config.programs.mlx.memoryHardLimitGb;
   budgetMb = kMax * perWorkerGb * 1024;
+
+  # --- the vllm-mlx half of the same budget ------------------------------
+  #
+  # memoryHardLimitGb is applied by the mlx-lm launcher via mx.set_memory_limit
+  # and is INERT under vllm-mlx. There the per-worker cap is instead
+  # gpuMemoryUtilization, a FRACTION — so the same budget has to be expressed
+  # twice, in different units, or the second one derives from nothing. It
+  # derived from nothing: a flat 0.8 that ignores both the ceiling and k_max,
+  # which on a 2-resident host grants 2 x 0.8 x 100 = 160 GiB against a 100 GiB
+  # ceiling.
+  #
+  # The fraction has TWO independent constraints, on two different bases. Read
+  # from the installed vllm-mlx source, because its own documentation states
+  # one base for both:
+  #
+  #   cap  = max_recommended_working_set_size * util
+  #   trip = memory_size * (util + 0.05)      <- physical RAM, not the ceiling
+  #
+  # 1. CAP: the per-worker allocation limit must equal the budget already
+  #    derived above, so both backends bound a worker identically.
+  #      util <= perWorkerGb / maxRecommendedGb
+  #
+  # 2. TRIP: the emergency cache-clear must be able to fire BELOW the wired
+  #    ceiling. Above it the valve is unreachable and the process swaps or dies
+  #    first — which is the state a flat 0.8 leaves this host in today
+  #    (0.85 x 128 = 108.8 GiB, above a 100 GiB ceiling).
+  #      util <  ceilingGb / physicalRamGb - 0.05
+  #
+  # Take the lower. Neither constraint alone is sufficient and they do not
+  # reduce to each other.
+  #
+  # maxRecommendedGb is ceilingGb: Metal reports max_recommended_working_set_size
+  # equal to iogpu.wired_limit_mb whenever that sysctl is set, and this module
+  # only runs where wiredLimitMb is non-null — which is what sets it. The
+  # assertion below refuses the case where that identity would not hold.
+  #
+  # Float math is deliberate. Nix integer division truncates, and every one of
+  # these ratios is between 0 and 1, so an int expression here evaluates to 0
+  # and then fails the option's own 0.05 lower bound.
+  physicalRamGb = tunables.physicalRamGb or null;
+  utilFromCap = (perWorkerGb * 1.0) / ceilingGb;
+  utilFromTrip = ((ceilingGb * 1.0) / physicalRamGb) - 0.05;
+  derivedUtil = lib.min utilFromCap utilFromTrip;
+
+  vllmSelected = config.programs.mlx.modelServerBackend or "mlx-lm" == "vllm-mlx";
+  currentUtil = config.programs.mlx.gpuMemoryUtilization;
+  tripReachable = currentUtil == null || ((currentUtil + 0.05) * physicalRamGb) < (ceilingGb * 1.0);
 in
 {
   config = lib.mkIf (mlxHost && ceilingMb != null) {
@@ -64,7 +111,37 @@ in
     # holds that override to the same invariant.
     programs.mlx.memoryHardLimitGb = lib.mkDefault derivedPerWorkerGb;
 
+    # Derived unconditionally, not only when vllm-mlx is selected. The fraction
+    # means the same thing whichever backend reads it, and making the NUMBER
+    # depend on the backend is the same false-capability shape that let a
+    # batching flag read as enabled on a backend that ignores it. On an mlx-lm
+    # host nothing consumes it, so this changes no behaviour there.
+    programs.mlx.gpuMemoryUtilization = lib.mkIf (physicalRamGb != null) (lib.mkDefault derivedUtil);
+
     assertions = [
+      {
+        # Gated on vllm-mlx because the fraction is inert under mlx-lm: firing
+        # there would block every host today over a knob none of them read.
+        # Under vllm-mlx it is the ONLY per-worker enforcement, so an
+        # unreachable trip means the emergency valve silently does not exist.
+        assertion = !vllmSelected || physicalRamGb == null || tripReachable;
+        message = ''
+          programs.mlx.gpuMemoryUtilization leaves the emergency cache-clear
+          unreachable on this host, and vllm-mlx is the selected backend.
+
+            gpuMemoryUtilization  = ${toString currentUtil}
+            trip                  = (util + 0.05) x physicalRamGb
+                                  = ${toString ((currentUtil + 0.05) * physicalRamGb)} GiB
+            wired ceiling         = ${toString ceilingGb} GiB
+
+          The trip is computed on PHYSICAL RAM while the allocation cap is
+          computed on the wired ceiling, so a fraction that looks safe against
+          the cap can put the trip above the ceiling — where it can never fire
+          and the worker swaps instead. Drop the override and let this module
+          derive the fraction, or lower it below
+          ${toString (((ceilingGb * 1.0) / physicalRamGb) - 0.05)}.
+        '';
+      }
       {
         assertion = budgetMb <= ceilingMb;
         message = ''
