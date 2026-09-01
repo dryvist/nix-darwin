@@ -82,6 +82,16 @@ in
     # behind the reserve: ./mac-studio-residency.md.
     maxResidentWorkers = 2;
 
+    # Serving implementation for every standalone worker on this host.
+    # vllm-mlx brings continuous batching and the prefix cache; nix-ai derives
+    # programs.mlx.continuousBatching from this selection. mlx-lm stays listed
+    # so the mlx-lm server package remains available to the closure.
+    enabledBackends = [
+      "mlx-lm"
+      "vllm-mlx"
+    ];
+    modelServerBackend = "vllm-mlx";
+
     # Validated catalog selections (profiles in nix-ai catalog-data.nix).
     #
     # ROLES SPLIT ACROSS THE TWO RESIDENTS, and a role may be assigned only
