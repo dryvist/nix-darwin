@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.47.0](https://github.com/dryvist/nix-darwin/compare/v2.46.0...v2.47.0) (2026-09-01)
+
+
+### Features
+
+* **ai-stack:** schedule the subagent tier refresh and pin drifted roles ([173744a](https://github.com/dryvist/nix-darwin/commit/173744aee41b5f931627050b5a0738582c348f8c))
+
+
+### Bug Fixes
+
+* **ci:** restore the executable bit on the closure check and assert it ([#2310](https://github.com/dryvist/nix-darwin/issues/2310)) ([8dc4fb9](https://github.com/dryvist/nix-darwin/commit/8dc4fb99205b12725898fd52589e17812910ed43))
+* **openbao-github-creds:** fail the self-check when a configured login fails ([#2311](https://github.com/dryvist/nix-darwin/issues/2311)) ([c94035e](https://github.com/dryvist/nix-darwin/commit/c94035e93ae87d592ed5f8042ada2f823ab13719))
+* **validate:** surface a failed homebrew evaluation instead of passing on empty output ([#2315](https://github.com/dryvist/nix-darwin/issues/2315)) ([5f07c88](https://github.com/dryvist/nix-darwin/commit/5f07c88060fd9d2b2c8c0e1ff8e39c11048defe5))
+
 ## [2.46.0](https://github.com/dryvist/nix-darwin/compare/v2.45.0...v2.46.0) (2026-08-31)
 
 
