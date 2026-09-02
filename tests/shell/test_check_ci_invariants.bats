@@ -228,3 +228,19 @@ YAML
   [[ "$output" == *"timeout-minutes must stay"* ]]
   [[ "$output" == *"cold-builds the closure"* ]]
 }
+
+# The environment this suite actually runs in has no readable index: the check
+# derivation carries no `git` (exit 127) and builds from a store path that is
+# not a repository (exit 128). Either one was fatal under `set -euo pipefail`,
+# so the script died before reporting a single invariant and every test in this
+# file failed on a status that matched neither 0 nor 1.
+@test "survives an unreadable git index" {
+  mkdir -p "$BATS_TEST_TMPDIR/bin"
+  printf '#!/usr/bin/env bash\necho "fatal: not a git repository" >&2\nexit 128\n' \
+    >"$BATS_TEST_TMPDIR/bin/git"
+  chmod +x "$BATS_TEST_TMPDIR/bin/git"
+  PATH="$BATS_TEST_TMPDIR/bin:$PATH"
+  run bash "$SCRIPT" "$GOOD" "$GOOD_CALLER"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"invariants hold"* ]]
+}
