@@ -1206,11 +1206,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1788302588,
-        "narHash": "sha256-9bIC3M8tfplYkMPKeuMocZrSmHA3eh5VJNTxtrzWhbU=",
+        "lastModified": 1788314859,
+        "narHash": "sha256-nuo90dk/fXu8Y6xthK2oQSQyQ6P77zbUkev5EdPziOA=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "912d4ddfa30289b3982e29c1b386cd8558e4fff3",
+        "rev": "ca5d758cb8267519b1dbbed8daf2dd83ee49de99",
         "type": "github"
       },
       "original": {
