@@ -53,34 +53,34 @@ in
     # characters on 3 of 3 runs. The kwarg lives in the nix-ai catalog, and it
     # is a prompt string, not a budget — nothing here caps thinking length.
 
-    # RESIDENCY BUDGET — k_max is the ONLY number stated here.
+    # RESIDENCY BUDGET — only k_max is set here; the rest derives.
     #
     #   maxResidentWorkers * memoryHardLimitGb <= wired ceiling (100 GiB here,
     #   from appleSiliconTunables.maxLocalLlmGb in hosts/mac-studio/default.nix)
     #
-    # memoryHardLimitGb is DERIVED in hosts/common/residency-budget.nix as
+    # 2 x 48 = 96 GiB. The cushion is NOT the 4 GiB that subtraction suggests:
+    # the non-MLX wired baseline measures ~3.4 GiB while a worker decodes, so
+    # the strict worst case is 99.4 against 100 — roughly 0.6 GiB. It holds, and
+    # overshoot spills to pageable memory rather than failing (the limit is a
+    # shed-hint, not a refusal), but do not spend that 4 GiB.
+    #
+    # At the previous k_max = 1 the resident and the 9B shared one exclusive
+    # group, so loading the 9B evicted the 35B and the next request paid a
+    # reload — measured 2026-08-05. k_max = 2 restores the tiered topology so a
+    # small-model load sits BESIDE the resident. It does not pin the 9B
+    # resident: that entry keeps ttl 900 and still idle-unloads.
+    #
+    # k_max is the ONLY number stated here. memoryHardLimitGb is DERIVED from
+    # the host ceiling in hosts/common/residency-budget.nix as
     # (maxLocalLlmGb - baselineReserve) / maxResidentWorkers, which at 100 GiB
     # and k=2 gives 48 GiB per worker. Change k_max alone and the per-worker
     # budget re-derives; nobody redoes the arithmetic, and an explicit override
     # is still held to the invariant by that module's assertion.
     #
     # suppressWiredLimit defaults true, so weights are pageable and overshoot
-    # spills to swap rather than panicking. Why the cushion is ~0.6 GiB and not
-    # the 4 GiB subtraction suggests, why k_max is 2 and not 1, and the
-    # measurements behind the reserve: ./mac-studio-residency.md.
+    # spills to swap rather than panicking. Rationale and the measurements
+    # behind the reserve: ./mac-studio-residency.md.
     maxResidentWorkers = 2;
-
-    # DEFAULT serving implementation here. A catalog entry that pins its own
-    # backend still wins (modelBackends beats this) — the OCR entry does. So
-    # this covers the three language models, not literally every worker.
-    # vllm-mlx brings continuous batching and the prefix cache; nix-ai derives
-    # programs.mlx.continuousBatching from this selection. mlx-lm stays listed
-    # so its server package remains in the closure.
-    enabledBackends = [
-      "mlx-lm"
-      "vllm-mlx"
-    ];
-    modelServerBackend = "vllm-mlx";
 
     # Validated catalog selections (profiles in nix-ai catalog-data.nix).
     #

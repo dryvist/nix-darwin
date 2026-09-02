@@ -65,13 +65,9 @@ leaves weights pageable and makes this budget load-bearing: exceed the ceiling
 and the trade is a kernel panic for swap thrash. Do not raise `maxResidentWorkers`
 again without lowering `memoryHardLimitGb` to match.
 
-`memoryHardLimitGb` is applied by the `mlx_lm` launcher via `mx.set_memory_limit`,
-so it is **inert on this host**: `modelServerBackend` is `vllm-mlx`, whose flag
-set carries `--gpu-memory-utilization` instead. The active per-worker bound is
-`gpuMemoryUtilization`, derived in `hosts/common/residency-budget.nix` (0.48
-here) and held reachable by that module's emergency-trip assertion. The budget
-arithmetic below still governs how the fraction is derived, and
-`memoryHardLimitGb` remains the number that derivation divides.
+`memoryHardLimitGb` is applied by the `mlx_lm` launcher via `mx.set_memory_limit`.
+It is wired up on this host because `modelServerBackend` is `mlx-lm` — nix-ai
+`modules/mlx/assertions.nix` asserts that outright — and inert under `vllm-mlx`.
 
 **It is a sizing guideline, not an enforcement.** Upstream MLX raises only when
 RAM *and swap* are exhausted; crossing the limit sheds the free-buffer cache and

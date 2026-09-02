@@ -178,13 +178,13 @@ The warmup deadline needs no adjustment for the second entry: nix-ai's
 which is 180 × 2 + 60 = 420 s here. Restart *count* is bounded separately by
 `mlx-warmup.py`, which is the actual livelock fix.
 
-## Serving watchdog
+## No serving watchdog on this host
 
-nix-ai's `launchd-watchdog.nix` is not gated on the backend. It enables
-whenever `preload` is non-empty, which it is here, so the reap/kickstart/
-bootout ladder does run. Under `vllm-mlx` its `MLX_WATCHDOG_BUSY_ESCALATION`
-is `restart` rather than `alert`, so a busy worker is restarted, not just
-reported.
+nix-ai's `launchd-watchdog.nix` gates itself on
+`modelServerBackend == "vllm-mlx"`, and `assertions.nix` forces the backend to
+`mlx-lm`, so the reap/kickstart/bootout recovery ladder never runs here. The
+brain watchdog on the Hermes guest is the only automated recovery path for a
+wedged model server.
 
 ## Document OCR (Unlimited OCR)
 
