@@ -45,12 +45,16 @@ CRITICAL_PACKAGES=(
 # Exempt packages (archived repos, intentional pins)
 # Add packages here that should never trigger staleness failures
 # Supports glob patterns: "prefix*" matches "prefix", "prefix_2", etc.
-# NOTE: With depth-1 checking, only direct inputs are iterated — most transitive
-# exemptions are no longer needed.
+# Direct inputs are matched by their user-facing key; the transitive entries
+# below (injected by Determinate/Nix, never depth-1 root inputs) are matched by
+# node name in the transitive-exemption pass after the direct-input loop.
 EXEMPT_PACKAGES=(
   "darwin"          # Pinned to nix-darwin-25.11 stable branch — infrequent backports
   "systems"         # nix-systems/default-darwin — rarely updated
   "pal-mcp-server"  # Upstream repo (BeehiveInnovations) — infrequent releases
+  "flake-compat*"   # Compatibility shim and suffixed variants (flake-compat_2 etc)
+  "nixpkgs_2"       # Determinate's transitive nixpkgs (Nix renames determinate's copy)
+  "nix"             # DeterminateSystems/nix-src — pinned by determinate, not directly updatable
 )
 
 # Check if flake.lock exists
@@ -156,6 +160,18 @@ while IFS=$'\t' read -r input_key node_name; do
     echo -e "  ${GREEN}✓ OK${NC}:   $input_key ($DAYS_OLD days old)"
   fi
 done < <(jq -r '.nodes.root.inputs | to_entries[] | "\(.key)\t\(.value)"' "$FLAKE_LOCK")
+
+# Determinate and Nix inject transitive nodes (nixpkgs_2, nix, flake-compat*)
+# that are not depth-1 root inputs, so the loop above never visits them. Report
+# the exempt ones so an intentional pin stays visible. This pass only reports;
+# it never fails the run, preserving the depth-1 failure scoping above.
+DIRECT_INPUTS=$(jq -r '.nodes.root.inputs[]? // empty' "$FLAKE_LOCK")
+while IFS= read -r node_name; do
+  [[ "$node_name" == "root" ]] && continue
+  printf '%s\n' "$DIRECT_INPUTS" | grep -qxF "$node_name" && continue
+  matches_exemption_pattern "$node_name" "${EXEMPT_PACKAGES[@]}" || continue
+  echo -e "  ${YELLOW}⊘ EXEMPT${NC}: $node_name (in exemption list)"
+done < <(jq -r '.nodes | keys[]' "$FLAKE_LOCK")
 
 # Summary
 echo ""
