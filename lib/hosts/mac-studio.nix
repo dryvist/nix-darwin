@@ -11,8 +11,8 @@ let
   # It was previously restated: proxy.concurrencyLimit said 1 while a
   # modelConcurrencyLimits entry said a bare 4, so the host admitted 4 while its
   # single "source" claimed 1, and the two could drift silently. Since
-  # 2026-07-27 the per-model override is gone entirely, so this is now the
-  # only concurrency number on the host.
+  # 2026-09-01 the per-model overrides below pin both residents to 1, so
+  # this is the admission ceiling, not what any model actually serves.
   #
   # It is ALSO no longer this repo's only definition of the number, just the
   # only one nix can evaluate hermetically. dryvist/tofu-proxmox's
