@@ -27,9 +27,16 @@ let
     #
     # `set skip` is NOT valid inside an anchor loaded via
     # `pfctl -a <name> -f <file>` (anchors carry filter/scrub rules only,
-    # not top-level pf.conf options) — exemptions are plain `pass quick on
-    # <iface>` rules instead, evaluated before the default-deny below.
+    # not top-level pf.conf options) — exemptions are plain `pass quick`
+    # rules instead, evaluated before the default-deny below. Estate rule:
+    # cluster rendezvous traffic (exemptNetworks) must NEVER be touched by
+    # this anchor — zero human/AI steps in cluster standup means this pf
+    # anchor is not allowed to be one of them.
     ${lib.concatMapStrings (iface: "pass quick on ${iface} all\n") cfg.exemptInterfaces}
+    ${lib.concatMapStrings (
+      net:
+      "pass in quick from ${net} to ${net} keep state\npass out quick from ${net} to ${net} keep state\n"
+    ) cfg.exemptNetworks}
     block in all
     pass out all keep state
     pass in quick proto tcp from { ${lib.concatStringsSep ", " cfg.allowedSshSources} } to any port 22 flags S/SA keep state (max-src-conn 10)
@@ -76,11 +83,25 @@ in
         window cluster-link-prep briefly touches bridge0 during its sweep.
         Deliberately NOT a wildcard en* glob: that would exempt the primary
         LAN NIC (en0) from the entire ruleset, defeating the default-deny.
-        The actual Thunderbolt RDMA link runs on whichever physical enN port
-        is cabled (varies per host, never a fixed name — see
-        cluster-link-prep.nix), so it is NOT covered by this list; it rides
-        the synthetic 192.168.208.0/x point-to-point net between the two
-        hosts, distinct from the LAN this anchor is guarding.
+        The actual Thunderbolt RDMA link is covered by exemptNetworks
+        below instead, since it rides whichever physical enN port is
+        cabled (no fixed name — see cluster-link-prep.nix).
+      '';
+    };
+
+    exemptNetworks = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      # Reuses cluster-link-prep.nix's own network option (one shared
+      # source, never a second literal copy of the /24 that could drift).
+      default = [ config.system.clusterLinkPrep.network ];
+      description = ''
+        CIDRs fully exempt from the pf anchor's default-deny, matched by
+        address rather than interface (`pass in/out quick from <cidr> to
+        <cidr> keep state`, evaluated before the default-deny). Exists so
+        Thunderbolt RDMA cluster rendezvous traffic — which rides whichever
+        physical enN port is cabled, never a fixed interface name — is
+        never blocked: the estate rule forbids any human/AI step in
+        cluster standup, and this anchor must not become one.
       '';
     };
   };
