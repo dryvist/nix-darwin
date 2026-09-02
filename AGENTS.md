@@ -1,3 +1,6 @@
+---
+skill-groups: [core, nix]
+---
 # Nix Configuration - AI Agent Instructions
 
 ## Repository Purpose
