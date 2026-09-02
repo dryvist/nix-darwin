@@ -189,10 +189,23 @@ grep -q 'check-closure-health.sh' "$wf" ||
 while IFS= read -r script; do
   [ -n "$script" ] || continue
   [ -f "$script" ] || continue
-  mode=$(git ls-files -s -- "$script" 2>/dev/null | awk '{print $1}')
-  [ -n "$mode" ] || continue
-  [ "$mode" = "100755" ] ||
-    die "$wf runs ./$script but it is mode $mode in the index. The step will fail on a runner with 'Permission denied'. Fix with: git update-index --chmod=+x $script"
+  # The index is not always readable. Inside a Nix check derivation there is no
+  # `git` on PATH at all (exit 127) and the source is a store path with no
+  # repository (exit 128); either one is fatal under `set -euo pipefail`, which
+  # took the whole script down before a single invariant was reported. `|| true`
+  # keeps the lookup advisory.
+  #
+  # Falling back to the on-disk bit rather than skipping: a store source
+  # preserves the executable bit, so the invariant still holds where the index
+  # is unavailable instead of going quietly inert.
+  mode="$(git ls-files -s -- "$script" 2>/dev/null | awk '{print $1}' || true)"
+  if [ -n "$mode" ]; then
+    [ "$mode" = "100755" ] ||
+      die "$wf runs ./$script but it is mode $mode in the index. The step will fail on a runner with 'Permission denied'. Fix with: git update-index --chmod=+x $script"
+  else
+    [ -x "$script" ] ||
+      die "$wf runs ./$script but it is not executable. The step will fail on a runner with 'Permission denied'. Fix with: git update-index --chmod=+x $script"
+  fi
 done <<EOF
 $(grep -oE '^[[:space:]]*run:[[:space:]]*\./[A-Za-z0-9_./-]+\.sh' "$wf" |
   sed -E 's@^[[:space:]]*run:[[:space:]]*\./@@' | sort -u)
