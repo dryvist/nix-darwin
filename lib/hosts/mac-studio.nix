@@ -11,8 +11,8 @@ let
   # It was previously restated: proxy.concurrencyLimit said 1 while a
   # modelConcurrencyLimits entry said a bare 4, so the host admitted 4 while its
   # single "source" claimed 1, and the two could drift silently. Since
-  # 2026-07-27 the per-model override is gone entirely, so this is now the
-  # only concurrency number on the host.
+  # 2026-09-01 the per-model overrides below pin both residents to 1, so
+  # this is the admission ceiling, not what any model actually serves.
   #
   # It is ALSO no longer this repo's only definition of the number, just the
   # only one nix can evaluate hermetically. dryvist/tofu-proxmox's
@@ -53,34 +53,34 @@ in
     # characters on 3 of 3 runs. The kwarg lives in the nix-ai catalog, and it
     # is a prompt string, not a budget — nothing here caps thinking length.
 
-    # RESIDENCY BUDGET — k_max is the ONLY number stated here.
+    # RESIDENCY BUDGET — only k_max is set here; the rest derives.
     #
     #   maxResidentWorkers * memoryHardLimitGb <= wired ceiling (100 GiB here,
     #   from appleSiliconTunables.maxLocalLlmGb in hosts/mac-studio/default.nix)
     #
-    # memoryHardLimitGb is DERIVED in hosts/common/residency-budget.nix as
+    # 2 x 48 = 96 GiB. The cushion is NOT the 4 GiB that subtraction suggests:
+    # the non-MLX wired baseline measures ~3.4 GiB while a worker decodes, so
+    # the strict worst case is 99.4 against 100 — roughly 0.6 GiB. It holds, and
+    # overshoot spills to pageable memory rather than failing (the limit is a
+    # shed-hint, not a refusal), but do not spend that 4 GiB.
+    #
+    # At the previous k_max = 1 the resident and the 9B shared one exclusive
+    # group, so loading the 9B evicted the 35B and the next request paid a
+    # reload — measured 2026-08-05. k_max = 2 restores the tiered topology so a
+    # small-model load sits BESIDE the resident. It does not pin the 9B
+    # resident: that entry keeps ttl 900 and still idle-unloads.
+    #
+    # k_max is the ONLY number stated here. memoryHardLimitGb is DERIVED from
+    # the host ceiling in hosts/common/residency-budget.nix as
     # (maxLocalLlmGb - baselineReserve) / maxResidentWorkers, which at 100 GiB
     # and k=2 gives 48 GiB per worker. Change k_max alone and the per-worker
     # budget re-derives; nobody redoes the arithmetic, and an explicit override
     # is still held to the invariant by that module's assertion.
     #
     # suppressWiredLimit defaults true, so weights are pageable and overshoot
-    # spills to swap rather than panicking. Why the cushion is ~0.6 GiB and not
-    # the 4 GiB subtraction suggests, why k_max is 2 and not 1, and the
-    # measurements behind the reserve: ./mac-studio-residency.md.
+    # spills to swap rather than panicking. Rationale and the measurements
+    # behind the reserve: ./mac-studio-residency.md.
     maxResidentWorkers = 2;
-
-    # DEFAULT serving implementation here. A catalog entry that pins its own
-    # backend still wins (modelBackends beats this) — the OCR entry does. So
-    # this covers the three language models, not literally every worker.
-    # vllm-mlx brings continuous batching and the prefix cache; nix-ai derives
-    # programs.mlx.continuousBatching from this selection. mlx-lm stays listed
-    # so its server package remains in the closure.
-    enabledBackends = [
-      "mlx-lm"
-      "vllm-mlx"
-    ];
-    modelServerBackend = "vllm-mlx";
 
     # Validated catalog selections (profiles in nix-ai catalog-data.nix).
     #
@@ -168,12 +168,13 @@ in
 
     cacheMemoryMb = 8192;
     prefillBatchSize = 2048;
-    # NO per-model concurrency override: the resident inherits
-    # proxy.concurrencyLimit below — 2 since 2026-08-06 (the 2026-07 benches
-    # ran at 1). The 9B and every 40B+ entry keep their catalog
-    # concurrencyLimit=1 pins, so only the resident serves 2. Why 2 is safe
-    # where the 2026-07-27 4x override was harmful: ./mac-studio.md
-    # "Serving concurrency".
+    # Both residents pinned serial until mlx-lm concurrency is qualified —
+    # they wedged repeatedly under load at 2 where the c=1 9B never did.
+    # Vikunja ai #144/#150. proxy.concurrencyLimit stays 2 for CI parity.
+    modelConcurrencyLimits = {
+      "mlx-community/Qwen3.8-27B-4bit" = 1;
+      "mlx-community/Qwen3.6-35B-A3B-4bit" = 1;
+    };
 
     # Server host: no group swap, no global idle eviction (per-class unloads
     # come from the catalog). A blanket TTL would make each resident brain pay

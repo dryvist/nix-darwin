@@ -178,10 +178,11 @@ in
   # unused exporters to `none`, so an unset endpoint means that signal is not
   # emitted at all rather than emitted to a conventional default address.
   #
-  # Logs stay off for that reason: no service here ingests them, and the
-  # content worth having is already on the span path.
+  # Logs ride the generic endpoint (a BASE url; the exporter appends
+  # /v1/logs) and carry the per-request api_request event.
   telemetry = {
     enable = true;
+    otlpEndpoint = "https://otel.${internalDomain}";
 
     # Signal-specific, so it carries the full path — nothing is appended.
     # Setting it is also what turns span emission on at all.
