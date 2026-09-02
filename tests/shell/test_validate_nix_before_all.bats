@@ -18,8 +18,14 @@ setup() {
   # A `nix` whose behaviour is chosen per test. Only `eval` is ever reached:
   # DARWIN_HOST short-circuits host discovery, and both lists coming back empty
   # returns before any `nix search`.
+  # The stub gets the shebang of the bash actually running the suite, matching
+  # the convention in test_cluster_maintenance_window.bats: `/usr/bin/env` is
+  # not available in the Nix build sandbox these tests run in, so a
+  # `#!/usr/bin/env bash` stub fails to exec. That exec failure made `nix eval`
+  # return non-zero, so the empty-mode no-op looked like a failed evaluation and
+  # aborted — the empty path was never actually exercised.
   {
-    echo '#!/usr/bin/env bash'
+    echo "#!$(command -v bash)"
     echo 'case "${NIX_STUB_MODE}" in'
     echo '  fail)  echo "error: attribute '"'"'homebrew'"'"' missing" >&2; exit 1 ;;'
     echo '  empty) echo "[]"; exit 0 ;;'
