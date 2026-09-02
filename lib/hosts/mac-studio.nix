@@ -11,8 +11,8 @@ let
   # It was previously restated: proxy.concurrencyLimit said 1 while a
   # modelConcurrencyLimits entry said a bare 4, so the host admitted 4 while its
   # single "source" claimed 1, and the two could drift silently. Since
-  # 2026-07-27 the per-model override is gone entirely, so this is now the
-  # only concurrency number on the host.
+  # 2026-09-01 the per-model overrides below pin both residents to 1, so
+  # this is the admission ceiling, not what any model actually serves.
   #
   # It is ALSO no longer this repo's only definition of the number, just the
   # only one nix can evaluate hermetically. dryvist/tofu-proxmox's
@@ -168,12 +168,13 @@ in
 
     cacheMemoryMb = 8192;
     prefillBatchSize = 2048;
-    # NO per-model concurrency override: the resident inherits
-    # proxy.concurrencyLimit below — 2 since 2026-08-06 (the 2026-07 benches
-    # ran at 1). The 9B and every 40B+ entry keep their catalog
-    # concurrencyLimit=1 pins, so only the resident serves 2. Why 2 is safe
-    # where the 2026-07-27 4x override was harmful: ./mac-studio.md
-    # "Serving concurrency".
+    # Both residents pinned serial until mlx-lm concurrency is qualified —
+    # they wedged repeatedly under load at 2 where the c=1 9B never did.
+    # Vikunja ai #144/#150. proxy.concurrencyLimit stays 2 for CI parity.
+    modelConcurrencyLimits = {
+      "mlx-community/Qwen3.8-27B-4bit" = 1;
+      "mlx-community/Qwen3.6-35B-A3B-4bit" = 1;
+    };
 
     # Server host: no group swap, no global idle eviction (per-class unloads
     # come from the catalog). A blanket TTL would make each resident brain pay
