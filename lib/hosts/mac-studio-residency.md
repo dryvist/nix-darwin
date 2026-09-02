@@ -81,6 +81,32 @@ This matters for reading the numbers above: the worst constructible resident set
 practical effect of lowering 99 → 48 is *earlier buffer-cache shedding under
 long-context load*, costing some re-allocation latency — not allocation failure.
 
+## The cushion is ~0.6 GiB, not 4 GiB
+
+`maxResidentWorkers * memoryHardLimitGb <= wired ceiling` (100 GiB here, from
+`appleSiliconTunables.maxLocalLlmGb` in `hosts/mac-studio/default.nix`). 2 x 48 =
+96 GiB, but the non-MLX wired baseline measures ~3.4 GiB while a worker decodes,
+so the strict worst case is 99.4 against 100. It holds, and overshoot spills to
+pageable memory rather than failing (the limit is a shed-hint, not a refusal) —
+but do not spend that apparent 4 GiB.
+
+`memoryHardLimitGb` is DERIVED in `hosts/common/residency-budget.nix` as
+`(maxLocalLlmGb - baselineReserve) / maxResidentWorkers`, which at 100 GiB and
+k=2 gives 48 GiB per worker. Change `k_max` alone and the per-worker budget
+re-derives; nobody redoes the arithmetic, and an explicit override is still held
+to the invariant by that module's assertion. `suppressWiredLimit` defaults true,
+so weights are pageable and overshoot spills to swap rather than panicking.
+
+## Why k_max = 2
+
+At the previous k_max = 1 the resident and the 9B shared one exclusive group, so
+loading the 9B evicted the 35B and the next request paid a reload — measured
+2026-08-05. k_max = 2 restores the tiered topology so a small-model load sits
+BESIDE the resident. It does not pin the 9B resident: that entry keeps ttl 900
+and still idle-unloads.
+
+## Upstream prose defect
+
 nix-ai's own prose still says this limit "forces … allocation failure ahead of
 the host wired ceiling" (`options-residency.nix`, `mlx-lm-launch.py`). That
 contradicts upstream semantics — failure arrives at RAM+swap exhaustion, which is

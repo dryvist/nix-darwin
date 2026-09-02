@@ -58,29 +58,24 @@ in
     #   maxResidentWorkers * memoryHardLimitGb <= wired ceiling (100 GiB here,
     #   from appleSiliconTunables.maxLocalLlmGb in hosts/mac-studio/default.nix)
     #
-    # 2 x 48 = 96 GiB. The cushion is NOT the 4 GiB that subtraction suggests:
-    # the non-MLX wired baseline measures ~3.4 GiB while a worker decodes, so
-    # the strict worst case is 99.4 against 100 — roughly 0.6 GiB. It holds, and
-    # overshoot spills to pageable memory rather than failing (the limit is a
-    # shed-hint, not a refusal), but do not spend that 4 GiB.
-    #
-    # At the previous k_max = 1 the resident and the 9B shared one exclusive
-    # group, so loading the 9B evicted the 35B and the next request paid a
-    # reload — measured 2026-08-05. k_max = 2 restores the tiered topology so a
-    # small-model load sits BESIDE the resident. It does not pin the 9B
-    # resident: that entry keeps ttl 900 and still idle-unloads.
-    #
-    # k_max is the ONLY number stated here. memoryHardLimitGb is DERIVED from
-    # the host ceiling in hosts/common/residency-budget.nix as
-    # (maxLocalLlmGb - baselineReserve) / maxResidentWorkers, which at 100 GiB
-    # and k=2 gives 48 GiB per worker. Change k_max alone and the per-worker
-    # budget re-derives; nobody redoes the arithmetic, and an explicit override
-    # is still held to the invariant by that module's assertion.
-    #
-    # suppressWiredLimit defaults true, so weights are pageable and overshoot
-    # spills to swap rather than panicking. Rationale and the measurements
-    # behind the reserve: ./mac-studio-residency.md.
+    # 2 x 48 = 96 GiB, and the cushion is ~0.6 GiB rather than the 4 GiB that
+    # subtraction suggests. k_max is the ONLY number stated here;
+    # memoryHardLimitGb DERIVES from the host ceiling in
+    # hosts/common/residency-budget.nix, so change k_max alone. Why 2 not 1,
+    # the cushion arithmetic, and suppressWiredLimit: ./mac-studio-residency.md.
     maxResidentWorkers = 2;
+
+    # Only the 35B MoE is served by vllm-mlx; every other model stays on serial
+    # mlx-lm, which is what modelServerBackend still is. continuousBatching is
+    # explicit because its default derives from the GLOBAL backend (mlx-lm
+    # here), so the one model that can batch would otherwise render without the
+    # flag. It reaches vllm-mlx commands only.
+    enabledBackends = [
+      "mlx-lm"
+      "vllm-mlx"
+    ];
+    modelBackends."mlx-community/Qwen3.6-35B-A3B-4bit" = "vllm-mlx";
+    continuousBatching = true;
 
     # Validated catalog selections (profiles in nix-ai catalog-data.nix).
     #
