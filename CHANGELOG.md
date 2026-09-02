@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.50.0](https://github.com/dryvist/nix-darwin/compare/v2.49.0...v2.50.0) (2026-09-02)
+
+
+### Features
+
+* **agent-skills:** carry only the core group on the workstation ([#2336](https://github.com/dryvist/nix-darwin/issues/2336)) ([e2e73af](https://github.com/dryvist/nix-darwin/commit/e2e73af39451b90631541820dcae292fe69f5a69))
+
+
+### Bug Fixes
+
+* **ci:** freshness check reports exempt inputs as EXEMPT ([#2340](https://github.com/dryvist/nix-darwin/issues/2340)) ([4164e2c](https://github.com/dryvist/nix-darwin/commit/4164e2c4e3b2af2ab3ec1903f46fcd49b7f8a27d))
+* **ci:** keep the exec-bit invariant working without a git index ([#2335](https://github.com/dryvist/nix-darwin/issues/2335)) ([e837693](https://github.com/dryvist/nix-darwin/commit/e83769374cc4e1e0cb54be257a9892d49aa896bc))
+* **ci:** validate-nix empty homebrew result exits zero in the sandbox ([#2338](https://github.com/dryvist/nix-darwin/issues/2338)) ([57dd970](https://github.com/dryvist/nix-darwin/commit/57dd970c9b6bf073437fd54655465414306e1807))
+* **litellm-local:** take Claude Code off the proxy on the laptop ([#2339](https://github.com/dryvist/nix-darwin/issues/2339)) ([2b9e4db](https://github.com/dryvist/nix-darwin/commit/2b9e4dbc51d5b958d2c20d750daa8fdcae72220e))
+
 ## [2.49.0](https://github.com/dryvist/nix-darwin/compare/v2.48.0...v2.49.0) (2026-09-02)
 
 
