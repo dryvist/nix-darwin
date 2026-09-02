@@ -299,6 +299,23 @@
             src = ./.;
             darwinConfigurations = { };
           };
+
+          # pf anchor syntax check — Darwin-only (pfctl is a macOS system
+          # binary, not a nixpkgs package): parses the REAL rendered anchor
+          # from the primary host's own config (DRY — no copy of the anchor
+          # text lives here) with `pfctl -n -f` (syntax-only, does not load
+          # it), so a bad anchor fails `nix flake check` instead of shipping
+          # silently broken (see modules/darwin/pf-hardening.nix).
+          aarch64-darwin.pf-anchor-syntax =
+            let
+              darwinPkgs = nixpkgs.legacyPackages.aarch64-darwin;
+              anchorText = configs.${primaryHost.hostName}.config.environment.etc."pf.anchors/nix-hardening".text;
+              anchorFile = darwinPkgs.writeText "nix-hardening-anchor.conf" anchorText;
+            in
+            darwinPkgs.runCommand "check-pf-anchor-syntax" { } ''
+              /sbin/pfctl -n -f ${anchorFile}
+              touch $out
+            '';
         };
 
       # Development shell for CI and local nix tooling
