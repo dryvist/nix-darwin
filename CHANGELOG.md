@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.49.0](https://github.com/dryvist/nix-darwin/compare/v2.48.0...v2.49.0) (2026-09-02)
+
+
+### Features
+
+* **telemetry:** export Claude Code logs to the OTLP collector ([#2330](https://github.com/dryvist/nix-darwin/issues/2330)) ([3e16c2a](https://github.com/dryvist/nix-darwin/commit/3e16c2a4364f8b8e2067164a8b19a8f415ebdf5a))
+
+
+### Bug Fixes
+
+* **mac-studio:** serve the 27B and 35B serially until mlx-lm concurrency is qualified ([#2331](https://github.com/dryvist/nix-darwin/issues/2331)) ([24c578a](https://github.com/dryvist/nix-darwin/commit/24c578a6071bfe8b75eeffccf0958c208297a19e))
+* **mcp:** leave openrouter at the catalog default ([#2329](https://github.com/dryvist/nix-darwin/issues/2329)) ([2866499](https://github.com/dryvist/nix-darwin/commit/28664995f3b78e907dc64e6deec3096d62cbb1ff))
+
 ## [2.48.0](https://github.com/dryvist/nix-darwin/compare/v2.47.0...v2.48.0) (2026-09-01)
 
 
