@@ -168,12 +168,13 @@ in
 
     cacheMemoryMb = 8192;
     prefillBatchSize = 2048;
-    # NO per-model concurrency override: the resident inherits
-    # proxy.concurrencyLimit below — 2 since 2026-08-06 (the 2026-07 benches
-    # ran at 1). The 9B and every 40B+ entry keep their catalog
-    # concurrencyLimit=1 pins, so only the resident serves 2. Why 2 is safe
-    # where the 2026-07-27 4x override was harmful: ./mac-studio.md
-    # "Serving concurrency".
+    # Both residents pinned serial until mlx-lm concurrency is qualified —
+    # they wedged repeatedly under load at 2 where the c=1 9B never did.
+    # Vikunja ai #144/#150. proxy.concurrencyLimit stays 2 for CI parity.
+    modelConcurrencyLimits = {
+      "mlx-community/Qwen3.8-27B-4bit" = 1;
+      "mlx-community/Qwen3.6-35B-A3B-4bit" = 1;
+    };
 
     # Server host: no group swap, no global idle eviction (per-class unloads
     # come from the catalog). A blanket TTL would make each resident brain pay
