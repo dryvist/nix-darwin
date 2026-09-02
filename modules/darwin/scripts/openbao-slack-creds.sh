@@ -599,12 +599,113 @@ self_check() {
   echo "$prefix self-check OK" >&2
 }
 
+# ---------------------------------------------------------------------------
+# message: the read/search/send surface an agent actually uses.
+#
+# Sized from recorded usage rather than guessed: across local agent
+# transcripts the Slack calls were conversations.history 284, search.messages
+# 68, chat.postMessage 55, conversations.replies 24. Those four are the whole
+# surface, so those four are what this exposes.
+#
+# This exists so agents do not need an MCP server for Slack. A hosted Slack
+# MCP connector measured 20,930 tokens in EVERY session; a CLI plus a
+# manual-invoke skill costs about 10, works in every harness that has a shell
+# (Claude, Codex, Cursor, OpenCode, Antigravity, qwen), and needs no per-
+# harness configuration.
+# ---------------------------------------------------------------------------
+
+cmd_message_read() {
+  local ch="" limit=50 tok id
+  ch="${1:?usage: message read <id-or-name> [--limit N]}"; shift
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --limit) limit="${2:?--limit needs a value}"; shift 2 ;;
+      *) die "message read: unexpected argument '$1'" ;;
+    esac
+  done
+  tok="$(get_bot_token)"
+  id="$(resolve_channel "${tok}" "${ch}")"
+  jq -r '.messages[] | [.ts, (.user // .bot_id // "unknown"), (.text // "" | gsub("\n"; " "))] | @tsv' \
+    <<<"$(slack_get "${tok}" "https://slack.com/api/conversations.history?channel=${id}&limit=${limit}")"
+}
+
+cmd_message_replies() {
+  local ch="" ts="" tok id
+  ch="${1:?usage: message replies <id-or-name> <thread-ts>}"
+  ts="${2:?usage: message replies <id-or-name> <thread-ts>}"
+  tok="$(get_bot_token)"
+  id="$(resolve_channel "${tok}" "${ch}")"
+  jq -r '.messages[] | [.ts, (.user // .bot_id // "unknown"), (.text // "" | gsub("\n"; " "))] | @tsv' \
+    <<<"$(slack_get "${tok}" "https://slack.com/api/conversations.replies?channel=${id}&ts=${ts}&limit=200")"
+}
+
+# search.messages requires a USER token; a bot token is rejected with
+# not_allowed_token_type. That is a Slack API constraint, not a scope that can
+# be granted, so this reports the limitation rather than failing obscurely.
+cmd_message_search() {
+  local q="" limit=20 tok resp
+  q="${1:?usage: message search <query> [--limit N]}"; shift
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --limit) limit="${2:?--limit needs a value}"; shift 2 ;;
+      *) die "message search: unexpected argument '$1'" ;;
+    esac
+  done
+  tok="$(get_bot_token)"
+  resp="$(curl -fsS --max-time 30 -H "Authorization: Bearer ${tok}" \
+    --get --data-urlencode "query=${q}" --data-urlencode "count=${limit}" \
+    "https://slack.com/api/search.messages")" || die "Slack search.messages call failed"
+  if [ "$(jq -r '.ok // false' <<<"${resp}")" != "true" ]; then
+    local err; err="$(jq -r '.error // "unknown"' <<<"${resp}")"
+    if [ "${err}" = "not_allowed_token_type" ]; then
+      die "search.messages needs a USER token; the slack-ops credential is a bot token. Use 'message read' on a specific channel, or add a user-token credential to OpenBao."
+    fi
+    die "Slack search.messages rejected: ${err}"
+  fi
+  jq -r '.messages.matches[] | [.ts, (.channel.name // "?"), (.username // "unknown"), (.text // "" | gsub("\n"; " "))] | @tsv' <<<"${resp}"
+}
+
+cmd_message_send() {
+  local ch="" text="" thread="" tok id body
+  ch="${1:?usage: message send <id-or-name> <text> [--thread <ts>]}"; shift
+  text="${1:?usage: message send <id-or-name> <text> [--thread <ts>]}"; shift
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --thread) thread="${2:?--thread needs a ts}"; shift 2 ;;
+      *) die "message send: unexpected argument '$1'" ;;
+    esac
+  done
+  tok="$(get_bot_token)"
+  id="$(resolve_channel "${tok}" "${ch}")"
+  if [ -n "${thread}" ]; then
+    body="$(jq -nc --arg c "${id}" --arg t "${text}" --arg ts "${thread}" \
+      '{channel:$c, text:$t, thread_ts:$ts}')"
+  else
+    body="$(jq -nc --arg c "${id}" --arg t "${text}" '{channel:$c, text:$t}')"
+  fi
+  jq -r '.ts' <<<"$(slack_post "${tok}" "chat.postMessage" "${body}")"
+}
+
+cmd_message() {
+  local sub="${1:-}"
+  [ "$#" -gt 0 ] && shift
+  case "${sub}" in
+    read)    cmd_message_read "$@" ;;
+    replies) cmd_message_replies "$@" ;;
+    search)  cmd_message_search "$@" ;;
+    send)    cmd_message_send "$@" ;;
+    *) die "usage: openbao-slack-creds message {read <id-or-name> [--limit N]|replies <id-or-name> <thread-ts>|search <query> [--limit N]|send <id-or-name> <text> [--thread <ts>]}" ;;
+  esac
+}
+
+
 case "${1:-}" in
   token)             cmd_token ;;
   rotate)            cmd_rotate ;;
   manifest-create)   shift; cmd_manifest_create "${1:-}" ;;
   manifest-validate) shift; cmd_manifest_validate "${1:-}" ;;
   channel)           shift; cmd_channel "$@" ;;
+  message)           shift; cmd_message "$@" ;;
   --self-check)      self_check ;;
-  *) die "usage: openbao-slack-creds {token|rotate|manifest-create <path>|manifest-validate <path>|channel <subcommand>|--self-check}" ;;
+  *) die "usage: openbao-slack-creds {token|rotate|manifest-create <path>|manifest-validate <path>|channel <subcommand>|message <subcommand>|--self-check}" ;;
 esac
