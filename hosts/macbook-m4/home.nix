@@ -90,6 +90,16 @@ in
     litellmLocal = {
       enable = true;
 
+      # Claude Code talks straight to Anthropic on this machine — no proxy hop,
+      # no header, nothing that can rewrite a model id or the context window it
+      # advertises. Routing Claude Code through the loopback proxy repeatedly
+      # cost subagents their 1M window (they came back 200k) and forced a
+      # re-diagnosis each time. The proxy still runs for the OpenAI-shaped
+      # clients, and `localModels`/`routerEntryModel` below stay declared, so
+      # flipping this back to false is the only step needed to re-route
+      # subagents through it.
+      claudeDirect = true;
+
       # Serve this laptop's OWN model first, with the shared router as the one
       # rung behind it. Replaces the daily re-ranked cloud tier: that enumerated
       # specific cloud models here while the shared router already owned which
