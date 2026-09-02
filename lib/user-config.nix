@@ -199,10 +199,10 @@ in
     # host.name is per-host, so flake.nix's mkHost merges it in — this file is
     # host-agnostic and every host would otherwise report the same identity.
 
-    # Ships full prompt and tool content. Deliberate, and only sound because
-    # the collector and every hop past it are self-hosted on the internal zone.
-    logUserPrompts = true;
-    logToolDetails = true;
+    # Full prompt and tool content is sensitive even on a self-hosted
+    # collector (pasted secrets, credentials). Keep both off.
+    logUserPrompts = false;
+    logToolDetails = false;
   };
 
   # Personal directories Claude Code may read without per-prompt approval.
