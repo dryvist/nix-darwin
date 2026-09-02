@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.51.0](https://github.com/dryvist/nix-darwin/compare/v2.50.0...v2.51.0) (2026-09-02)
+
+
+### Features
+
+* **homebrew:** weekly unattended brew upgrade LaunchAgent ([#2345](https://github.com/dryvist/nix-darwin/issues/2345)) ([60bbab4](https://github.com/dryvist/nix-darwin/commit/60bbab4e704085825e39f81bac0fc5377cc128d7))
+
 ## [2.50.0](https://github.com/dryvist/nix-darwin/compare/v2.49.0...v2.50.0) (2026-09-02)
 
 
