@@ -155,10 +155,26 @@ in
     # declarative way to express "these must not exist". Globs cover Apple's macOS
     # 26 display-name variants (e.g. "Keynote Creator Studio.app"); the removal
     # runs as root at activation and `rm -rf` is idempotent.
-    activationScripts.postActivation.text = lib.mkAfter ''
-      echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Removing unused Apple iWork/iLife apps from /Applications..."
-      rm -rf /Applications/Keynote*.app /Applications/Numbers*.app /Applications/Pages*.app /Applications/GarageBand*.app /Applications/iMovie*.app
-    '';
+    activationScripts.postActivation.text = lib.mkAfter (
+      ''
+        echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Removing unused Apple iWork/iLife apps from /Applications..."
+        rm -rf /Applications/Keynote*.app /Applications/Numbers*.app /Applications/Pages*.app /Applications/GarageBand*.app /Applications/iMovie*.app
+      ''
+      # --- Delete a stale auto-login key on hosts that no longer declare one ---
+      # nix-darwin's loginwindow.autoLoginUser removes the *option*, not the
+      # existing /Library/Preferences/com.apple.loginwindow autoLoginUser key or
+      # the /etc/kcpassword it wrote — `defaults` and `kcpassword` are host state,
+      # not nix-managed files, so a removed option leaves both behind and the
+      # host keeps auto-logging in. A no-op wherever the key was never set
+      # (macOS `defaults delete` on a missing key exits non-zero, hence
+      # `|| true`). The Studio's explicit autoLoginUser (see its host file,
+      # Vikunja #2132) is untouched — this only fires when the option is null.
+      + lib.optionalString (config.system.defaults.loginwindow.autoLoginUser == null) ''
+        echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Removing stale auto-login key (autoLoginUser option unset)..."
+        /usr/bin/defaults delete /Library/Preferences/com.apple.loginwindow autoLoginUser 2>/dev/null || true
+        rm -f /etc/kcpassword
+      ''
+    );
 
     # --- Class-driven system defaults (server class only) ---
     # `class = "server"` (headless machines) flips a few macOS system knobs away
