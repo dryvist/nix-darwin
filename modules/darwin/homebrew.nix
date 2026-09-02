@@ -238,6 +238,9 @@ in
       # run never skips the index refresh.
       HOMEBREW_AUTO_UPDATE_SECS = "1";
       HOMEBREW_NO_INTERACTIVE = "1";
+      # brew and git read user state (caches, config) from HOME; set it
+      # explicitly rather than relying on the launchd default.
+      HOME = userConfig.user.homeDir;
     };
     # Keep the output so a failed week is diagnosable after the fact.
     StandardOutPath = "${userConfig.user.homeDir}/Library/Logs/brew-upgrade.log";
