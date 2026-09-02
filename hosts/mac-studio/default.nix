@@ -79,17 +79,29 @@ in
     # network tuning, and energyMode come from the server class in ../common.
     energy.enable = true;
 
-    # --- Auto-login ---
-    # The MLX stack and the gh-runner lifecycle are launchd USER agents — a
-    # headless reboot serves nothing until a session exists. Auto-
-    # login gives that session with zero prompts (enable once via GUI so macOS
-    # writes the kcpassword artifact; FileVault stays off on this host).
+    # --- Auto-login: kept on this host only, deliberately (Vikunja #2132) ---
+    # The MLX cluster rank/model-server agents and the GitHub runner
+    # container are launchd USER agents, not system daemons — none of them
+    # start after an unattended reboot without a logged-in session, and the
+    # estate rule ("cluster automation requires ZERO AI/human steps") forbids
+    # a human or an AI having to log in to bring the cluster back. FileVault
+    # stays off here for the same reason (auto-login + FileVault means a
+    # stranded pre-boot unlock screen, see modules/darwin/security.nix's
+    # fdesetup comment). Vikunja #2132 tracks moving these to system daemons
+    # so this can be removed and FileVault turned on. macbook-m4 has no such
+    # dependency and had its auto-login removed.
     defaults.loginwindow.autoLoginUser = userConfig.user.name;
   };
 
   # Studio-only program modules, grouped under one `programs` attrset (statix
   # W20: avoid repeated top-level keys).
   programs = {
+    # Headless server with no physical console visit expected between
+    # reboots — opts back in to the default-off posture in
+    # hosts/common/default.nix so a stuck boot or wedged sshd is still
+    # recoverable over VNC.
+    screenSharing.enable = true;
+
     # ========================================================================
     # llm-large Serving Gate (ADR: llm-large-studio-serving)
     # ========================================================================
