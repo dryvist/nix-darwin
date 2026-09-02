@@ -142,9 +142,11 @@ bao_login() {
     die "${role_id_var} / ${secret_id_var} not in environment — run under 'doppler run'"
   role_id="${!role_id_var}"
   secret_id="${!secret_id_var}"
-  resp="$(curl -sf --max-time 10 -X POST \
-    -d "{\"role_id\":\"${role_id}\",\"secret_id\":\"${secret_id}\"}" \
-    "${bao_addr}/v1/auth/approle/login")" || die "AppRole login (${approle_prefix}) failed"
+  # Credential travels via a private payload on stdin, never argv (argv is
+  # visible to any local process via ps).
+  resp="$(jq -n --arg r "${role_id}" --arg s "${secret_id}" '{role_id: $r, secret_id: $s}' \
+    | curl -sf --max-time 10 -X POST --data-binary @- \
+        "${bao_addr}/v1/auth/approle/login")" || die "AppRole login (${approle_prefix}) failed"
   token="$(jq -r '.auth.client_token // empty' <<<"${resp}")"
   [ -n "${token}" ] || die "AppRole login (${approle_prefix}) returned no client_token"
   printf '%s' "${token}"
@@ -213,8 +215,9 @@ mint_write() {
   prefix="$(write_login_prefix_for "${repo}")"
   bao_tok="$(bao_login "${prefix}")"
   body="$(write_token_body "${iid}" "${repo}")"
-  resp="$(curl -sf --max-time 10 -X POST -H "X-Vault-Token: ${bao_tok}" \
-    -d "${body}" "${bao_addr}/v1/github/token")" \
+  resp="$(printf '%s' "${body}" \
+    | curl -sf --max-time 10 -X POST -H "X-Vault-Token: ${bao_tok}" --data-binary @- \
+        "${bao_addr}/v1/github/token")" \
     || die "mint write token for ${owner}/${repo} failed (identity: ${prefix}).
 Most likely ${repo} is not on the allowlist this identity is pinned to. That is
 a deny, not a bug, and there is no client-side workaround — do NOT fall back to
@@ -270,9 +273,10 @@ mint_break_glass() {
   else
     body="$(jq -cn --argjson p "${scope_json}" '{permissions: $p}')"
   fi
-  resp="$(curl -sf --max-time 15 -X POST \
-    -H "Authorization: Bearer ${jwt}" -H "Accept: application/vnd.github+json" \
-    -d "${body}" "https://api.github.com/app/installations/${iid}/access_tokens")" \
+  resp="$(printf '%s' "${body}" \
+    | curl -sf --max-time 15 -X POST \
+        -H "Authorization: Bearer ${jwt}" -H "Accept: application/vnd.github+json" \
+        --data-binary @- "https://api.github.com/app/installations/${iid}/access_tokens")" \
     || die "break-glass mint failed for ${owner} (App key valid? api.github.com reachable?)"
   gh_tok="$(jq -r '.token // empty' <<<"${resp}")"
   [ -n "${gh_tok}" ] || die "no token in break-glass response for ${owner}"
@@ -311,8 +315,9 @@ lock_acquire() {
   data_url="${bao_addr}/v1/secret/data/locks/github-write/${iid}/${repo}"
   meta_url="${bao_addr}/v1/secret/metadata/locks/github-write/${iid}/${repo}"
   # Server-side deadman: each lock version self-deletes, freeing a crashed holder.
-  curl -sf --max-time 10 -X POST -H "X-Vault-Token: ${bao_tok}" \
-    -d "{\"delete_version_after\":\"${OPENBAO_GH_LOCK_TTL:-15m}\"}" "${meta_url}" >/dev/null \
+  jq -cn --arg ttl "${OPENBAO_GH_LOCK_TTL:-15m}" '{delete_version_after: $ttl}' \
+    | curl -sf --max-time 10 -X POST -H "X-Vault-Token: ${bao_tok}" --data-binary @- \
+        "${meta_url}" >/dev/null \
     || true
   cur="$(curl -sf --max-time 10 -H "X-Vault-Token: ${bao_tok}" "${data_url}" 2>/dev/null || echo '{}')"
   holder="$(jq -r '.data.data.holder // empty' <<<"${cur}")"
@@ -334,11 +339,11 @@ lock_acquire() {
   fi
   now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   local acq
-  acq="$(curl -s --max-time 10 -o /dev/null -w '%{http_code}' -X POST \
-    -H "X-Vault-Token: ${bao_tok}" \
-    -d "$(jq -cn --arg h "${me}" --arg t "${now}" --argjson v "${ver}" \
-          '{options:{cas:$v}, data:{holder:$h, acquired_at:$t}}')" \
-    "${data_url}")"
+  acq="$(jq -cn --arg h "${me}" --arg t "${now}" --argjson v "${ver}" \
+        '{options:{cas:$v}, data:{holder:$h, acquired_at:$t}}' \
+    | curl -s --max-time 10 -o /dev/null -w '%{http_code}' -X POST \
+        -H "X-Vault-Token: ${bao_tok}" --data-binary @- \
+        "${data_url}")"
   # A 400 here is a genuine CAS mismatch (someone else wrote between our read and
   # our write). Name both possibilities rather than only the race — the expired
   # -lease case above looked identical and cost hours of chasing a phantom agent.
@@ -515,16 +520,16 @@ self_check_lock_reacquire() {
   m="${base}/metadata/locks/github-write/147266792/zz-self-check"
 
   curl -s -o /dev/null --max-time 10 -X DELETE -H "X-Vault-Token: ${bao_tok}" "${m}"
-  curl -s -o /dev/null --max-time 10 -X POST -H "X-Vault-Token: ${bao_tok}" \
-    -d '{"options":{"cas":0},"data":{"holder":"self-check"}}' "${d}"
+  printf '%s' '{"options":{"cas":0},"data":{"holder":"self-check"}}' \
+    | curl -s -o /dev/null --max-time 10 -X POST -H "X-Vault-Token: ${bao_tok}" --data-binary @- "${d}"
   # Delete the version's data but leave metadata: exactly what the deadman does.
   curl -s -o /dev/null --max-time 10 -X DELETE -H "X-Vault-Token: ${bao_tok}" "${d}"
 
   ver="$(curl -sf --max-time 10 -H "X-Vault-Token: ${bao_tok}" "${m}" 2>/dev/null \
            | jq -r '.data.current_version // 0')"
-  code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 -X POST \
-    -H "X-Vault-Token: ${bao_tok}" \
-    -d "$(jq -cn --argjson v "${ver:-0}" '{options:{cas:$v}, data:{holder:"self-check-2"}}')" "${d}")"
+  code="$(jq -cn --argjson v "${ver:-0}" '{options:{cas:$v}, data:{holder:"self-check-2"}}' \
+    | curl -s -o /dev/null -w '%{http_code}' --max-time 10 -X POST \
+        -H "X-Vault-Token: ${bao_tok}" --data-binary @- "${d}")"
   curl -s -o /dev/null --max-time 10 -X DELETE -H "X-Vault-Token: ${bao_tok}" "${m}"
 
   [ "${code}" = "200" ] \

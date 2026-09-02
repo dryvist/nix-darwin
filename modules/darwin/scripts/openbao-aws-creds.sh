@@ -64,13 +64,24 @@ fi
 # invocations (terraform issues many AWS calls in parallel) don't each
 # independently log in and mint a fresh STS lease. mkdir is atomic on a local
 # filesystem; whichever process wins does the fetch, the rest wait for it.
+#
+# The lock dir carries the owning PID in a "pid" file. A blind time-based
+# reclaim (the prior behavior) can fire on a holder that is merely slow, not
+# dead — leaving two processes believing they hold the lock at once. Reclaim
+# only when the recorded PID is provably dead (kill -0 fails); a live holder
+# past the wait budget is a hard failure, not a force-evict.
+readonly LOCK_PID_FILE="${LOCK_DIR}/pid"
 attempt=0
 until /bin/mkdir "${LOCK_DIR}" 2>/dev/null; do
-  attempt=$((attempt + 1))
-  if [ "${attempt}" -ge 100 ]; then
-    warn "lock ${LOCK_DIR} held past ~10s, reclaiming (assuming a prior holder crashed)"
+  owner_pid="$(cat "${LOCK_PID_FILE}" 2>/dev/null || echo "")"
+  if [ -n "${owner_pid}" ] && ! kill -0 "${owner_pid}" 2>/dev/null; then
+    warn "lock ${LOCK_DIR} held by dead pid ${owner_pid}, reclaiming"
     /bin/rm -rf "${LOCK_DIR}"
     continue
+  fi
+  attempt=$((attempt + 1))
+  if [ "${attempt}" -ge 100 ]; then
+    die "lock ${LOCK_DIR} held by live pid ${owner_pid:-unknown} past ~10s — refusing to force-evict a live holder"
   fi
   sleep 0.1
   # Someone else may have refreshed the cache while we were waiting on it.
@@ -79,6 +90,7 @@ until /bin/mkdir "${LOCK_DIR}" 2>/dev/null; do
     exit 0
   fi
 done
+echo "$$" >"${LOCK_PID_FILE}"
 trap '/bin/rm -rf "${LOCK_DIR}"' EXIT
 
 # Re-check after acquiring the lock — another process may have just won it
@@ -95,9 +107,11 @@ if [ -z "${bao_addr}" ] || [ -z "${role_id}" ] || [ -z "${secret_id}" ]; then
   die "VAULT_ADDR / OPENBAO_APPROLE_TERRAFORM_ROLE_ID / OPENBAO_APPROLE_TERRAFORM_SECRET_ID not in environment — run terragrunt under 'doppler run' so the OpenBao bootstrap is injected"
 fi
 
-login_resp="$(curl -sf --max-time 10 -X POST \
-  -d "{\"role_id\":\"${role_id}\",\"secret_id\":\"${secret_id}\"}" \
-  "${bao_addr}/v1/auth/approle/login")" || die "AppRole login to ${bao_addr} failed"
+# Credential travels via a private payload on stdin, never argv (argv is
+# visible to any local process via ps).
+login_resp="$(jq -n --arg r "${role_id}" --arg s "${secret_id}" '{role_id: $r, secret_id: $s}' \
+  | curl -sf --max-time 10 -X POST --data-binary @- \
+      "${bao_addr}/v1/auth/approle/login")" || die "AppRole login to ${bao_addr} failed"
 token="$(jq -r '.auth.client_token // empty' <<<"${login_resp}")"
 [ -n "${token}" ] || die "AppRole login returned no client_token"
 

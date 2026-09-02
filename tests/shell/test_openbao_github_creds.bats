@@ -102,3 +102,31 @@ SH
   [ "$status" -eq 0 ]
   [ ! -f "$BATS_TEST_TMPDIR/curl-calls" ]
 }
+
+@test "AppRole login sends role_id/secret_id on stdin, never in argv" {
+  # argv is visible to any local process via `ps`; a JSON body built with
+  # `curl -d "...${secret_id}..."` leaks the credential there. The fix routes
+  # the body through stdin (--data-binary @-) instead — this asserts the
+  # secret never appears in the recorded argv and DOES appear on stdin, so
+  # the check fails if a future edit reintroduces the argv form.
+  export OPENBAO_APPROLE_GITHUB_WRITE_ROLE_ID=role-abc
+  export OPENBAO_APPROLE_GITHUB_WRITE_SECRET_ID=secret-abc-DO-NOT-LEAK
+  write_stub "$STUB_DIR/curl" <<'SH'
+for a in "$@"; do echo "$a" >> "$BATS_TEST_TMPDIR/curl-argv"; done
+case " $* " in
+  *"auth/approle/login"*)
+    cat > "$BATS_TEST_TMPDIR/curl-stdin"
+    echo '{"auth":{"client_token":"tok-123"}}'
+    exit 0
+    ;;
+esac
+exit 22
+SH
+
+  run_creds --self-check
+
+  [ -f "$BATS_TEST_TMPDIR/curl-argv" ]
+  ! grep -q "secret-abc-DO-NOT-LEAK" "$BATS_TEST_TMPDIR/curl-argv"
+  [ -f "$BATS_TEST_TMPDIR/curl-stdin" ]
+  grep -q "secret-abc-DO-NOT-LEAK" "$BATS_TEST_TMPDIR/curl-stdin"
+}
