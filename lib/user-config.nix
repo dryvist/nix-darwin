@@ -179,9 +179,7 @@ in
   # emitted at all rather than emitted to a conventional default address.
   #
   # Logs ride the generic endpoint (a BASE url; the exporter appends
-  # /v1/logs). They carry the per-request api_request event — the only source
-  # that itemizes a single request's token fields — which the metric cannot
-  # give: its first export window already sums several requests.
+  # /v1/logs) and carry the per-request api_request event.
   telemetry = {
     enable = true;
     otlpEndpoint = "https://otel.${internalDomain}";
