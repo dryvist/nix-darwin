@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.52.0](https://github.com/dryvist/nix-darwin/compare/v2.51.0...v2.52.0) (2026-09-02)
+
+
+### Features
+
+* **darwin:** install the OpenBao CLI system-wide ([#2362](https://github.com/dryvist/nix-darwin/issues/2362)) ([a5d00b9](https://github.com/dryvist/nix-darwin/commit/a5d00b94425c1cec66d063f71e34f32a75c25e6f))
+
+
+### Bug Fixes
+
+* **agent-skills:** deploy the whole shared catalog again ([#2365](https://github.com/dryvist/nix-darwin/issues/2365)) ([ba6451c](https://github.com/dryvist/nix-darwin/commit/ba6451cc0ad9e4163445306b9edf982800d48e10))
+* **claude-code:** stop exporting user prompts and tool details to OTEL ([#2364](https://github.com/dryvist/nix-darwin/issues/2364)) ([09f561d](https://github.com/dryvist/nix-darwin/commit/09f561df62e520722cb28ec8288afef757776aac))
+
 ## [2.51.0](https://github.com/dryvist/nix-darwin/compare/v2.50.0...v2.51.0) (2026-09-02)
 
 
