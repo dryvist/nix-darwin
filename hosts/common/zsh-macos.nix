@@ -51,26 +51,40 @@ in
       # --- API Keys (from macOS Keychain) ---
       # GitHub tokens are deliberately NOT read here — they come from OpenBao via
       # the openbao-github-creds git credential helper (see hosts/macbook-m4).
+      #
+      # These keys are NOT exported at shell init — an ambient export leaks
+      # into every child process's environment for the life of the shell.
+      # Instead each key gets a lazy per-command wrapper (mirroring
+      # _with_keychain_doppler below): `with-<key> <cmd> [args...]` reads the
+      # keychain only at call time and scopes the value to that one command.
+      # Values are interpolated at BUILD time (not read from a shell var) so
+      # the functions still work regardless of unset order later in this file.
 
       # Context7 - for context7@claude-plugins-official MCP server
-      export CONTEXT7_API_KEY=''${CONTEXT7_API_KEY:-"$(_get_keychain_secret 'CONTEXT7_API_KEY' "$_KC_USER")"}
+      with-context7-key() {
+        CONTEXT7_API_KEY="$(_get_keychain_secret 'CONTEXT7_API_KEY' ${lib.escapeShellArg userConfig.user.name})" "$@"
+      }
 
       # HuggingFace - for huggingface MCP server and hf CLI (model downloads)
+      with-hf-token() {
       ${
         # Server-class hosts are keychain-free for real secrets: HF_TOKEN
         # comes from the sops-rendered per-machine secret instead (portable
         # across machines via the committed encrypted file + on-device age
         # key). Workstations keep the keychain read, byte-identical.
         if hostConfig.isServer then
-          ''export HF_TOKEN=''${HF_TOKEN:-"$(cat /run/secrets/HF_TOKEN 2>/dev/null || echo "")"}''
+          ''HF_TOKEN="$(cat /run/secrets/HF_TOKEN 2>/dev/null || echo "")" "$@"''
         else
-          ''export HF_TOKEN=''${HF_TOKEN:-"$(_get_keychain_secret 'HF_TOKEN' "$_KC_AI_ACCOUNT" "$_KC_AI_DB")"}''
+          ''HF_TOKEN="$(_get_keychain_secret 'HF_TOKEN' ${lib.escapeShellArg userConfig.keychain.aiAccount} ${lib.escapeShellArg userConfig.keychain.aiDb})" "$@"''
+      }
       }
 
       # openHarness local-LLM bearer (workstation only; no server sops fallback).
+      ${lib.optionalString (!hostConfig.isServer) "with-openai-key() {"}
       ${lib.optionalString (!hostConfig.isServer) ''
-        export OPENAI_API_KEY=''${OPENAI_API_KEY:-"$(_get_keychain_secret 'OPENAI_API_KEY' "$_KC_AI_ACCOUNT" "$_KC_AI_DB")"}
+        OPENAI_API_KEY="$(_get_keychain_secret 'OPENAI_API_KEY' ${lib.escapeShellArg userConfig.keychain.aiAccount} ${lib.escapeShellArg userConfig.keychain.aiDb})" "$@"
       ''}
+      ${lib.optionalString (!hostConfig.isServer) "}"}
 
       # --- GitHub authentication ---
       # GitHub tokens are minted on demand by OpenBao (ephemeral GitHub App
