@@ -171,6 +171,10 @@ Source: `modules/darwin/homebrew.nix`
 ### Casks
 
 All casks use `greedy = true` so that `brew upgrade --greedy` always installs the latest version rather than deferring to built-in auto-updaters.
+That upgrade runs unattended every Thursday at 04:20 local time via the `brew-upgrade` LaunchAgent in the same module,
+logging to `~/Library/Logs/brew-upgrade.log`. `darwin-rebuild` does not upgrade Homebrew packages
+(`onActivation.upgrade = false`), and the agent does not upgrade Homebrew itself — the `brew` binary comes from the
+`brew-src` flake input via `nix-homebrew`, so its version advances when the flake lock is refreshed and the host rebuilds.
 
 | Package | greedy | Description |
 | --- | --- | --- |

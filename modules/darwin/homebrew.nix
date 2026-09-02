@@ -11,6 +11,9 @@
 let
   inherit (hostConfig) homebrew;
 
+  # Plain file import (not a module arg), matching modules/darwin/nix-homebrew.nix.
+  userConfig = import ../../lib/user-config.nix;
+
   # Packages needed by every host.
   baseBrews = [
     # Apple container runtime for the GitHub Actions runner VM.
@@ -187,5 +190,60 @@ in
       baseBrews ++ aiHomebrew.brews ++ lib.optionals homebrew.enableWorkstationApps workstationBrews;
     casks = aiHomebrew.casks ++ lib.optionals homebrew.enableWorkstationApps workstationCasks;
     masApps = lib.optionalAttrs homebrew.enableWorkstationApps workstationMasApps;
+  };
+
+  # Weekly unattended upgrade of every Homebrew package on every host.
+  #
+  # One native invocation, no wrapper script: `brew upgrade` runs `brew update`
+  # itself before upgrading. launchd rather than cron, because a calendar slot
+  # missed while the Mac is asleep or shut down runs once at the next wake
+  # instead of being dropped. A user agent rather than a daemon, because
+  # Homebrew refuses to run as root and the login user owns /opt/homebrew.
+  #
+  # --greedy is required: every cask above declares greedy = true, and without
+  # the flag Homebrew defers to each app's own updater and silently skips it.
+  # That includes the ghostty cask, and per its comment above each upgraded
+  # bundle is a new identity to TCC — its Full Disk Access, App Management and
+  # Local Network grants need a human to re-approve afterwards.
+  #
+  # This does not, and cannot, upgrade Homebrew itself: /opt/homebrew is not a
+  # git checkout here. `brew` comes from the brew-src flake input via
+  # nix-homebrew, so its own version advances when the flake lock is refreshed
+  # and the host rebuilds. Do not try to make this agent do it.
+  #
+  # `brew cleanup` is not run here — homebrew.onActivation.cleanup above
+  # already runs it on every rebuild.
+  launchd.user.agents.brew-upgrade.serviceConfig = {
+    Label = "com.nix-darwin.brew-upgrade";
+    ProgramArguments = [
+      "/opt/homebrew/bin/brew"
+      "upgrade"
+      "--greedy"
+    ];
+    StartCalendarInterval = [
+      {
+        Weekday = 4; # 4 = Thursday per launchd.plist(5)
+        Hour = 4;
+        Minute = 20;
+      }
+    ];
+    RunAtLoad = false;
+    ProcessType = "Background";
+    LowPriorityIO = true;
+    Nice = 5;
+    EnvironmentVariables = {
+      # Agents inherit a bare PATH; brew shells out to git and curl.
+      PATH = "/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin";
+      # brew's implicit update is throttled to 24h; pin it low so the weekly
+      # run never skips the index refresh.
+      HOMEBREW_AUTO_UPDATE_SECS = "1";
+      HOMEBREW_NO_INTERACTIVE = "1";
+      # brew and git read user state (caches, config) from HOME; set it
+      # explicitly rather than relying on the launchd default.
+      HOME = userConfig.user.homeDir;
+    };
+    # Keep the output so a failed week is diagnosable after the fact.
+    StandardOutPath = "${userConfig.user.homeDir}/Library/Logs/brew-upgrade.log";
+    StandardErrorPath = "${userConfig.user.homeDir}/Library/Logs/brew-upgrade.log";
   };
 }
