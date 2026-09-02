@@ -79,17 +79,22 @@ in
     # network tuning, and energyMode come from the server class in ../common.
     energy.enable = true;
 
-    # --- Auto-login ---
+    # --- Auto-login: removed (feat/workstation-posture-hardening) ---
     # The MLX stack and the gh-runner lifecycle are launchd USER agents — a
-    # headless reboot serves nothing until a session exists. Auto-
-    # login gives that session with zero prompts (enable once via GUI so macOS
-    # writes the kcpassword artifact; FileVault stays off on this host).
-    defaults.loginwindow.autoLoginUser = userConfig.user.name;
+    # headless reboot now needs an operator (or Screen Sharing, enabled
+    # above) to log in once before those services start. See that commit's
+    # message for the security rationale.
   };
 
   # Studio-only program modules, grouped under one `programs` attrset (statix
   # W20: avoid repeated top-level keys).
   programs = {
+    # Headless server with no physical console visit expected between
+    # reboots — opts back in to the default-off posture in
+    # hosts/common/default.nix so a stuck boot or wedged sshd is still
+    # recoverable over VNC.
+    screenSharing.enable = true;
+
     # ========================================================================
     # llm-large Serving Gate (ADR: llm-large-studio-serving)
     # ========================================================================

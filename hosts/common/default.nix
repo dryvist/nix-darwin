@@ -51,10 +51,12 @@ in
     };
   };
 
-  # Screen Sharing (VNC) — macOS Remote Login's GUI counterpart, enabled on
-  # every host so a reboot always leaves remote recovery available without a
-  # trip to the physical console. See modules/darwin/apps/screen-sharing.nix.
-  programs.screenSharing.enable = true;
+  # Screen Sharing (VNC) — off by default (network attack surface with no
+  # authentication policy declared here). The Studio is headless and its own
+  # host file documents why it opts back in for remote recovery; the laptop
+  # has physical console access and stays off. See
+  # modules/darwin/apps/screen-sharing.nix.
+  programs.screenSharing.enable = lib.mkDefault false;
 
   # Restart automatically once mains power returns, so an always-on host needs
   # no console visit after an outage. Servers only, and deliberately left null
@@ -74,7 +76,12 @@ in
     allowSigned = true;
     allowSignedApp = true;
     blockAllIncoming = false;
-    enableStealthMode = false;
+    # Stealth: drop unsolicited ICMP/UDP probes instead of answering them.
+    # Signed apps and sshd still accept their allowed inbound (allowSigned/
+    # allowSignedApp above; the pf anchor separately permits ICMP echo from
+    # security.pf.allowedSshSources), so cluster and LAN service traffic is
+    # unaffected — this only stops the host announcing itself to a scan.
+    enableStealthMode = true;
   };
 
   programs = {

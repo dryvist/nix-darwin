@@ -85,14 +85,6 @@ in
   # System-Level Tuning (inference performance, power, limits, network)
   # ==========================================================================
   system = {
-    # --- Auto-login ---
-    # Land in the user session on every restart so login-time agents (the
-    # claude-continuity auto-resume, the MLX user agents) come up unattended.
-    # With FileVault on, macOS defers this to the pre-boot unlock: the unlock
-    # user proceeds straight to the desktop, so the effect is one password at
-    # disk unlock and zero prompts after.
-    defaults.loginwindow.autoLoginUser = userConfig.user.name;
-
     # --- Apple Silicon Tunables ---
     # Wired-memory ceiling, pmset perf flags, App Nap, Spotlight + TM excludes,
     # Metal debug-env guard. See modules/darwin/apple-silicon-tunables.nix.
