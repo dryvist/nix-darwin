@@ -16,27 +16,21 @@
   imports = [ ../common/home.nix ];
 
   # Token Meter (nix-ai home-manager module) — this host only supplies
-  # parameters. The gate's LAN address is read from the darwin-level llm-gate,
-  # which already pins its listeners to this host's fixed reservation: Caddy's
-  # `bind` needs a socket address, and a second literal is a second thing to
-  # move when the reservation does.
+  # parameters.
+  #
+  # Its HTTPS gate listens on all interfaces, matching llm-gate, with the
+  # firewall as the boundary.
+  #
+  # bindAddress used to borrow llm-gate's pinned address. llm-gate no longer
+  # pins one, so there is nothing to borrow, and this is set explicitly rather
+  # than re-coupled. The module asserts a non-empty bindAddress whenever the
+  # gate is on — that check is left intact and satisfied with the
+  # all-interfaces address, so an accidental empty value still fails loudly.
   programs.token-meter = {
     enable = lib.mkDefault hostConfig.aiTooling.tokenMeter.enable;
     menuBar = lib.mkDefault hostConfig.aiTooling.tokenMeter.menuBar;
     httpsGate = lib.mkDefault hostConfig.aiTooling.tokenMeter.httpsGate;
-    # llm-gate treats an empty bindAddresses as a supported state, so nothing
-    # guarantees this list is populated. Say which invariant broke: a bare
-    # lib.head reports "list must not be empty" from inside nixpkgs, one layer
-    # before nix-ai's own bindAddress assertion and with no hint that the two
-    # settings are coupled.
-    bindAddress =
-      let
-        addresses = osConfig.programs.llm-gate.bindAddresses;
-      in
-      if addresses == [ ] then
-        throw "token-meter: the HTTPS gate takes its bind address from programs.llm-gate.bindAddresses, which is empty on this host — set one there, or set programs.token-meter.httpsGate = false."
-      else
-        lib.head addresses;
+    bindAddress = "0.0.0.0";
   };
 
   # Model cache uses the module default (/Volumes/HuggingFace) — identical to the
