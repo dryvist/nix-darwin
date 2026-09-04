@@ -33,6 +33,7 @@ in
     ./boot-activation.nix # Creates /run/current-system at boot
     ./auto-recovery.nix
     ./security.nix
+    ./sudo-touchid.nix # Touch ID for sudo (see the file's header)
     ./ssh-hardening.nix
     ./pf-hardening.nix
     ./trackpad.nix
