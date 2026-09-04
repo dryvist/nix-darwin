@@ -3,11 +3,11 @@
     "ai-assistant-instructions": {
       "flake": false,
       "locked": {
-        "lastModified": 1787403655,
-        "narHash": "sha256-kjaX6x+gNuVy4OgnaRAtIZT6Y/l2yXk/39zmEUtWHYE=",
+        "lastModified": 1788557177,
+        "narHash": "sha256-/rqp2YyIZvqVcirwDTRl0QWP97pmyfjO2ZlCyLz/gZk=",
         "owner": "dryvist",
         "repo": "ai-assistant-instructions",
-        "rev": "3427fdfa96ea6b85ff5cdc08613ac24d4e89dcf8",
+        "rev": "56e766f67686f521164123bc76d03d08e39d32b1",
         "type": "github"
       },
       "original": {
@@ -303,11 +303,11 @@
     "claude-code-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1788479285,
-        "narHash": "sha256-5IYXGq+kbgpIgmJj1I7M3APIL2nTpifwWxLIWltFc0s=",
+        "lastModified": 1788551883,
+        "narHash": "sha256-zSVQXDg55ZpphCUNxUXchKBFvbtaNmMDVyynaGhJW4I=",
         "owner": "anthropics",
         "repo": "claude-code",
-        "rev": "b3f0e501b79fe5cfc8c10d18cf3b0b6715c5c2fb",
+        "rev": "d7dbd9a09f59775726ed14bbea8fc9dfdff62f7b",
         "type": "github"
       },
       "original": {
@@ -526,11 +526,11 @@
     "dotgithub": {
       "flake": false,
       "locked": {
-        "lastModified": 1788148427,
-        "narHash": "sha256-nSB7u2Q5sU1hKS4E0/FAkX4/gq5FqEGbXO9M2w5N4z4=",
+        "lastModified": 1788552081,
+        "narHash": "sha256-s6SV750cZd7iCXLED1HbZ+uHk78gR5fRPNUJDN3Q1Ls=",
         "owner": "dryvist",
         "repo": ".github",
-        "rev": "09d64b73f58a9de000b2168c50df63dcf2a1ac1a",
+        "rev": "bf7e2e9d337a68be2bc40e6098e568c040d930d5",
         "type": "github"
       },
       "original": {
@@ -991,11 +991,11 @@
     "jacobpevans-cc-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1788148686,
-        "narHash": "sha256-90pMPq6YQBz/eCF7nkQmRXiRIG1Vo60ujCkm5mWeDng=",
+        "lastModified": 1788552219,
+        "narHash": "sha256-kic3RON+6eL1ZgcCm8kK1LNZG9GOAKBFxAT1Zm2YCns=",
         "owner": "dryvist",
         "repo": "claude-code-plugins",
-        "rev": "2a6fa8760ae0c51ff91f78a55fa524f0a4b0f202",
+        "rev": "c2c504b24372032f27808627dd0b06270c87eac8",
         "type": "github"
       },
       "original": {
