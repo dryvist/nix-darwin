@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.54.1](https://github.com/dryvist/nix-darwin/compare/v2.54.0...v2.54.1) (2026-09-04)
+
+
+### Bug Fixes
+
+* **deps:** pin brew-src off master, which no longer builds ([#2384](https://github.com/dryvist/nix-darwin/issues/2384)) ([ce057ab](https://github.com/dryvist/nix-darwin/commit/ce057ab77f884035669af2d82cf35407e14b1fb4))
+
 ## [2.54.0](https://github.com/dryvist/nix-darwin/compare/v2.53.0...v2.54.0) (2026-09-04)
 
 
