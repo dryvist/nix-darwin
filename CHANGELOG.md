@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.53.0](https://github.com/dryvist/nix-darwin/compare/v2.52.0...v2.53.0) (2026-09-04)
+
+
+### Features
+
+* **security:** harden workstation posture (sshd, screen sharing, auto-login, pf, sudoers) ([#2369](https://github.com/dryvist/nix-darwin/issues/2369)) ([bc2d74b](https://github.com/dryvist/nix-darwin/commit/bc2d74b1df5e8c66ae19ce18cc4b89b081a7dc5d))
+
+
+### Bug Fixes
+
+* **llm-gate:** listen on all interfaces instead of one pinned address ([f85e0f4](https://github.com/dryvist/nix-darwin/commit/f85e0f4757bcb3fade39388ccc7aaf95ffd84572))
+* **llm-gate:** listen on all interfaces instead of one pinned address ([d8be5b8](https://github.com/dryvist/nix-darwin/commit/d8be5b86e13510ec286f5ccf23ab46823a8617ef))
+* **secrets:** pass credentials on stdin, lock STS cache correctly, stop exporting keys at shell init ([#2368](https://github.com/dryvist/nix-darwin/issues/2368)) ([257503f](https://github.com/dryvist/nix-darwin/commit/257503f0a1753210d27afa21d4cc912d52cd1c42))
+* **security:** load the pf anchor correctly, exempt the cluster network, delete the stale auto-login key ([#2371](https://github.com/dryvist/nix-darwin/issues/2371)) ([a940e68](https://github.com/dryvist/nix-darwin/commit/a940e68f1ad6ec0214be3f275964a9c065d7ea45))
+
 ## [2.52.0](https://github.com/dryvist/nix-darwin/compare/v2.51.0...v2.52.0) (2026-09-02)
 
 
