@@ -108,8 +108,16 @@
       inputs.brew-src.follows = "brew-src";
     };
 
+    # PINNED, not tracking master. Homebrew's 2026-09-04 "legacy-master-bootstrap"
+    # commit removed Library/Homebrew/cmd, which nix-homebrew's patch phase
+    # chmods unconditionally — every darwin-rebuild then dies at
+    # `brew-<version>-patched` with "cannot access .../Library/Homebrew/cmd".
+    # Nothing in this repo can build until this pin moves back off master.
+    #
+    # Unpin when nix-homebrew handles the new layout; check its issue tracker
+    # rather than simply bumping this rev, since master still lacks that path.
     brew-src = {
-      url = "github:Homebrew/brew/master";
+      url = "github:Homebrew/brew/2316567ba9be476c217c49829a70b7ffe4b806d4";
       flake = false;
     };
 
