@@ -31,12 +31,18 @@
 #   - Anything already covered by a NOPASSWD rule in security.nix. Those skip
 #     PAM entirely and are unaffected by this file, in either direction.
 #
+# SERVER HOSTS ARE EXCLUDED, and that is not a formality. A headless host has
+# no Touch ID sensor and nobody sitting at it, so pam_tid could only ever fall
+# through to a password — while timestamp_timeout=0 below would strip the
+# credential cache from the one class of machine that has no biometric
+# alternative to fall back on. Enabling this there makes sudo strictly worse.
+#
 # The credential cache is the one replay window Touch ID would otherwise leave
 # open — see the timestamp_timeout note below.
 
-{ ... }:
+{ lib, hostConfig, ... }:
 
-{
+lib.mkIf (!hostConfig.isServer) {
   security.pam.services.sudo_local = {
     # /etc/pam.d/sudo already begins with `auth include sudo_local`, so
     # pam_tid gets the first attempt and pam_opendirectory (password) remains
