@@ -33,6 +33,8 @@ in
     ./boot-activation.nix # Creates /run/current-system at boot
     ./auto-recovery.nix
     ./security.nix
+    ./ssh-hardening.nix
+    ./pf-hardening.nix
     ./trackpad.nix
     ./system-ui.nix
     ./activation-error-tracking.nix

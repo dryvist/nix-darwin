@@ -79,17 +79,29 @@ in
     # network tuning, and energyMode come from the server class in ../common.
     energy.enable = true;
 
-    # --- Auto-login ---
-    # The MLX stack and the gh-runner lifecycle are launchd USER agents — a
-    # headless reboot serves nothing until a session exists. Auto-
-    # login gives that session with zero prompts (enable once via GUI so macOS
-    # writes the kcpassword artifact; FileVault stays off on this host).
+    # --- Auto-login: kept on this host only, deliberately (Vikunja #2132) ---
+    # The MLX cluster rank/model-server agents and the GitHub runner
+    # container are launchd USER agents, not system daemons — none of them
+    # start after an unattended reboot without a logged-in session, and the
+    # estate rule ("cluster automation requires ZERO AI/human steps") forbids
+    # a human or an AI having to log in to bring the cluster back. FileVault
+    # stays off here for the same reason (auto-login + FileVault means a
+    # stranded pre-boot unlock screen, see modules/darwin/security.nix's
+    # fdesetup comment). Vikunja #2132 tracks moving these to system daemons
+    # so this can be removed and FileVault turned on. macbook-m4 has no such
+    # dependency and had its auto-login removed.
     defaults.loginwindow.autoLoginUser = userConfig.user.name;
   };
 
   # Studio-only program modules, grouped under one `programs` attrset (statix
   # W20: avoid repeated top-level keys).
   programs = {
+    # Headless server with no physical console visit expected between
+    # reboots — opts back in to the default-off posture in
+    # hosts/common/default.nix so a stuck boot or wedged sshd is still
+    # recoverable over VNC.
+    screenSharing.enable = true;
+
     # ========================================================================
     # llm-large Serving Gate (ADR: llm-large-studio-serving)
     # ========================================================================
@@ -113,14 +125,21 @@ in
       # the public zone issues cleanly, same as the host FQDN. (A future
       # public-facing capability name is tracked separately.)
       extraHostnames = [ "llm-large.${userConfig.baseDomain}" ];
-      # Bind the gate's listeners to this host's LAN address only — never the
-      # wildcard/loopback socket. apiPort/clusterPort mirror the loopback
-      # llama-swap ports, so a wildcard bind lets Caddy capture 127.0.0.1
-      # whenever llama-swap restarts and proxy loopback callers into its own
-      # TLS listener (INC-17114). Caddy's `bind` needs a socket address, not a
-      # DNS name, so the host's fixed-reservation LAN address is set here (it
-      # tracks the jevans-ms A record; move it if the reservation moves).
-      bindAddresses = [ "10.0.50.10" ];
+      # bindAddresses is deliberately UNSET: the gate listens on all interfaces
+      # and the firewall is the boundary.
+      #
+      # It previously pinned one interface's address. This host has interfaces
+      # on two networks, the published A record points at the other one, and the
+      # gate therefore refused every caller that resolved its own name while the
+      # service itself was healthy. Pinning one address means the bind list and
+      # DNS are two places that must agree, and nothing detects them disagreeing.
+      #
+      # Known ceiling, accepted: a wildcard listener also owns 127.0.0.1 on
+      # these ports, which mirror llama-swap's loopback ports. If llama-swap
+      # ever drops its specific loopback bind, Caddy can capture loopback
+      # callers into its own TLS listener and they see an HTTP-to-HTTPS error
+      # (INC-17114). llama-swap binding loopback first is what keeps that from
+      # happening.
       # Clustered-mode endpoint (mlx-lm rank 0 on loopback :11440, see
       # lib/hosts/mac-studio.nix clusterMode): second gated site, same
       # bearer token and cert, mirrored external:loopback port convention.

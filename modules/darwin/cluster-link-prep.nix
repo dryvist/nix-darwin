@@ -67,6 +67,17 @@ in
       description = "Link addresses of the two ends of the Thunderbolt cable.";
     };
 
+    network = lib.mkOption {
+      type = lib.types.str;
+      # The synthetic /24 linkIps above live on — shared here (rather than a
+      # second literal) so modules/darwin/pf-hardening.nix's default
+      # security.pf.exemptNetworks can pass cluster rendezvous traffic
+      # without ever being able to drift from the addresses this module
+      # actually assigns.
+      default = "192.168.208.0/24";
+      description = "CIDR containing both cluster linkIps addresses.";
+    };
+
     clusterWiredLimitMb = lib.mkOption {
       type = lib.types.nullOr lib.types.int;
       default = null;

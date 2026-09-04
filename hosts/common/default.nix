@@ -51,10 +51,12 @@ in
     };
   };
 
-  # Screen Sharing (VNC) — macOS Remote Login's GUI counterpart, enabled on
-  # every host so a reboot always leaves remote recovery available without a
-  # trip to the physical console. See modules/darwin/apps/screen-sharing.nix.
-  programs.screenSharing.enable = true;
+  # Screen Sharing (VNC) — off by default (network attack surface with no
+  # authentication policy declared here). The Studio is headless and its own
+  # host file documents why it opts back in for remote recovery; the laptop
+  # has physical console access and stays off. See
+  # modules/darwin/apps/screen-sharing.nix.
+  programs.screenSharing.enable = lib.mkDefault false;
 
   # Restart automatically once mains power returns, so an always-on host needs
   # no console visit after an outage. Servers only, and deliberately left null
@@ -74,7 +76,12 @@ in
     allowSigned = true;
     allowSignedApp = true;
     blockAllIncoming = false;
-    enableStealthMode = false;
+    # Stealth: drop unsolicited ICMP/UDP probes instead of answering them.
+    # Signed apps and sshd still accept their allowed inbound (allowSigned/
+    # allowSignedApp above; the pf anchor separately permits ICMP echo from
+    # security.pf.allowedSshSources), so cluster and LAN service traffic is
+    # unaffected — this only stops the host announcing itself to a scan.
+    enableStealthMode = true;
   };
 
   programs = {
@@ -148,10 +155,26 @@ in
     # declarative way to express "these must not exist". Globs cover Apple's macOS
     # 26 display-name variants (e.g. "Keynote Creator Studio.app"); the removal
     # runs as root at activation and `rm -rf` is idempotent.
-    activationScripts.postActivation.text = lib.mkAfter ''
-      echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Removing unused Apple iWork/iLife apps from /Applications..."
-      rm -rf /Applications/Keynote*.app /Applications/Numbers*.app /Applications/Pages*.app /Applications/GarageBand*.app /Applications/iMovie*.app
-    '';
+    activationScripts.postActivation.text = lib.mkAfter (
+      ''
+        echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Removing unused Apple iWork/iLife apps from /Applications..."
+        rm -rf /Applications/Keynote*.app /Applications/Numbers*.app /Applications/Pages*.app /Applications/GarageBand*.app /Applications/iMovie*.app
+      ''
+      # --- Delete a stale auto-login key on hosts that no longer declare one ---
+      # nix-darwin's loginwindow.autoLoginUser removes the *option*, not the
+      # existing /Library/Preferences/com.apple.loginwindow autoLoginUser key or
+      # the /etc/kcpassword it wrote — `defaults` and `kcpassword` are host state,
+      # not nix-managed files, so a removed option leaves both behind and the
+      # host keeps auto-logging in. A no-op wherever the key was never set
+      # (macOS `defaults delete` on a missing key exits non-zero, hence
+      # `|| true`). The Studio's explicit autoLoginUser (see its host file,
+      # Vikunja #2132) is untouched — this only fires when the option is null.
+      + lib.optionalString (config.system.defaults.loginwindow.autoLoginUser == null) ''
+        echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Removing stale auto-login key (autoLoginUser option unset)..."
+        /usr/bin/defaults delete /Library/Preferences/com.apple.loginwindow autoLoginUser 2>/dev/null || true
+        rm -f /etc/kcpassword
+      ''
+    );
 
     # --- Class-driven system defaults (server class only) ---
     # `class = "server"` (headless machines) flips a few macOS system knobs away
