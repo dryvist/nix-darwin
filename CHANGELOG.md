@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.54.0](https://github.com/dryvist/nix-darwin/compare/v2.53.0...v2.54.0) (2026-09-04)
+
+
+### Features
+
+* **security:** authenticate sudo with Touch ID, and stop caching credentials ([#2380](https://github.com/dryvist/nix-darwin/issues/2380)) ([d5c07e3](https://github.com/dryvist/nix-darwin/commit/d5c07e3e06f1e0276ce517ef74b93ef9577e5a9d))
+
 ## [2.53.0](https://github.com/dryvist/nix-darwin/compare/v2.52.0...v2.53.0) (2026-09-04)
 
 
