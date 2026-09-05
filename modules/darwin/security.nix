@@ -8,6 +8,8 @@
 #   (enables unattended cluster bring-up recovery)
 # - No passwordless sudo for darwin-rebuild/activate — a converge is a
 #   deliberate, password-gated root action (feat/workstation-posture-hardening)
+# - The one passwordless converge grant belongs to the automation account and
+#   is declared with that account in modules/darwin/agent-identity.nix
 
 { lib, ... }:
 
