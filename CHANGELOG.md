@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.54.2](https://github.com/dryvist/nix-darwin/compare/v2.54.1...v2.54.2) (2026-09-05)
+
+
+### Bug Fixes
+
+* **ci:** make the Validate workflow green again ([#2398](https://github.com/dryvist/nix-darwin/issues/2398)) ([2fbefc6](https://github.com/dryvist/nix-darwin/commit/2fbefc644e2a9d1c3d17fb9a4c05593693b72578))
+* **macbook-m4:** render qwen3-coder-30b as a swap entry instead of a shadowed resident ([#2397](https://github.com/dryvist/nix-darwin/issues/2397)) ([74536b1](https://github.com/dryvist/nix-darwin/commit/74536b1898cf2d4806a8bd98e7e72a23f7c95fe0))
+* **tests:** drain stdin in the reclaim test's curl stub ([#2401](https://github.com/dryvist/nix-darwin/issues/2401)) ([d876696](https://github.com/dryvist/nix-darwin/commit/d876696fa5dd73ac94f756d2a093c97a9d747571))
+* **tests:** select the reclaim test's dead pid from the top of the pid space ([#2400](https://github.com/dryvist/nix-darwin/issues/2400)) ([c235908](https://github.com/dryvist/nix-darwin/commit/c2359082f36686cd0591365431fdce979fd14b2f))
+
 ## [2.54.1](https://github.com/dryvist/nix-darwin/compare/v2.54.0...v2.54.1) (2026-09-04)
 
 
