@@ -41,5 +41,14 @@
     # assertion then has no catalog to resolve against, because the catalog is
     # populated per host in the operator's home.
     mlx.enable = lib.mkForce false;
+
+    # herdr's launchd agent targets the gui/<uid> domain, which this account
+    # does not have. `launchctl bootstrap` there returns "Domain does not
+    # support specified action" and home-manager activation logs a failure.
+    herdr.enable = lib.mkForce false;
   };
+
+  # Same gui/<uid> domain problem as herdr. Nothing signs commits from this
+  # account, so there is no agent to keep alive.
+  services.gpg-agent.enable = lib.mkForce false;
 }
