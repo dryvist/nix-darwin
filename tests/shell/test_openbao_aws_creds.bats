@@ -22,10 +22,55 @@ write_stub() {
   chmod +x "$path"
 }
 
+# The script addresses macOS system binaries under $SYS_BIN (default /bin) so an
+# ambient PATH cannot shadow them. These tests run in the Linux Nix sandbox,
+# where /bin holds only sh, so point SYS_BIN at a stub directory: real coreutils
+# for mkdir/chmod/rm, and a `date` that answers the three BSD invocations the
+# script makes. Without this the script dies at the first date call and every
+# assertion below fails for a reason that has nothing to do with what it covers.
+write_sys_bin() {
+  SYS_BIN_DIR="$BATS_TEST_TMPDIR/sysbin"
+  mkdir -p "$SYS_BIN_DIR"
+  for tool in mkdir chmod rm; do
+    ln -sf "$(command -v "$tool")" "$SYS_BIN_DIR/$tool"
+  done
+  write_stub "$SYS_BIN_DIR/date" <<'SH'
+# BSD date, as the script calls it:
+#   date -j -u -f <fmt> <timestamp> +%s   -> parse to epoch
+#   date -u +%s                           -> now
+#   date -u -v+<N>S +<fmt>                -> now plus N seconds
+#
+# The ambient date is GNU in the Linux sandbox and BSD on a developer's Mac, so
+# each branch tries GNU first and falls back to BSD. Hardcoding either one makes
+# these tests pass on exactly one of the two platforms.
+case " $* " in
+  *" -j "*)
+    stamp=""
+    for a in "$@"; do
+      case "$a" in [0-9][0-9][0-9][0-9]-*) stamp="$a" ;; esac
+    done
+    date -u -d "${stamp//Z/ UTC}" +%s 2>/dev/null \
+      || date -j -u -f '%Y-%m-%dT%H:%M:%SZ' "$stamp" +%s
+    ;;
+  *" -v+"*)
+    secs=""
+    for a in "$@"; do
+      case "$a" in -v+*S) secs="${a#-v+}"; secs="${secs%S}" ;; esac
+    done
+    date -u -d "+${secs} seconds" +'%Y-%m-%dT%H:%M:%SZ' 2>/dev/null \
+      || date -u -v+"${secs}"S +'%Y-%m-%dT%H:%M:%SZ'
+    ;;
+  *) date -u +%s ;;
+esac
+SH
+}
+
 setup() {
   STUB_DIR="$BATS_TEST_TMPDIR/stub"
   mkdir -p "$STUB_DIR"
   PATH="$STUB_DIR:$PATH"
+  write_sys_bin
+  export OPENBAO_AWS_SYS_BIN="$SYS_BIN_DIR"
   export HOME="$BATS_TEST_TMPDIR/home"
   mkdir -p "$HOME"
   export VAULT_ADDR="http://openbao.invalid"
