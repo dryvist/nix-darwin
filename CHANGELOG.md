@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.56.0](https://github.com/dryvist/nix-darwin/compare/v2.55.0...v2.56.0) (2026-09-05)
+
+
+### Features
+
+* **checks:** guard against AI CLI dual-installs on darwin ([d536a71](https://github.com/dryvist/nix-darwin/commit/d536a71842d0cfa9b068ccc36862fced33b8e33b))
+* **checks:** guard against AI CLI dual-installs on darwin ([#2417](https://github.com/dryvist/nix-darwin/issues/2417)) ([0ba2e6a](https://github.com/dryvist/nix-darwin/commit/0ba2e6ad8a48a83332e326118e573304db5becd0))
+
 ## [2.55.0](https://github.com/dryvist/nix-darwin/compare/v2.54.2...v2.55.0) (2026-09-05)
 
 
