@@ -24,7 +24,14 @@
 # `pkgs.writeShellApplication` (used to build this script) wraps it in
 # `set -euo pipefail` and runs shellcheck, so this file omits its own.
 #
-# macOS-only: `/bin/date -v` below is BSD date syntax, not GNU.
+# macOS-only: `date -v` below is BSD date syntax, not GNU, and the system
+# binaries are addressed by absolute path so an arbitrary ambient PATH (this
+# runs from `aws`, under whatever shell invoked terraform) cannot shadow them.
+#
+# SYS_BIN exists solely so the test suite can point at a stub directory; it runs
+# on Linux, where /bin holds only sh. Production never sets it, so the resolved
+# paths stay byte-identical to the hardcoded ones this replaced.
+readonly SYS_BIN="${OPENBAO_AWS_SYS_BIN:-/bin}"
 
 readonly CACHE_DIR="${HOME}/.cache/openbao-aws"
 readonly ROLE="${1:?usage: openbao-aws-creds <aws-role-name>}"
@@ -44,8 +51,8 @@ cache_is_fresh() {
   local expiration exp_epoch now_epoch
   expiration="$(jq -r '.Expiration // empty' "${CACHE_FILE}" 2>/dev/null)" || return 1
   [ -n "${expiration}" ] || return 1
-  exp_epoch="$(/bin/date -j -u -f '%Y-%m-%dT%H:%M:%SZ' "${expiration}" +%s 2>/dev/null)" || return 1
-  now_epoch="$(/bin/date -u +%s)"
+  exp_epoch="$("${SYS_BIN}"/date -j -u -f '%Y-%m-%dT%H:%M:%SZ' "${expiration}" +%s 2>/dev/null)" || return 1
+  now_epoch="$("${SYS_BIN}"/date -u +%s)"
   [ "$((exp_epoch - now_epoch))" -gt "${SAFETY_MARGIN_SECONDS}" ]
 }
 
@@ -57,8 +64,8 @@ fi
 # The lock dir lives INSIDE the cache dir, so the cache dir must exist before
 # the first lock attempt (mkdir without -p fails on a missing parent, which
 # would spin the acquisition loop forever on a cold start).
-/bin/mkdir -p "${CACHE_DIR}"
-/bin/chmod 0700 "${CACHE_DIR}"
+"${SYS_BIN}"/mkdir -p "${CACHE_DIR}"
+"${SYS_BIN}"/chmod 0700 "${CACHE_DIR}"
 
 # Cache miss/stale: acquire a short-lived atomic lock so concurrent
 # invocations (terraform issues many AWS calls in parallel) don't each
@@ -72,11 +79,11 @@ fi
 # past the wait budget is a hard failure, not a force-evict.
 readonly LOCK_PID_FILE="${LOCK_DIR}/pid"
 attempt=0
-until /bin/mkdir "${LOCK_DIR}" 2>/dev/null; do
+until "${SYS_BIN}"/mkdir "${LOCK_DIR}" 2>/dev/null; do
   owner_pid="$(cat "${LOCK_PID_FILE}" 2>/dev/null || echo "")"
   if [ -n "${owner_pid}" ] && ! kill -0 "${owner_pid}" 2>/dev/null; then
     warn "lock ${LOCK_DIR} held by dead pid ${owner_pid}, reclaiming"
-    /bin/rm -rf "${LOCK_DIR}"
+    "${SYS_BIN}"/rm -rf "${LOCK_DIR}"
     continue
   fi
   attempt=$((attempt + 1))
@@ -91,7 +98,7 @@ until /bin/mkdir "${LOCK_DIR}" 2>/dev/null; do
   fi
 done
 echo "$$" >"${LOCK_PID_FILE}"
-trap '/bin/rm -rf "${LOCK_DIR}"' EXIT
+trap '${SYS_BIN}/rm -rf "${LOCK_DIR}"' EXIT
 
 # Re-check after acquiring the lock — another process may have just won it
 # and refreshed the cache before we got here.
@@ -126,7 +133,7 @@ if [ -z "${access_key}" ] || [ -z "${secret_key}" ] || [ -z "${session_token}" ]
   die "aws/sts/${ROLE} response missing access_key/secret_key/security_token/lease_duration"
 fi
 
-expiration="$(/bin/date -u -v+"${lease_seconds}"S +'%Y-%m-%dT%H:%M:%SZ')"
+expiration="$("${SYS_BIN}"/date -u -v+"${lease_seconds}"S +'%Y-%m-%dT%H:%M:%SZ')"
 
 umask 077
 jq -n \
@@ -136,5 +143,5 @@ jq -n \
   --arg exp "${expiration}" \
   '{Version: 1, AccessKeyId: $akid, SecretAccessKey: $sak, SessionToken: $tok, Expiration: $exp}' \
   >"${CACHE_FILE}"
-/bin/chmod 0600 "${CACHE_FILE}"
+"${SYS_BIN}"/chmod 0600 "${CACHE_FILE}"
 cat "${CACHE_FILE}"

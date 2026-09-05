@@ -22,10 +22,55 @@ write_stub() {
   chmod +x "$path"
 }
 
+# The script addresses macOS system binaries under $SYS_BIN (default /bin) so an
+# ambient PATH cannot shadow them. These tests run in the Linux Nix sandbox,
+# where /bin holds only sh, so point SYS_BIN at a stub directory: real coreutils
+# for mkdir/chmod/rm, and a `date` that answers the three BSD invocations the
+# script makes. Without this the script dies at the first date call and every
+# assertion below fails for a reason that has nothing to do with what it covers.
+write_sys_bin() {
+  SYS_BIN_DIR="$BATS_TEST_TMPDIR/sysbin"
+  mkdir -p "$SYS_BIN_DIR"
+  for tool in mkdir chmod rm; do
+    ln -sf "$(command -v "$tool")" "$SYS_BIN_DIR/$tool"
+  done
+  write_stub "$SYS_BIN_DIR/date" <<'SH'
+# BSD date, as the script calls it:
+#   date -j -u -f <fmt> <timestamp> +%s   -> parse to epoch
+#   date -u +%s                           -> now
+#   date -u -v+<N>S +<fmt>                -> now plus N seconds
+#
+# The ambient date is GNU in the Linux sandbox and BSD on a developer's Mac, so
+# each branch tries GNU first and falls back to BSD. Hardcoding either one makes
+# these tests pass on exactly one of the two platforms.
+case " $* " in
+  *" -j "*)
+    stamp=""
+    for a in "$@"; do
+      case "$a" in [0-9][0-9][0-9][0-9]-*) stamp="$a" ;; esac
+    done
+    date -u -d "${stamp//Z/ UTC}" +%s 2>/dev/null \
+      || date -j -u -f '%Y-%m-%dT%H:%M:%SZ' "$stamp" +%s
+    ;;
+  *" -v+"*)
+    secs=""
+    for a in "$@"; do
+      case "$a" in -v+*S) secs="${a#-v+}"; secs="${secs%S}" ;; esac
+    done
+    date -u -d "+${secs} seconds" +'%Y-%m-%dT%H:%M:%SZ' 2>/dev/null \
+      || date -u -v+"${secs}"S +'%Y-%m-%dT%H:%M:%SZ'
+    ;;
+  *) date -u +%s ;;
+esac
+SH
+}
+
 setup() {
   STUB_DIR="$BATS_TEST_TMPDIR/stub"
   mkdir -p "$STUB_DIR"
   PATH="$STUB_DIR:$PATH"
+  write_sys_bin
+  export OPENBAO_AWS_SYS_BIN="$SYS_BIN_DIR"
   export HOME="$BATS_TEST_TMPDIR/home"
   mkdir -p "$HOME"
   export VAULT_ADDR="http://openbao.invalid"
@@ -82,15 +127,30 @@ SH
   mkdir -p "$HOME/.cache/openbao-aws"
   lock_dir="$HOME/.cache/openbao-aws/tf-proxmox.json.lock"
   mkdir -p "$lock_dir"
-  # A pid guaranteed not to be running: fork a subshell and capture its pid
-  # after it has already exited.
-  ( : ) & dead_pid=$!
-  wait "$dead_pid" || true
+  # A pid the script will find dead. Forking a subshell and reusing its pid is
+  # not safe here: inside the Linux sandbox's PID namespace the numbers are
+  # small and handed out again quickly, and an unreaped child lingers as a
+  # zombie, which `kill -0` still reports as alive. Either way the script sees a
+  # live holder and refuses, which is the opposite of what this covers. Walk
+  # down from the top of the pid space instead and take the first value that is
+  # provably not in use.
+  dead_pid=4194303
+  while kill -0 "$dead_pid" 2>/dev/null; do
+    dead_pid=$((dead_pid - 1))
+  done
   echo "$dead_pid" > "$lock_dir/pid"
 
   write_stub "$STUB_DIR/curl" <<'SH'
 case " $* " in
-  *"auth/approle/login"*) echo '{"auth":{"client_token":"tok-123"}}'; exit 0 ;;
+  *"auth/approle/login"*)
+    # The script pipes the login payload in (`jq ... | curl --data-binary @-`),
+    # so a stub that exits without reading leaves jq writing into a closed
+    # pipe. Under pipefail that SIGPIPE fails the whole pipeline and the script
+    # dies before it can mint. Drain stdin, as the argv test's stub does.
+    cat >/dev/null
+    echo '{"auth":{"client_token":"tok-123"}}'
+    exit 0
+    ;;
   *"aws/sts/"*) echo '{"data":{"access_key":"AKIA","secret_key":"sk","security_token":"st"},"lease_duration":3600}'; exit 0 ;;
 esac
 exit 22
@@ -98,6 +158,9 @@ SH
 
   run_creds tf-proxmox
 
+  # Assert the reclaim actually happened before asserting the outcome, so a
+  # regression here says which half broke instead of just "exit 1".
+  [[ "$stderr" == *"held by dead pid ${dead_pid}, reclaiming"* ]]
   [ "$status" -eq 0 ]
   [[ "$output" == *"AccessKeyId"* ]]
 }
