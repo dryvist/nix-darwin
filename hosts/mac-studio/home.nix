@@ -8,7 +8,6 @@
 {
   hostConfig,
   lib,
-  osConfig,
   ...
 }:
 

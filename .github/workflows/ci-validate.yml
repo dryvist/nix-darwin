@@ -19,4 +19,10 @@ permissions:
 jobs:
   validate:
     name: Validate
+    # all_systems must stay false here, as it already is in ci-gate.yml: this
+    # flake declares checks.aarch64-darwin.pf-anchor-syntax, which shells out to
+    # /sbin/pfctl. `--all-systems` makes a Linux runner try to build it and fail
+    # with a platform mismatch, which is what kept this workflow red.
     uses: dryvist/.github/.github/workflows/_nix-validate.yml@main
+    with:
+      all_systems: false
