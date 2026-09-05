@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.55.0](https://github.com/dryvist/nix-darwin/compare/v2.54.2...v2.55.0) (2026-09-05)
+
+
+### Features
+
+* **darwin:** add hidden non-admin automation account ([#2404](https://github.com/dryvist/nix-darwin/issues/2404)) ([bdd76f6](https://github.com/dryvist/nix-darwin/commit/bdd76f6b262980bd5a2104e157cdb3558f7b518e))
+* **darwin:** attach home-manager to the automation account ([#2406](https://github.com/dryvist/nix-darwin/issues/2406)) ([7396f23](https://github.com/dryvist/nix-darwin/commit/7396f234abc8c4a56ae4aef218c71235878b3b5e))
+* **darwin:** grant the automation account a passwordless converge ([#2405](https://github.com/dryvist/nix-darwin/issues/2405)) ([fb209e6](https://github.com/dryvist/nix-darwin/commit/fb209e610797578a07402ec0457f223c8077ba7b))
+
+
+### Bug Fixes
+
+* **darwin:** drop launchd user agents from the automation home ([#2408](https://github.com/dryvist/nix-darwin/issues/2408)) ([8b0ba84](https://github.com/dryvist/nix-darwin/commit/8b0ba843dc841dfb826e765e2ac88d430a0a0c08))
+
 ## [2.54.2](https://github.com/dryvist/nix-darwin/compare/v2.54.1...v2.54.2) (2026-09-05)
 
 
