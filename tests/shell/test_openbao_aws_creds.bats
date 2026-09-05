@@ -127,10 +127,17 @@ SH
   mkdir -p "$HOME/.cache/openbao-aws"
   lock_dir="$HOME/.cache/openbao-aws/tf-proxmox.json.lock"
   mkdir -p "$lock_dir"
-  # A pid guaranteed not to be running: fork a subshell and capture its pid
-  # after it has already exited.
-  ( : ) & dead_pid=$!
-  wait "$dead_pid" || true
+  # A pid the script will find dead. Forking a subshell and reusing its pid is
+  # not safe here: inside the Linux sandbox's PID namespace the numbers are
+  # small and handed out again quickly, and an unreaped child lingers as a
+  # zombie, which `kill -0` still reports as alive. Either way the script sees a
+  # live holder and refuses, which is the opposite of what this covers. Walk
+  # down from the top of the pid space instead and take the first value that is
+  # provably not in use.
+  dead_pid=4194303
+  while kill -0 "$dead_pid" 2>/dev/null; do
+    dead_pid=$((dead_pid - 1))
+  done
   echo "$dead_pid" > "$lock_dir/pid"
 
   write_stub "$STUB_DIR/curl" <<'SH'
@@ -143,6 +150,9 @@ SH
 
   run_creds tf-proxmox
 
+  # Assert the reclaim actually happened before asserting the outcome, so a
+  # regression here says which half broke instead of just "exit 1".
+  [[ "$stderr" == *"held by dead pid ${dead_pid}, reclaiming"* ]]
   [ "$status" -eq 0 ]
   [[ "$output" == *"AccessKeyId"* ]]
 }
