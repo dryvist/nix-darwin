@@ -142,7 +142,15 @@ SH
 
   write_stub "$STUB_DIR/curl" <<'SH'
 case " $* " in
-  *"auth/approle/login"*) echo '{"auth":{"client_token":"tok-123"}}'; exit 0 ;;
+  *"auth/approle/login"*)
+    # The script pipes the login payload in (`jq ... | curl --data-binary @-`),
+    # so a stub that exits without reading leaves jq writing into a closed
+    # pipe. Under pipefail that SIGPIPE fails the whole pipeline and the script
+    # dies before it can mint. Drain stdin, as the argv test's stub does.
+    cat >/dev/null
+    echo '{"auth":{"client_token":"tok-123"}}'
+    exit 0
+    ;;
   *"aws/sts/"*) echo '{"data":{"access_key":"AKIA","secret_key":"sk","security_token":"st"},"lease_duration":3600}'; exit 0 ;;
 esac
 exit 22
