@@ -240,7 +240,12 @@
                   # Host-stamped: see hostUserConfig above.
                   userConfig = hostUserConfig;
                 };
-                users.${userConfig.user.name} = import ./hosts/${label}/home.nix;
+                users = {
+                  ${userConfig.user.name} = import ./hosts/${label}/home.nix;
+                  # The automation account is headless on every host, so it takes
+                  # one shared home rather than a per-host one.
+                  ${userConfig.agentUser.name} = import ./hosts/common/home-agent.nix;
+                };
 
                 # Shared modules from external flakes:
                 # - nix-ai: Claude, Gemini, Copilot, MCP servers, marketplace plugins
