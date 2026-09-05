@@ -13,7 +13,6 @@ let
       cleanup = "zap";
       enableWorkstationApps = false;
       ai = {
-        antigravityCli = false;
         antigravityDesktop = false;
         antigravityIde = false;
         chatgptDesktop = false;
@@ -22,7 +21,6 @@ let
         codex = false;
         codexDesktop = false;
         goose = false;
-        qwenCode = false;
         langgraphCli = false;
       };
     };
@@ -39,11 +37,9 @@ let
       httpsGate = true;
     };
     homebrew.ai = {
-      antigravityCli = true;
       claudeCode = true;
       codex = true;
       goose = true;
-      qwenCode = true;
       langgraphCli = true;
     };
   };
