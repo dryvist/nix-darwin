@@ -241,6 +241,7 @@ Managed by nix-darwin modules but installed externally (not via nixpkgs or Homeb
 | Trackpad | `modules/darwin/trackpad.nix` | Gestures |
 | System UI | `modules/darwin/system-ui.nix` | Menu bar, control center, login window |
 | Security | `modules/darwin/security.nix` | System security policies |
+| Automation Identity | `modules/darwin/agent-identity.nix` | Hidden non-admin local account used by AI harnesses |
 | Energy | `modules/darwin/energy.nix` | Power management (sleep/wake timers) |
 | Apple Silicon Tunables | `modules/darwin/apple-silicon-tunables.nix` | GPU wired limit, pmset perf, App Nap, Spotlight/TM excludes, Metal env |
 | Resource Limits | `modules/darwin/system-limits.nix` | `kern.maxfiles*` / `maxproc` + `launchctl limit maxfiles` (524288) |
