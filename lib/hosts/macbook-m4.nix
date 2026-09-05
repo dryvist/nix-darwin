@@ -19,18 +19,16 @@
     # Every logical role resolves through the validated catalog entry; no
     # physical model id is repeated in deployed host configuration.
     catalog = {
-      qwen3-coder-30b = {
-        class = "resident";
-        roles = [
-          "default"
-          "quickest"
-          "tool-calling"
-          "coding"
-          "large-context"
-          "most-capable"
-          "oss"
-        ];
-      };
+      # Qwen3-Coder-30B-A3B (17 GB, ~3B active). Swap-class and addressable by
+      # its physical id only: every role is pinned in hosts/macbook-m4/home.nix
+      # `roleOverrides` to a model the shared router also serves, and the router
+      # does not serve this one yet, so a role here would resolve locally and
+      # 404 when routed. Until 2026-09-04 this entry claimed `resident` plus
+      # seven roles that the overrides shadowed, so it was never rendered into
+      # llama-swap at all — the catalog said one thing and the host served
+      # another. Now it loads on demand for measurement; once the bench and the
+      # router entry land, the pins move here.
+      qwen3-coder-30b.class = "swap";
       # Small always-loadable 9B (5.2 GB) for trivial local tasks via the
       # Gemini-CLI path and the hourly Obsidian summarizer pipe, which requests
       # this physical id directly. Swap-class, so it loads on demand and routes
@@ -45,17 +43,12 @@
         class = "swap";
         roles = [ "small" ];
       };
-      # Qwen3.8-27B — current small/midsize generation, servable here on demand.
-      #
-      # Deliberately swap-class, NOT resident: promoting it would demote
-      # qwen3-coder-30b, which is a ~3B-active MoE, in favour of a model that
-      # activates all 27B. On this machine — a laptop that is also a cluster peer
-      # under a shared memory cap — that trades the fast local coding path for an
-      # unmeasured one. Swap-class keeps it addressable by its physical id
-      # everywhere while the Studio carries the default-routing switch.
-      #
-      # To promote after the throughput numbers land: move the roles list from
-      # qwen3-coder-30b to the qwen38-27b entry and flip the classes.
+      # Qwen3.8-27B — the model every pinned role resolves to today (see the
+      # `roleOverrides` in hosts/macbook-m4/home.nix), so it is what llama-swap
+      # actually keeps warm, whatever class is written here. Swap-class so the
+      # catalog stays honest about the intent: a dense 27B on a laptop that is
+      # also a cluster peer is the interim brain, not the chosen one. The bench
+      # that decides between it and qwen3-coder-30b runs by physical id.
       qwen38-27b.class = "swap";
     };
 
