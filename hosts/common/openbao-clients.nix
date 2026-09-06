@@ -23,6 +23,10 @@ _:
     # disk.
     openbao-slack-creds.enable = true;
 
+    # The ansible AppRole; signs a throwaway keypair with the SSH client CA
+    # per invocation, so no key, certificate or token is cached on disk.
+    openbao-ssh.enable = true;
+
     # Env injector for interactive use. The llm-gate and maintenance-window
     # modules also enable this; the option merges.
     openbao-run.enable = true;
