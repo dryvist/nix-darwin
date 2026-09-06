@@ -174,42 +174,6 @@ in
       memory = "16g";
       secretsFile = config.sops.templates."github-runner.env".path;
     };
-
-    # --- OpenBao-minted AWS STS credential_process ---
-    # Installs the `openbao-aws-creds` wrapper for the tf-proxmox AWS profile.
-    # Secret-zero (VAULT_ADDR + the terraform AppRole) is supplied ambiently by
-    # `doppler run`, not a local keychain. See modules/darwin/apps/openbao-aws-creds.nix.
-    openbao-aws-creds.enable = true;
-
-    # --- OpenBao-backed GitHub token provider ---
-    # Same wrapper the laptop ships (hosts/macbook-m4): ambient READ tokens,
-    # per-repo WRITE behind a claim/lease, keychain-free. The git credential
-    # wiring lives in hosts/common/home.nix, so enabling this module is all a
-    # host needs for the OpenBao GitHub path.
-    openbao-github-creds.enable = true;
-
-    # --- OpenBao-backed Slack app configuration token provider ---
-    # Installs the `openbao-slack-creds` wrapper. Secret-zero (BAO_ADDR + the
-    # slack-admin AppRole) is ambient via `doppler run`; the token pair lives
-    # in OpenBao KV-v2, never on disk here. See
-    # modules/darwin/apps/openbao-slack-creds.nix.
-    openbao-slack-creds.enable = true;
-
-    # --- OpenBao SSH client-CA certificate provider ---
-    # Installs `openbao-ssh`, which signs a throwaway keypair with the OpenBao
-    # SSH client CA and runs ssh with the resulting certificate. Secret-zero
-    # (BAO_ADDR + the ansible AppRole) is ambient via `doppler run`; no key,
-    # certificate or token is cached on disk. See
-    # modules/darwin/apps/openbao-ssh.nix.
-    openbao-ssh.enable = true;
-
-    # --- OpenBao env injector ---
-    # Installs `openbao-run` for interactive use, so a tool that needs a whole
-    # config document can be run with it injected from OpenBao instead of an
-    # external secret manager. The llm-gate and maintenance-window modules
-    # enable this too; the option merges.
-    openbao-run.enable = true;
-
   };
 
   # nix-prebuild: warm the darwin closure on a schedule so the next

@@ -60,38 +60,6 @@ in
         "/opt/homebrew/share/zsh/site-functions"
       ];
     };
-
-    # --- OpenBao-minted AWS STS credential_process ---
-    # Installs the `openbao-aws-creds` wrapper for the tf-proxmox AWS profile.
-    # Secret-zero (VAULT_ADDR + the terraform AppRole) is supplied ambiently by
-    # `doppler run`, not a local keychain. See modules/darwin/apps/openbao-aws-creds.nix.
-    openbao-aws-creds.enable = true;
-
-    # --- OpenBao-backed GitHub token provider ---
-    # Runtime behavior and operator commands are canonical at
-    # https://docs.dryvist.com/d/runbooks/github-token-openbao-migration/.
-    # This host only installs the provider; it holds no GitHub credential.
-    openbao-github-creds.enable = true;
-
-    # --- OpenBao-backed Slack app configuration token provider ---
-    # Same wrapper the Studio ships (hosts/mac-studio): ambient secret-zero
-    # via `doppler run`, token pair held in OpenBao KV-v2, never on disk.
-    # See modules/darwin/apps/openbao-slack-creds.nix.
-    openbao-slack-creds.enable = true;
-
-    # --- OpenBao SSH client-CA certificate provider ---
-    # Same wrapper the Studio ships (hosts/mac-studio): signs a throwaway
-    # keypair with the OpenBao SSH client CA per invocation and caches nothing.
-    # This host only installs the provider; it holds no SSH credential.
-    openbao-ssh.enable = true;
-
-    # --- OpenBao env injector ---
-    # Installs `openbao-run` for interactive use, so a tool that needs a whole
-    # config document can be run with it injected from OpenBao instead of an
-    # external secret manager. The llm-gate and maintenance-window modules
-    # enable this too; the option merges.
-    openbao-run.enable = true;
-
   };
 
   # ==========================================================================
