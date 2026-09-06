@@ -47,7 +47,16 @@ in
     ./apple-silicon-tunables.nix
     ./system-limits.nix
     ./network-tuning.nix
+    ./credential-residue-scan.nix # Reports loose credential material; never deletes
   ];
+
+  # Enabled here rather than shipped off. A module disabled on every host is
+  # never evaluated, so a green build says nothing about it -- that exact gap
+  # let a module referencing a non-existent package merge and pass CI.
+  local.credentialResidueScan = {
+    enable = true;
+    user = userConfig.user.name;
+  };
 
   # --- Nixpkgs Configuration ---
   nixpkgs.config.allowUnfree = true;
