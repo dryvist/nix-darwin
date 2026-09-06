@@ -77,6 +77,20 @@
 prefix="[openbao-github-creds]"
 die() { echo "$prefix ERROR $*" >&2; exit 1; }
 
+# Refusing to write a credential to a terminal.
+#
+# Every subcommand below exists to be CAPTURED -- `export X="$(...)"` or
+# `eval "$(...)"` -- so in correct use stdout is a pipe. A terminal on stdout
+# means a human or an agent ran it directly to "see if it works", and the value
+# lands in scrollback or a session transcript, which outlive the credential
+# itself. That has happened; it is a usability trap in this tool rather than a
+# user error, so the tool refuses rather than relying on everyone remembering.
+refuse_tty() {
+  [ -t 1 ] || return 0
+  die "refusing to print a credential to a terminal. It would persist in scrollback and session transcripts long after the token itself expires. Capture it instead: export GITHUB_TOKEN=\"\$(openbao-github-creds token read <owner>)\", or eval \"\$(openbao-github-creds claim <owner>/<repo>)\" for a write lease."
+}
+
+
 default_owner="${OPENBAO_GH_DEFAULT_OWNER:-dryvist}"
 
 # Owner -> read permission-set name. Owner strings are public; no secret here.
@@ -289,6 +303,7 @@ bg_read_scope='{"contents":"read","metadata":"read","issues":"read","pull_reques
 bg_write_scope='{"contents":"write","pull_requests":"write","issues":"write","metadata":"read","checks":"read","actions":"read","statuses":"read"}'
 
 cmd_break_glass() {
+  refuse_tty "$@"
   # split_repo assigns owner/repo; scope them here so a break-glass call cannot
   # leave them set for anything that runs afterwards.
   local owner repo
@@ -368,6 +383,7 @@ split_repo() {  # "owner/repo" -> sets $owner $repo; defaults owner if bare
 }
 
 cmd_claim() {
+  refuse_tty "$@"
   local owner repo iid tok
   require_env
   [ -n "${1:-}" ] || die "usage: openbao-github-creds claim <owner>/<repo>"
@@ -418,6 +434,7 @@ cmd_get() {
 }
 
 cmd_token() {
+  refuse_tty "$@"
   require_env
   case "${1:-read}" in
     read)  cmd_token_read "${2:-${default_owner}}" ;;
@@ -430,6 +447,12 @@ cmd_token_read() { mint_read "$1"; echo; }
 
 self_check() {
   local out
+  # The guard must never block the CORRECT use. Every real caller
+  # captures stdout, so stdout is a pipe and refuse_tty must return 0.
+  # A regression here would break git, gh and every wrapper at once,
+  # which is far worse than the leak the guard prevents.
+  refuse_tty >/dev/null 2>&1 \
+    || { echo "self-check FAIL: refuse_tty blocked a non-terminal (captured) call"; return 1; }
   out="$(write_token_body 147266792 nix-darwin)"
   [ "${out}" = '{"installation_id":"147266792","repositories":"nix-darwin"}' ] \
     || { echo "self-check FAIL: write body = ${out}"; return 1; }
