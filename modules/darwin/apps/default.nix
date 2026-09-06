@@ -15,6 +15,7 @@ _:
     ./apple-container-runtime.nix
     ./auto-update-prevention.nix
     ./claude-continuity.nix
+    ./corosync-qnetd-arbiter.nix
     ./cribl-edge.nix
     ./cribl-stream.nix
     ./git-apfs-volume.nix
@@ -24,6 +25,7 @@ _:
     ./openbao-github-creds.nix
     ./openbao-run.nix
     ./openbao-slack-creds.nix
+    ./openbao-ssh.nix
     ./orbstack.nix
     ./raycast.nix
     ./screen-sharing.nix

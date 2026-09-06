@@ -23,6 +23,14 @@ in
 
   # --- Streamline Login Items ---
   programs = {
+    # Standby build for the corosync-qnetd quorum arbiter (see
+    # modules/darwin/apps/corosync-qnetd-arbiter.md): buildable but disabled.
+    # corosync permits exactly one qdevice per cluster, and mac-studio holds
+    # that role as the more available of the two Macs. Flip this to `true`
+    # (and mac-studio's to `false`) only if mac-studio is retired — never run
+    # both at once.
+    corosync-qnetd-arbiter.enable = false;
+
     # Persistently disable unwanted updaters and remove junk plists.
     # Edit these lists to add/remove services — enforced on every rebuild.
     streamline-login = {
@@ -60,32 +68,6 @@ in
         "/opt/homebrew/share/zsh/site-functions"
       ];
     };
-
-    # --- OpenBao-minted AWS STS credential_process ---
-    # Installs the `openbao-aws-creds` wrapper for the tf-proxmox AWS profile.
-    # Secret-zero (VAULT_ADDR + the terraform AppRole) is supplied ambiently by
-    # `doppler run`, not a local keychain. See modules/darwin/apps/openbao-aws-creds.nix.
-    openbao-aws-creds.enable = true;
-
-    # --- OpenBao-backed GitHub token provider ---
-    # Runtime behavior and operator commands are canonical at
-    # https://docs.dryvist.com/d/runbooks/github-token-openbao-migration/.
-    # This host only installs the provider; it holds no GitHub credential.
-    openbao-github-creds.enable = true;
-
-    # --- OpenBao-backed Slack app configuration token provider ---
-    # Same wrapper the Studio ships (hosts/mac-studio): ambient secret-zero
-    # via `doppler run`, token pair held in OpenBao KV-v2, never on disk.
-    # See modules/darwin/apps/openbao-slack-creds.nix.
-    openbao-slack-creds.enable = true;
-
-    # --- OpenBao env injector ---
-    # Installs `openbao-run` for interactive use, so a tool that needs a whole
-    # config document can be run with it injected from OpenBao instead of an
-    # external secret manager. The llm-gate and maintenance-window modules
-    # enable this too; the option merges.
-    openbao-run.enable = true;
-
   };
 
   # ==========================================================================
