@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.57.0](https://github.com/dryvist/nix-darwin/compare/v2.56.0...v2.57.0) (2026-09-06)
+
+
+### Features
+
+* **mac-studio:** serve the coder as a sidecar and move the coding role to it ([#2423](https://github.com/dryvist/nix-darwin/issues/2423)) ([be84829](https://github.com/dryvist/nix-darwin/commit/be848294049571f4d40a09fa27879fa0060d8c6c))
+* **openbao-run:** inject whole KV documents with --secrets ([#2425](https://github.com/dryvist/nix-darwin/issues/2425)) ([310dd86](https://github.com/dryvist/nix-darwin/commit/310dd867d09816ac50adb6e20cd58a800f979d9e))
+
 ## [2.56.0](https://github.com/dryvist/nix-darwin/compare/v2.55.0...v2.56.0) (2026-09-05)
 
 
