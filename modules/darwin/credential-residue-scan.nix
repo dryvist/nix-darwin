@@ -16,7 +16,12 @@
 # Log: ~/Library/Logs/credential-residue-scan.log, plus syslog markers under
 # the tag `credential-residue-scan` for alert rules.
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.local.credentialResidueScan;
@@ -51,7 +56,10 @@ in
 
     directories = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = [ "$HOME/Downloads" "$HOME/Desktop" ];
+      default = [
+        "$HOME/Downloads"
+        "$HOME/Desktop"
+      ];
       description = ''
         Directories to scan. Kept to the places credential material lands by
         accident rather than where it lives on purpose: a scan that walks a
@@ -76,7 +84,12 @@ in
       serviceConfig = {
         Label = "dev.local.credential-residue-scan";
         ProgramArguments = [ "${scanScript}/bin/credential-residue-scan" ];
-        StartCalendarInterval = [{ Hour = cfg.startHour; Minute = 17; }];
+        StartCalendarInterval = [
+          {
+            Hour = cfg.startHour;
+            Minute = 17;
+          }
+        ];
         # Not RunAtLoad: a rebuild is the moment the operator is busiest, and a
         # finding surfaced then competes with whatever the rebuild was for.
         RunAtLoad = false;
