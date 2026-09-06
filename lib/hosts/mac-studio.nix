@@ -53,33 +53,16 @@ in
     # characters on 3 of 3 runs. The kwarg lives in the nix-ai catalog, and it
     # is a prompt string, not a budget — nothing here caps thinking length.
 
-    # RESIDENCY BUDGET — only k_max is set here; the rest derives.
+    # RESIDENCY BUDGET — k_max is the ONLY number set here. memoryHardLimitGb
+    # DERIVES from the host ceiling in hosts/common/residency-budget.nix, so
+    # changing k_max alone re-derives the per-worker budget and nobody redoes
+    # the arithmetic. k_max = 2 is what lets a swap-class load sit BESIDE a
+    # resident instead of evicting it (measured 2026-08-05 at k_max = 1).
     #
-    #   maxResidentWorkers * memoryHardLimitGb <= wired ceiling (100 GiB here,
-    #   from appleSiliconTunables.maxLocalLlmGb in hosts/mac-studio/default.nix)
-    #
-    # 2 x 48 = 96 GiB. The cushion is NOT the 4 GiB that subtraction suggests:
-    # the non-MLX wired baseline measures ~3.4 GiB while a worker decodes, so
-    # the strict worst case is 99.4 against 100 — roughly 0.6 GiB. It holds, and
-    # overshoot spills to pageable memory rather than failing (the limit is a
-    # shed-hint, not a refusal), but do not spend that 4 GiB.
-    #
-    # At the previous k_max = 1 the resident and the 9B shared one exclusive
-    # group, so loading the 9B evicted the 35B and the next request paid a
-    # reload — measured 2026-08-05. k_max = 2 restores the tiered topology so a
-    # small-model load sits BESIDE the resident. It does not pin the 9B
-    # resident: that entry keeps ttl 900 and still idle-unloads.
-    #
-    # k_max is the ONLY number stated here. memoryHardLimitGb is DERIVED from
-    # the host ceiling in hosts/common/residency-budget.nix as
-    # (maxLocalLlmGb - baselineReserve) / maxResidentWorkers, which at 100 GiB
-    # and k=2 gives 48 GiB per worker. Change k_max alone and the per-worker
-    # budget re-derives; nobody redoes the arithmetic, and an explicit override
-    # is still held to the invariant by that module's assertion.
-    #
-    # suppressWiredLimit defaults true, so weights are pageable and overshoot
-    # spills to swap rather than panicking. Rationale and the measurements
-    # behind the reserve: ./mac-studio-residency.md.
+    # The arithmetic, the measured ~0.6 GiB cushion (NOT the 4 GiB subtraction
+    # suggests), and why overshoot spills to swap rather than panicking:
+    # ./mac-studio-residency.md. Do not restate any of it here — this file is
+    # at its size budget, which is how that document came to exist.
     maxResidentWorkers = 2;
 
     # Validated catalog selections (profiles in nix-ai catalog-data.nix).
@@ -142,22 +125,8 @@ in
         class = "swap";
         enable = false;
       };
-      # THE CODING SIDECAR, and only that. Enabled 2026-09-05 as the one
-      # deliberate re-enable the comment above asks for; the `coding` role moves
-      # here from the dense 27B, which held it while being an order of magnitude
-      # slower at exactly the work the role names.
-      #
-      # IT DOES NOT GET `tool-calling`, and that is measured, not cautious:
-      # the agentic grid (mlx-benchmarks RANKINGS.md) puts this model at
-      # 0-67% valid tool calls at concurrency 4 with multi-turn collapse at
-      # round 1, against a clean 20/20 for the 35B-A3B MoE. Single-stream it is
-      # the fastest coder measured here and its calls are well-formed. So it
-      # serves code edits one at a time and never fronts a session's tools.
-      #
-      # Swap, not resident: 17 GB of weights would be a third warm model
-      # against a residency budget sized for two, and a coding request is
-      # bursty. It idle-unloads like every other swap entry and pays a cold
-      # load on the next one.
+      # THE CODING SIDECAR: `coding` only, never `tool-calling`, and swap
+      # rather than resident. All three measured: ./mac-studio-coder.md.
       qwen3-coder-30b = {
         class = "swap";
         roles = [ "coding" ];
