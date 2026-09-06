@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.58.0](https://github.com/dryvist/nix-darwin/compare/v2.57.0...v2.58.0) (2026-09-06)
+
+
+### Features
+
+* **darwin:** add corosync-qnetd quorum arbiter module ([#2430](https://github.com/dryvist/nix-darwin/issues/2430)) ([855e999](https://github.com/dryvist/nix-darwin/commit/855e9996a47dd656e5e48cde0c2c044e7ff7e6d1))
+* **darwin:** add openbao-ssh client-CA certificate provider ([#2429](https://github.com/dryvist/nix-darwin/issues/2429)) ([880e823](https://github.com/dryvist/nix-darwin/commit/880e82324bd022af78726d4155695ebade7445cf))
+* **darwin:** enable the corosync-qnetd arbiter on one host ([#2432](https://github.com/dryvist/nix-darwin/issues/2432)) ([0cf56e2](https://github.com/dryvist/nix-darwin/commit/0cf56e2d717d129d21e73b4da1d7bdc1bc548ba3))
+
 ## [2.57.0](https://github.com/dryvist/nix-darwin/compare/v2.56.0...v2.57.0) (2026-09-06)
 
 
