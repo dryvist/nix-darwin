@@ -102,6 +102,13 @@ in
     # recoverable over VNC.
     screenSharing.enable = true;
 
+    # This is the ONE host running the arbiter (see
+    # modules/darwin/apps/corosync-qnetd-arbiter.md): always-on server class,
+    # so it is the more available of the two Macs eligible for this role.
+    # corosync permits exactly one qdevice per cluster — macbook-m4 carries
+    # the identical, disabled standby build.
+    corosync-qnetd-arbiter.enable = true;
+
     # ========================================================================
     # llm-large Serving Gate (ADR: llm-large-studio-serving)
     # ========================================================================

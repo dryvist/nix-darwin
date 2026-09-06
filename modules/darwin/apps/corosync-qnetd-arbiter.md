@@ -56,6 +56,14 @@ lacks it, Lima falls back to software emulation (TCG) — slower, but qnetd's
 load is trivial, so this is a performance-only concern, not a correctness
 one.
 
+## `socket-vmnet` is vendored, not from nixpkgs
+
+`socket-vmnet` isn't in this repo's pinned nixpkgs release branch yet (only
+in the unstable channel as of 2026-09) — enabling this module against the
+plain `pkgs.socket-vmnet` attribute fails to evaluate. `packages/socket-vmnet.nix`
+vendors the same upstream derivation, same pattern as `packages/cribl-edge.nix`.
+Drop it and switch back to `pkgs.socket-vmnet` once the pin catches up.
+
 ## Power settings: not new — already declarative
 
 The Mac must not sleep its network. This repo already expresses that via

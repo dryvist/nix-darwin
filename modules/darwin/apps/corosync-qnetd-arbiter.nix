@@ -20,6 +20,10 @@
 let
   cfg = config.programs.corosync-qnetd-arbiter;
 
+  # Not yet in this repo's pinned nixpkgs-26.05-darwin branch — see
+  # ../../../packages/socket-vmnet.nix for why it's vendored.
+  socket-vmnet = pkgs.callPackage ../../../packages/socket-vmnet.nix { };
+
   vmnetSocketPath = "${cfg.dataDir}/vmnet.bridged.sock";
   limaHome = "${cfg.dataDir}/lima-home";
   limaInstance = "corosync-qnetd";
@@ -127,7 +131,7 @@ in
         Label = "com.nix-darwin.corosync-qnetd-vmnet";
         ProgramArguments = [ "${vmnetStartScript}/bin/corosync-qnetd-vmnet-start" ];
         EnvironmentVariables = {
-          SOCKET_VMNET_BIN = "${pkgs.socket-vmnet}/bin/socket_vmnet";
+          SOCKET_VMNET_BIN = "${socket-vmnet}/bin/socket_vmnet";
           VMNET_INTERFACE = cfg.lanInterface;
           VMNET_SOCKET_PATH = vmnetSocketPath;
         };
