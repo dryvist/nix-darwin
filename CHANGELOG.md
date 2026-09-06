@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.59.0](https://github.com/dryvist/nix-darwin/compare/v2.58.0...v2.59.0) (2026-09-06)
+
+
+### Features
+
+* **security:** daily scan for credential material left in user directories ([#2437](https://github.com/dryvist/nix-darwin/issues/2437)) ([0259f40](https://github.com/dryvist/nix-darwin/commit/0259f40f6bcd683fb83d96ee9852469c06c6b070))
+
+
+### Bug Fixes
+
+* **openbao-github-creds:** refuse to write a credential to a terminal ([#2436](https://github.com/dryvist/nix-darwin/issues/2436)) ([e4dab36](https://github.com/dryvist/nix-darwin/commit/e4dab36c501fb8cb059c9a5755ef33d51d0a4c60))
+
 ## [2.58.0](https://github.com/dryvist/nix-darwin/compare/v2.57.0...v2.58.0) (2026-09-06)
 
 
