@@ -25,6 +25,8 @@ in
     # Cribl Edge/Stream log shipping (self-gated on `hostConfig ? mlx`).
     ./cribl.nix
     ./cribl-stream-local.nix
+    # Shared OpenBao-backed credential/config wrapper family.
+    ./openbao-clients.nix
   ];
 
   # Network hostname from the per-host registry.
