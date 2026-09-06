@@ -23,6 +23,14 @@ in
 
   # --- Streamline Login Items ---
   programs = {
+    # Standby build for the corosync-qnetd quorum arbiter (see
+    # modules/darwin/apps/corosync-qnetd-arbiter.md): buildable but disabled.
+    # corosync permits exactly one qdevice per cluster, and mac-studio holds
+    # that role as the more available of the two Macs. Flip this to `true`
+    # (and mac-studio's to `false`) only if mac-studio is retired — never run
+    # both at once.
+    corosync-qnetd-arbiter.enable = false;
+
     # Persistently disable unwanted updaters and remove junk plists.
     # Edit these lists to add/remove services — enforced on every rebuild.
     streamline-login = {
