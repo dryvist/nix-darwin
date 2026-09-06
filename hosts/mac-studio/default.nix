@@ -195,6 +195,13 @@ in
     # modules/darwin/apps/openbao-slack-creds.nix.
     openbao-slack-creds.enable = true;
 
+    # --- OpenBao env injector ---
+    # Installs `openbao-run` for interactive use, so a tool that needs a whole
+    # config document can be run with it injected from OpenBao instead of an
+    # external secret manager. The llm-gate and maintenance-window modules
+    # enable this too; the option merges.
+    openbao-run.enable = true;
+
   };
 
   # nix-prebuild: warm the darwin closure on a schedule so the next
