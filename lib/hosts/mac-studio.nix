@@ -102,7 +102,6 @@ in
           "tool-calling"
           "most-capable"
           "oss"
-          "coding"
         ];
       };
       # Routine tier, and the 2026-07-27 throughput winner (115.2 tok/s
@@ -143,9 +142,25 @@ in
         class = "swap";
         enable = false;
       };
+      # THE CODING SIDECAR, and only that. Enabled 2026-09-05 as the one
+      # deliberate re-enable the comment above asks for; the `coding` role moves
+      # here from the dense 27B, which held it while being an order of magnitude
+      # slower at exactly the work the role names.
+      #
+      # IT DOES NOT GET `tool-calling`, and that is measured, not cautious:
+      # the agentic grid (mlx-benchmarks RANKINGS.md) puts this model at
+      # 0-67% valid tool calls at concurrency 4 with multi-turn collapse at
+      # round 1, against a clean 20/20 for the 35B-A3B MoE. Single-stream it is
+      # the fastest coder measured here and its calls are well-formed. So it
+      # serves code edits one at a time and never fronts a session's tools.
+      #
+      # Swap, not resident: 17 GB of weights would be a third warm model
+      # against a residency budget sized for two, and a coding request is
+      # bursty. It idle-unloads like every other swap entry and pays a cold
+      # load on the next one.
       qwen3-coder-30b = {
         class = "swap";
-        enable = false;
+        roles = [ "coding" ];
       };
       qwen35-9b-optiq = {
         class = "swap";
