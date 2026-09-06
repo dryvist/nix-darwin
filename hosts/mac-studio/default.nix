@@ -195,6 +195,14 @@ in
     # modules/darwin/apps/openbao-slack-creds.nix.
     openbao-slack-creds.enable = true;
 
+    # --- OpenBao SSH client-CA certificate provider ---
+    # Installs `openbao-ssh`, which signs a throwaway keypair with the OpenBao
+    # SSH client CA and runs ssh with the resulting certificate. Secret-zero
+    # (BAO_ADDR + the ansible AppRole) is ambient via `doppler run`; no key,
+    # certificate or token is cached on disk. See
+    # modules/darwin/apps/openbao-ssh.nix.
+    openbao-ssh.enable = true;
+
     # --- OpenBao env injector ---
     # Installs `openbao-run` for interactive use, so a tool that needs a whole
     # config document can be run with it injected from OpenBao instead of an

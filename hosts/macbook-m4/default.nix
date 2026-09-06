@@ -79,6 +79,12 @@ in
     # See modules/darwin/apps/openbao-slack-creds.nix.
     openbao-slack-creds.enable = true;
 
+    # --- OpenBao SSH client-CA certificate provider ---
+    # Same wrapper the Studio ships (hosts/mac-studio): signs a throwaway
+    # keypair with the OpenBao SSH client CA per invocation and caches nothing.
+    # This host only installs the provider; it holds no SSH credential.
+    openbao-ssh.enable = true;
+
     # --- OpenBao env injector ---
     # Installs `openbao-run` for interactive use, so a tool that needs a whole
     # config document can be run with it injected from OpenBao instead of an
