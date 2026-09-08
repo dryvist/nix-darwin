@@ -382,20 +382,31 @@ split_repo() {  # "owner/repo" -> sets $owner $repo; defaults owner if bare
   [ -n "${repo}" ] || die "expected <owner>/<repo>, got '$1'"
 }
 
+# Shell for the caller to eval: the claim is recorded and released first so a
+# failed mint still frees the lease, and the token is minted by the caller's own
+# command substitution rather than by this process. No credential passes through
+# this script's stdout, so output that reaches a transcript instead of an eval
+# carries nothing to leak. refuse_tty cannot cover that case: a pipe into a
+# transcript is indistinguishable from a pipe into eval.
+claim_exports() {
+  printf 'export OPENBAO_GH_CLAIM=%q;\n' "$1"
+  printf 'trap %q EXIT;\n' "openbao-github-creds release >/dev/null 2>&1 || true"
+  # The substitution must reach the caller unexpanded — it is what moves the
+  # mint out of this process — so the single quotes are deliberate.
+  # shellcheck disable=SC2016
+  printf 'export GITHUB_TOKEN="$(openbao-github-creds token write %q)";\n' "$1"
+}
+
 cmd_claim() {
   refuse_tty "$@"
-  local owner repo iid tok
+  local owner repo iid
   require_env
   [ -n "${1:-}" ] || die "usage: openbao-github-creds claim <owner>/<repo>"
   split_repo "$1"
   iid="$(installation_id_for "${owner}")"
   [ -n "${iid}" ] || die "no installation id for owner '${owner}'"
   lock_acquire "${iid}" "${repo}"
-  tok="$(mint_write "${owner}" "${repo}")"
-  # Emit shell to eval: token in the env, claim recorded, auto-release on exit.
-  printf 'export GITHUB_TOKEN=%q;\n' "${tok}"
-  printf 'export OPENBAO_GH_CLAIM=%q;\n' "${owner}/${repo}"
-  printf 'trap %q EXIT;\n' "openbao-github-creds release >/dev/null 2>&1 || true"
+  claim_exports "${owner}/${repo}"
   echo "$prefix claimed write on ${owner}/${repo} (GITHUB_TOKEN set; auto-releases on shell exit)" >&2
 }
 
@@ -558,6 +569,10 @@ self_check_lock_reacquire() {
   [ "${code}" = "200" ] \
     || { echo "self-check FAIL: expired lease not re-acquirable (cas=${ver} -> HTTP ${code})"; return 1; }
 }
+
+# Sourcing this file loads its functions without dispatching, so a unit test
+# can exercise one in isolation. `return` only succeeds in a sourced shell.
+(return 0 2>/dev/null) && return 0
 
 case "${1:-}" in
   get)          cmd_get ;;

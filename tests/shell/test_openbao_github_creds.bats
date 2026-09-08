@@ -130,3 +130,23 @@ SH
   [ -f "$BATS_TEST_TMPDIR/curl-stdin" ]
   grep -q "secret-abc-DO-NOT-LEAK" "$BATS_TEST_TMPDIR/curl-stdin"
 }
+
+# claim's stdout is eval'd by the caller, and a pipe into eval is
+# indistinguishable from a pipe into an agent transcript — refuse_tty only sees
+# terminals, so it cannot protect this path. The emitted shell must therefore
+# carry no credential of its own: it mints inside the caller's substitution.
+@test "claim emits shell that mints in the caller, never a token value" {
+  run --separate-stderr bash -euo pipefail -c \
+    'source "$1"; claim_exports dryvist/some-repo' _ "$SCRIPTS/openbao-github-creds.sh"
+
+  [ "$status" -eq 0 ]
+  # A minted installation token would appear here as a ghs_ value.
+  ! grep -q 'ghs_' <<<"$output"
+  grep -q 'export GITHUB_TOKEN="\$(openbao-github-creds token write dryvist/some-repo)"' <<<"$output"
+  # The lease is recorded and the release trap armed BEFORE the mint, so a mint
+  # that fails still frees the lease.
+  [ "$(grep -n 'OPENBAO_GH_CLAIM' <<<"$output" | cut -d: -f1)" -lt \
+    "$(grep -n 'GITHUB_TOKEN' <<<"$output" | cut -d: -f1)" ]
+  [ "$(grep -n 'trap' <<<"$output" | cut -d: -f1)" -lt \
+    "$(grep -n 'GITHUB_TOKEN' <<<"$output" | cut -d: -f1)" ]
+}
