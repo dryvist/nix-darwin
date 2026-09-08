@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.59.1](https://github.com/dryvist/nix-darwin/compare/v2.59.0...v2.59.1) (2026-09-08)
+
+
+### Bug Fixes
+
+* **openbao-github-creds:** mint the claim token in the caller, not in stdout ([#2442](https://github.com/dryvist/nix-darwin/issues/2442)) ([81737ee](https://github.com/dryvist/nix-darwin/commit/81737ee6a617ca4f9de5200756658609002eed98))
+
 ## [2.59.0](https://github.com/dryvist/nix-darwin/compare/v2.58.0...v2.59.0) (2026-09-06)
 
 
