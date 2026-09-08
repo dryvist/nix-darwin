@@ -24,9 +24,12 @@ in
         ".crbl" = "public.tar-archive";
       };
       description = ''
-        Custom file extension to UTI (Uniform Type Identifier) mappings.
-        Extensions should start with a dot (e.g., ".spl").
-        UTI values determine how macOS handles the file type.
+        Custom file extension mappings, keyed by extension (e.g., ".spl").
+        Each value is passed straight to duti, which accepts either a UTI
+        (Uniform Type Identifier) or an app's bundle identifier — a UTI
+        determines how macOS handles the file type generally, while a
+        bundle id binds the extension straight to one app (useful when no
+        UTI exists for the file type at all).
       '';
       example = {
         ".spl" = "public.tar-archive";
