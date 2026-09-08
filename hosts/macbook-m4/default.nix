@@ -17,12 +17,33 @@ let
   # User identity (homeDir) for the host-unique config below. Host identity
   # (hostName, registry params) is consumed in ../common.
   userConfig = import ../../lib/user-config.nix;
+
+  # Cursor ships under a TodDesktop-generated bundle id, not a com.cursor.*
+  # one — verified against the installed app:
+  #   /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" \
+  #     "$HOME/Applications/Home Manager Apps/Cursor.app/Contents/Info.plist"
+  cursorBundleId = "com.todesktop.230313mzl4w4u92";
 in
 {
   imports = [ ../common/default.nix ];
 
   # --- Streamline Login Items ---
   programs = {
+    # Workstation-only .d2 (D2 diagram language) file association: macOS has
+    # no built-in UTI for it, so Finder refuses to open one at all ("There is
+    # no application set to open the document"). Re-specifies ../common's
+    # .spl/.crbl defaults explicitly alongside .d2 rather than relying on
+    # Nix's attrsOf default-vs-definition merge (any host-level definition of
+    # this option replaces the module's built-in default outright, it does
+    # not merge with it). mac-studio (server) is untouched.
+    file-extensions.customMappings = {
+      ".spl" = "public.tar-archive";
+      ".crbl" = "public.tar-archive";
+      # Not a UTI — duti (and this module's generic `<id> <ext> all`
+      # write-through) accepts a bundle id here just as well. Binds .d2
+      # straight to Cursor since no macOS UTI exists for D2 diagram files.
+      ".d2" = cursorBundleId;
+    };
     # Standby build for the corosync-qnetd quorum arbiter (see
     # modules/darwin/apps/corosync-qnetd-arbiter.md): buildable but disabled.
     # corosync permits exactly one qdevice per cluster, and mac-studio holds
