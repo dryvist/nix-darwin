@@ -39,7 +39,25 @@ in
     # serves but the router does not, so a local caller worked and every routed
     # delegation 404'd for the same role — an asymmetry nothing reported,
     # because a registry id had never been compared against what any endpoint
-    # actually serves. `ai-stack-drift-check` now does that comparison.
+    # actually serves.
+    #
+    # THE PINS BELOW ARE THE GUARD. Naming only models that both endpoints
+    # serve is what prevents the asymmetry. There is no separate checker, and
+    # this comment previously claimed one, ai-stack-drift-check, that was never
+    # written. Corrected 2026-09-09: a comment asserting a guard exists is worse
+    # than no guard, because it stops anyone from looking for one.
+    #
+    # What actually reports drift here, none of it bespoke:
+    #   - Configuration drift is reported by the router's own Ansible converge.
+    #     An idempotent run that reports changes is the drift signal.
+    #   - A deployment that stopped answering is reported by the router's own
+    #     health endpoint. It reports nothing for a model-group alias such as
+    #     tool-calling, because an alias is not a deployment; ask about the
+    #     physical model id instead.
+    #   - Local single-slot deployments opt out of active health probing on
+    #     purpose and recover passively instead. Probing them churns VRAM and
+    #     once hung the GPU host, so an empty health result for those is
+    #     intended rather than a gap.
     #
     # Both endpoints serve these two, so a role pinned here resolves either way.
     # `small` keeps the 9B: it is a size class, and a consumer that asks for
