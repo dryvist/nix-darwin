@@ -39,7 +39,7 @@ in
     # serves but the router does not, so a local caller worked and every routed
     # delegation 404'd for the same role — an asymmetry nothing reported,
     # because a registry id had never been compared against what any endpoint
-    # actually serves. `ai-stack-drift-check` now does that comparison.
+    # actually serves.
     #
     # Both endpoints serve these two, so a role pinned here resolves either way.
     # `small` keeps the 9B: it is a size class, and a consumer that asks for
