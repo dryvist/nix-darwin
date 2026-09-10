@@ -324,21 +324,32 @@
           # second copy. Placed here, not in lib/checks.nix, because that call
           # receives `darwinConfigurations = { }` — a check there would never
           # evaluate a host and would pass vacuously.
-          aarch64-darwin.cli-ownership = import ./lib/checks/cli-ownership.nix {
-            pkgs = nixpkgs.legacyPackages.aarch64-darwin;
-            inherit configs;
-          };
+          aarch64-darwin = {
+            cli-ownership = import ./lib/checks/cli-ownership.nix {
+              pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+              inherit configs;
+            };
 
-          aarch64-darwin.pf-anchor-syntax =
-            let
-              darwinPkgs = nixpkgs.legacyPackages.aarch64-darwin;
-              anchorText = configs.${primaryHost.hostName}.config.environment.etc."pf.anchors/nix-hardening".text;
-              anchorFile = darwinPkgs.writeText "nix-hardening-anchor.conf" anchorText;
-            in
-            darwinPkgs.runCommand "check-pf-anchor-syntax" { } ''
-              /sbin/pfctl -n -f ${anchorFile}
-              touch $out
-            '';
+            # Token Meter is deliberately universal: every registered Mac's
+            # primary user opts in to the service and native menu-bar companion.
+            # The check evaluates real host configs, where Home Manager option
+            # merging is observable, rather than duplicating the source policy.
+            token-meter = import ./lib/checks/token-meter.nix {
+              pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+              inherit configs userConfig;
+            };
+
+            pf-anchor-syntax =
+              let
+                darwinPkgs = nixpkgs.legacyPackages.aarch64-darwin;
+                anchorText = configs.${primaryHost.hostName}.config.environment.etc."pf.anchors/nix-hardening".text;
+                anchorFile = darwinPkgs.writeText "nix-hardening-anchor.conf" anchorText;
+              in
+              darwinPkgs.runCommand "check-pf-anchor-syntax" { } ''
+                /sbin/pfctl -n -f ${anchorFile}
+                touch $out
+              '';
+          };
         };
 
       # Development shell for CI and local nix tooling

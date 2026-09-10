@@ -142,21 +142,6 @@ in
       routerEntryModel = "hermes-default";
     };
 
-    # Token Meter is deliberately OFF on the laptop, overriding the tier.
-    #
-    # It re-parses the entire session corpus per question, and this machine's
-    # corpus is far past what that assumes: 10,586 files / 4.2 GB in
-    # .claude/projects alone, even after a 60-day prune removed 3.4 GB. Measured
-    # 2026-08-06: one `capabilities` MCP call took 336 s, `usage` did not finish
-    # in 600 s, and the server process held ~2.4 cores continuously (640 min CPU
-    # in ~4.5 h). On a laptop that is a battery and thermal cost with nothing to
-    # show for it, since no MCP client waits minutes for a tool result.
-    #
-    # The studio runs the one instance instead — plugged in, headless, and
-    # already fronted by the HTTPS gate. Re-enable here only if upstream stops
-    # rescanning the whole corpus per call.
-    token-meter.enable = false;
-
     # Hourly push of AI session history to the mac-studio (nix-ai module).
     # Laptop-side only: the studio is the durable copy, so the direction is
     # one-way and the studio needs no access back to this machine.
