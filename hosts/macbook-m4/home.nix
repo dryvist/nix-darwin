@@ -44,6 +44,15 @@ in
     # Both endpoints serve these two, so a role pinned here resolves either way.
     # `small` keeps the 9B: it is a size class, and a consumer that asks for
     # small must not be handed a 27B.
+    #
+    # HOST-QUALIFIED ON PURPOSE: `coding`, `quickest` and `large-context`
+    # resolve differently here than on the headless host. Decision, not drift.
+    # Measured 2026-09-09: seven of eight role NAMES are unroutable at the
+    # shared router (400), while the local server resolves all eight from this
+    # same map — so these pins prefer a model BOTH endpoints serve over the
+    # one best in isolation. Do not reconcile them until the router serves the
+    # role names; cross-host comparison is unchecked and belongs in this
+    # repo's flake checks, the only ones that see every host at once.
     roleOverrides = {
       default = "mlx-community/Qwen3.8-27B-4bit";
       quickest = "mlx-community/Qwen3.5-9B-MLX-4bit";
