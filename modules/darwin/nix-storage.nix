@@ -34,13 +34,15 @@ in
       # Allow the primary user to use flake-level nixConfig (extra-substituters, etc.)
       # Security: equivalent to root for Nix store operations — appropriate for
       # single-user macOS workstation where the primary user already has sudo
-      # The automation account is listed for the unprivileged
+      # The converging automation account is listed for the unprivileged
       # `darwin-rebuild build` it runs before its own switch; under sudo it is
-      # already root and already trusted.
+      # already root and already trusted. Named explicitly, never derived from
+      # `agentUsers` — trusted-user is root-equivalent, and the other
+      # identities exist precisely so a lower-trust agent never holds it.
       trusted-users = [
         "root"
         userConfig.user.name
-        userConfig.agentUser.name
+        userConfig.agentUsers.claude.name
       ];
 
       # devenv binary cache — used by nix-ai devShells, avoids building from source

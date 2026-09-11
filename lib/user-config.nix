@@ -18,14 +18,6 @@ let
   # is not available
   homeDir = "/Users/${username}";
 
-  # Automation identity. A second macOS account that AI harnesses run under,
-  # so a converge is scoped to that account rather than to the operator's.
-  # `checkout` is the flake checkout path relative to a home directory — the
-  # same layout the operator's clone uses — so a flake reference composes as
-  # "${homeDir}/${checkout}", never as a committed absolute path.
-  agentUsername = "claude";
-  agentCheckout = "git/public/nix/nix-darwin";
-
   # GitHub handle, reused by the nix-ai agent profile below.
   fullName = "JacobPEvans";
 
@@ -79,16 +71,41 @@ in
   };
 
   # ==========================================================================
-  # Automation Identity
+  # Automation Identities
   # ==========================================================================
-  # Consumed by modules/darwin/agent-identity.nix, which creates the account.
-  # uid 505 is the first free uid on these hosts; gid 20 is `staff`, which is
-  # what lets this account read the operator's group-readable files.
-  agentUser = {
-    name = agentUsername;
-    uid = 505;
-    homeDir = "/Users/${agentUsername}";
-    checkout = agentCheckout;
+  # Dedicated macOS accounts that AI harnesses run under, one per trust tier,
+  # so nothing an agent does runs as the operator. Consumed by
+  # modules/darwin/agent-identity.nix (accounts, the `agent` group, sudoers)
+  # and flake.nix (one home-manager home per identity).
+  #
+  # `converge` is the capability gate: only an identity with `converge = true`
+  # gets the NOPASSWD `darwin-rebuild switch` rule, and only that identity is
+  # listed in Nix `trusted-users` (modules/darwin/nix-storage.nix). Both are
+  # root-equivalent — never default them on for a new identity. `checkout` is
+  # the flake path relative to the identity's home, so the sudoers flake
+  # reference composes as "${homeDir}/${checkout}" and no absolute path or
+  # host name is ever committed; an identity without `converge` has no use for
+  # it and omits it.
+  #
+  # uids climb from 505 (first free on these hosts). Every identity keeps
+  # `staff` (gid 20) as its primary group — that is what lets it read the
+  # operator's group-readable files — and additionally joins `agent`.
+  agentUsers = {
+    claude = {
+      name = "claude";
+      uid = 505;
+      homeDir = "/Users/claude";
+      checkout = "git/public/nix/nix-darwin";
+      converge = true;
+    };
+    # Runs opencode and cursor CLI: executes model-generated code from a
+    # lower-trust tool, so no converge grant and no trusted-user status.
+    open-llm = {
+      name = "open-llm";
+      uid = 506;
+      homeDir = "/Users/open-llm";
+      converge = false;
+    };
   };
 
   # ==========================================================================
