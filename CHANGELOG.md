@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.60.0](https://github.com/dryvist/nix-darwin/compare/v2.59.1...v2.60.0) (2026-09-11)
+
+
+### Features
+
+* **token-meter:** enable on every Mac ([#2456](https://github.com/dryvist/nix-darwin/issues/2456)) ([bca6f18](https://github.com/dryvist/nix-darwin/commit/bca6f183214c06802b63905f5968337821f123b3))
+
+
+### Bug Fixes
+
+* **macbook-m4:** open .d2 files in Cursor via duti binding ([ca75215](https://github.com/dryvist/nix-darwin/commit/ca752156e02e773c9183e838c5238ddbd6bd88fe))
+
 ## [2.59.1](https://github.com/dryvist/nix-darwin/compare/v2.59.0...v2.59.1) (2026-09-08)
 
 
