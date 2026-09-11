@@ -63,7 +63,8 @@ in
     # Keep the account off the login window; sessions start with `sudo -u`.
     isHidden = true;
 
-    description = "Automation identity";
+    # macOS rejects a second account with the same full name, so it must differ per identity.
+    description = "Automation identity (${name})";
 
     # programs.zsh.enable is already true (modules/darwin/common.nix).
     shell = pkgs.zsh;

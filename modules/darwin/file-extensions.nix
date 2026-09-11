@@ -60,11 +60,11 @@ in
       LS_ERROR_LOG=$(mktemp)
       trap 'rm -f "$DUTI_CONFIG" "$LS_ERROR_LOG"' EXIT
 
-      ${lib.concatStringsSep "\n" (
-        lib.mapAttrsToList (ext: uti: ''
-          echo "${uti} ${ext} all" >> "$DUTI_CONFIG"
-        '') cfg.customMappings
-      )}
+      printf '%s\n' ${
+        lib.concatMapStringsSep " " lib.escapeShellArg (
+          lib.mapAttrsToList (ext: uti: "${uti} ${ext} all") cfg.customMappings
+        )
+      } > "$DUTI_CONFIG"
 
       if ${pkgs.duti}/bin/duti "$DUTI_CONFIG" 2>/dev/null; then
         echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Successfully registered ${toString (lib.length (lib.attrNames cfg.customMappings))} file extension(s)"
