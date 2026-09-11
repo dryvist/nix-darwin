@@ -180,6 +180,15 @@ in
     # (no MLX server) rather than crashing on a missing attr.
     mlx = lib.mkIf (hostConfig ? mlx) ({ enable = true; } // hostConfig.mlx);
 
+    # Token Meter is a shared primary-user service: every registered Mac
+    # reports its local coding-agent use, including server-class hosts. nix-ai
+    # owns the service lifecycle; this consumer only opts in to it and its
+    # native menu-bar companion.
+    token-meter = {
+      disabled = false;
+      menuBar = true;
+    };
+
     # macOS-specific zsh overrides (keychain API keys, GitHub tiered-token
     # switching, custom launchers) live in ./zsh-macos.nix — split out for the
     # per-file byte cap. They merge into programs.zsh via the module system.

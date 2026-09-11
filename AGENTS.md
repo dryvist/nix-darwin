@@ -109,7 +109,6 @@ and on-demand patterns.
 
 ## PR Rules
 
-- Never auto-merge without explicit user approval
 - 50-comment limit per PR
 - Batch commits locally, push once
 

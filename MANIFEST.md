@@ -121,7 +121,9 @@ Source: nix-home (`home.packages` via flake input)
 
 ### Visualization & Diagramming
 
-On-demand via `nix run nixpkgs#d2` and `nix run nixpkgs#mermaid-cli` — not installed globally.
+`mermaid-cli` stays on-demand via `nix run nixpkgs#mermaid-cli` — not installed globally.
+`d2` is installed on macbook-m4 only (see `hosts/macbook-m4/home.nix`), so it's on PATH for
+the Cursor D2 extension's live preview; other hosts still use `nix run nixpkgs#d2` on-demand.
 
 ### Python
 

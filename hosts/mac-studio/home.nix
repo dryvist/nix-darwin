@@ -5,17 +5,13 @@
 # Headless server: no host-specific GUI app list — `home-profile.preset = server`
 # (from the registry class) already drops the GUI/desktop features.
 
-{
-  hostConfig,
-  lib,
-  ...
-}:
+{ ... }:
 
 {
   imports = [ ../common/home.nix ];
 
-  # Token Meter (nix-ai home-manager module) — this host only supplies
-  # parameters.
+  # Token Meter's universal service and menu-bar opt-in live in
+  # ../common/home.nix. This server alone exposes the optional HTTPS gate.
   #
   # Its HTTPS gate listens on all interfaces, matching llm-gate, with the
   # firewall as the boundary.
@@ -26,9 +22,7 @@
   # gate is on — that check is left intact and satisfied with the
   # all-interfaces address, so an accidental empty value still fails loudly.
   programs.token-meter = {
-    enable = lib.mkDefault hostConfig.aiTooling.tokenMeter.enable;
-    menuBar = lib.mkDefault hostConfig.aiTooling.tokenMeter.menuBar;
-    httpsGate = lib.mkDefault hostConfig.aiTooling.tokenMeter.httpsGate;
+    httpsGate = true;
     bindAddress = "0.0.0.0";
   };
 
