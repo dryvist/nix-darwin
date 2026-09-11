@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.61.0](https://github.com/dryvist/nix-darwin/compare/v2.60.0...v2.61.0) (2026-09-11)
+
+
+### Features
+
+* **darwin:** add open-llm automation identity and the agent group ([#2461](https://github.com/dryvist/nix-darwin/issues/2461)) ([1960a5d](https://github.com/dryvist/nix-darwin/commit/1960a5dd7f1534b177265b9de993a4fbb8185553))
+
+
+### Bug Fixes
+
+* **darwin:** write the duti mapping file in one printf ([#2462](https://github.com/dryvist/nix-darwin/issues/2462)) ([fc469dc](https://github.com/dryvist/nix-darwin/commit/fc469dce39f66f46fe684bd856af71d606b5f6ff))
+
 ## [2.60.0](https://github.com/dryvist/nix-darwin/compare/v2.59.1...v2.60.0) (2026-09-11)
 
 
