@@ -47,32 +47,34 @@ let
   flakeRef = agent: "${agent.homeDir}/${agent.checkout}#${hostConfig.hostName}";
 in
 {
-  users.knownUsers = lib.attrNames agentUsers;
-  users.knownGroups = [ "agent" ];
+  users = {
+    knownUsers = lib.attrNames agentUsers;
+    knownGroups = [ "agent" ];
 
-  users.users = lib.mapAttrs (name: agent: {
-    inherit name;
-    inherit (agent) uid;
+    users = lib.mapAttrs (name: agent: {
+      inherit name;
+      inherit (agent) uid;
 
-    # staff — the operator's primary group, and the whole of the read story.
-    gid = 20;
+      # staff — the operator's primary group, and the whole of the read story.
+      gid = 20;
 
-    home = agent.homeDir;
-    createHome = true;
+      home = agent.homeDir;
+      createHome = true;
 
-    # Keep the account off the login window; sessions start with `sudo -u`.
-    isHidden = true;
+      # Keep the account off the login window; sessions start with `sudo -u`.
+      isHidden = true;
 
-    # macOS rejects a second account with the same full name, so it must differ per identity.
-    description = "Automation identity (${name})";
+      # macOS rejects a second account with the same full name, so it must differ per identity.
+      description = "Automation identity (${name})";
 
-    # programs.zsh.enable is already true (modules/darwin/common.nix).
-    shell = pkgs.zsh;
-  }) agentUsers;
+      # programs.zsh.enable is already true (modules/darwin/common.nix).
+      shell = pkgs.zsh;
+    }) agentUsers;
 
-  users.groups.agent = {
-    gid = 510;
-    members = lib.attrNames agentUsers;
+    groups.agent = {
+      gid = 510;
+      members = lib.attrNames agentUsers;
+    };
   };
 
   # ==========================================================================
