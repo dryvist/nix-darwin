@@ -171,6 +171,14 @@ in
     # (modules/default.nix). Re-enable in nix-ai once the dep bound is relaxed.
     cecli.enable = lib.mkForce false;
 
+    # cursor and opencode moved to the dedicated `open-llm` identity
+    # (hosts/common/home-open-llm.nix), so a lower-trust coding agent never
+    # runs as the operator. mkForce overrides nix-ai's unconditional enable
+    # (modules/default.nix). Run them with `sudo -u open-llm -i`. The GUI
+    # Cursor IDE (code-cursor, in the per-host home) is unaffected.
+    cursor.enable = lib.mkForce false;
+    opencode.enable = lib.mkForce false;
+
     # Local MLX inference server (mlx_lm + llama-swap proxy on :11434).
     # Brings the MLX model-server LaunchAgent under Nix management — without
     # this, the registry at services.aiStack.models is materialized to nothing
