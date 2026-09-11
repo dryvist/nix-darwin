@@ -1,43 +1,63 @@
-# Automation Identity — the `claude` macOS account
+# Automation Identities — the dedicated macOS accounts AI harnesses run under
 #
-# Creates the second local account that AI harnesses run under. The account is
-# hidden from the login window, sits in `staff` (gid 20) and NOT in `admin`, so
-# it holds no `(ALL) ALL` sudo grant and reads the operator's files only where
-# they are group-readable. Hiding a path from it is `chmod 700 <path>` by the
-# operator — nothing to declare here.
+# Creates one hidden local account per entry in lib/user-config.nix's
+# `agentUsers`, plus the `agent` group they all belong to. Each account sits in
+# `staff` (gid 20) and NOT in `admin`, so it holds no `(ALL) ALL` sudo grant
+# and reads the operator's files only where they are group-readable. Hiding a
+# path from them is `chmod 700 <path>` by the operator — nothing to declare
+# here.
 #
-# ⚠️ DELETION FOOTGUN: `users.knownUsers` is the list of accounts nix-darwin
-# manages. Removing this name from it does not "stop managing" the account —
-# the next activation runs `sysadminctl -deleteUser`, which deletes the account
-# and, with this repo's home-manager `backupCommand`, its home directory. To
-# stop granting the account capabilities while keeping it, remove those grants
-# and leave this module in place.
+# `agent` (gid 510) is additive: `staff` stays the primary group on every
+# identity, and `agent` is the group to scope a future grant to when it should
+# reach "the automation identities" and nothing else. `staff` is macOS's
+# generic every-local-user group, so a grant against it silently extends to
+# any account created later on the machine; a grant against `agent` does not.
+#
+# ⚠️ DELETION FOOTGUN: `users.knownUsers` and `users.knownGroups` are the
+# lists of accounts and groups nix-darwin manages. Removing a name from either
+# does not "stop managing" it — the next activation runs `sysadminctl
+# -deleteUser` (which, with this repo's home-manager `backupCommand`, also
+# deletes the home directory) or `dscl . -delete /Groups/<g>` (any gid > 501).
+# To stop granting an identity capabilities while keeping it, flip its
+# `converge` flag off and leave it in `agentUsers`.
 #
 # There is no `users.users.<name>.extraGroups` option in nix-darwin.
-# Supplementary group membership is declared as `users.groups.<g>.members`.
+# Supplementary group membership is declared as `users.groups.<g>.members`,
+# and a group is only created if it is also listed in `users.knownGroups`.
 
-{ hostConfig, pkgs, ... }:
+{
+  hostConfig,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   userConfig = import ../../lib/user-config.nix;
-  inherit (userConfig) agentUser;
+  inherit (userConfig) agentUsers;
 
-  # The flake reference the grant below is pinned to. Composed from the
-  # account's home, its checkout path and the host registry, so the committed
-  # text carries no absolute path and no host name, and each host generates
-  # the rule for itself.
-  flakeRef = "${agentUser.homeDir}/${agentUser.checkout}#${hostConfig.hostName}";
+  # The identities allowed to converge this host. Root-equivalent, so it is an
+  # explicit per-identity opt-in, never derived from membership in agentUsers.
+  convergeUsers = lib.filterAttrs (_: agent: agent.converge) agentUsers;
+
+  # The flake reference each grant is pinned to. Composed from the account's
+  # home, its checkout path and the host registry, so the committed text
+  # carries no absolute path and no host name, and each host generates the
+  # rule for itself.
+  flakeRef = agent: "${agent.homeDir}/${agent.checkout}#${hostConfig.hostName}";
 in
 {
-  users.knownUsers = [ agentUser.name ];
+  users.knownUsers = lib.attrNames agentUsers;
+  users.knownGroups = [ "agent" ];
 
-  users.users.${agentUser.name} = {
-    inherit (agentUser) name uid;
+  users.users = lib.mapAttrs (name: agent: {
+    inherit name;
+    inherit (agent) uid;
 
     # staff — the operator's primary group, and the whole of the read story.
     gid = 20;
 
-    home = agentUser.homeDir;
+    home = agent.homeDir;
     createHome = true;
 
     # Keep the account off the login window; sessions start with `sudo -u`.
@@ -47,28 +67,44 @@ in
 
     # programs.zsh.enable is already true (modules/darwin/common.nix).
     shell = pkgs.zsh;
+  }) agentUsers;
+
+  users.groups.agent = {
+    gid = 510;
+    members = lib.attrNames agentUsers;
   };
 
   # ==========================================================================
-  # Passwordless sudo: converge, for the automation account only
+  # Passwordless sudo: converge, for `converge = true` identities only
   # ==========================================================================
-  # One command, one flake reference, one host. The rule matches on the
-  # invoking user, so a process running as the operator cannot use it; the
-  # operator's own `darwin-rebuild` stays password-gated (see
-  # modules/darwin/security.nix) and Touch ID remains the gate on `sudo -u`
-  # into this account, because `timestamp_timeout=0` is set globally
-  # (modules/darwin/sudo-touchid.nix) and NOPASSWD rules never consult the
-  # timestamp anyway.
+  # One command, one flake reference, one host, one file per identity. The
+  # rule matches on the invoking user, so a process running as the operator
+  # cannot use it; the operator's own `darwin-rebuild` stays password-gated
+  # (see modules/darwin/security.nix) and Touch ID remains the gate on
+  # `sudo -u` into these accounts, because `timestamp_timeout=0` is set
+  # globally (modules/darwin/sudo-touchid.nix) and NOPASSWD rules never
+  # consult the timestamp anyway.
+  #
+  # An identity without `converge` gets no file here at all. A NOPASSWD grant
+  # on darwin-rebuild is a root primitive for anything that can run a shell as
+  # that user — the reason security.nix withholds it from the operator — and
+  # an identity whose job is running a lower-trust coding agent must never
+  # hold one.
   #
   # The command is the `/run/current-system` symlink, never the store path
   # behind it — that path changes with every generation, so pinning it would
   # make the rule stop matching after the first converge.
   #
-  # Validate the generated file before activating a change to it:
+  # Validate the generated files before activating a change to them:
   #   darwin-rebuild build --flake .#<host>
-  #   sudo visudo -cf result/etc/sudoers.d/agent-converge
-  environment.etc."sudoers.d/agent-converge".text = ''
-    # Generated by nix-darwin - do not edit manually
-    ${agentUser.name} ALL=(ALL) NOPASSWD: /run/current-system/sw/bin/darwin-rebuild switch --flake ${flakeRef}
-  '';
+  #   sudo visudo -cf result/etc/sudoers.d/agent-converge-<name>
+  environment.etc = lib.mapAttrs' (
+    name: agent:
+    lib.nameValuePair "sudoers.d/agent-converge-${name}" {
+      text = ''
+        # Generated by nix-darwin - do not edit manually
+        ${name} ALL=(ALL) NOPASSWD: /run/current-system/sw/bin/darwin-rebuild switch --flake ${flakeRef agent}
+      '';
+    }
+  ) convergeUsers;
 }

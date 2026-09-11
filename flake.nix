@@ -242,9 +242,10 @@
                 };
                 users = {
                   ${userConfig.user.name} = import ./hosts/${label}/home.nix;
-                  # The automation account is headless on every host, so it takes
-                  # one shared home rather than a per-host one.
-                  ${userConfig.agentUser.name} = import ./hosts/common/home-agent.nix;
+                  # The automation accounts are headless on every host, so each
+                  # takes one shared home rather than a per-host one.
+                  ${userConfig.agentUsers.claude.name} = import ./hosts/common/home-agent.nix;
+                  ${userConfig.agentUsers.open-llm.name} = import ./hosts/common/home-open-llm.nix;
                 };
 
                 # Shared modules from external flakes:
