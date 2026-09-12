@@ -9,7 +9,7 @@
 # Physical interfaces only. A VPN service supplies its own resolver while
 # connected, so naming one here would clear the setting it needs to work.
 
-{ ... }:
+_:
 
 {
   networking.knownNetworkServices = [
