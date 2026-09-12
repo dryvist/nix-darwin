@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.61.2](https://github.com/dryvist/nix-darwin/compare/v2.61.1...v2.61.2) (2026-09-12)
+
+
+### Bug Fixes
+
+* **container-runtime:** verify the apiserver came up, not just the exit code ([#2485](https://github.com/dryvist/nix-darwin/issues/2485)) ([9be09b5](https://github.com/dryvist/nix-darwin/commit/9be09b59c60eb2696c9c4951a5b89ddb5f12fd6d))
+* **launchd:** remove orphaned user agents and point nix-prebuild at the daemon's nix ([#2482](https://github.com/dryvist/nix-darwin/issues/2482)) ([3e30507](https://github.com/dryvist/nix-darwin/commit/3e30507367a2718bc9cf4a191fa442b9b080389e))
+
 ## [2.61.1](https://github.com/dryvist/nix-darwin/compare/v2.61.0...v2.61.1) (2026-09-12)
 
 
