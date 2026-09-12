@@ -135,6 +135,59 @@ SH
 # indistinguishable from a pipe into an agent transcript — refuse_tty only sees
 # terminals, so it cannot protect this path. The emitted shell must therefore
 # carry no credential of its own: it mints inside the caller's substitution.
+# repo-create is the only subcommand that can request administration:write. Its
+# safety rests on two properties that self-check cannot assert, because both are
+# about the process boundary rather than about a value: it must refuse to run
+# without a human at a terminal, and it must reject a bad target BEFORE anything
+# reaches the network. bats can drive both — its `run` gives a non-terminal
+# stdin, which is exactly the unattended case the verb exists to refuse.
+@test "repo-create refuses to run without an interactive terminal" {
+  write_stub "$STUB_DIR/curl" <<SH
+echo "called" >> "\$BATS_TEST_TMPDIR/curl-calls"
+exit 22
+SH
+
+  run_creds repo-create dryvist/some-new-repo
+
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"interactive terminal"* ]]
+  # Refusal must come before any credential work: no JWT minted, nothing dialled.
+  [ ! -f "$BATS_TEST_TMPDIR/curl-calls" ]
+}
+
+@test "repo-create rejects a malformed target before touching the network" {
+  write_stub "$STUB_DIR/curl" <<SH
+echo "called" >> "\$BATS_TEST_TMPDIR/curl-calls"
+exit 22
+SH
+
+  # A second path segment is the dangerous shape: it would extend the API path.
+  run_creds repo-create dryvist/some/repo
+
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"exactly one <owner>/<repo>"* ]]
+  [ ! -f "$BATS_TEST_TMPDIR/curl-calls" ]
+}
+
+@test "repo-create rejects an unknown visibility" {
+  run_creds repo-create dryvist/some-new-repo internal
+
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"visibility must be"* ]]
+}
+
+@test "the administration scope is reachable only from repo-create" {
+  # The everyday scopes are what a caller can actually hold; neither may ever
+  # carry administration. Asserted here as well as in --self-check so the
+  # property is covered even if a future edit reorders the self-check.
+  run bash -euo pipefail -c \
+    'source "$1"; printf "%s\n%s\n" "$bg_read_scope" "$bg_write_scope"' \
+    _ "$SCRIPTS/openbao-github-creds.sh"
+
+  [ "$status" -eq 0 ]
+  ! grep -q 'administration' <<<"$output"
+}
+
 @test "claim emits shell that mints in the caller, never a token value" {
   run --separate-stderr bash -euo pipefail -c \
     'source "$1"; claim_exports dryvist/some-repo' _ "$SCRIPTS/openbao-github-creds.sh"
