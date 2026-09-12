@@ -172,6 +172,16 @@ bao_login_configured() {
 # caller then continues with an EMPTY token — so a login that could not
 # complete becomes a request made with an empty X-Vault-Token, and whatever
 # the caller reports afterwards is reported as though the credential were fine.
+#
+# That "errexit reliably aborts" claim has a hole: POSIX exempts a command
+# that is the condition of `if`/`while`/`until`, or a non-final member of an
+# `&&`/`||` list, from errexit — and every caller here is reached through
+# self_check's own `fn || return 1` dispatch (or an `if out="$(...)"; then`
+# around it), which puts THIS assignment inside exactly that exemption.
+# `shopt -s inherit_errexit` propagates the exemption into every nested
+# command substitution below it, so a bare assignment is NOT actually safe in
+# this file. Every caller MUST follow its `bao_tok="$(bao_login ...)"` with
+# `require_tok "${bao_tok}" ...` (below) rather than trusting errexit alone.
 bao_login() {
   local approle_prefix="$1" role_id_var secret_id_var role_id secret_id resp token
   bao_login_var_names "${approle_prefix}"
@@ -187,6 +197,13 @@ bao_login() {
   token="$(jq -r '.auth.client_token // empty' <<<"${resp}")"
   [ -n "${token}" ] || die "AppRole login (${approle_prefix}) returned no client_token"
   printf '%s' "${token}"
+}
+
+# The reliable half of every `bao_tok="$(bao_login ...)"` capture — see the
+# comment on bao_login above for why the assignment alone cannot be trusted
+# to abort on failure here. Halts unconditionally, independent of errexit.
+require_tok() {
+  [ -n "$1" ] || die "AppRole login (${2}) returned no token"
 }
 
 # Which AppRole identity mints writes for a repository.
@@ -226,6 +243,7 @@ mint_read() {
   local owner="$1" set_name bao_tok resp gh_tok
   set_name="$(read_set_for "${owner}")"
   bao_tok="$(bao_login GITHUB_READ)"
+  require_tok "${bao_tok}" GITHUB_READ
   resp="$(curl -sf --max-time 10 -X POST -H "X-Vault-Token: ${bao_tok}" \
     "${bao_addr}/v1/github/token/${set_name}")" || die "mint read token (${set_name}) failed"
   gh_tok="$(jq -r '.data.token // empty' <<<"${resp}")"
@@ -251,6 +269,7 @@ mint_write() {
   [ -n "${iid}" ] || die "no installation id for owner '${owner}' — set OPENBAO_GITHUB_*_INSTALLATION_ID"
   prefix="$(write_login_prefix_for "${repo}")"
   bao_tok="$(bao_login "${prefix}")"
+  require_tok "${bao_tok}" "${prefix}"
   body="$(write_token_body "${iid}" "${repo}")"
   resp="$(printf '%s' "${body}" \
     | curl -sf --max-time 10 -X POST -H "X-Vault-Token: ${bao_tok}" --data-binary @- \
@@ -293,15 +312,7 @@ mint_repo_create() {
   local owner="$1" set_name bao_tok resp gh_tok
   set_name="$(repo_create_set_for "${owner}")"
   bao_tok="$(bao_login GITHUB_REPO_CREATE)"
-  # Explicit, not just bao_login's own die(): this function is reached through
-  # self_check_repo_create's `if out="$(mint_repo_create ... 2>&1)"; then`,
-  # and self_check()'s own `self_check_repo_create || return 1` — both put
-  # this call inside an if/or-list, which POSIX exempts from errexit, and
-  # `inherit_errexit` propagates that exemption into every nested command
-  # substitution below it. bao_login's exit 1 therefore does NOT reliably
-  # abort this function before the curl call; a token-emptiness check does,
-  # regardless of the ambient errexit state.
-  [ -n "${bao_tok}" ] || die "AppRole login (GITHUB_REPO_CREATE) returned no token"
+  require_tok "${bao_tok}" GITHUB_REPO_CREATE
   resp="$(curl -sf --max-time 10 -X POST -H "X-Vault-Token: ${bao_tok}" \
     "${bao_addr}/v1/github/token/${set_name}")" || die "mint repo-create token (${set_name}) failed"
   gh_tok="$(jq -r '.data.token // empty' <<<"${resp}")"
@@ -380,9 +391,11 @@ lock_path() { echo "github/token"; }  # documented anchor; real path built inlin
 
 # CAS-acquire the per-repo write lease. Refuses if another live holder owns it.
 lock_acquire() {
-  local iid="$1" repo="$2" bao_tok data_url meta_url cur ver holder me now
+  local iid="$1" repo="$2" bao_tok prefix data_url meta_url cur ver holder me now
   me="$(lock_holder)"
-  bao_tok="$(bao_login "$(write_login_prefix_for "${repo}")")"
+  prefix="$(write_login_prefix_for "${repo}")"
+  bao_tok="$(bao_login "${prefix}")"
+  require_tok "${bao_tok}" "${prefix}"
   data_url="${bao_addr}/v1/secret/data/locks/github-write/${iid}/${repo}"
   meta_url="${bao_addr}/v1/secret/metadata/locks/github-write/${iid}/${repo}"
   # Server-side deadman: each lock version self-deletes, freeing a crashed holder.
@@ -423,8 +436,10 @@ lock_acquire() {
 }
 
 lock_release() {
-  local iid="$1" repo="$2" bao_tok meta_url
-  bao_tok="$(bao_login "$(write_login_prefix_for "${repo}")")"
+  local iid="$1" repo="$2" bao_tok ap_prefix meta_url
+  ap_prefix="$(write_login_prefix_for "${repo}")"
+  bao_tok="$(bao_login "${ap_prefix}")"
+  require_tok "${bao_tok}" "${ap_prefix}"
   meta_url="${bao_addr}/v1/secret/metadata/locks/github-write/${iid}/${repo}"
   curl -sf --max-time 10 -X DELETE -H "X-Vault-Token: ${bao_tok}" "${meta_url}" >/dev/null \
     || echo "$prefix warning: could not release lease for ${repo} (it will expire on its own)" >&2

@@ -103,6 +103,24 @@ SH
   [ ! -f "$BATS_TEST_TMPDIR/curl-calls" ]
 }
 
+@test "token read with GITHUB_READ unconfigured never reaches curl either" {
+  # The same hole self_check_repo_create's fix closed exists at every OTHER
+  # bao_login call site (mint_read, mint_write, lock_acquire, lock_release):
+  # a bare `bao_tok="$(bao_login ...)"` assignment is not actually protected
+  # by errexit once the caller is reached through an if/or-list context.
+  # `token read` is a production entry point, not a self-check step, so this
+  # pins the fix (require_tok) for the sibling most exercised in practice.
+  write_stub "$STUB_DIR/curl" <<SH
+echo "called" >> "$BATS_TEST_TMPDIR/curl-calls"
+exit 22
+SH
+
+  run_creds token read dryvist
+
+  [ "$status" -ne 0 ]
+  [ ! -f "$BATS_TEST_TMPDIR/curl-calls" ]
+}
+
 @test "AppRole login sends role_id/secret_id on stdin, never in argv" {
   # argv is visible to any local process via `ps`; a JSON body built with
   # `curl -d "...${secret_id}..."` leaks the credential there. The fix routes
