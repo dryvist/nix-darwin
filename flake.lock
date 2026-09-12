@@ -1208,11 +1208,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1789215816,
-        "narHash": "sha256-XW1l0kDIoJxhkdvzLH4aERdGoTKWgTABcGJpvz57XZY=",
+        "lastModified": 1789221615,
+        "narHash": "sha256-XBbh53LSd+WwNv8VlrKWFYI/O34T+qmCQXM3z/3oHwo=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "b49c6c57c2fc6bf9e880d565b0de8b83c2079bf4",
+        "rev": "2a8dcbfe980ff212cb56555eb567606103b81bdf",
         "type": "github"
       },
       "original": {
@@ -1328,11 +1328,11 @@
         "visual-explainer-marketplace": "visual-explainer-marketplace"
       },
       "locked": {
-        "lastModified": 1788619475,
-        "narHash": "sha256-9tiO7KBdFD5clVsCB6kYTTpAD4nmJPl1RvXLskCQ3IE=",
+        "lastModified": 1789220731,
+        "narHash": "sha256-Wz+83xbGSnWv+xIN0O82vYxon+lVuB0S8jkelV+brTc=",
         "owner": "dryvist",
         "repo": "nix-claude-code",
-        "rev": "3baab0b79a0d22f70bec30f30c8aba0b6d035db1",
+        "rev": "e8e17a7ae9fd3749c25dbf914d7692bfb3baef20",
         "type": "github"
       },
       "original": {
@@ -1377,11 +1377,11 @@
         "orbstack-kubernetes": "orbstack-kubernetes"
       },
       "locked": {
-        "lastModified": 1789219421,
-        "narHash": "sha256-8XrJ4to6Qqvffq8ntWLm7ZWOsQC3j8F2Tdb9TzXyBfw=",
+        "lastModified": 1789220720,
+        "narHash": "sha256-BrI63OtxpTR5k0OXaT68yt15De/cFDdD4gLqPm3YfgM=",
         "owner": "dryvist",
         "repo": "nix-home",
-        "rev": "74228da8ab21ed66d86b1f0e19f535090ad05a34",
+        "rev": "54f52cbed327319306fb20b377270bbf5b4a69b3",
         "type": "github"
       },
       "original": {
