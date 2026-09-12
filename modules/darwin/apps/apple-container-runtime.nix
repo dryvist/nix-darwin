@@ -15,11 +15,17 @@
 {
   lib,
   config,
+  pkgs,
   ...
 }:
 
 let
   cfg = config.programs.apple-container-runtime;
+
+  startScript = pkgs.writeShellApplication {
+    name = "apple-container-runtime-start";
+    text = builtins.readFile ./../scripts/apple-container-runtime-start.sh;
+  };
 in
 {
   options.programs.apple-container-runtime = {
@@ -57,10 +63,8 @@ in
     launchd.user.agents.apple-container-runtime.serviceConfig = {
       Label = "com.nix-darwin.apple-container-runtime";
       ProgramArguments = [
+        (lib.getExe startScript)
         cfg.containerBin
-        "system"
-        "start"
-        "--enable-kernel-install"
       ];
       RunAtLoad = true;
       StandardErrorPath = "${cfg.dataDir}/logs/apple-container-runtime.err.log";
