@@ -33,6 +33,10 @@ let
     hash = "sha256-VzRPBode10yLdDqmcaOhwWnTpUVmF10OwVkXZtyjGJ4=";
     stripRoot = false;
   };
+
+  # One full claude/codex/gemini/antigravity input set per managed OS user
+  # (split out for the repo file-size gate — see ./cribl-ai-inputs.nix).
+  aiCliInputsBlock = import ./cribl-ai-inputs.nix { inherit lib userConfig; };
 in
 {
   programs = {
@@ -354,104 +358,13 @@ in
             # pack pipelines, which are installed as worker-level pipelines
             # from the released pack derivations (see the pipelines/*
             # configFiles below).
-            in_codex_sessions:
-              type: file
-              disabled: false
-              mode: manual
-              interval: 30
-              path: ${userConfig.user.homeDir}/.codex/sessions
-              filenames:
-                - "*/rollout-*.jsonl"
-              recurse: true
-              tailOnly: false
-              sendToRoutes: false
-              breakerRulesets:
-                - AI CLI JSONL
-              metadata:
-                - name: datatype
-                  value: "'codex-cli-session'"
-              connections:
-                - pipeline: codex_sessions
-                  output: cribl_codex
-            in_codex_history:
-              type: file
-              disabled: false
-              mode: manual
-              interval: 30
-              path: ${userConfig.user.homeDir}/.codex
-              filenames:
-                - "*/history.jsonl"
-              recurse: false
-              tailOnly: false
-              sendToRoutes: false
-              breakerRulesets:
-                - AI CLI JSONL
-              metadata:
-                - name: datatype
-                  value: "'codex-cli-history'"
-              connections:
-                - pipeline: codex_history
-                  output: cribl_codex
-            in_gemini_sessions:
-              type: file
-              disabled: false
-              mode: manual
-              interval: 30
-              path: ${userConfig.user.homeDir}/.gemini/tmp
-              filenames:
-                - "*session-*.json"
-                - "*session-*.jsonl"
-              recurse: true
-              tailOnly: true
-              sendToRoutes: false
-              breakerRulesets:
-                - AI CLI JSONL
-              metadata:
-                - name: datatype
-                  value: "'gemini-cli-session'"
-              connections:
-                - pipeline: llm_normalize
-                  output: cribl_agy
-            in_antigravity_transcripts:
-              type: file
-              disabled: false
-              mode: manual
-              interval: 60
-              path: ${userConfig.user.homeDir}/.gemini/antigravity-cli/brain
-              filenames:
-                - "*/transcript_full.jsonl"
-              recurse: true
-              tailOnly: false
-              sendToRoutes: false
-              breakerRulesets:
-                - AI CLI JSONL
-              metadata:
-                - name: datatype
-                  value: "'antigravity-cli-transcript'"
-              connections:
-                - pipeline: llm_normalize
-                  output: cribl_agy
-            in_antigravity_history:
-              type: file
-              disabled: false
-              mode: manual
-              interval: 30
-              path: ${userConfig.user.homeDir}/.gemini/antigravity-cli
-              filenames:
-                - "*history.jsonl"
-              recurse: false
-              tailOnly: true
-              sendToRoutes: false
-              breakerRulesets:
-                - AI CLI JSONL
-              metadata:
-                - name: datatype
-                  value: "'antigravity-cli-history'"
-              # v0.4.1 llm_normalize stamps history's sourcetype/index too (its
-              # llm.* evals gate on fields history lacks, so they skip it).
-              connections:
-                - pipeline: llm_normalize
-                  output: cribl_agy
+            # One codex/gemini/antigravity input set PER MANAGED OS USER
+            # (aiHomes, above) — a second automation identity's transcripts
+            # ship too, each stamped with its own enduser_id.
+            # v0.4.1 llm_normalize stamps antigravity history's
+            # sourcetype/index too (its llm.* evals gate on fields history
+            # lacks, so they skip it).
+            ${aiCliInputsBlock}
             # The copilot input is deliberately absent. It watched a directory
             # the CLI creates once and never writes to, and the tool keeps no
             # on-disk log elsewhere. An input on a never-written path is not
@@ -507,20 +420,9 @@ in
             # /home/$CLAUDE_USER default path does not exist on
             # macOS). tailOnly: pre-cutover history was already
             # indexed once via the old OrbStack path — ship appends
-            # only, don't re-ingest months of transcripts.
-            in_claude_logs:
-              type: file
-              disabled: false
-              mode: manual
-              interval: 10
-              path: ${userConfig.user.homeDir}/.claude/projects/
-              filenames:
-                - "*.jsonl"
-              recurse: true
-              tailOnly: true
-              sendToRoutes: false
-              connections:
-                - output: cribl_claude
+            # only, don't re-ingest months of transcripts. Generated per OS
+            # user (in_claude_logs_<user>, see aiCliInputsBlock above) together
+            # with the codex/gemini/antigravity inputs.
             # Firewall unified-log tail (modules/darwin/logging.nix daemon
             # writes ndjson here). Stamped index=firewall locally; Stream's
             # in_cribl_s2s force_splunk_meta is fill-if-missing, so the stamp
