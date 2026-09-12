@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.62.0](https://github.com/dryvist/nix-darwin/compare/v2.61.2...v2.62.0) (2026-09-12)
+
+
+### Features
+
+* **agent-identity:** keep the automation account's checkout present ([#2495](https://github.com/dryvist/nix-darwin/issues/2495)) ([fe85602](https://github.com/dryvist/nix-darwin/commit/fe856028bdb576d4ddc9a995208f86226d582b72))
+
+
+### Bug Fixes
+
+* **home:** disable manpage generation in the agent homes ([#2494](https://github.com/dryvist/nix-darwin/issues/2494)) ([b32e598](https://github.com/dryvist/nix-darwin/commit/b32e598967d0783b5d5be580931da9f20eac6ad7))
+* **tunables:** exclude volumes from Time Machine with tmutil -v ([#2493](https://github.com/dryvist/nix-darwin/issues/2493)) ([58e78f4](https://github.com/dryvist/nix-darwin/commit/58e78f4db8e162893882137f0f8e8bdce1d99e85))
+
 ## [2.61.2](https://github.com/dryvist/nix-darwin/compare/v2.61.1...v2.61.2) (2026-09-12)
 
 
