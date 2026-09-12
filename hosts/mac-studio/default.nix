@@ -187,10 +187,15 @@ in
   # `darwin-rebuild switch` is a near-instant cache hit instead of a cold build.
   # Plain launchd agent (no claude, no token) — inline ProgramArguments, logs to
   # ~/Library/Logs/nix-prebuild/, Background priority.
+  #
+  # The nix binary is the daemon's own (Determinate installs it under the
+  # default profile; nothing links it into /run/current-system/sw/bin). A
+  # program path that does not exist makes launchd fail the spawn with
+  # EX_CONFIG and the agent never runs.
   launchd.user.agents.nix-prebuild.serviceConfig = {
     Label = "com.nix-darwin.nix-prebuild";
     ProgramArguments = [
-      "/run/current-system/sw/bin/nix"
+      "/nix/var/nix/profiles/default/bin/nix"
       "build"
       "github:dryvist/nix-darwin/main#darwinConfigurations.${hostConfig.hostName}.system"
       "--no-link"
@@ -207,7 +212,7 @@ in
     StandardErrorPath = "${userConfig.user.homeDir}/Library/Logs/nix-prebuild/nix-prebuild.error.log";
     EnvironmentVariables = {
       HOME = userConfig.user.homeDir;
-      PATH = "/run/current-system/sw/bin:/usr/bin:/bin";
+      PATH = "/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin:/usr/bin:/bin";
     };
   };
 

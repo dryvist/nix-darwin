@@ -56,6 +56,7 @@ jobs:
       actions: write
     uses: dryvist/.github/.github/workflows/_ci-gate.yml@main
     with:
+      osv_scan: true
       nix_validate: true
       # This flake declares checks.aarch64-darwin.pf-anchor-syntax, which
       # shells out to /sbin/pfctl; `--all-systems` would make a Linux runner
@@ -64,8 +65,6 @@ jobs:
       # Dependency-only bot PRs skip Nix Validate unless flake.lock itself
       # changed — a lockfile bump must still validate.
       nix_skip_deps_only: true
-      markdown_lint: true
-      file_size: true
       dependency_review: false
       zizmor: false
       queue_timeout_minutes: 30
