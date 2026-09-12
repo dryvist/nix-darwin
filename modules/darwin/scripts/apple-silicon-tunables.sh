@@ -100,15 +100,29 @@ else
 fi
 
 # --- Time Machine excludes for the AI cache directories ------------------
-# TM_EXCLUDES is a colon-separated list of absolute paths.
+# TM_EXCLUDES is a colon-separated list of absolute paths. A path that is
+# itself a volume mount point must use `addexclusion -v`: per `man tmutil`,
+# "The -v option is the only supported way to exclude or unexclude a
+# volume" — the non -v form fails with EINVAL there. Detect a mount point by
+# comparing the device id of the path to its parent directory's.
 if [ -n "${TM_EXCLUDES:-}" ]; then
   IFS=':' read -ra _excludes <<<"${TM_EXCLUDES}"
   for _path in "${_excludes[@]}"; do
     if [ -e "${_path}" ]; then
-      if /usr/bin/tmutil addexclusion "${_path}" >/dev/null 2>&1; then
-        log "tmutil exclude ${_path}"
+      if /usr/bin/tmutil isexcluded "${_path}" 2>/dev/null | /usr/bin/grep -q '^\[Excluded\]'; then
+        log "tmutil exclude ${_path} already excluded; skipping"
+        continue
+      fi
+      _tm_args=()
+      _tm_suffix=""
+      if [ "$(/usr/bin/stat -f %d "${_path}")" != "$(/usr/bin/stat -f %d "$(/usr/bin/dirname "${_path}")")" ]; then
+        _tm_args=("-v")
+        _tm_suffix=" (volume)"
+      fi
+      if /usr/bin/tmutil addexclusion "${_tm_args[@]}" "${_path}" >/dev/null 2>&1; then
+        log "tmutil exclude ${_path}${_tm_suffix}"
       else
-        warn "tmutil addexclusion ${_path} failed"
+        warn "tmutil addexclusion ${_tm_args[*]} ${_path} failed"
       fi
     else
       warn "tmutil exclusion skipped for missing path ${_path}; rerun activation after it is created"
