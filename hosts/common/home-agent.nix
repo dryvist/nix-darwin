@@ -14,6 +14,7 @@
 
 {
   lib,
+  pkgs,
   userConfig,
   ...
 }:
@@ -51,4 +52,24 @@
   # Same gui/<uid> domain problem as herdr. Nothing signs commits from this
   # account, so there is no agent to keep alive.
   services.gpg-agent.enable = lib.mkForce false;
+
+  # WORKAROUND: Disable manpage generation to suppress options.json derivation context warning
+  # Upstream: https://github.com/nix-community/home-manager/issues/7935
+  # TODO: Re-enable when upstream fixes options.json context in manual.nix
+  manual.manpages.enable = false;
+
+  # The sudoers grant in modules/darwin/agent-identity.nix names a flake in
+  # this account's own checkout; keep that checkout present and current.
+  home.activation.agentCheckout = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    checkout="$HOME/${userConfig.agentUsers.claude.checkout}"
+    if [ ! -d "$checkout/.git" ]; then
+      $DRY_RUN_CMD mkdir -p "$(dirname "$checkout")"
+      $DRY_RUN_CMD ${pkgs.git}/bin/git clone --quiet https://github.com/dryvist/nix-darwin.git "$checkout" \
+        || echo "[WARN] agent checkout clone failed" >&2
+    else
+      $DRY_RUN_CMD ${pkgs.git}/bin/git -C "$checkout" fetch --quiet origin \
+        || echo "[WARN] agent checkout fetch failed" >&2
+    fi
+    [ -d "$HOME/.doppler" ] || echo "[WARN] $HOME/.doppler is absent; see SETUP.md 'Bootstrap the automation account'" >&2
+  '';
 }

@@ -53,4 +53,9 @@
   # Same gui/<uid> domain problem as herdr. Nothing signs commits from this
   # account, so there is no agent to keep alive.
   services.gpg-agent.enable = lib.mkForce false;
+
+  # WORKAROUND: Disable manpage generation to suppress options.json derivation context warning
+  # Upstream: https://github.com/nix-community/home-manager/issues/7935
+  # TODO: Re-enable when upstream fixes options.json context in manual.nix
+  manual.manpages.enable = false;
 }

@@ -5,6 +5,7 @@
 - [Overview](#overview)
 - [Setup Summary](#setup-summary)
 - [Configuration Structure](#configuration-structure)
+- [Bootstrap the Automation Account](#bootstrap-the-automation-account)
 - [Issues Solved](#issues-solved)
 - [What Was Migrated](#what-was-migrated)
 - [Usage](#usage)
@@ -30,6 +31,31 @@ Minimal nix-darwin configuration with home-manager for macOS system management.
 ## Configuration Structure
 
 See [CLAUDE.md](CLAUDE.md) for complete directory structure with all files and descriptions.
+
+## Bootstrap the Automation Account
+
+The switch creates the `claude` account (`modules/darwin/agent-identity.nix`).
+Its checkout is cloned on the first home-manager activation
+(`hosts/common/home-agent.nix`). Two things the switch does not do, set once
+as `claude`:
+
+- **Doppler service token**, scoped to that account's home, never global:
+
+  ```sh
+  sudo -u claude -i doppler configure set token=<service-token> --scope ~
+  ```
+
+- **OpenBao AppRole pair**, read from the same Doppler project/config the
+  `openbao-run` wrapper consumes (`modules/darwin/apps/openbao-run.nix`):
+  `BAO_ADDR` plus a per-domain `<DOMAIN>_VAULT_ROLE_ID` /
+  `<DOMAIN>_VAULT_SECRET_ID` pair. No values here — pull them from the store.
+
+The sudoers grant allows exactly one command, run as `claude`:
+
+```sh
+sudo -n /run/current-system/sw/bin/darwin-rebuild switch \
+  --flake /Users/claude/git/public/nix/nix-darwin#<host>
+```
 
 ## Issues Solved
 
