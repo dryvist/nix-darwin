@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.61.1](https://github.com/dryvist/nix-darwin/compare/v2.61.0...v2.61.1) (2026-09-12)
+
+
+### Bug Fixes
+
+* **llm-gate:** re-pin the caddy route53 plugin hash for the current Go toolchain ([#2469](https://github.com/dryvist/nix-darwin/issues/2469)) ([c4ae592](https://github.com/dryvist/nix-darwin/commit/c4ae592a5f2f4e5868ae4c413a74f5890a4e52ee))
+* **networking:** declare the services whose resolver comes from DHCP ([1168dd9](https://github.com/dryvist/nix-darwin/commit/1168dd9390e54e67ff2f4239a2cf40b243af21c9))
+* **networking:** use _ for the unused module argument ([#2476](https://github.com/dryvist/nix-darwin/issues/2476)) ([aa2026f](https://github.com/dryvist/nix-darwin/commit/aa2026f9df774a927b59aef940309a2e04dd45e2))
+
 ## [2.61.0](https://github.com/dryvist/nix-darwin/compare/v2.60.0...v2.61.0) (2026-09-11)
 
 
