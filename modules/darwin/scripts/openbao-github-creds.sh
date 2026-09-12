@@ -59,6 +59,14 @@
 #      pins an explicit minimal permissions scope on the mint request rather than
 #      taking the installation default.
 #
+#   5. repo-create (the ONLY administration-scoped path):
+#        openbao-github-creds repo-create <owner>/<repo> [private|public]
+#      Creates one organisation repository and nothing else. It is the inverse of
+#      every other subcommand: an ACTION, not a credential. The administration
+#      token is minted, used, revoked, and never leaves the process — so unlike
+#      claim/token/break-glass this one is not captured, requires a terminal, and
+#      requires the operator to type the target back. See cmd_repo_create.
+#
 # SECRET-ZERO is AMBIENT (no local keychain), identical to openbao-aws-creds.sh
 # after dryvist/nix-darwin#1686: BAO_ADDR (or legacy VAULT_ADDR) + the github-read / github-write
 # AppRole role_id/secret_id, injected by running under `doppler run`. Write and
@@ -320,6 +328,143 @@ cmd_break_glass() {
   esac
 }
 
+# --- repo-create: the one administration-scoped action ------------------------
+#
+# WHY THIS IS AN ACTION AND NOT A TOKEN VERB. `administration: write` is the
+# permission that creates repositories — and also deletes them, transfers them,
+# rewrites branch protection and flips visibility. Handing such a token to the
+# caller the way `token write` does would put the single most destructive
+# credential in this estate into a shell variable, a transcript, and an agent's
+# environment, where it stays live for its full hour and is reusable for every
+# other administration call. So this verb performs the creation itself: the
+# token is minted, spent on exactly one API call, revoked, and never printed.
+# Nothing the caller can capture carries administration rights.
+#
+# The GitHub-side grant is the real boundary. Once the App installation holds
+# Administration:write, anyone with the ambient App key can mint that scope by
+# hand; this verb does not widen anything, it exists so the sanctioned path is
+# the easy one and the hand-rolled JWT never gets written.
+#
+# Verified 2026-09-12 against GitHub's permissions reference: POST
+# /orgs/{org}/repos requires repository permission `administration` = write and
+# accepts an installation access token (IAT). The not-yet-existing repository
+# cannot appear in a `repositories` list, so the narrowing axis here is
+# PERMISSIONS, not repositories — installation-wide in breadth, one capability
+# deep. Personal-account repositories are out of reach for an IAT entirely
+# (POST /user/repos does not accept one); this verb is organisations only.
+bg_repo_create_scope='{"administration":"write","metadata":"read"}'
+
+# Exactly one "owner/repo": both halves present, no third segment, nothing that
+# is not a legal name character. Split out so --self-check can exercise it
+# without a terminal or a network.
+valid_repo_target() {
+  case "$1" in
+    *[!A-Za-z0-9._/-]*) return 1 ;;
+    */*/*|/*|*/)        return 1 ;;
+    */*)                return 0 ;;
+    *)                  return 1 ;;
+  esac
+}
+
+cmd_repo_create() {
+  local target="${1:-}" visibility="${2:-private}" owner repo typed private
+  [ -n "${target}" ] \
+    || die "usage: openbao-github-creds repo-create <owner>/<repo> [private|public]"
+  valid_repo_target "${target}" \
+    || die "expected exactly one <owner>/<repo>, got '${target}'. One repository per invocation; there is no batch form on purpose."
+  case "${visibility}" in
+    private) private=true ;;
+    public)  private=false ;;
+    *)       die "visibility must be 'private' or 'public', got '${visibility}'" ;;
+  esac
+  # Every other subcommand refuses a terminal because its output is a
+  # credential. This one refuses the ABSENCE of a terminal, because its output
+  # is a new repository: it must never be reachable from a script, a CI job or
+  # an unattended agent loop. There is deliberately no --yes flag — adding one
+  # is precisely what would make this scriptable again.
+  { [ -t 0 ] && [ -t 2 ]; } \
+    || die "repo-create requires an interactive terminal. It is a deliberate, one-at-a-time human action and has no unattended form; do not wrap it in a script."
+  owner="${target%%/*}"
+  repo="${target#*/}"
+
+  printf '%s\n' "$prefix about to create a NEW ${visibility} repository:" >&2
+  printf '%s\n' "    https://github.com/${owner}/${repo}" >&2
+  printf '%s\n' "$prefix this mints a short-lived administration:write token for the ${owner} installation." >&2
+  printf '%s' "$prefix type the full owner/repo to confirm: " >&2
+  # An EOF at the prompt (Ctrl-D, or a terminal that closes) fails `read`, and
+  # under errexit that would abort with status 1 and no message at all — a
+  # confusing silent exit at the most security-sensitive prompt in the tool.
+  # Fail closed AND say so.
+  IFS= read -r typed \
+    || die "no confirmation entered — nothing was created and no token was minted."
+  [ "${typed}" = "${target}" ] \
+    || die "confirmation did not match ('${typed}' != '${target}') — nothing was created and no token was minted."
+
+  do_repo_create "${owner}" "${repo}" "${private}" "${visibility}"
+}
+
+# Mints the administration-scoped token, spends it on exactly one
+# repo-creation call, and revokes it. Split out of cmd_repo_create so the
+# interactive gate above (terminal + typed-back confirmation) is the only
+# thing standing between an invocation and this, and so this half — the part
+# that actually touches a credential — can be driven directly in a test
+# without a terminal.
+do_repo_create() {
+  local owner="$1" repo="$2" private="$3" visibility="$4"
+  local body resp code url
+  tok="$(mint_break_glass "${owner}" "${bg_repo_create_scope}" "")"
+  # Spend it, then kill it. GitHub revokes the installation token the call was
+  # made with, so the credential stops existing once this function returns
+  # rather than living out its hour. Best-effort: a failed revoke must not turn
+  # a successful creation into an error.
+  #
+  # `tok` is deliberately NOT `local`. Bash pops a function's locals the
+  # moment it returns, but this EXIT trap doesn't fire until the whole
+  # process exits — which, on the success path below, is after this function
+  # has already returned. A `local tok` here left the trap referencing an
+  # unbound variable on exactly that path (the only one where a real
+  # administration token is ever minted and spent): under `set -u` the
+  # expansion aborted before the trap's own command ran, so the DELETE never
+  # happened and the token lived out its full ~1h TTL. Every error path
+  # (403/404/422/die) was unaffected, because those call `exit` from within
+  # this same function's still-live call frame — only the return-normally
+  # path was silently unrevoked.
+  # shellcheck disable=SC2317  # reached via the EXIT trap, not by fallthrough
+  revoke() {
+    curl -s -o /dev/null --max-time 10 -X DELETE \
+      -H "Authorization: Bearer ${tok}" -H "Accept: application/vnd.github+json" \
+      "https://api.github.com/installation/token" || true
+  }
+  trap revoke EXIT
+
+  body="$(jq -cn --arg n "${repo}" --argjson p "${private}" '{name: $n, private: $p}')"
+  resp="$(printf '%s' "${body}" \
+    | curl -s --max-time 20 -w $'\n%{http_code}' -X POST \
+        -H "Authorization: Bearer ${tok}" -H "Accept: application/vnd.github+json" \
+        --data-binary @- "https://api.github.com/orgs/${owner}/repos")"
+  code="${resp##*$'\n'}"
+  resp="${resp%$'\n'*}"
+  case "${code}" in
+    201)
+      url="$(jq -r '.html_url // empty' <<<"${resp}")"
+      printf '%s\n' "${url:-https://github.com/${owner}/${repo}}"
+      echo "$prefix created ${owner}/${repo} (${visibility}); administration token revoked." >&2
+      ;;
+    403)
+      die "GitHub refused the creation (403). The App installation for '${owner}' most likely does not hold Administration: write — that grant is a one-time organisation-settings change and cannot be made from here. $(jq -r '.message // empty' <<<"${resp}")"
+      ;;
+    404)
+      die "GitHub returned 404 for org '${owner}'. Either the organisation name is wrong, or '${owner}' is a personal account — an App installation token cannot create repositories on a personal account at all (POST /user/repos does not accept one)."
+      ;;
+    422)
+      die "GitHub rejected the name (422) — usually '${repo}' already exists in ${owner}. $(jq -r '.message // empty' <<<"${resp}")"
+      ;;
+    *)
+      die "repository creation failed (HTTP ${code}): $(jq -r '.message // empty' <<<"${resp}")"
+      ;;
+  esac
+}
+
 lock_path() { echo "github/token"; }  # documented anchor; real path built inline
 
 # CAS-acquire the per-repo write lease. Refuses if another live holder owns it.
@@ -486,12 +631,49 @@ self_check() {
   if [ "$(jq -r '.pull_requests' <<<"${bg_write_scope}")" != "write" ]; then
     echo "self-check FAIL: break-glass write scope lacks pull_requests:write"; return 1
   fi
+  # The EVERYDAY paths must never grant administration. That assertion predates
+  # repo-create and is not weakened by it: repo-create does not hand its token
+  # to anyone, so these two remain the only scopes a caller can ever hold.
   if [ "$(jq -r 'has("administration")' <<<"${bg_write_scope}")" != "false" ]; then
     echo "self-check FAIL: break-glass write scope must never grant administration"; return 1
   fi
+  if [ "$(jq -r 'has("administration")' <<<"${bg_read_scope}")" != "false" ]; then
+    echo "self-check FAIL: break-glass read scope must never grant administration"; return 1
+  fi
+  self_check_repo_create || return 1
   self_check_write_realms || return 1
   self_check_lock_reacquire || return 1
   echo "self-check OK"
+}
+
+# repo-create is the one path allowed to request administration, so the scope it
+# requests is the thing that must not drift. Assert it from both ends: the
+# capability is present, and it is the ONLY write in the object — a future edit
+# that adds contents:write "while we're in here" turns a repository-creation
+# credential into a push-anywhere one, and would otherwise pass silently.
+self_check_repo_create() {
+  local writes
+  if ! jq -e . >/dev/null 2>&1 <<<"${bg_repo_create_scope}"; then
+    echo "self-check FAIL: repo-create scope not valid JSON"; return 1
+  fi
+  if [ "$(jq -r '.administration' <<<"${bg_repo_create_scope}")" != "write" ]; then
+    echo "self-check FAIL: repo-create scope lacks administration:write"; return 1
+  fi
+  writes="$(jq -r '[to_entries[] | select(.value == "write")] | length' <<<"${bg_repo_create_scope}")"
+  [ "${writes}" = "1" ] \
+    || { echo "self-check FAIL: repo-create scope grants ${writes} write permissions, expected exactly 1"; return 1; }
+
+  # Target validation: one repo per invocation, and nothing that could smuggle a
+  # second path segment or a shell/URL metacharacter into the API path.
+  local t
+  for t in dryvist/new-repo owner/a.b_c-d; do
+    valid_repo_target "${t}" || { echo "self-check FAIL: rejected valid target '${t}'"; return 1; }
+  done
+  for t in "" bare-repo a/b/c /leading trailing/ "a b/c" "a/b;id" "a/b?x=1"; do
+    if valid_repo_target "${t}"; then
+      echo "self-check FAIL: accepted invalid target '${t}'"; return 1
+    fi
+  done
 }
 
 # Realm routing, exercised without a server. Both directions matter: a mapped
@@ -581,6 +763,7 @@ case "${1:-}" in
   release)      cmd_release "${2:-}" ;;
   token)        shift; cmd_token "$@" ;;
   break-glass)  shift; cmd_break_glass "$@" ;;
+  repo-create)  shift; cmd_repo_create "$@" ;;
   --self-check) self_check ;;
-  *) die "usage: openbao-github-creds {get|store|erase|claim <owner>/<repo>|release [<owner>/<repo>]|token [read|write] [<owner>[/<repo>]]|break-glass [read|write] [<owner>[/<repo>]]|--self-check}" ;;
+  *) die "usage: openbao-github-creds {get|store|erase|claim <owner>/<repo>|release [<owner>/<repo>]|token [read|write] [<owner>[/<repo>]]|break-glass [read|write] [<owner>[/<repo>]]|repo-create <owner>/<repo> [private|public]|--self-check}" ;;
 esac
