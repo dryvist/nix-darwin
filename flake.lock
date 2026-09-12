@@ -303,11 +303,11 @@
     "claude-code-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1789154267,
-        "narHash": "sha256-sQ+KVNfvhRiarbmVvXbnRZT7WRDJt9w4/YPezhTTMj4=",
+        "lastModified": 1789242338,
+        "narHash": "sha256-Cx+mUJ6DwPI7NvGZu0ArPfqyHFn4sqIexn5bWkNJmxw=",
         "owner": "anthropics",
         "repo": "claude-code",
-        "rev": "df52d04a4e65195c1621fe6222e0564bcccb1804",
+        "rev": "2b40e76d3f03b9070e2431e0bd05b4f3ace77982",
         "type": "github"
       },
       "original": {
@@ -1225,11 +1225,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1789240333,
-        "narHash": "sha256-AA1TGaNs88TwLFjtmvSe1efvLQAK8Xj2WrLqD7qFOwc=",
+        "lastModified": 1789247589,
+        "narHash": "sha256-nERNCerWYt+SjsfAPaaXROf1iTyCs5b9vZhHHDB9uWI=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "48c5e3d6b2db07b297e3a3ce2bfcf42c78dbeb72",
+        "rev": "cb7e22e97933d6868fd2037d3e2064bf0f0b7aef",
         "type": "github"
       },
       "original": {
