@@ -27,6 +27,7 @@ in
     ./cribl-stream-local.nix
     # Shared OpenBao-backed credential/config wrapper family.
     ./openbao-clients.nix
+    ./resolver-services.nix
   ];
 
   # Network hostname from the per-host registry.
