@@ -293,6 +293,15 @@ mint_repo_create() {
   local owner="$1" set_name bao_tok resp gh_tok
   set_name="$(repo_create_set_for "${owner}")"
   bao_tok="$(bao_login GITHUB_REPO_CREATE)"
+  # Explicit, not just bao_login's own die(): this function is reached through
+  # self_check_repo_create's `if out="$(mint_repo_create ... 2>&1)"; then`,
+  # and self_check()'s own `self_check_repo_create || return 1` — both put
+  # this call inside an if/or-list, which POSIX exempts from errexit, and
+  # `inherit_errexit` propagates that exemption into every nested command
+  # substitution below it. bao_login's exit 1 therefore does NOT reliably
+  # abort this function before the curl call; a token-emptiness check does,
+  # regardless of the ambient errexit state.
+  [ -n "${bao_tok}" ] || die "AppRole login (GITHUB_REPO_CREATE) returned no token"
   resp="$(curl -sf --max-time 10 -X POST -H "X-Vault-Token: ${bao_tok}" \
     "${bao_addr}/v1/github/token/${set_name}")" || die "mint repo-create token (${set_name}) failed"
   gh_tok="$(jq -r '.data.token // empty' <<<"${resp}")"
