@@ -367,8 +367,7 @@ valid_repo_target() {
 }
 
 cmd_repo_create() {
-  local target="${1:-}" visibility="${2:-private}" owner repo typed private tok
-  local body resp code url
+  local target="${1:-}" visibility="${2:-private}" owner repo typed private
   [ -n "${target}" ] \
     || die "usage: openbao-github-creds repo-create <owner>/<repo> [private|public]"
   valid_repo_target "${target}" \
@@ -401,11 +400,35 @@ cmd_repo_create() {
   [ "${typed}" = "${target}" ] \
     || die "confirmation did not match ('${typed}' != '${target}') — nothing was created and no token was minted."
 
+  do_repo_create "${owner}" "${repo}" "${private}" "${visibility}"
+}
+
+# Mints the administration-scoped token, spends it on exactly one
+# repo-creation call, and revokes it. Split out of cmd_repo_create so the
+# interactive gate above (terminal + typed-back confirmation) is the only
+# thing standing between an invocation and this, and so this half — the part
+# that actually touches a credential — can be driven directly in a test
+# without a terminal.
+do_repo_create() {
+  local owner="$1" repo="$2" private="$3" visibility="$4"
+  local body resp code url
   tok="$(mint_break_glass "${owner}" "${bg_repo_create_scope}" "")"
   # Spend it, then kill it. GitHub revokes the installation token the call was
-  # made with, so the credential stops existing at the end of this function
+  # made with, so the credential stops existing once this function returns
   # rather than living out its hour. Best-effort: a failed revoke must not turn
   # a successful creation into an error.
+  #
+  # `tok` is deliberately NOT `local`. Bash pops a function's locals the
+  # moment it returns, but this EXIT trap doesn't fire until the whole
+  # process exits — which, on the success path below, is after this function
+  # has already returned. A `local tok` here left the trap referencing an
+  # unbound variable on exactly that path (the only one where a real
+  # administration token is ever minted and spent): under `set -u` the
+  # expansion aborted before the trap's own command ran, so the DELETE never
+  # happened and the token lived out its full ~1h TTL. Every error path
+  # (403/404/422/die) was unaffected, because those call `exit` from within
+  # this same function's still-live call frame — only the return-normally
+  # path was silently unrevoked.
   # shellcheck disable=SC2317  # reached via the EXIT trap, not by fallthrough
   revoke() {
     curl -s -o /dev/null --max-time 10 -X DELETE \

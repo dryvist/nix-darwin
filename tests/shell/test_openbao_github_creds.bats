@@ -188,6 +188,58 @@ SH
   ! grep -q 'administration' <<<"$output"
 }
 
+# do_repo_create is the mint -> spend -> revoke half of repo-create, split out
+# of cmd_repo_create precisely so this can be driven without a terminal (the
+# interactive gate lives entirely in cmd_repo_create, above). This is the test
+# whose absence let a real bug ship: `tok` was `local` to the function that set
+# the EXIT trap, and bash pops a function's locals on return, while an EXIT
+# trap fires later, at process exit. On the success path below (the only path
+# where a real administration token is ever minted and spent) that left the
+# trap referencing an unbound `${tok}`, which aborted under `set -u` before the
+# trap's own DELETE call ran — so the token was never actually revoked despite
+# the repo being created and the URL printed. Every error path was unaffected,
+# because `die` exits from within the same still-live call frame.
+@test "a successful repo-create revokes the administration token afterward" {
+  export OPENBAO_GITHUB_APP_ID=123456
+  export OPENBAO_GITHUB_APP_PRIVATE_KEY="stub-key-openssl-is-stubbed-below"
+  # openssl is only used here to build a JWT for the mint call; curl (stubbed
+  # below) does not validate it, so a fixed fake signature is sufficient.
+  write_stub "$STUB_DIR/openssl" <<'SH'
+case "$1" in
+  base64) echo "c3R1Yg" ;;
+  dgst)   echo "c2ln" ;;
+esac
+SH
+  write_stub "$STUB_DIR/curl" <<SH
+case " \$* " in
+  *"access_tokens"*)
+    echo '{"token":"ghs_faketoken123"}'
+    exit 0
+    ;;
+  *"/installation/token"*)
+    for a in "\$@"; do echo "\$a" >> "\$BATS_TEST_TMPDIR/revoke-argv"; done
+    exit 0
+    ;;
+  *"/orgs/dryvist/repos"*)
+    printf '%s\n%s' '{"html_url":"https://github.com/dryvist/zz-demo-repo"}' 201
+    exit 0
+    ;;
+esac
+exit 22
+SH
+
+  run --separate-stderr bash -euo pipefail -c \
+    'source "$1"; do_repo_create dryvist zz-demo-repo true private' \
+    _ "$SCRIPTS/openbao-github-creds.sh"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"https://github.com/dryvist/zz-demo-repo"* ]]
+  # The bug: this file never existed because the revoke trap died on an
+  # unbound variable before its curl call ran.
+  [ -f "$BATS_TEST_TMPDIR/revoke-argv" ]
+  grep -q "ghs_faketoken123" "$BATS_TEST_TMPDIR/revoke-argv"
+}
+
 @test "claim emits shell that mints in the caller, never a token value" {
   run --separate-stderr bash -euo pipefail -c \
     'source "$1"; claim_exports dryvist/some-repo' _ "$SCRIPTS/openbao-github-creds.sh"
