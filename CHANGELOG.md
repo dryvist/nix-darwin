@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.63.0](https://github.com/dryvist/nix-darwin/compare/v2.62.0...v2.63.0) (2026-09-12)
+
+
+### Features
+
+* **cribl:** collect AI-CLI transcripts from every managed OS user and stamp enduser_id ([#2510](https://github.com/dryvist/nix-darwin/issues/2510)) ([c305a43](https://github.com/dryvist/nix-darwin/commit/c305a438ec06a5cd19c822e681901d6f14e910d8))
+
 ## [2.62.0](https://github.com/dryvist/nix-darwin/compare/v2.61.2...v2.62.0) (2026-09-12)
 
 

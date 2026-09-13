@@ -14,10 +14,11 @@
 #                by a claim: you must `claim <owner>/<repo>` (which takes a
 #                cross-agent lease) before a write token exists.
 #   repo-create  github/token/<owner>-repo-create   installation-wide,
-#                permission map exactly {administration: write}. Ambient like
-#                write, but never scoped to a repo (nothing to scope before the
-#                repo exists) and never used to push — creating a repo does not
-#                itself grant write; the caller still adds it to
+#                permission map exactly {administration: write}. Unlike read
+#                and write, this credential is never handed to the caller: the
+#                `repo-create` ACTION (below) mints it, spends it on exactly
+#                one repository-creation call, and revokes it — creating a
+#                repo does not itself grant write; the caller still adds it to
 #                OPENBAO_GITHUB_WRITE_REPOS and converges before `token write`
 #                will mint for it.
 #   admin        github/token/<...>-full-automation   installation-wide, full
@@ -51,11 +52,16 @@
 #   3. explicit token to stdout (for scripts / `gh`):
 #        export GITHUB_TOKEN="$(openbao-github-creds token read <owner>)"
 #        export GITHUB_TOKEN="$(openbao-github-creds token write <owner>/<repo>)"  # takes no lease
-#        export GITHUB_TOKEN="$(openbao-github-creds token repo-create <owner>)"   # administration:write only
+#      There is no `token repo-create`: administration:write is never printed
+#      or captured — see repo-create below.
 #
-#   3b. create a repository (mints a repo-create token itself; never pushes):
-#         openbao-github-creds repo create <owner>/<name> [--private|--public] [--description ...]
-#       Prints the new repo's html_url and default_branch, then one line naming
+#   3b. repo-create <owner>/<repo> [private|public] — create a repository. An
+#       ACTION, not a token verb: mints the repo-create credential, spends it
+#       on exactly one API call, revokes it, and never prints it. Runs
+#       non-interactively (refuse_tty, like every other verb here) — the
+#       escalation gate is the operator-provisioned
+#       OPENBAO_APPROLE_GITHUB_REPO_CREATE_ROLE_ID/_SECRET_ID pair, not a
+#       terminal prompt. Prints the new repo's html_url, then one line naming
 #       the next step (add it to OPENBAO_GITHUB_WRITE_REPOS and converge).
 #
 #   4. break-glass (OpenBao is unreachable): mint straight from the GitHub App
@@ -387,6 +393,130 @@ cmd_break_glass() {
   esac
 }
 
+# --- repo-create: the one administration-scoped action ------------------------
+#
+# WHY THIS IS AN ACTION AND NOT A TOKEN VERB. `administration: write` is the
+# permission that creates repositories — and also deletes them, transfers them,
+# rewrites branch protection and flips visibility. Handing such a token to the
+# caller the way `token write` does would put the single most destructive
+# credential in this estate into a shell variable, a transcript, and an agent's
+# environment, where it stays live for its full hour and is reusable for every
+# other administration call. So this verb performs the creation itself: the
+# token is minted, spent on exactly one API call, revoked, and never printed.
+# Nothing the caller can capture carries administration rights.
+#
+# WHY THIS RUNS UNATTENDED, WITH NO TTY OR TYPED CONFIRMATION. The escalation
+# already happened at credential-issuance time: OPENBAO_APPROLE_GITHUB_REPO_
+# CREATE_ROLE_ID/_SECRET_ID is an operator-provisioned pair, scoped server-side
+# by OpenBao's github secrets engine to permission map exactly
+# {administration: write} (github/token/dryvist-repo-create) — the same
+# boundary every other ambient tier (read, write) relies on. A second,
+# interactive gate in front of an already-gated credential would only block
+# the agents this tool exists to serve, not a human without the secret_id.
+#
+# Verified 2026-09-12 against GitHub's permissions reference: POST
+# /orgs/{org}/repos requires repository permission `administration` = write and
+# accepts an installation access token (IAT). The not-yet-existing repository
+# cannot appear in a `repositories` list, so the narrowing axis here is
+# PERMISSIONS, not repositories — installation-wide in breadth, one capability
+# deep. Personal-account repositories are out of reach for an IAT entirely
+# (POST /user/repos does not accept one); this verb is organisations only, and
+# — per repo_create_set_for below — dryvist only, since that is the only
+# repo-create set OpenBao currently has provisioned.
+
+# Exactly one "owner/repo": both halves present, no third segment, nothing that
+# is not a legal name character. Split out so --self-check can exercise it
+# without a terminal or a network.
+valid_repo_target() {
+  case "$1" in
+    *[!A-Za-z0-9._/-]*) return 1 ;;
+    */*/*|/*|*/)        return 1 ;;
+    */*)                return 0 ;;
+    *)                  return 1 ;;
+  esac
+}
+
+cmd_repo_create() {
+  refuse_tty
+  require_env
+  local target="${1:-}" visibility="${2:-private}" owner repo private
+  [ -n "${target}" ] \
+    || die "usage: openbao-github-creds repo-create <owner>/<repo> [private|public]"
+  valid_repo_target "${target}" \
+    || die "expected exactly one <owner>/<repo>, got '${target}'. One repository per invocation; there is no batch form on purpose."
+  case "${visibility}" in
+    private) private=true ;;
+    public)  private=false ;;
+    *)       die "visibility must be 'private' or 'public', got '${visibility}'" ;;
+  esac
+  owner="${target%%/*}"
+  repo="${target#*/}"
+
+  do_repo_create "${owner}" "${repo}" "${private}" "${visibility}"
+}
+
+# Mints the administration-scoped token, spends it on exactly one
+# repo-creation call, and revokes it. Split out of cmd_repo_create purely so
+# this half — the part that actually touches a credential — can be driven
+# directly in a test without going through refuse_tty/require_env.
+do_repo_create() {
+  local owner="$1" repo="$2" private="$3" visibility="$4"
+  local body resp code url
+  # mint_repo_create guarantees a non-empty token or dies (require_tok inside
+  # it) — no separate check needed here.
+  tok="$(mint_repo_create "${owner}")"
+  # Spend it, then kill it. GitHub revokes the installation token the call was
+  # made with, so the credential stops existing once this function returns
+  # rather than living out its hour. Best-effort: a failed revoke must not turn
+  # a successful creation into an error.
+  #
+  # `tok` is deliberately NOT `local`. Bash pops a function's locals the
+  # moment it returns, but this EXIT trap doesn't fire until the whole
+  # process exits — which, on the success path below, is after this function
+  # has already returned. A `local tok` here left the trap referencing an
+  # unbound variable on exactly that path (the only one where a real
+  # administration token is ever minted and spent): under `set -u` the
+  # expansion aborted before the trap's own command ran, so the DELETE never
+  # happened and the token lived out its full ~1h TTL. Every error path
+  # (403/404/422/die) was unaffected, because those call `exit` from within
+  # this same function's still-live call frame — only the return-normally
+  # path was silently unrevoked.
+  # shellcheck disable=SC2317  # reached via the EXIT trap, not by fallthrough
+  revoke() {
+    curl -s -o /dev/null --max-time 10 -X DELETE \
+      -H "Authorization: Bearer ${tok}" -H "Accept: application/vnd.github+json" \
+      "https://api.github.com/installation/token" || true
+  }
+  trap revoke EXIT
+
+  body="$(jq -cn --arg n "${repo}" --argjson p "${private}" '{name: $n, private: $p}')"
+  resp="$(printf '%s' "${body}" \
+    | curl -s --max-time 20 -w $'\n%{http_code}' -X POST \
+        -H "Authorization: Bearer ${tok}" -H "Accept: application/vnd.github+json" \
+        --data-binary @- "https://api.github.com/orgs/${owner}/repos")"
+  code="${resp##*$'\n'}"
+  resp="${resp%$'\n'*}"
+  case "${code}" in
+    201)
+      url="$(jq -r '.html_url // empty' <<<"${resp}")"
+      printf '%s\n' "${url:-https://github.com/${owner}/${repo}}"
+      echo "$prefix created ${owner}/${repo} (${visibility}); administration token revoked." >&2
+      ;;
+    403)
+      die "GitHub refused the creation (403). The App installation for '${owner}' most likely does not hold Administration: write — that grant is a one-time organisation-settings change and cannot be made from here. $(jq -r '.message // empty' <<<"${resp}")"
+      ;;
+    404)
+      die "GitHub returned 404 for org '${owner}'. Either the organisation name is wrong, or '${owner}' is a personal account — an App installation token cannot create repositories on a personal account at all (POST /user/repos does not accept one)."
+      ;;
+    422)
+      die "GitHub rejected the name (422) — usually '${repo}' already exists in ${owner}. $(jq -r '.message // empty' <<<"${resp}")"
+      ;;
+    *)
+      die "repository creation failed (HTTP ${code}): $(jq -r '.message // empty' <<<"${resp}")"
+      ;;
+  esac
+}
+
 lock_path() { echo "github/token"; }  # documented anchor; real path built inline
 
 # CAS-acquire the per-repo write lease. Refuses if another live holder owns it.
@@ -522,57 +652,10 @@ cmd_token() {
     read)  cmd_token_read "${2:-${default_owner}}" ;;
     write) [ -n "${2:-}" ] || die "usage: openbao-github-creds token write <owner>/<repo>"
            split_repo "$2"; mint_write "${owner}" "${repo}"; echo ;;
-    repo-create) mint_repo_create "${2:-${default_owner}}"; echo ;;
     */*|*) cmd_token_read "${1}" ;;   # `token <owner>` shorthand for read
   esac
 }
 cmd_token_read() { mint_read "$1"; echo; }
-
-# repo create <owner>/<name> [--private|--public] [--description ...]
-#
-# Mints its own repo-create token (never reuses a write/claim token — this
-# call never pushes). The created repo is not yet writable: the caller still
-# has to add it to OPENBAO_GITHUB_WRITE_REPOS and converge, same as any repo
-# joining the write tier — this prints that as the one next step, not as an
-# automatic follow-up.
-cmd_repo() {
-  case "${1:-}" in
-    create) shift; cmd_repo_create "$@" ;;
-    *) die "usage: openbao-github-creds repo create <owner>/<name> [--private|--public] [--description <text>]" ;;
-  esac
-}
-
-cmd_repo_create() {
-  refuse_tty
-  require_env
-  [ -n "${1:-}" ] || die "usage: openbao-github-creds repo create <owner>/<name> [--private|--public] [--description <text>]"
-  local target="$1" owner repo name visibility="private" description="" gh_tok body resp url branch
-  shift
-  split_repo "${target}"
-  name="${repo}"
-  while [ $# -gt 0 ]; do
-    case "$1" in
-      --private) visibility="private"; shift ;;
-      --public)  visibility="public"; shift ;;
-      --description) description="${2:-}"; shift 2 ;;
-      *) die "unknown option '$1' (usage: repo create <owner>/<name> [--private|--public] [--description <text>])" ;;
-    esac
-  done
-  gh_tok="$(mint_repo_create "${owner}")"
-  body="$(jq -cn --arg n "${name}" --arg d "${description}" --argjson priv "$([ "${visibility}" = private ] && echo true || echo false)" \
-    '{name: $n, private: $priv} + (if $d == "" then {} else {description: $d} end)')"
-  resp="$(printf '%s' "${body}" \
-    | curl -sf --max-time 15 -X POST \
-        -H "Authorization: Bearer ${gh_tok}" -H "Accept: application/vnd.github+json" \
-        --data-binary @- "https://api.github.com/orgs/${owner}/repos")" \
-    || die "repo creation failed for ${owner}/${name} (org exists? name free? repo-create token has administration:write on the App?)"
-  url="$(jq -r '.html_url // empty' <<<"${resp}")"
-  branch="$(jq -r '.default_branch // empty' <<<"${resp}")"
-  [ -n "${url}" ] || die "repo creation response for ${owner}/${name} had no html_url: ${resp}"
-  echo "${url}"
-  echo "default_branch: ${branch}"
-  echo "$prefix next step: add '${owner}/${name}' to OPENBAO_GITHUB_WRITE_REPOS and converge before 'token write' can push to it." >&2
-}
 
 self_check() {
   local out
@@ -604,12 +687,18 @@ self_check() {
   if [ "$(jq -r '.pull_requests' <<<"${bg_write_scope}")" != "write" ]; then
     echo "self-check FAIL: break-glass write scope lacks pull_requests:write"; return 1
   fi
+  # The EVERYDAY paths must never grant administration. That assertion predates
+  # repo-create and is not weakened by it: repo-create does not hand its token
+  # to anyone, so these two remain the only scopes a caller can ever hold.
   if [ "$(jq -r 'has("administration")' <<<"${bg_write_scope}")" != "false" ]; then
     echo "self-check FAIL: break-glass write scope must never grant administration"; return 1
   fi
+  if [ "$(jq -r 'has("administration")' <<<"${bg_read_scope}")" != "false" ]; then
+    echo "self-check FAIL: break-glass read scope must never grant administration"; return 1
+  fi
+  self_check_repo_create || return 1
   self_check_write_realms || return 1
   self_check_lock_reacquire || return 1
-  self_check_repo_create || return 1
   echo "self-check OK"
 }
 
@@ -647,9 +736,11 @@ self_check_write_realms() {
     || { echo "self-check FAIL: malformed realm data routed to '${got}'"; return 1; }
 }
 
-# repo-create: exercised without a server, plus one live-adjacent check that
-# the tier fails CLOSED rather than falling back to some other credential
-# when its env pair is absent — no live mint attempted either way.
+# repo-create: exercised without a server. Owner routing and target validation
+# both run unconditionally; the AppRole-mint check below is the one
+# live-adjacent piece, asserting the tier fails CLOSED rather than falling
+# back to some other credential when its env pair is absent — no live mint
+# attempted either way.
 self_check_repo_create() {
   local got out
   got="$(repo_create_set_for dryvist)"
@@ -659,6 +750,18 @@ self_check_repo_create() {
   if out="$(repo_create_set_for JacobPEvans-personal 2>&1)"; then
     echo "self-check FAIL: repo_create_set_for accepted a non-dryvist owner ('${out}')"; return 1
   fi
+
+  # Target validation: one repo per invocation, and nothing that could smuggle
+  # a second path segment or a shell/URL metacharacter into the API path.
+  local t
+  for t in dryvist/new-repo owner/a.b_c-d; do
+    valid_repo_target "${t}" || { echo "self-check FAIL: rejected valid target '${t}'"; return 1; }
+  done
+  for t in "" bare-repo a/b/c /leading trailing/ "a b/c" "a/b;id" "a/b?x=1"; do
+    if valid_repo_target "${t}"; then
+      echo "self-check FAIL: accepted invalid target '${t}'"; return 1
+    fi
+  done
 
   if bao_login_configured GITHUB_REPO_CREATE; then
     echo "self-check SKIP: GITHUB_REPO_CREATE AppRole configured on this machine — not exercising a live mint"
@@ -727,8 +830,8 @@ case "${1:-}" in
   claim)        cmd_claim "${2:-}" ;;
   release)      cmd_release "${2:-}" ;;
   token)        shift; cmd_token "$@" ;;
-  repo)         shift; cmd_repo "$@" ;;
   break-glass)  shift; cmd_break_glass "$@" ;;
+  repo-create)  shift; cmd_repo_create "$@" ;;
   --self-check) self_check ;;
-  *) die "usage: openbao-github-creds {get|store|erase|claim <owner>/<repo>|release [<owner>/<repo>]|token [read|write|repo-create] [<owner>[/<repo>]]|repo create <owner>/<name> [--private|--public] [--description <text>]|break-glass [read|write] [<owner>[/<repo>]]|--self-check}" ;;
+  *) die "usage: openbao-github-creds {get|store|erase|claim <owner>/<repo>|release [<owner>/<repo>]|token [read|write] [<owner>[/<repo>]]|break-glass [read|write] [<owner>[/<repo>]]|repo-create <owner>/<repo> [private|public]|--self-check}" ;;
 esac

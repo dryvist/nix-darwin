@@ -153,6 +153,98 @@ SH
 # indistinguishable from a pipe into an agent transcript — refuse_tty only sees
 # terminals, so it cannot protect this path. The emitted shell must therefore
 # carry no credential of its own: it mints inside the caller's substitution.
+# repo-create is the only subcommand that can request administration:write. Its
+# safety rests on a property self-check cannot assert, because it is about the
+# process boundary rather than about a value: it must reject a bad target
+# BEFORE anything reaches the network. There is deliberately no interactive
+# gate here (unlike an earlier design) — the escalation is the
+# operator-provisioned GITHUB_REPO_CREATE AppRole pair, and this verb must run
+# unattended like every other tier in this file.
+@test "repo-create rejects a malformed target before touching the network" {
+  write_stub "$STUB_DIR/curl" <<SH
+echo "called" >> "\$BATS_TEST_TMPDIR/curl-calls"
+exit 22
+SH
+
+  # A second path segment is the dangerous shape: it would extend the API path.
+  run_creds repo-create dryvist/some/repo
+
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"exactly one <owner>/<repo>"* ]]
+  [ ! -f "$BATS_TEST_TMPDIR/curl-calls" ]
+}
+
+@test "repo-create rejects an unknown visibility" {
+  run_creds repo-create dryvist/some-new-repo internal
+
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"visibility must be"* ]]
+}
+
+@test "the administration scope is reachable only from repo-create" {
+  # The everyday scopes are what a caller can actually hold; neither may ever
+  # carry administration. Asserted here as well as in --self-check so the
+  # property is covered even if a future edit reorders the self-check.
+  run bash -euo pipefail -c \
+    'source "$1"; printf "%s\n%s\n" "$bg_read_scope" "$bg_write_scope"' \
+    _ "$SCRIPTS/openbao-github-creds.sh"
+
+  [ "$status" -eq 0 ]
+  ! grep -q 'administration' <<<"$output"
+}
+
+# do_repo_create is the mint -> spend -> revoke half of repo-create, split out
+# of cmd_repo_create so this can be driven directly without going through
+# refuse_tty/require_env. This is the test whose absence let a real bug ship:
+# `tok` was `local` to the function that set the EXIT trap, and bash pops a
+# function's locals on return, while an EXIT trap fires later, at process
+# exit. On the success path below (the only path where a real administration
+# token is ever minted and spent) that left the trap referencing an unbound
+# `${tok}`, which aborted under `set -u` before the trap's own DELETE call ran
+# — so the token was never actually revoked despite the repo being created and
+# the URL printed. Every error path was unaffected, because `die` exits from
+# within the same still-live call frame. The mint itself goes through the
+# OpenBao GITHUB_REPO_CREATE AppRole, not a GitHub App JWT — same as every
+# other tier in this file — but the revoke call (DELETE
+# /installation/token) is identical either way, since it operates on the
+# resulting GitHub installation token regardless of how it was minted.
+@test "a successful repo-create revokes the administration token afterward" {
+  export OPENBAO_APPROLE_GITHUB_REPO_CREATE_ROLE_ID=role-abc
+  export OPENBAO_APPROLE_GITHUB_REPO_CREATE_SECRET_ID=secret-abc
+  write_stub "$STUB_DIR/curl" <<SH
+case " \$* " in
+  *"auth/approle/login"*)
+    echo '{"auth":{"client_token":"bao-tok-123"}}'
+    exit 0
+    ;;
+  *"github/token/dryvist-repo-create"*)
+    echo '{"data":{"token":"ghs_faketoken123"}}'
+    exit 0
+    ;;
+  *"/installation/token"*)
+    for a in "\$@"; do echo "\$a" >> "\$BATS_TEST_TMPDIR/revoke-argv"; done
+    exit 0
+    ;;
+  *"/orgs/dryvist/repos"*)
+    printf '%s\n%s' '{"html_url":"https://github.com/dryvist/zz-demo-repo"}' 201
+    exit 0
+    ;;
+esac
+exit 22
+SH
+
+  run --separate-stderr bash -euo pipefail -c \
+    'source "$1"; do_repo_create dryvist zz-demo-repo true private' \
+    _ "$SCRIPTS/openbao-github-creds.sh"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"https://github.com/dryvist/zz-demo-repo"* ]]
+  # The bug: this file never existed because the revoke trap died on an
+  # unbound variable before its curl call ran.
+  [ -f "$BATS_TEST_TMPDIR/revoke-argv" ]
+  grep -q "ghs_faketoken123" "$BATS_TEST_TMPDIR/revoke-argv"
+}
+
 @test "claim emits shell that mints in the caller, never a token value" {
   run --separate-stderr bash -euo pipefail -c \
     'source "$1"; claim_exports dryvist/some-repo' _ "$SCRIPTS/openbao-github-creds.sh"
