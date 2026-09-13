@@ -74,13 +74,14 @@ STUB
   # maintains KV_STATE across calls so a rotation's write-back is visible to
   # the next read — the tests below depend on that being real, not recorded.
   write_stub "$STUB_DIR/curl" << STUB
-method="GET"; data=""; url=""
+method="GET"; data=""; url=""; want_code=""
 while [ "\$#" -gt 0 ]; do
   case "\$1" in
     -X) method="\$2"; shift 2 ;;
     -d|--data-urlencode) data="\$2"; shift 2 ;;
+    --data-binary) [ "\$2" = "@-" ] && data="\$(cat)"; shift 2 ;;
     -H|--max-time|-o) shift 2 ;;
-    -w) shift 2 ;;
+    -w) want_code=1; shift 2 ;;
     -s|-f|-sf) shift ;;
     http*) url="\$1"; shift ;;
     *) shift ;;
@@ -89,11 +90,14 @@ done
 
 case "\$url" in
   */auth/approle/login)
-    role_id=\$(echo "\$data" | jq -r '.role_id')
+    role_id=\$(echo "\$data" | jq -r '.role_id // empty')
     if [ -n "\${SLACK_OPS_LOGIN_FAIL:-}" ] && [ "\$role_id" = "\$OPENBAO_APPROLE_SLACK_OPS_ROLE_ID" ]; then
-      exit 1
+      echo '{"errors":["permission denied"]}'
+      if [ -n "\$want_code" ]; then printf '403'; fi
+    else
+      echo '{"auth":{"client_token":"stub-bao-token"}}'
+      if [ -n "\$want_code" ]; then printf '200'; fi
     fi
-    echo '{"auth":{"client_token":"stub-bao-token"}}'
     ;;
   */secrets-external/data/platform/slack-admin)
     if [ "\$method" = "POST" ]; then

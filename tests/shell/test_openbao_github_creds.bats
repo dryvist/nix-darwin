@@ -117,6 +117,7 @@ case " $* " in
   *"auth/approle/login"*)
     cat > "$BATS_TEST_TMPDIR/curl-stdin"
     echo '{"auth":{"client_token":"tok-123"}}'
+    printf '200'
     exit 0
     ;;
 esac
