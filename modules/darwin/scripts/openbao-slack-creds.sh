@@ -102,9 +102,9 @@ bao_login() {
   # timeout must not turn a slow success into a reported failure. -w appends
   # the HTTP status so a failure can name it (and the store's .errors[0])
   # instead of a bare "failed".
-  resp="$("${curl_bin}" -s --max-time 60 -w '\n%{http_code}' -X POST \
-    -d "{\"role_id\":\"${role_id}\",\"secret_id\":\"${secret_id}\"}" \
-    "${bao_addr}/v1/auth/approle/login")" || die "AppRole login (SLACK_ADMIN) failed: curl could not reach ${bao_addr}"
+  resp="$(jq -n --arg r "${role_id}" --arg s "${secret_id}" '{role_id: $r, secret_id: $s}' \
+    | "${curl_bin}" -s --max-time 60 -w '\n%{http_code}' -X POST --data-binary @- \
+        "${bao_addr}/v1/auth/approle/login")" || die "AppRole login (SLACK_ADMIN) failed: curl could not reach ${bao_addr}"
   http_code="${resp##*$'\n'}"
   resp="${resp%$'\n'*}"
   case "${http_code}" in
@@ -370,9 +370,9 @@ bao_login_slack_ops() {
   # timeout must not turn a slow success into a reported failure. -w appends
   # the HTTP status so a failure can name it (and the store's .errors[0])
   # instead of a bare "failed".
-  resp="$("${curl_bin}" -s --max-time 60 -w '\n%{http_code}' -X POST \
-    -d "{\"role_id\":\"${role_id}\",\"secret_id\":\"${secret_id}\"}" \
-    "${bao_addr}/v1/auth/approle/login")" \
+  resp="$(jq -n --arg r "${role_id}" --arg s "${secret_id}" '{role_id: $r, secret_id: $s}' \
+    | "${curl_bin}" -s --max-time 60 -w '\n%{http_code}' -X POST --data-binary @- \
+        "${bao_addr}/v1/auth/approle/login")" \
     || die "AppRole login (SLACK_OPS) failed — curl could not reach ${bao_addr}"
   http_code="${resp##*$'\n'}"
   resp="${resp%$'\n'*}"
