@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.64.0](https://github.com/dryvist/nix-darwin/compare/v2.63.0...v2.64.0) (2026-09-13)
+
+
+### Features
+
+* **openbao-github-creds:** add gated repo-create verb ([#2509](https://github.com/dryvist/nix-darwin/issues/2509)) ([2536123](https://github.com/dryvist/nix-darwin/commit/25361235f76d798142aa3413bf15a3d6432cdc2f))
+
+
+### Bug Fixes
+
+* **openbao-creds:** allow 60 s for AppRole login and report the HTTP status on failure ([#2515](https://github.com/dryvist/nix-darwin/issues/2515)) ([1896f1d](https://github.com/dryvist/nix-darwin/commit/1896f1d4405ab8be1e738601b918a23d12b533d5))
+
 ## [2.63.0](https://github.com/dryvist/nix-darwin/compare/v2.62.0...v2.63.0) (2026-09-12)
 
 
