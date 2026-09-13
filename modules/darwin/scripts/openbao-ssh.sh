@@ -87,7 +87,7 @@ token=$(jq -nc \
   --arg role_id "$OPENBAO_APPROLE_ANSIBLE_ROLE_ID" \
   --arg secret_id "$OPENBAO_APPROLE_ANSIBLE_SECRET_ID" \
   '{role_id: $role_id, secret_id: $secret_id}' |
-  curl -fsSL --max-time 10 -H 'Content-Type: application/json' --data @- \
+  curl -fsSL --max-time 60 -H 'Content-Type: application/json' --data @- \
     "$BAO_ADDR/v1/auth/approle/login" | jq -er '.auth.client_token')
 
 jq -nc --rawfile public_key "$workdir/id.pub" --arg ttl "$ttl" \

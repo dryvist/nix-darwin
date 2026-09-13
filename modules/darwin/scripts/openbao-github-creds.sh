@@ -158,7 +158,7 @@ bao_login_configured() {
 # complete becomes a request made with an empty X-Vault-Token, and whatever
 # the caller reports afterwards is reported as though the credential were fine.
 bao_login() {
-  local approle_prefix="$1" role_id_var secret_id_var role_id secret_id resp token
+  local approle_prefix="$1" role_id_var secret_id_var role_id secret_id resp token http_code
   bao_login_var_names "${approle_prefix}"
   bao_login_configured "${approle_prefix}" || \
     die "${role_id_var} / ${secret_id_var} not in environment — run under 'doppler run'"
@@ -166,9 +166,20 @@ bao_login() {
   secret_id="${!secret_id_var}"
   # Credential travels via a private payload on stdin, never argv (argv is
   # visible to any local process via ps).
+  # AppRole logins can take 4-30s when the store's write path is slow, so the
+  # timeout must not turn a slow success into a reported failure; -w appends
+  # the HTTP status so a failure can name it (and the store's .errors[0])
+  # instead of a bare "failed".
   resp="$(jq -n --arg r "${role_id}" --arg s "${secret_id}" '{role_id: $r, secret_id: $s}' \
-    | curl -sf --max-time 10 -X POST --data-binary @- \
-        "${bao_addr}/v1/auth/approle/login")" || die "AppRole login (${approle_prefix}) failed"
+    | curl -s --max-time 60 -w '\n%{http_code}' -X POST --data-binary @- \
+        "${bao_addr}/v1/auth/approle/login")" \
+    || die "AppRole login (${approle_prefix}) failed: curl could not reach ${bao_addr}"
+  http_code="${resp##*$'\n'}"
+  resp="${resp%$'\n'*}"
+  case "${http_code}" in
+    2??) ;;
+    *) die "AppRole login (${approle_prefix}) failed: http=${http_code} $(jq -r '.errors[0] // "no error body"' <<<"${resp}" 2>/dev/null)" ;;
+  esac
   token="$(jq -r '.auth.client_token // empty' <<<"${resp}")"
   [ -n "${token}" ] || die "AppRole login (${approle_prefix}) returned no client_token"
   printf '%s' "${token}"

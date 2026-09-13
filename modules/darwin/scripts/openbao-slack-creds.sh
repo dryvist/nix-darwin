@@ -93,14 +93,24 @@ require_env() {
 
 # AppRole login for the slack-admin identity; prints the client_token.
 bao_login() {
-  local role_id secret_id resp token
+  local role_id secret_id resp token http_code
   role_id="${OPENBAO_APPROLE_SLACK_ADMIN_ROLE_ID:-}"
   secret_id="${OPENBAO_APPROLE_SLACK_ADMIN_SECRET_ID:-}"
   [ -n "${role_id}" ] && [ -n "${secret_id}" ] || \
     die "OPENBAO_APPROLE_SLACK_ADMIN_ROLE_ID / OPENBAO_APPROLE_SLACK_ADMIN_SECRET_ID not in environment — run under 'doppler run'"
-  resp="$("${curl_bin}" -sf --max-time 10 -X POST \
+  # 60s: AppRole logins take 4-30s when the store's write path is slow, so the
+  # timeout must not turn a slow success into a reported failure. -w appends
+  # the HTTP status so a failure can name it (and the store's .errors[0])
+  # instead of a bare "failed".
+  resp="$("${curl_bin}" -s --max-time 60 -w '\n%{http_code}' -X POST \
     -d "{\"role_id\":\"${role_id}\",\"secret_id\":\"${secret_id}\"}" \
-    "${bao_addr}/v1/auth/approle/login")" || die "AppRole login (SLACK_ADMIN) failed"
+    "${bao_addr}/v1/auth/approle/login")" || die "AppRole login (SLACK_ADMIN) failed: curl could not reach ${bao_addr}"
+  http_code="${resp##*$'\n'}"
+  resp="${resp%$'\n'*}"
+  case "${http_code}" in
+    2??) ;;
+    *) die "AppRole login (SLACK_ADMIN) failed: http=${http_code} $(jq -r '.errors[0] // "no error body"' <<<"${resp}" 2>/dev/null)" ;;
+  esac
   token="$(jq -r '.auth.client_token // empty' <<<"${resp}")"
   [ -n "${token}" ] || die "AppRole login (SLACK_ADMIN) returned no client_token"
   printf '%s' "${token}"
@@ -351,15 +361,25 @@ cmd_manifest_validate() {
 slack_ops_kv_path="secrets-external/data/platform/slack-ops"
 
 bao_login_slack_ops() {
-  local role_id secret_id resp token
+  local role_id secret_id resp token http_code
   role_id="${OPENBAO_APPROLE_SLACK_OPS_ROLE_ID:-}"
   secret_id="${OPENBAO_APPROLE_SLACK_OPS_SECRET_ID:-}"
   [ -n "${role_id}" ] && [ -n "${secret_id}" ] || \
     die "OPENBAO_APPROLE_SLACK_OPS_ROLE_ID / OPENBAO_APPROLE_SLACK_OPS_SECRET_ID not in environment — run under 'doppler run'"
-  resp="$("${curl_bin}" -sf --max-time 10 -X POST \
+  # 60s: AppRole logins take 4-30s when the store's write path is slow, so the
+  # timeout must not turn a slow success into a reported failure. -w appends
+  # the HTTP status so a failure can name it (and the store's .errors[0])
+  # instead of a bare "failed".
+  resp="$("${curl_bin}" -s --max-time 60 -w '\n%{http_code}' -X POST \
     -d "{\"role_id\":\"${role_id}\",\"secret_id\":\"${secret_id}\"}" \
     "${bao_addr}/v1/auth/approle/login")" \
-    || die "AppRole login (SLACK_OPS) failed — verify OPENBAO_APPROLE_SLACK_OPS_ROLE_ID/_SECRET_ID are correct and the slack-ops AppRole exists in OpenBao"
+    || die "AppRole login (SLACK_OPS) failed — curl could not reach ${bao_addr}"
+  http_code="${resp##*$'\n'}"
+  resp="${resp%$'\n'*}"
+  case "${http_code}" in
+    2??) ;;
+    *) die "AppRole login (SLACK_OPS) failed: http=${http_code} $(jq -r '.errors[0] // "no error body"' <<<"${resp}" 2>/dev/null) — verify OPENBAO_APPROLE_SLACK_OPS_ROLE_ID/_SECRET_ID are correct and the slack-ops AppRole exists in OpenBao" ;;
+  esac
   token="$(jq -r '.auth.client_token // empty' <<<"${resp}")"
   [ -n "${token}" ] || die "AppRole login (SLACK_OPS) returned no client_token"
   printf '%s' "${token}"
