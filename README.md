@@ -4,7 +4,7 @@
 
 [![License][license-img]][license-link]
 
-[![CI Gate][ci-gate-img]][ci-gate-link] [![Nix Build][nix-build-img]][nix-build-link] [![Markdown Lint][md-lint-img]][md-lint-link]
+[![CI Gate][ci-gate-img]][ci-gate-link] [![Nix Build][nix-build-img]][nix-build-link]
 
 ## What Is This?
 
@@ -157,7 +157,5 @@ Contributions welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 [ci-gate-link]: https://github.com/JacobPEvans/nix-darwin/actions/workflows/ci-gate.yml
 [nix-build-img]: https://github.com/JacobPEvans/nix-darwin/actions/workflows/ci-nix.yml/badge.svg
 [nix-build-link]: https://github.com/JacobPEvans/nix-darwin/actions/workflows/ci-nix.yml
-[md-lint-img]: https://github.com/JacobPEvans/nix-darwin/actions/workflows/ci-markdownlint.yml/badge.svg
-[md-lint-link]: https://github.com/JacobPEvans/nix-darwin/actions/workflows/ci-markdownlint.yml
 
 > Part of a [larger ecosystem of ~40 repos](https://docs.jacobpevans.com) — see how it all fits together.
