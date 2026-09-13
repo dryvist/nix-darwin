@@ -526,11 +526,11 @@
     "dotgithub": {
       "flake": false,
       "locked": {
-        "lastModified": 1789279454,
-        "narHash": "sha256-8re91TlN31wGw5Y9DyOVdkENi22mfALMUnbytMKCIW4=",
+        "lastModified": 1789285680,
+        "narHash": "sha256-jdfbpbrSW6If3CwWDXLCcSafiTt1ILkd9H1XTBx0FtE=",
         "owner": "dryvist",
         "repo": ".github",
-        "rev": "9b1ca5404a1a6423b6af27467c16f128ffd1dd52",
+        "rev": "6a5c3bebbf50cf0248f3fd1e13d0b4b090620b79",
         "type": "github"
       },
       "original": {
@@ -1225,11 +1225,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1789326273,
-        "narHash": "sha256-Xnj9/EXAnwU5WFoujbp5cVryZ6ywvOMoJy3u/TAPMzQ=",
+        "lastModified": 1789326402,
+        "narHash": "sha256-KiKT7uRuQ5dyoX99CjtrCyPSgw9v4CictAk+2ihXJG4=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "2a6bcbd39ba7b360fba16065f610b1eab72c54de",
+        "rev": "01fbfcc29db34d69f7e8d62dfed1253bc8210cc8",
         "type": "github"
       },
       "original": {
