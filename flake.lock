@@ -1007,11 +1007,11 @@
     "jacobpevans-cc-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1789250609,
-        "narHash": "sha256-MpnI6D5jw7hFmEX3ym5fPRCk8TzAyevyLyD4io3oVQ4=",
+        "lastModified": 1789328106,
+        "narHash": "sha256-q8J6344SxSE5Wb7ATh6CNVRal31T17+y1uMBF0mVUqc=",
         "owner": "dryvist",
         "repo": "claude-code-plugins",
-        "rev": "e90905c34907bb62997c72db1a26dbcac790b77d",
+        "rev": "95926f263490bc4666239fbe3f7541a3a639f1f4",
         "type": "github"
       },
       "original": {
@@ -1225,11 +1225,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1789326402,
-        "narHash": "sha256-KiKT7uRuQ5dyoX99CjtrCyPSgw9v4CictAk+2ihXJG4=",
+        "lastModified": 1789334781,
+        "narHash": "sha256-IJPzmrzdOnCosFHm0VJ9ssWP6nC2c/dvClZjKhyncbY=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "01fbfcc29db34d69f7e8d62dfed1253bc8210cc8",
+        "rev": "037bb86b4cc3c78962308c24f623431c7660149a",
         "type": "github"
       },
       "original": {
@@ -1412,11 +1412,11 @@
         "orbstack-kubernetes": "orbstack-kubernetes"
       },
       "locked": {
-        "lastModified": 1789257436,
-        "narHash": "sha256-MxN9IczY2bnwQYD2fksc3bdISoJxo5DjVkU4qNgHHvc=",
+        "lastModified": 1789328496,
+        "narHash": "sha256-JWy7T9ooMa6CtFNwlF1x3a1TF80eDSqB/vBilaVpzUo=",
         "owner": "dryvist",
         "repo": "nix-home",
-        "rev": "8a6e5e6120664bfac5e70d8004a008455f4eef3d",
+        "rev": "faee3159ed55859f06cee03ed1542dda0d27d2ee",
         "type": "github"
       },
       "original": {
