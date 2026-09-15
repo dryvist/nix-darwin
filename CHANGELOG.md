@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.64.1](https://github.com/dryvist/nix-darwin/compare/v2.64.0...v2.64.1) (2026-09-15)
+
+
+### Bug Fixes
+
+* **agent-identity:** owner-only agent homes, no ssh-agent passthrough ([#2528](https://github.com/dryvist/nix-darwin/issues/2528)) ([07ace3f](https://github.com/dryvist/nix-darwin/commit/07ace3ff3058a7289c05ccffb64a95403578970a))
+
 ## [2.64.0](https://github.com/dryvist/nix-darwin/compare/v2.63.0...v2.64.0) (2026-09-13)
 
 
