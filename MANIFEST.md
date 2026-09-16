@@ -19,14 +19,15 @@ Source: `modules/darwin/common.nix`
 
 | Package | Description |
 | --- | --- |
-| entire | AI-session capture for git (records live agent sessions) |
-| git | Version control |
+| git | Version control (bootstrapping) |
 | gnupg | GPG encryption and signing |
 | vim | Text editor |
+| mas | Mac App Store CLI |
+| ngrep | Network packet grep |
 
 ### Modern CLI Tools
 
-Source: `modules/darwin/common.nix`
+Source: nix-home (`modules/common/packages/core.nix` via flake input)
 
 | Package | Description |
 | --- | --- |
@@ -41,30 +42,11 @@ Source: `modules/darwin/common.nix`
 | htop | Interactive process viewer |
 | jq | JSON parsing |
 | ncdu | NCurses disk usage analyzer |
-| ngrep | Network packet grep |
 | ripgrep | Fast grep alternative (rg) |
 | tldr | Simplified, community-driven man pages |
 | tree | Directory tree visualization |
 | watchexec | File watcher that re-executes commands on changes |
 | yq | YAML/XML/TOML parsing (like jq) |
-| sox | Audio recording, conversion, and effects (Sound eXchange) |
-| portaudio | Cross-platform audio I/O library |
-
-### Development Tools
-
-Source: `modules/darwin/common.nix`
-
-| Package | Description |
-| --- | --- |
-| mas | Mac App Store CLI |
-
-### Graphical Applications
-
-Source: `modules/darwin/common.nix`
-
-| Package | Description |
-| --- | --- |
-| gimp | GNU Image Manipulation Program photo editor |
 
 ---
 
@@ -82,6 +64,7 @@ Source: nix-home (`home.packages` via flake input)
 
 | Package | Description |
 | --- | --- |
+| entire | AI-session capture for git (records live agent sessions) |
 | git-flow-next | Modern git-flow workflow tool (custom buildGoModule, gittower/git-flow-next v1.0.0) |
 | git-bug | Distributed bug tracker embedded in git (`git bug` command) |
 
@@ -111,7 +94,8 @@ Source: nix-home (`home.packages` via flake input)
 | --- | --- |
 | bitwarden-cli | CLI for Bitwarden password manager (bw) |
 | bws | Bitwarden Secrets Manager CLI, pinned from Bitwarden's official release to avoid nixpkgs' Rust source rebuild |
-| doppler | Doppler secrets manager CLI |
+| doppler | Doppler secrets manager CLI (restricted to jevans and claude accounts) |
+| openbao | OpenBao secrets manager CLI (`bao`, operator account via `hosts/common/home.nix`) |
 
 ### Remote Shell
 
@@ -148,6 +132,7 @@ copies them to `~/Applications/Home Manager Apps/` at TCC-stable paths.
 | code-cursor | Cursor AI IDE (VS Code fork) |
 | discord | Voice/video chat (copyApps for TCC camera/mic stability) |
 | ffmpeg | Audio/video recording, conversion, streaming |
+| sox | Sound eXchange audio recording, conversion, and effects CLI |
 | ghostty-bin | Terminal emulator |
 | rapidapi | Full-featured HTTP client |
 | swiftbar | Menu bar customization |

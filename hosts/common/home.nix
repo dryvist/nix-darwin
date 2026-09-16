@@ -229,6 +229,10 @@ in
   # Nix does NOT manage the volume contents — it only creates the symlink. The
   # volume itself is created by a launchd daemon (modules/darwin/apps/orbstack.nix).
   home = {
+    packages = [
+      pkgs.openbao
+    ];
+
     file = lib.mkIf (hostConfig.orbstack.enable or false) {
       # The Group Container symlink is deliberately NOT here — see
       # `linkOrbstackContainer` below. home.file re-links every managed path on

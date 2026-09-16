@@ -79,20 +79,9 @@ in
     # ========================================================================
     # Core CLI tools (bootstrapping - needed before home-manager)
     # ========================================================================
-    entire # AI-session capture for git (records live agent sessions)
     git
     gnupg
     vim
-
-    # ========================================================================
-    # Secret store client
-    # ========================================================================
-    # General client for the secret store: AppRole login, KV reads, and SSH
-    # certificate signing (`bao ssh`, `bao write <mount>/sign/<role>`). The
-    # openbao-*-creds wrappers in modules/darwin/apps wrap three specific
-    # credential types; anything they do not wrap previously had no tool at
-    # all, which pushed operators into hand-rolled curl against the HTTP API.
-    openbao
 
     # ========================================================================
     # macOS-specific system tools
@@ -103,12 +92,6 @@ in
     # Network & process tools
     # ========================================================================
     ngrep # Network packet grep (useful for debugging)
-
-    # ========================================================================
-    # Audio libraries (system-level dependencies)
-    # ========================================================================
-    sox # Audio recording, conversion, and effects (Sound eXchange)
-    portaudio # Cross-platform audio I/O library
   ];
   # GUI apps: SwiftBar via home-manager copyApps (hosts/macbook-m4/home.nix);
   # Raycast / Bitwarden / Ghostty / etc. are Homebrew casks (see homebrew.nix).

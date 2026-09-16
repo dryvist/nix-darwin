@@ -217,6 +217,7 @@ in
 
     # CLI / Media tools (non-GUI, no .app bundle)
     ffmpeg # Complete solution to record, convert and stream audio and video
+    sox # Sound eXchange audio recording, conversion, and effects CLI
     d2 # D2 diagram compiler — kept on PATH for the Cursor D2 extension's live
     # preview (elsewhere it's on-demand only via `nix run nixpkgs#d2`)
   ];
