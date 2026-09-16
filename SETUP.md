@@ -57,6 +57,22 @@ sudo -n /run/current-system/sw/bin/darwin-rebuild switch \
   --flake /Users/claude/git/public/nix/nix-darwin#<host>
 ```
 
+## Multi-User Doppler Configuration
+
+Doppler CLI is installed per-user via Home Manager exclusively for authorized identities (`jevans` and `claude`).
+System-level packages intentionally exclude Doppler so unmanaged accounts (`visicore`, system daemons, root) have no access.
+Configuration remains strictly separated per user:
+
+1. **Version Parity**: Both `jevans` and `claude` receive Doppler from the same pinned `nixpkgs` derivation, ensuring identical versions.
+2. **Configuration Isolation**: Doppler stores config in `~/.doppler/.doppler.yaml` (mode `0700` directory, `0600` file).
+   Each OS user has an isolated home directory that other users cannot read.
+3. **User Tiers**:
+   - **Operator (`jevans`)**: Uses personal authentication (`doppler login`) with directory scopes under `~/git` mapped to relevant projects.
+   - **Automation (`claude`)**: Uses a scoped service token configured via `sudo -u claude -i doppler configure set token=<service-token> --scope ~`.
+   - **Untrusted / Lower-Trust (`open-llm`)**: Doppler CLI is explicitly excluded from the profile (`home.path` filter + `rm -f $out/bin/doppler`).
+     Any stale credentials in `~/.doppler` are purged on activation.
+   - **Doppler tokens must never be set in system-wide environment files** (`/etc/zshenv`, `/etc/zprofile`), preserving user boundary isolation.
+
 ## Issues Solved
 
 ### 1. Determinate Nix Compatibility

@@ -16,13 +16,50 @@
 # ai-tools.nix) and are likewise not removable from here.
 
 {
+  config,
   lib,
+  pkgs,
   userConfig,
   ...
 }:
 
 {
   home-profile.preset = "server";
+
+  # open-llm is a lower-trust identity running opencode/cursor.
+  # It must NOT have access to Doppler or secret management CLIs.
+  home = {
+    # 1. Filter doppler out from home.packages when building home-manager-path:
+    path = lib.mkForce (
+      pkgs.buildEnv {
+        name = "home-manager-path";
+        paths = builtins.filter (
+          p:
+          let
+            name = p.pname or p.name or "";
+          in
+          name != "doppler" && !(lib.hasPrefix "doppler-" name)
+        ) config.home.packages;
+        inherit (config.home) extraOutputsToInstall;
+        postBuild = config.home.extraProfileCommands;
+        meta = {
+          description = "Environment of packages for ${config.home.username}";
+        };
+      }
+    );
+
+    # 2. Defense in depth: remove any binary named doppler from profile outputs:
+    extraProfileCommands = ''
+      rm -f $out/bin/doppler
+    '';
+
+    # 3. Purge any leftover ~/.doppler credentials from this account's home:
+    activation.removeDoppler = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      if [ -d "$HOME/.doppler" ]; then
+        $DRY_RUN_CMD rm -rf "$HOME/.doppler"
+      fi
+    '';
+  };
 
   programs = {
     # Reading the operator's checkouts trips git's ownership check, because
