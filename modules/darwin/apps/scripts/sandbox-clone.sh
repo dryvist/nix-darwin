@@ -71,16 +71,14 @@ if [ -L "$dest_canonical" ]; then
   exit 1
 fi
 
-# Mint ephemeral token at call time if not provided in environment
-token="${GH_TOKEN:-${GITHUB_TOKEN:-}}"
-if [ -z "$token" ]; then
-  if command -v openbao-github-creds >/dev/null 2>&1; then
-    token="$(openbao-github-creds token read "$owner" 2>/dev/null || true)"
-  fi
+# Mint ephemeral token strictly at call time from OpenBao (never accept ambient GH_TOKEN)
+token=""
+if command -v openbao-github-creds >/dev/null 2>&1; then
+  token="$(openbao-github-creds token read "$owner" 2>/dev/null || true)"
 fi
 
 if [ -z "$token" ]; then
-  echo "error: could not obtain ephemeral GitHub token for $owner" >&2
+  echo "error: could not obtain ephemeral GitHub token for $owner from OpenBao" >&2
   exit 1
 fi
 

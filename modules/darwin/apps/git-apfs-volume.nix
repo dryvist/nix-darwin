@@ -29,12 +29,25 @@ let
     runtimeInputs = [ pkgs.git ];
     text = builtins.readFile ./scripts/sandbox-clone.sh;
   };
+  sandboxCommitPkg = pkgs.writeShellApplication {
+    name = "sandbox-commit";
+    runtimeInputs = [
+      pkgs.git
+      pkgs.python3
+    ];
+    text = ''
+      exec ${pkgs.python3}/bin/python3 ${./scripts/sandbox-commit.py} "$@"
+    '';
+  };
 in
 {
   options.programs.gitApfsVolume.enable = lib.mkEnableOption ''dedicated 100 GiB-quota "git" APFS volume on the internal container'';
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = [ sandboxClonePkg ];
+    environment.systemPackages = [
+      sandboxClonePkg
+      sandboxCommitPkg
+    ];
 
     system.activationScripts.postActivation.text = lib.mkAfter ''
       echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Ensuring 'git' APFS volume (100g quota) exists on the internal container..."

@@ -72,8 +72,8 @@ def main():
     rules_dir = Path(sys.argv[3]).expanduser().resolve() if len(sys.argv) > 3 else None
 
     if not src_file.is_file():
-        print(f"[instruction-bundle] Source file {src_file} does not exist", file=sys.stderr)
-        sys.exit(0)
+        print(f"[instruction-bundle] Fatal: Source file {src_file} does not exist", file=sys.stderr)
+        sys.exit(1)
 
     # Allowed roots for import resolution: source file directory, ~/.agents, ~/.config
     allowed_roots = [

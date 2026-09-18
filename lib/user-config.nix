@@ -117,6 +117,7 @@ in
       gid = 510;
       homeDir = "/Users/work";
       converge = false;
+      signingKey = "~/.ssh/id_ed25519.pub";
     };
   };
 

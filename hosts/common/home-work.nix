@@ -14,10 +14,17 @@
   home-profile.preset = "server";
 
   programs = {
-    # Ensure git signing is enabled by default
+    # Ensure git signing is enabled by default with work SSH key
     git = {
       enable = true;
-      signing.signByDefault = true;
+      signing = {
+        signByDefault = true;
+        key = lib.mkForce userConfig.agentUsers.work.signingKey;
+      };
+      settings = {
+        gpg.format = lib.mkForce "ssh";
+        user.signingkey = lib.mkForce userConfig.agentUsers.work.signingKey;
+      };
     };
 
     # Same exclusions as other server identities
@@ -36,8 +43,14 @@
     fabric.enable = lib.mkForce false;
   };
 
-  # Work identity does not run ambient gpg-agent daemon
+  # Work identity uses SSH key signing rather than gpg-agent daemon
   services.gpg-agent.enable = lib.mkForce false;
+
+  # Ensure ~/.ssh directory exists with private permissions (mode 0700)
+  home.activation.setupWorkSsh = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    $DRY_RUN_CMD mkdir -p "$HOME/.ssh"
+    $DRY_RUN_CMD chmod 0700 "$HOME/.ssh"
+  '';
 
   # WORKAROUND: Disable manpage generation to suppress options.json derivation context warning
   manual.manpages.enable = false;
