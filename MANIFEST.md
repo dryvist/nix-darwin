@@ -64,7 +64,7 @@ Source: nix-home (`home.packages` via flake input)
 
 | Package | Description |
 | --- | --- |
-| entire | AI-session capture for git (records live agent sessions) |
+| entire | AI-session capture for git (records live agent sessions, from nix-ai `ai-tools.nix`) |
 | git-flow-next | Modern git-flow workflow tool (custom buildGoModule, gittower/git-flow-next v1.0.0) |
 | git-bug | Distributed bug tracker embedded in git (`git bug` command) |
 
@@ -131,11 +131,18 @@ copies them to `~/Applications/Home Manager Apps/` at TCC-stable paths.
 | --- | --- |
 | code-cursor | Cursor AI IDE (VS Code fork) |
 | discord | Voice/video chat (copyApps for TCC camera/mic stability) |
-| ffmpeg | Audio/video recording, conversion, streaming |
-| sox | Sound eXchange audio recording, conversion, and effects CLI |
 | ghostty-bin | Terminal emulator |
 | rapidapi | Full-featured HTTP client |
 | swiftbar | Menu bar customization |
+
+### CLI / Media Tools (Workstation)
+
+Source: `hosts/macbook-m4/home.nix` (no `.app` bundle, not GUI)
+
+| Package | Description |
+| --- | --- |
+| ffmpeg | Audio/video recording, conversion, streaming |
+| sox | Sound eXchange audio recording, conversion, and effects CLI |
 
 Note: OrbStack installed via Homebrew cask (`greedy = true`) in `modules/darwin/homebrew.nix` for TCC permission stability.
 The `programs.orbstack` module (`modules/darwin/apps/orbstack.nix`) still manages the APFS data volume via launchd.

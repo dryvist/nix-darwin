@@ -28,9 +28,22 @@
 
   # open-llm is a lower-trust identity running opencode/cursor.
   # It must NOT have access to Doppler or secret management CLIs.
+  # Blocked packages: doppler, openbao (bao), bitwarden-cli (bw), bws.
   home = {
-    # 1. Filter doppler out from home.packages when building home-manager-path:
+    # 1. Filter secret-management CLIs out of home-manager-path.
+    # These arrive unconditionally from nix-home (security.nix) and nix-ai
+    # (ai-tools.nix) via sharedModules; filtering here is the only lever
+    # inside nix-darwin without modifying those upstream repos.
     path = lib.mkForce (
+      let
+        # Package names to exclude from the lower-trust profile.
+        blocked = [
+          "doppler"
+          "openbao"
+          "bitwarden-cli"
+          "bws"
+        ];
+      in
       pkgs.buildEnv {
         name = "home-manager-path";
         paths = builtins.filter (
@@ -38,7 +51,7 @@
           let
             name = p.pname or p.name or "";
           in
-          name != "doppler" && !(lib.hasPrefix "doppler-" name)
+          !builtins.elem name blocked && !(lib.hasPrefix "doppler-" name)
         ) config.home.packages;
         inherit (config.home) extraOutputsToInstall;
         postBuild = config.home.extraProfileCommands;
@@ -48,16 +61,18 @@
       }
     );
 
-    # 2. Defense in depth: remove any binary named doppler from profile outputs:
+    # 2. Defense in depth: strip secret-management binaries from profile outputs.
     extraProfileCommands = ''
-      rm -f $out/bin/doppler
+      rm -f $out/bin/doppler $out/bin/bao $out/bin/bw $out/bin/bws
     '';
 
-    # 3. Purge any leftover ~/.doppler credentials from this account's home:
+    # 3. Purge any leftover credential directories from this account's home:
     activation.removeDoppler = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      if [ -d "$HOME/.doppler" ]; then
-        $DRY_RUN_CMD rm -rf "$HOME/.doppler"
-      fi
+      for dir in "$HOME/.doppler" "$HOME/.bw" "$HOME/.config/bws"; do
+        if [ -d "$dir" ]; then
+          $DRY_RUN_CMD rm -rf "$dir"
+        fi
+      done
     '';
   };
 

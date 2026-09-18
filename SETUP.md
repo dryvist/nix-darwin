@@ -69,8 +69,9 @@ Configuration remains strictly separated per user:
 3. **User Tiers**:
    - **Operator (`jevans`)**: Uses personal authentication (`doppler login`) with directory scopes under `~/git` mapped to relevant projects.
    - **Automation (`claude`)**: Uses a scoped service token configured via `sudo -u claude -i doppler configure set token=<service-token> --scope ~`.
-   - **Untrusted / Lower-Trust (`open-llm`)**: Doppler CLI is explicitly excluded from the profile (`home.path` filter + `rm -f $out/bin/doppler`).
-     Any stale credentials in `~/.doppler` are purged on activation.
+   - **Untrusted / Lower-Trust (`open-llm`)**: All secret-management CLIs are excluded from the profile via a
+     `home.path` filter and `rm -f` defense in depth: `doppler`, `bao` (openbao), `bw` (bitwarden-cli), `bws`.
+     Any stale credential directories (`~/.doppler`, `~/.bw`, `~/.config/bws`) are purged on activation.
    - **Doppler tokens must never be set in system-wide environment files** (`/etc/zshenv`, `/etc/zprofile`), preserving user boundary isolation.
 
 ## Issues Solved
