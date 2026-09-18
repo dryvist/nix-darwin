@@ -246,6 +246,7 @@
                   # takes one shared home rather than a per-host one.
                   ${userConfig.agentUsers.claude.name} = import ./hosts/common/home-agent.nix;
                   ${userConfig.agentUsers.open-llm.name} = import ./hosts/common/home-open-llm.nix;
+                  ${userConfig.agentUsers.work.name} = import ./hosts/common/home-work.nix;
                 };
 
                 # Shared modules from external flakes:

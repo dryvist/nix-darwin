@@ -1,17 +1,14 @@
 # Automation Identities — the dedicated macOS accounts AI harnesses run under
 #
 # Creates one hidden local account per entry in lib/user-config.nix's
-# `agentUsers`, plus the `agent` group they all belong to. Each account sits in
-# `staff` (gid 20) and NOT in `admin`, so it holds no `(ALL) ALL` sudo grant
-# and reads the operator's files only where they are group-readable. Hiding a
-# path from them is `chmod 700 <path>` by the operator — nothing to declare
-# here.
+# `agentUsers`, plus the `agent` group they all belong to. Each account takes
+# `agent` (gid 510) as its primary group and NOT `staff` (gid 20) or `admin`,
+# so it holds no `(ALL) ALL` sudo grant and cannot read the operator's
+# staff-group-readable files.
 #
-# `agent` (gid 510) is additive: `staff` stays the primary group on every
-# identity, and `agent` is the group to scope a future grant to when it should
-# reach "the automation identities" and nothing else. `staff` is macOS's
-# generic every-local-user group, so a grant against it silently extends to
-# any account created later on the machine; a grant against `agent` does not.
+# `agent` (gid 510) is the isolation boundary: automation identities are
+# isolated from generic local users (staff), and only paths explicitly granted
+# to group `agent` (like the /Volumes/git workspace) are accessible across tiers.
 #
 # ⚠️ DELETION FOOTGUN: `users.knownUsers` and `users.knownGroups` are the
 # lists of accounts and groups nix-darwin manages. Removing a name from either
@@ -64,8 +61,8 @@ in
       inherit name;
       inherit (agent) uid;
 
-      # staff — the operator's primary group, and the whole of the read story.
-      gid = 20;
+      # Primary group is `agent` (gid 510), isolating from the operator's `staff` group.
+      gid = agent.gid or 510;
 
       home = agent.homeDir;
       createHome = true;

@@ -24,11 +24,18 @@ let
     name = "git-apfs-volume-create";
     text = builtins.readFile ./scripts/git-apfs-volume.sh;
   };
+  sandboxClonePkg = pkgs.writeShellApplication {
+    name = "sandbox-clone";
+    runtimeInputs = [ pkgs.git ];
+    text = builtins.readFile ./scripts/sandbox-clone.sh;
+  };
 in
 {
   options.programs.gitApfsVolume.enable = lib.mkEnableOption ''dedicated 100 GiB-quota "git" APFS volume on the internal container'';
 
   config = lib.mkIf cfg.enable {
+    environment.systemPackages = [ sandboxClonePkg ];
+
     system.activationScripts.postActivation.text = lib.mkAfter ''
       echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Ensuring 'git' APFS volume (100g quota) exists on the internal container..."
       ${lib.getExe createPkg}
