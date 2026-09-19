@@ -3,11 +3,11 @@
     "ai-assistant-instructions": {
       "flake": false,
       "locked": {
-        "lastModified": 1789768604,
-        "narHash": "sha256-lxOYxOlZynJcZmJ+/D/QNoMdcheWZqfB36ljc2tNADk=",
+        "lastModified": 1789848695,
+        "narHash": "sha256-mt44x8P5jsd4Ev8ylqUIjwjsSGp4d08VKbxO1/VDAV8=",
         "owner": "dryvist",
         "repo": "ai-assistant-instructions",
-        "rev": "d3de3b27e6b75f7d328f4e7dcad2ce39a36bebfc",
+        "rev": "7c8bdad539b2e79892815488adfa1fede65b2af6",
         "type": "github"
       },
       "original": {
@@ -303,11 +303,11 @@
     "claude-code-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1789759680,
-        "narHash": "sha256-B5/oJFCK7yAYRIa4vsYcgO3pYDx7q/ziiOOPh3BBaGE=",
+        "lastModified": 1789787424,
+        "narHash": "sha256-r+AZr1kr/nKaNGZd8O++bgy8gtqAv+o9TDx29WktW04=",
         "owner": "anthropics",
         "repo": "claude-code",
-        "rev": "6ce37e9f464cf75d172754ba70a42e01c3d876e9",
+        "rev": "bf7d404e26a5fb6167d21b46c93a2bf6c22ab274",
         "type": "github"
       },
       "original": {
@@ -526,11 +526,11 @@
     "dotgithub": {
       "flake": false,
       "locked": {
-        "lastModified": 1789768370,
-        "narHash": "sha256-+DXxZM3XbGgG5Q8PCg34biG0OtfywlVvmznGBE3wXUo=",
+        "lastModified": 1789845636,
+        "narHash": "sha256-xh8DbT9hu/NylH1jlVAlHOw9rhG6OfZBDR57XFyPX0A=",
         "owner": "dryvist",
         "repo": ".github",
-        "rev": "32c886aae9a9da9b01724fadaf6de4c412edffdd",
+        "rev": "90d2454a486cb944272ff526fbdb68abce1cd2d1",
         "type": "github"
       },
       "original": {
@@ -1007,11 +1007,11 @@
     "jacobpevans-cc-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1789769430,
-        "narHash": "sha256-MW30tHqNHCcuzu6/V11p3QaPfHc+Umk6QouPQkAMUJI=",
+        "lastModified": 1789842472,
+        "narHash": "sha256-psknuWtjFM10ZGlpX77ISJ8pBc7EUV82Ldw28GFKPRY=",
         "owner": "dryvist",
         "repo": "claude-code-plugins",
-        "rev": "28bb01de980a9930a0dcf130fee1b07609e1f71c",
+        "rev": "a9446d87ea69b800c005ebbbeb433256cb6272c2",
         "type": "github"
       },
       "original": {
@@ -1225,11 +1225,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1789772999,
-        "narHash": "sha256-80VC3vRkXCcHbYLXCd7nFxke8KhT7OR+nNHJQ23x9ns=",
+        "lastModified": 1789773136,
+        "narHash": "sha256-lbioAd+qucvVJ0h0DmR4rYf9QVU8LgEqTZqtpqC6lJ0=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "88f8413fbe6ec5c72640be816dc6600b4779f762",
+        "rev": "ae3e0424fc4663eab83231d026fe442be814a937",
         "type": "github"
       },
       "original": {
@@ -1415,11 +1415,11 @@
         "orbstack-kubernetes": "orbstack-kubernetes"
       },
       "locked": {
-        "lastModified": 1789785320,
-        "narHash": "sha256-Md+nUkbNFPjc/M0LuyHzfOYuNqZ0KzyaKj1mOBBaw/c=",
+        "lastModified": 1789842329,
+        "narHash": "sha256-mPjUmj5Pdf2hU5jmEhkqBsTYsPpWyfAjPdketbbFu/s=",
         "owner": "dryvist",
         "repo": "nix-home",
-        "rev": "61dcf233cc05fb4b5950bdc700cb9d07eb39ce83",
+        "rev": "65fb66186163bf32abb7ec4ece8def7f0d29db94",
         "type": "github"
       },
       "original": {
@@ -1458,11 +1458,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789168179,
-        "narHash": "sha256-D0Vz4XavZ6tQ3o1jGzUHriB13WKRpJ53WiOEZV6+FJE=",
+        "lastModified": 1789774182,
+        "narHash": "sha256-vuLtPtGIHYgHNBovDYwiFVihHknuZEs3TWSrSTRj92I=",
         "owner": "dryvist",
         "repo": "nix-openwhispr",
-        "rev": "55e3db0ef42db69026029acbbeaa6a5327c8e2b0",
+        "rev": "4996a07f566b65a72f4e8a676629f581d3cbb34c",
         "type": "github"
       },
       "original": {
@@ -1687,11 +1687,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789691124,
-        "narHash": "sha256-k+I+R6uwHX3VcJ7326qLV6vCahZUgsVl+i8sSU/Stxk=",
+        "lastModified": 1789815532,
+        "narHash": "sha256-/Ql9UE21iDwOU/JdPV20yZtaMpGf+iD2EhIA1aAi540=",
         "owner": "Mic92",
         "repo": "sops-nix",
-        "rev": "1e73e8f7176d65e1b55e324de099bbfff4b2c574",
+        "rev": "166fc0d3f4fcd0dfc9af102ba8e85fa5dd04e5f7",
         "type": "github"
       },
       "original": {
