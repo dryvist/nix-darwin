@@ -125,36 +125,39 @@
   # account, so there is no agent to keep alive.
   services.gpg-agent.enable = lib.mkForce false;
 
-  # Ensure ~/.secrets exists with mode 0700 and secret-zero env is mode 0400
-  home.activation.setupSecretsDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    $DRY_RUN_CMD mkdir -p "$HOME/.secrets"
-    $DRY_RUN_CMD chmod 0700 "$HOME/.secrets"
-    if [ -f "$HOME/.secrets/openbao-ai-public.env" ]; then
-      $DRY_RUN_CMD chmod 0400 "$HOME/.secrets/openbao-ai-public.env"
-    fi
-  '';
+  # Activation scripts for secrets, doppler removal, and instruction bundle
+  home.activation = {
+    # Ensure ~/.secrets exists with mode 0700 and secret-zero env is mode 0400
+    setupSecretsDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      $DRY_RUN_CMD mkdir -p "$HOME/.secrets"
+      $DRY_RUN_CMD chmod 0700 "$HOME/.secrets"
+      if [ -f "$HOME/.secrets/openbao-ai-public.env" ]; then
+        $DRY_RUN_CMD chmod 0400 "$HOME/.secrets/openbao-ai-public.env"
+      fi
+    '';
 
-  # Ensure ~/.doppler is completely absent from the untrusted tier
-  home.activation.removeDoppler = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    if [ -e "$HOME/.doppler" ]; then
-      $DRY_RUN_CMD rm -rf "$HOME/.doppler"
-    fi
-  '';
+    # Ensure ~/.doppler is completely absent from the untrusted tier
+    removeDoppler = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      if [ -e "$HOME/.doppler" ]; then
+        $DRY_RUN_CMD rm -rf "$HOME/.doppler"
+      fi
+    '';
 
-  # Replace Claude-only @import syntax by generated concatenation so OpenCode
-  # receives the complete instruction context in a single document
-  home.activation.generateInstructionBundle = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    if [ -f "$HOME/.agents/AGENTS.md" ]; then
-      $DRY_RUN_CMD mkdir -p "$HOME/.config/opencode"
-      $DRY_RUN_CMD ${pkgs.python3}/bin/python3 \
-        ${../../modules/darwin/apps/scripts/generate-instruction-bundle.py} \
-        "$HOME/.agents/AGENTS.md" \
-        "$HOME/.config/opencode/AGENTS.md" \
-        "$HOME/.agents/agentsmd/rules"
-    else
-      echo "[instruction-bundle] Warning: $HOME/.agents/AGENTS.md not found; skipping instruction bundle" >&2
-    fi
-  '';
+    # Replace Claude-only @import syntax by generated concatenation so OpenCode
+    # receives the complete instruction context in a single document
+    generateInstructionBundle = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      if [ -f "$HOME/.agents/AGENTS.md" ]; then
+        $DRY_RUN_CMD mkdir -p "$HOME/.config/opencode"
+        $DRY_RUN_CMD ${pkgs.python3}/bin/python3 \
+          ${../../modules/darwin/apps/scripts/generate-instruction-bundle.py} \
+          "$HOME/.agents/AGENTS.md" \
+          "$HOME/.config/opencode/AGENTS.md" \
+          "$HOME/.agents/agentsmd/rules"
+      else
+        echo "[instruction-bundle] Warning: $HOME/.agents/AGENTS.md not found; skipping instruction bundle" >&2
+      fi
+    '';
+  };
 
   # WORKAROUND: Disable manpage generation to suppress options.json derivation context warning
   # Upstream: https://github.com/nix-community/home-manager/issues/7935
