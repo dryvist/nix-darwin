@@ -135,14 +135,15 @@ let
   # Variables the runner requires before it will do anything. The backend-
   # specific ones are only demanded when that backend is selected — an unset
   # variable is a FAILURE either way (see the module header), never a skip.
-  requiredVars =
-    [ "OFFBOX_ROOT" ]
-    ++ lib.optionals isSftp [
-      "OFFBOX_HOST"
-      "OFFBOX_USER"
-      "OFFBOX_KEY_FILE"
-      "OFFBOX_KNOWN_HOSTS"
-    ];
+  requiredVars = [
+    "OFFBOX_ROOT"
+  ]
+  ++ lib.optionals isSftp [
+    "OFFBOX_HOST"
+    "OFFBOX_USER"
+    "OFFBOX_KEY_FILE"
+    "OFFBOX_KNOWN_HOSTS"
+  ];
 
   mkJobArgs =
     job:
