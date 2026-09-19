@@ -1415,11 +1415,11 @@
         "orbstack-kubernetes": "orbstack-kubernetes"
       },
       "locked": {
-        "lastModified": 1789768577,
-        "narHash": "sha256-xSq4fLMtx9C47sJMmPph4p4J3FyDAmhkHRwcRBBA37E=",
+        "lastModified": 1789785320,
+        "narHash": "sha256-Md+nUkbNFPjc/M0LuyHzfOYuNqZ0KzyaKj1mOBBaw/c=",
         "owner": "dryvist",
         "repo": "nix-home",
-        "rev": "eefd1ffeafffb57daec049feaff259b0c59c1ad7",
+        "rev": "61dcf233cc05fb4b5950bdc700cb9d07eb39ce83",
         "type": "github"
       },
       "original": {
