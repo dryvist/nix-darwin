@@ -5,10 +5,20 @@
 # Headless server: no host-specific GUI app list — `home-profile.preset = server`
 # (from the registry class) already drops the GUI/desktop features.
 
-{ ... }:
+{ lib, ... }:
 
 {
   imports = [ ../common/home.nix ];
+
+  # This host holds an hourly one-way rsync replica of another host's
+  # coding-agent transcripts (sessionSync). ../common/home.nix enables
+  # programs.claudeUsageCollector on every host, so this host's collector
+  # would re-read the replica and post the source host's cumulative totals a
+  # second time under its own identity. mkForce disables it here; the
+  # replica's owning host remains the single source for those transcripts.
+  # Ceiling: any session run natively on this host goes uncollected too —
+  # move the replica outside the transcript roots before re-enabling.
+  programs.claudeUsageCollector.enable = lib.mkForce false;
 
   # Token Meter's universal service and menu-bar opt-in live in
   # ../common/home.nix. This server alone exposes the optional HTTPS gate.
