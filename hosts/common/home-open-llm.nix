@@ -17,11 +17,14 @@
 
 {
   lib,
+  pkgs,
   userConfig,
   ...
 }:
 
 {
+  imports = [ ./agent-skills.nix ];
+
   home-profile.preset = "server";
 
   programs = {
@@ -48,11 +51,113 @@
     antigravity-ide.enable = lib.mkForce false;
     antigravity-cli.enable = lib.mkForce false;
     fabric.enable = lib.mkForce false;
+
+    # open-llm holds no signing key and never commits locally — its
+    # commits are made through the GitHub API as its App and show Verified.
+    # Reject local git signing attempts explicitly.
+    git = {
+      enable = true;
+      signing = {
+        signByDefault = true;
+        key = lib.mkForce null;
+      };
+      settings = {
+        gpg.program = "${pkgs.writeShellScriptBin "git-reject-local-signing" ''
+          echo "[open-llm] ERROR: Local git signing is forbidden for untrusted harnesses." >&2
+          echo "[open-llm] Commits must be made via GitHub API using 'sandbox-commit'." >&2
+          exit 1
+        ''}/bin/git-reject-local-signing";
+      };
+    };
+
+    # One provider per endpoint, each reading its own env key so model choice
+    # follows key choice injected at launch by openbao-run.
+    # Wrapped package ensures opencode ALWAYS runs under openbao-run and fails closed.
+    opencode = {
+      enable = true;
+      package = pkgs.writeShellScriptBin "opencode" ''
+        if ! command -v openbao-run >/dev/null 2>&1; then
+          echo "[opencode] Fatal: openbao-run not found. Failing closed to prevent unauthenticated execution." >&2
+          exit 1
+        fi
+        env_args=()
+        if [ -f "$HOME/.secrets/openbao-ai-public.env" ]; then
+          env_args=(--env-file "$HOME/.secrets/openbao-ai-public.env")
+        fi
+        exec openbao-run --domain ai-public "''${env_args[@]}" \
+          --secret OPENROUTER_API_KEY=ai/public#OPENROUTER_API_KEY \
+          --secret ZAI_API_KEY=ai/public#ZAI_API_KEY \
+          --secret LITELLM_LOCAL_KEY=ai/public#LITELLM_LOCAL_KEY \
+          -- "${pkgs.opencode}/bin/opencode" "$@"
+      '';
+      extraSettings = {
+        provider = {
+          openrouter = {
+            npm = "@ai-sdk/openai-compatible";
+            name = "OpenRouter";
+            options = {
+              baseURL = "https://openrouter.ai/api/v1";
+              apiKey = "{env:OPENROUTER_API_KEY}";
+            };
+          };
+          zai = {
+            npm = "@ai-sdk/openai-compatible";
+            name = "Z.ai";
+            options = {
+              baseURL = "https://api.z.ai/api/paas/v4";
+              apiKey = "{env:ZAI_API_KEY}";
+            };
+          };
+          litellm = {
+            npm = "@ai-sdk/openai-compatible";
+            name = "LiteLLM (local)";
+            options = {
+              baseURL = "http://127.0.0.1:4000/v1";
+              apiKey = "{env:LITELLM_LOCAL_KEY}";
+            };
+          };
+        };
+      };
+    };
   };
 
   # Same gui/<uid> domain problem as herdr. Nothing signs commits from this
   # account, so there is no agent to keep alive.
   services.gpg-agent.enable = lib.mkForce false;
+
+  # Activation scripts for secrets, doppler removal, and instruction bundle
+  home.activation = {
+    # Ensure ~/.secrets exists with mode 0700 and secret-zero env is mode 0400
+    setupSecretsDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      $DRY_RUN_CMD mkdir -p "$HOME/.secrets"
+      $DRY_RUN_CMD chmod 0700 "$HOME/.secrets"
+      if [ -f "$HOME/.secrets/openbao-ai-public.env" ]; then
+        $DRY_RUN_CMD chmod 0400 "$HOME/.secrets/openbao-ai-public.env"
+      fi
+    '';
+
+    # Ensure ~/.doppler is completely absent from the untrusted tier
+    removeDoppler = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      if [ -e "$HOME/.doppler" ]; then
+        $DRY_RUN_CMD rm -rf "$HOME/.doppler"
+      fi
+    '';
+
+    # Replace Claude-only @import syntax by generated concatenation so OpenCode
+    # receives the complete instruction context in a single document
+    generateInstructionBundle = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      if [ -f "$HOME/.agents/AGENTS.md" ]; then
+        $DRY_RUN_CMD mkdir -p "$HOME/.config/opencode"
+        $DRY_RUN_CMD ${pkgs.python3}/bin/python3 \
+          ${../../modules/darwin/apps/scripts/generate-instruction-bundle.py} \
+          "$HOME/.agents/AGENTS.md" \
+          "$HOME/.config/opencode/AGENTS.md" \
+          "$HOME/.agents/agentsmd/rules"
+      else
+        echo "[instruction-bundle] Warning: $HOME/.agents/AGENTS.md not found; skipping instruction bundle" >&2
+      fi
+    '';
+  };
 
   # WORKAROUND: Disable manpage generation to suppress options.json derivation context warning
   # Upstream: https://github.com/nix-community/home-manager/issues/7935

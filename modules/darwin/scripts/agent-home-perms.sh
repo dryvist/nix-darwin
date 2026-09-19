@@ -30,3 +30,15 @@ for agentHome in "$@"; do
   [ -d "$agentHome" ] || continue
   chmod 700 "$agentHome"
 done
+
+# Declaratively enforce permissions on operator's private agent notes directory
+# Ensures all regular files (including dotfiles and nested files) are mode 0600
+# and subdirectories are mode 0700.
+for operatorHome in /Users/*; do
+  localDir="${operatorHome}/AGENTS.local.d"
+  if [ -d "$localDir" ]; then
+    chmod 700 "$localDir"
+    find "$localDir" -mindepth 1 -type f -exec chmod 600 {} +
+    find "$localDir" -mindepth 1 -type d -exec chmod 700 {} +
+  fi
+done

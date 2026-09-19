@@ -87,24 +87,37 @@ in
   # host name is ever committed; an identity without `converge` has no use for
   # it and omits it.
   #
-  # uids climb from 505 (first free on these hosts). Every identity keeps
-  # `staff` (gid 20) as its primary group — that is what lets it read the
-  # operator's group-readable files — and additionally joins `agent`.
+  # uids climb from 505 (first free on these hosts). Every identity takes
+  # `agent` (gid 510) as its primary group rather than `staff` (gid 20),
+  # isolating it from the operator's group-readable files.
   agentUsers = {
     claude = {
       name = "claude";
       uid = 505;
+      gid = 510;
       homeDir = "/Users/claude";
       checkout = "git/public/nix/nix-darwin";
       converge = true;
+      signingKey = "1335F5D082489BBA";
     };
     # Runs opencode and cursor CLI: executes model-generated code from a
     # lower-trust tool, so no converge grant and no trusted-user status.
     open-llm = {
       name = "open-llm";
       uid = 506;
+      gid = 510;
       homeDir = "/Users/open-llm";
       converge = false;
+    };
+    # Employer/client repositories only: dedicated account with no
+    # passwordless sudo and separate forge identity.
+    work = {
+      name = "work";
+      uid = 507;
+      gid = 510;
+      homeDir = "/Users/work";
+      converge = false;
+      signingKey = "~/.ssh/id_ed25519.pub";
     };
   };
 

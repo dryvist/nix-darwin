@@ -47,11 +47,23 @@
     # does not have. `launchctl bootstrap` there returns "Domain does not
     # support specified action" and home-manager activation logs a failure.
     herdr.enable = lib.mkForce false;
+    # claude has its own dedicated signing key and gpg-agent
+    git = {
+      enable = true;
+      signing = {
+        key = userConfig.agentUsers.claude.signingKey;
+        signByDefault = true;
+      };
+    };
   };
 
-  # Same gui/<uid> domain problem as herdr. Nothing signs commits from this
-  # account, so there is no agent to keep alive.
-  services.gpg-agent.enable = lib.mkForce false;
+  # gpg-agent with curses pinentry for headless commit signing
+  services.gpg-agent = {
+    enable = true;
+    defaultCacheTtl = 86400;
+    maxCacheTtl = 86400;
+    pinentry.package = lib.mkForce pkgs.pinentry-curses;
+  };
 
   # WORKAROUND: Disable manpage generation to suppress options.json derivation context warning
   # Upstream: https://github.com/nix-community/home-manager/issues/7935
