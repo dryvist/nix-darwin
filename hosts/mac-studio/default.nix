@@ -185,6 +185,8 @@ in
 
   # nix-prebuild: warm the darwin closure on a schedule so the next
   # `darwin-rebuild switch` is a near-instant cache hit instead of a cold build.
+  # Builds `develop`, the ref this host converges from; it can also be run on
+  # demand right after a merge (`launchctl kickstart -k gui/<uid>/<Label>`).
   # Plain launchd agent (no claude, no token) — inline ProgramArguments, logs to
   # ~/Library/Logs/nix-prebuild/, Background priority.
   #
@@ -197,7 +199,7 @@ in
     ProgramArguments = [
       "/nix/var/nix/profiles/default/bin/nix"
       "build"
-      "github:dryvist/nix-darwin/main#darwinConfigurations.${hostConfig.hostName}.system"
+      "github:dryvist/nix-darwin/develop#darwinConfigurations.${hostConfig.hostName}.system"
       "--no-link"
       "--print-build-logs"
     ];
@@ -209,7 +211,8 @@ in
     ];
     ProcessType = "Background";
     StandardOutPath = "${userConfig.user.homeDir}/Library/Logs/nix-prebuild/nix-prebuild.log";
-    StandardErrorPath = "${userConfig.user.homeDir}/Library/Logs/nix-prebuild/nix-prebuild.error.log";
+    # nix writes build progress to stderr; one file keeps the log readable.
+    StandardErrorPath = "${userConfig.user.homeDir}/Library/Logs/nix-prebuild/nix-prebuild.log";
     EnvironmentVariables = {
       HOME = userConfig.user.homeDir;
       PATH = "/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin:/usr/bin:/bin";

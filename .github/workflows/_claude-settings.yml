@@ -53,7 +53,10 @@ jobs:
 
       - name: Validate settings files
         run: |
-          nix-shell -p check-jsonschema --run '
+          # --inputs-from pins check-jsonschema to the flake's locked nixpkgs so
+          # the store shares its closure with the eval above; a bare `nix-shell -p`
+          # resolves the ambient channel and drags in a second toolchain.
+          nix shell --inputs-from . nixpkgs#check-jsonschema --command sh -c '
             echo "Validating Claude Code settings..."
             check-jsonschema --schemafile claude-code-settings.schema.json settings-generated.json
             echo "Settings validation passed!"
