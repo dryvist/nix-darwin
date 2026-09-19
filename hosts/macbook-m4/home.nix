@@ -109,24 +109,32 @@ in
       # subagents through it.
       claudeDirect = true;
 
-      # Serve this laptop's OWN model first, with the shared router as the one
-      # rung behind it. Replaces the daily re-ranked cloud tier: that enumerated
-      # specific cloud models here while the shared router already owned which
-      # cloud model, in what order, at what price — so the choice existed twice
-      # and drifted, and every subagent call left the machine even when a local
-      # model could serve it.
+      # The subagent chain this laptop's proxy walks, in order:
       #
-      # The id is the role-resolved physical id, never a literal: this repo
-      # writes no physical model id in host configuration, and the mlx catalog
-      # is what decides which weights `default` means on this host. The context
-      # window is omitted deliberately — nix-ai derives it from that same
-      # catalog, so the serving limit is stated in exactly one place.
+      #   subagent / fast  ->  router:fast-gpu  ->  this laptop's own model  ->  router:fast
+      #
+      # The single-GPU fast-subagent tier first (a router GROUP, one slot,
+      # session-locked: a busy slot answers 429 and the chain moves on), this
+      # laptop's own model second (keeps working through a router outage), and
+      # the router's `fast` role last — its full ladder (studio, free, cheap,
+      # long) lives in the router database and is re-ranked in the admin UI,
+      # never here. Only the ORDER of these three rungs is declared on this
+      # host; nothing here names a provider, physical model id, or price.
+      #
+      # The local id is the role-resolved physical id, never a literal: the
+      # mlx catalog decides which weights `default` means on this host, and
+      # nix-ai derives the serving window from that same catalog.
       #
       # `subagent` is load-bearing as a NAME: consumers address that string
       # forever, so what sits behind it may change but the name may not.
+      # `fast` is served as an alias of the same chain (nix-ai headAliases).
       localModels = [
         {
           name = "subagent";
+          router = "fast-gpu";
+        }
+        {
+          name = "subagent-local";
           id = config.services.aiStack.models.default;
         }
       ];
@@ -135,11 +143,11 @@ in
       # to. Needed because that rung is a passthrough: without it LiteLLM
       # forwards this host's own rung name upstream, the router has no such
       # group, and the last rung 404s — both as a fallback and when addressed
-      # directly. Verified by completion against the router before setting it.
+      # directly.
       #
       # A group name only. No provider, model id, or price is named here; what
       # the router does behind this group stays the router's business.
-      routerEntryModel = "hermes-default";
+      routerEntryModel = "fast";
     };
 
     # Hourly push of AI session history to the mac-studio (nix-ai module).
