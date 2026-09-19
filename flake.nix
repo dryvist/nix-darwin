@@ -77,6 +77,9 @@
       inputs = {
         nixpkgs.follows = "nixpkgs";
         home-manager.follows = "home-manager";
+        # It grew its own nix-ai input; without this follow a relock drags a
+        # second full nix-ai tree (~90 transitive inputs) into the lock.
+        nix-ai.follows = "nix-ai";
       };
     };
 
