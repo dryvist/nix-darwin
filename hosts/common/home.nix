@@ -12,7 +12,6 @@
   pkgs,
   hostConfig,
   nix-ai,
-  userConfig,
   ...
 }:
 let
