@@ -200,7 +200,10 @@ in
               # the compositor starvation that mattered surfaced through
               # DumpPanic and "userspace watchdog timeout", both present and
               # both of which caught the real event.
-              predicate: '(process == "kernel" AND (eventMessage CONTAINS[c] "jetsam" OR eventMessage CONTAINS[c] "memorystatus" OR eventMessage CONTAINS[c] "low swap" OR eventMessage CONTAINS[c] "panic" OR eventMessage CONTAINS[c] "IOGPU" OR eventMessage CONTAINS[c] "AGX" OR eventMessage CONTAINS[c] "thermal")) OR eventMessage CONTAINS[c] "memory pressure" OR process == "DumpPanic" OR process == "ReportCrash" OR process == "thermalmonitord" OR subsystem == "com.apple.thermalmonitord" OR eventMessage CONTAINS[c] "userspace watchdog timeout" OR eventMessage CONTAINS[c] "GPU restart" OR eventMessage CONTAINS[c] "gpu hang"'
+              # WindowServer freeze & responsiveness anomalies: "synchronize timed out",
+              # and WindowServer "failed to act" or "Clearing datagram buffer" (replacing
+              # bespoke ws-monitor.sh LaunchDaemon polling with native streaming).
+              predicate: '(process == "kernel" AND (eventMessage CONTAINS[c] "jetsam" OR eventMessage CONTAINS[c] "memorystatus" OR eventMessage CONTAINS[c] "low swap" OR eventMessage CONTAINS[c] "panic" OR eventMessage CONTAINS[c] "IOGPU" OR eventMessage CONTAINS[c] "AGX" OR eventMessage CONTAINS[c] "thermal")) OR eventMessage CONTAINS[c] "memory pressure" OR process == "DumpPanic" OR process == "ReportCrash" OR process == "thermalmonitord" OR subsystem == "com.apple.thermalmonitord" OR eventMessage CONTAINS[c] "userspace watchdog timeout" OR eventMessage CONTAINS[c] "GPU restart" OR eventMessage CONTAINS[c] "gpu hang" OR eventMessage CONTAINS[c] "synchronize timed out" OR (process == "WindowServer" AND (eventMessage CONTAINS[c] "failed to act" OR eventMessage CONTAINS[c] "Clearing datagram buffer"))'
               sendToRoutes: false
               connections:
                 - pipeline: os_events
