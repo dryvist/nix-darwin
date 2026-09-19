@@ -25,8 +25,8 @@ nothing about which weights answered.
 
 ## Two warm brains (2026-08-14) — supersedes single-model mode
 
-This host is the estate's **intelligence tier**; a GPU is planned to take
-fast-and-small, so throughput is no longer the objective and both brains stay
+This host is the estate's **intelligence tier**; the GPU `fast` tier
+takes fast-and-small (this host is its second rung), so both brains stay
 warm. Roles split by cost, not preference:
 
 | Model | Roles | Shape | Thinking |
