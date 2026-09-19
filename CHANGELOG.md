@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.65.0](https://github.com/dryvist/nix-darwin/compare/v2.64.1...v2.65.0) (2026-09-19)
+
+
+### Features
+
+* **macbook:** GPU fast-subagent tier first, laptop model second, router ladder last ([#2542](https://github.com/dryvist/nix-darwin/issues/2542)) ([b948ea7](https://github.com/dryvist/nix-darwin/commit/b948ea709563dbe06ebd3cc3f1d257f4e254bb27))
+* **offbox-sync:** make the replication remote configurable ([126180c](https://github.com/dryvist/nix-darwin/commit/126180c2b5ab2eb67d46a22f3bb78eb6325463ce))
+* **offbox-sync:** make the replication remote configurable ([f11d45b](https://github.com/dryvist/nix-darwin/commit/f11d45b4943dd186eb395a98771bf90756652e38))
+
+
+### Bug Fixes
+
+* **ci:** forward the router secrets to ai-pr-care with secrets: inherit ([ef0d46b](https://github.com/dryvist/nix-darwin/commit/ef0d46b25da806c68cb54dca9c013bb0a5a24f44))
+* **ci:** forward the router secrets to ai-pr-care with secrets: inherit ([4d242ec](https://github.com/dryvist/nix-darwin/commit/4d242ec00f7bb59defe6797b8a2bca7b780f73d5))
+* **mac-studio:** avoid double-counting synced session usage ([9e97b75](https://github.com/dryvist/nix-darwin/commit/9e97b759e5b97f828a6513966d3d545c667403d7))
+* **mac-studio:** disable the usage collector on the transcript replica host ([04f26d7](https://github.com/dryvist/nix-darwin/commit/04f26d750bdedf35bafdfd5b3cef54e48b32f886))
+* **mac-studio:** prebuild the develop closure and log to one file ([#2537](https://github.com/dryvist/nix-darwin/issues/2537)) ([1234be5](https://github.com/dryvist/nix-darwin/commit/1234be5b828189aba3a4dd8fd853dcbcb290c809))
+
 ## [2.64.1](https://github.com/dryvist/nix-darwin/compare/v2.64.0...v2.64.1) (2026-09-15)
 
 
