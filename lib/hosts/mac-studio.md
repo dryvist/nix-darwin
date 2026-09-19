@@ -25,10 +25,9 @@ nothing about which weights answered.
 
 ## Two warm brains (2026-08-14) — supersedes single-model mode
 
-This host is the estate's **intelligence tier**; the single-GPU
-fast-subagent tier (router roles `fast`/`fast-gpu`, since 2026-09) takes
-fast-and-small, so throughput is no longer the objective and both brains stay
-warm. This host is the *second* rung of that tier's ladder, behind the GPU. Roles split by cost, not preference:
+This host is the estate's **intelligence tier**; the GPU `fast` tier
+takes fast-and-small (this host is its second rung), so both brains stay
+warm. Roles split by cost, not preference:
 
 | Model | Roles | Shape | Thinking |
 | --- | --- | --- | --- |
