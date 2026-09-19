@@ -107,6 +107,43 @@ let
   # in-flight video chunk, a half-flushed frame) must not be copied mid-write.
   # The global floor is not enough on its own for a source that writes one file
   # over many minutes with idle gaps — see the per-job `minAge` option.
+  # The SFTP backend names its host/user/key on the command line. Any other
+  # backend is defined entirely by RCLONE_CONFIG_<NAME>_* variables in the env
+  # file, so rclone resolves "<name>:" itself and this module needs to know
+  # nothing about the provider — no endpoint, bucket or key reaches the Nix
+  # store, and adding a backend is an env-file change rather than a module one.
+  # It is also how a crypt remote is used: point `remote` at the crypt, and the
+  # plaintext never leaves this machine.
+  isSftp = cfg.remote == "sftp";
+
+  backendArgs = lib.optionals isSftp [
+    "--sftp-host \"\${OFFBOX_HOST}\""
+    "--sftp-user \"\${OFFBOX_USER}\""
+    "--sftp-key-file \"\${OFFBOX_KEY_FILE}\""
+    # Host-key validation stays ON. rclone silently disables it unless a
+    # known_hosts file is named, which would make a MITM on this path
+    # invisible; the estate's standing rule is that host-key checking is
+    # never traded for convenience.
+    "--sftp-known-hosts-file \"\${OFFBOX_KNOWN_HOSTS}\""
+    "--sftp-concurrency ${toString cfg.transfers}"
+  ];
+
+  # ":sftp:" is an on-the-fly remote; a named remote from the env file is
+  # "<name>:". Both take the same ${OFFBOX_ROOT}/<dest> suffix.
+  destPrefix = if isSftp then ":sftp:" else "${cfg.remote}:";
+
+  # Variables the runner requires before it will do anything. The backend-
+  # specific ones are only demanded when that backend is selected — an unset
+  # variable is a FAILURE either way (see the module header), never a skip.
+  requiredVars =
+    [ "OFFBOX_ROOT" ]
+    ++ lib.optionals isSftp [
+      "OFFBOX_HOST"
+      "OFFBOX_USER"
+      "OFFBOX_KEY_FILE"
+      "OFFBOX_KNOWN_HOSTS"
+    ];
+
   mkJobArgs =
     job:
     lib.concatStringsSep " " (
@@ -119,22 +156,14 @@ let
         # time with a confusing "couldn't connect SSH" rather than an obvious
         # quoting error. Double quotes expand and still protect whitespace;
         # job.dest is a module option, not user input.
-        "\":sftp:\${OFFBOX_ROOT}/${job.dest}\""
+        "\"${destPrefix}\${OFFBOX_ROOT}/${job.dest}\""
         "--min-age ${if job.minAge != null then job.minAge else cfg.minAge}"
         "--transfers ${toString cfg.transfers}"
         "--checkers ${toString cfg.checkers}"
-        "--sftp-concurrency ${toString cfg.transfers}"
-        "--sftp-host \"\${OFFBOX_HOST}\""
-        "--sftp-user \"\${OFFBOX_USER}\""
-        "--sftp-key-file \"\${OFFBOX_KEY_FILE}\""
-        # Host-key validation stays ON. rclone silently disables it unless a
-        # known_hosts file is named, which would make a MITM on this path
-        # invisible; the estate's standing rule is that host-key checking is
-        # never traded for convenience.
-        "--sftp-known-hosts-file \"\${OFFBOX_KNOWN_HOSTS}\""
         "--stats-one-line"
         "--stats 1m"
       ]
+      ++ backendArgs
       ++ lib.optional job.immutable "--immutable"
       ++ lib.optional (job.maxAge != null) "--max-age ${job.maxAge} --no-traverse"
       # --suffix, not --backup-dir. --backup-dir moves the superseded remote
@@ -168,7 +197,7 @@ let
     . "${cfg.envFile}"
     set +a
 
-    for v in OFFBOX_HOST OFFBOX_USER OFFBOX_KEY_FILE OFFBOX_ROOT OFFBOX_KNOWN_HOSTS; do
+    for v in ${lib.concatStringsSep " " requiredVars}; do
       eval "val=\''${$v:-}"
       if [ -z "$val" ]; then
         emit "-" "misconfigured" 0 "$v unset"
@@ -201,6 +230,25 @@ in
     user = lib.mkOption {
       type = lib.types.str;
       description = "User whose LaunchAgent domain the job runs in.";
+    };
+
+    remote = lib.mkOption {
+      type = lib.types.str;
+      default = "sftp";
+      example = "archive";
+      description = ''
+        Which rclone remote to copy into. "sftp" (the default) keeps the
+        original on-the-fly SFTP behaviour, taking host, user, key and
+        known_hosts from the env file.
+
+        Any other value is treated as the NAME of a remote the env file
+        defines through RCLONE_CONFIG_<NAME>_* variables, so the provider,
+        endpoint, bucket and keys stay out of the Nix store and out of this
+        repo. Point it at a crypt remote wrapping the real one when the source
+        is sensitive — file contents and names are then encrypted before they
+        leave the machine, and neither the object store nor anything it
+        replicates to holds plaintext.
+      '';
     };
 
     envFile = lib.mkOption {
