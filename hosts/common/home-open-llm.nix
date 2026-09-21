@@ -1,19 +1,26 @@
 # Home-manager configuration for the `open-llm` automation identity
 #
-# The second dedicated agent account (see modules/darwin/agent-identity.nix):
-# runs opencode and the cursor CLI, and nothing else. Same headless `server`
-# preset as home-agent.nix, the same launchd-domain and model-serving
-# exclusions, plus every other coding agent nix-ai turns on by default forced
-# off — this identity is scoped to two tools, and a lower-trust tool should
-# not find a configured claude or codex sitting next to it.
+# The second dedicated agent account (see modules/darwin/agent-identity.nix).
+# Full parity with the `claude` identity (hosts/common/home-agent.nix): same
+# headless `server` preset, same launchd-domain exclusions, and every coding
+# agent nix-ai enables by default stays on — including `claude` itself, run
+# against Z.ai's endpoint via the `zcode` function below instead of a
+# first-party Anthropic subscription. `converge = false` in lib/user-config.nix
+# means this account never gets the agent-identity.nix sudoers grant, so it
+# has the same tools as `claude` but none of its host-rebuild privilege.
 #
-# What "off" means here: the `mkForce false` lines remove home-manager
-# CONFIGURATION for this account. `claude` and `codex` also exist system-wide
-# as Homebrew casks (/opt/homebrew/bin), which nothing in this repo can scope
-# per user — so `command -v codex` still resolves as this account; what it
-# does not get is a config, a login, or a place in this home's PATH. Some
-# shared AI packages also arrive via ungated `home.packages` (nix-ai
-# ai-tools.nix) and are likewise not removable from here.
+# UNLIKE `claude`: this identity holds no Doppler service token (operator
+# decision — open-llm is not trusted with Doppler at all). nix-ai's
+# `claude-zai` (modules/ai-aliases.zsh) now uses an already-set
+# ZAI_SUBSCRIPTION_KEY as-is and only falls back to `doppler run` when it is
+# unset — so `zcode` just has to set that env var and call the SAME function,
+# rather than re-implement its ANTHROPIC_*/model wiring here. `openbao-run`
+# (modules/darwin/scripts/openbao-run.sh) fetches the key from OpenBao
+# (roles/openbao/templates/open-llm-policy.hcl.j2 in ansible-proxmox-apps,
+# secret/apps/open-llm#ZAI_SUBSCRIPTION_KEY); secret-zero (BAO_ADDR + the
+# open-llm AppRole's role_id/secret_id) lives in a 0600 env file under this
+# account's own home, never in this repo. `-ic` re-sources zshrc in the
+# exec'd child so the `claude-zai` function (defined there) exists to call.
 
 {
   lib,
@@ -39,19 +46,22 @@
     mlx.enable = lib.mkForce false;
     herdr.enable = lib.mkForce false;
 
-    # Every other coding agent nix-ai enables unconditionally
-    # (modules/default.nix). cursor and opencode are deliberately left at
-    # their default — they are this identity's whole purpose.
-    claude.latest.enable = lib.mkForce false;
-    codex.enable = lib.mkForce false;
-    qwen-code.enable = lib.mkForce false;
-    antigravity-ide.enable = lib.mkForce false;
-    antigravity-cli.enable = lib.mkForce false;
-    fabric.enable = lib.mkForce false;
+    # `claude`, `codex`, `qwen-code`, `antigravity-*`, `cursor`, `opencode`,
+    # and `fabric` all stay at their nix-ai default (on) — same tool set as
+    # the `claude` identity.
+    zsh.initContent = lib.mkAfter ''
+      zcode() {
+        openbao-run --domain open-llm \
+          --env-file "$HOME/.config/openbao/open-llm.env" \
+          --secrets apps/open-llm \
+          -- zsh -ic 'claude-zai "$@"' zsh "$@"
+      }
+    '';
   };
 
   # Same gui/<uid> domain problem as herdr. Nothing signs commits from this
-  # account, so there is no agent to keep alive.
+  # account with a GUI-backed key; its git identity/signing is provisioned
+  # separately (see SETUP.md).
   services.gpg-agent.enable = lib.mkForce false;
 
   # WORKAROUND: Disable manpage generation to suppress options.json derivation context warning
