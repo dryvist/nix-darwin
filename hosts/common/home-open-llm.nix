@@ -58,6 +58,18 @@
     # `claude`, `codex`, `qwen-code`, `antigravity-*`, `cursor`, `opencode`,
     # and `fabric` all stay at their nix-ai default (on) — same tool set as
     # the `claude` identity.
+
+    # vikunja and zammad read their token via nix-ai's secretsRun, which
+    # picks up ~/.openbao/open-llm.env (see the header comment above) — same
+    # mechanism as the Z.ai key. vikunja ships catalog-disabled everywhere
+    # (same as the `claude` identity's home.nix override); zammad ships
+    # enabled. Only the URL is set here, same as `claude`'s Doppler-sourced
+    # value — not secret, but names homelab topology.
+    aiMcp = {
+      servers.vikunja.disabled = lib.mkForce false;
+      vikunjaUrl = "https://vikunja.${userConfig.internalDomain}/api/v1";
+      zammadUrl = "https://zammad.${userConfig.internalDomain}/api/v1";
+    };
   };
 
   home.packages = [
