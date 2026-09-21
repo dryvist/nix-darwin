@@ -4,10 +4,23 @@
 # Full parity with the `claude` identity (hosts/common/home-agent.nix): same
 # headless `server` preset, same launchd-domain exclusions, and every coding
 # agent nix-ai enables by default stays on — including `claude` itself, run
-# against Z.ai's endpoint via the `zcode` alias below instead of a first-party
-# Anthropic subscription. `converge = false` in lib/user-config.nix means this
-# account never gets the agent-identity.nix sudoers grant, so it has the same
-# tools as `claude` but none of its host-rebuild privilege.
+# against Z.ai's endpoint via the `zcode` function below instead of a
+# first-party Anthropic subscription. `converge = false` in lib/user-config.nix
+# means this account never gets the agent-identity.nix sudoers grant, so it
+# has the same tools as `claude` but none of its host-rebuild privilege.
+#
+# UNLIKE `claude`: this identity holds no Doppler service token (operator
+# decision — open-llm is not trusted with Doppler at all). nix-ai's
+# `claude-zai` (modules/ai-aliases.zsh) now uses an already-set
+# ZAI_SUBSCRIPTION_KEY as-is and only falls back to `doppler run` when it is
+# unset — so `zcode` just has to set that env var and call the SAME function,
+# rather than re-implement its ANTHROPIC_*/model wiring here. `openbao-run`
+# (modules/darwin/scripts/openbao-run.sh) fetches the key from OpenBao
+# (roles/openbao/templates/open-llm-policy.hcl.j2 in ansible-proxmox-apps,
+# secret/apps/open-llm#ZAI_SUBSCRIPTION_KEY); secret-zero (BAO_ADDR + the
+# open-llm AppRole's role_id/secret_id) lives in a 0600 env file under this
+# account's own home, never in this repo. `-ic` re-sources zshrc in the
+# exec'd child so the `claude-zai` function (defined there) exists to call.
 
 {
   lib,
@@ -35,12 +48,14 @@
 
     # `claude`, `codex`, `qwen-code`, `antigravity-*`, `cursor`, `opencode`,
     # and `fabric` all stay at their nix-ai default (on) — same tool set as
-    # the `claude` identity. `claude-zai`/`codex-zai` (nix-ai
-    # modules/ai-shell.nix, modules/ai-aliases.zsh) already point either CLI
-    # at Z.ai's endpoint using a Doppler-sourced ZAI_SUBSCRIPTION_KEY; `zcode`
-    # is just this account's name for that existing launcher, not a new tool.
+    # the `claude` identity.
     zsh.initContent = lib.mkAfter ''
-      alias zcode=claude-zai
+      zcode() {
+        openbao-run --domain open-llm \
+          --env-file "$HOME/.config/openbao/open-llm.env" \
+          --secrets apps/open-llm \
+          -- zsh -ic 'claude-zai "$@"' zsh "$@"
+      }
     '';
   };
 
