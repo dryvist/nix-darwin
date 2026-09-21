@@ -4,7 +4,7 @@
 # Full parity with the `claude` identity (hosts/common/home-agent.nix): same
 # headless `server` preset, same launchd-domain exclusions, and every coding
 # agent nix-ai enables by default stays on — including `claude` itself, run
-# against Z.ai's endpoint via the `zcode` function below instead of a
+# against Z.ai's endpoint via the `zcode` command below instead of a
 # first-party Anthropic subscription. `converge = false` in lib/user-config.nix
 # means this account never gets the agent-identity.nix sudoers grant, so it
 # has the same tools as `claude` but none of its host-rebuild privilege.
@@ -18,12 +18,23 @@
 # (modules/darwin/scripts/openbao-run.sh) fetches the key from OpenBao
 # (roles/openbao/templates/open-llm-policy.hcl.j2 in ansible-proxmox-apps,
 # secret/apps/open-llm#ZAI_SUBSCRIPTION_KEY); secret-zero (BAO_ADDR + the
-# open-llm AppRole's role_id/secret_id) lives in a 0600 env file under this
-# account's own home, never in this repo. `-ic` re-sources zshrc in the
-# exec'd child so the `claude-zai` function (defined there) exists to call.
+# open-llm AppRole's role_id/secret_id) lives in `~/.openbao/open-llm.env`.
+#
+# `zcode` (scripts/open-llm-zcode.sh) is a real PATH command, not a zsh
+# function: a zsh-function `zcode` is invisible to any non-interactive
+# invocation (`sudo -u open-llm -i zcode`, `su -l open-llm -c zcode`, cron,
+# launchd), because none of those source interactive zshrc for the OUTER
+# command itself. Verified live 2026-09-21: `sudo -u open-llm -i zcode
+# --version` reported "command not found" against the function form.
+#
+# Secret-zero lives at `~/.openbao/`, not `~/.config/openbao/`: home-manager
+# owns and resets `~/.config` on activation for this account, which silently
+# deleted a manually-installed file there (verified live, same date) —
+# `~/.config` is never a safe home for anything not declared in this module.
 
 {
   lib,
+  pkgs,
   userConfig,
   ...
 }:
@@ -49,15 +60,14 @@
     # `claude`, `codex`, `qwen-code`, `antigravity-*`, `cursor`, `opencode`,
     # and `fabric` all stay at their nix-ai default (on) — same tool set as
     # the `claude` identity.
-    zsh.initContent = lib.mkAfter ''
-      zcode() {
-        openbao-run --domain open-llm \
-          --env-file "$HOME/.config/openbao/open-llm.env" \
-          --secrets apps/open-llm \
-          -- zsh -ic 'claude-zai "$@"' zsh "$@"
-      }
-    '';
   };
+
+  home.packages = [
+    (pkgs.writeShellApplication {
+      name = "zcode";
+      text = builtins.readFile ./scripts/open-llm-zcode.sh;
+    })
+  ];
 
   # Same gui/<uid> domain problem as herdr. Nothing signs commits from this
   # account with a GUI-backed key; its git identity/signing is provisioned
