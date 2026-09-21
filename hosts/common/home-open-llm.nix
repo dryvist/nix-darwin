@@ -24,13 +24,11 @@
 # function: a zsh-function `zcode` is invisible to any non-interactive
 # invocation (`sudo -u open-llm -i zcode`, `su -l open-llm -c zcode`, cron,
 # launchd), because none of those source interactive zshrc for the OUTER
-# command itself. Verified live 2026-09-21: `sudo -u open-llm -i zcode
-# --version` reported "command not found" against the function form.
+# command itself.
 #
 # Secret-zero lives at `~/.openbao/`, not `~/.config/openbao/`: home-manager
-# owns and resets `~/.config` on activation for this account, which silently
-# deleted a manually-installed file there (verified live, same date) —
-# `~/.config` is never a safe home for anything not declared in this module.
+# owns and resets `~/.config` for this account on every activation, so
+# anything not declared in this module does not survive there.
 
 {
   lib,
