@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.66.1](https://github.com/dryvist/nix-darwin/compare/v2.66.0...v2.66.1) (2026-09-21)
+
+
+### Bug Fixes
+
+* **open-llm:** make zcode a real command, move secret-zero out of ~/.config ([7cac99f](https://github.com/dryvist/nix-darwin/commit/7cac99f30e57e2e297be1e11e3db05af0559ddc6))
+
 ## [2.66.0](https://github.com/dryvist/nix-darwin/compare/v2.65.0...v2.66.0) (2026-09-21)
 
 
