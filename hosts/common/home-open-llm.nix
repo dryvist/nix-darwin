@@ -4,10 +4,22 @@
 # Full parity with the `claude` identity (hosts/common/home-agent.nix): same
 # headless `server` preset, same launchd-domain exclusions, and every coding
 # agent nix-ai enables by default stays on — including `claude` itself, run
-# against Z.ai's endpoint via the `zcode` alias below instead of a first-party
-# Anthropic subscription. `converge = false` in lib/user-config.nix means this
-# account never gets the agent-identity.nix sudoers grant, so it has the same
-# tools as `claude` but none of its host-rebuild privilege.
+# against Z.ai's endpoint via the `zcode` function below instead of a
+# first-party Anthropic subscription. `converge = false` in lib/user-config.nix
+# means this account never gets the agent-identity.nix sudoers grant, so it
+# has the same tools as `claude` but none of its host-rebuild privilege.
+#
+# UNLIKE `claude`: this identity holds no Doppler service token (operator
+# decision — open-llm is not trusted with Doppler at all), so it cannot use
+# nix-ai's `claude-zai` alias, which fetches ZAI_SUBSCRIPTION_KEY via
+# `doppler run`. `zcode` below is its own function, reading the same key from
+# OpenBao instead (roles/openbao/templates/open-llm-policy.hcl.j2 in
+# ansible-proxmox-apps, secret/apps/open-llm#ZAI_SUBSCRIPTION_KEY) via the
+# existing `openbao-run` helper (modules/darwin/scripts/openbao-run.sh) —
+# secret-zero (BAO_ADDR + the open-llm AppRole's role_id/secret_id) lives in
+# a 0600 env file under this account's own home, never in this repo. It then
+# execs `claude` with the same ANTHROPIC_*/model env wiring claude-zai uses,
+# so it is a drop-in behavioral match, just with a different secret source.
 
 {
   lib,
@@ -35,12 +47,36 @@
 
     # `claude`, `codex`, `qwen-code`, `antigravity-*`, `cursor`, `opencode`,
     # and `fabric` all stay at their nix-ai default (on) — same tool set as
-    # the `claude` identity. `claude-zai`/`codex-zai` (nix-ai
-    # modules/ai-shell.nix, modules/ai-aliases.zsh) already point either CLI
-    # at Z.ai's endpoint using a Doppler-sourced ZAI_SUBSCRIPTION_KEY; `zcode`
-    # is just this account's name for that existing launcher, not a new tool.
+    # the `claude` identity. ZAI_CLAUDE_BASE_URL/PRIMARY_MODEL/FAST_MODEL/
+    # AUTO_COMPACT_WINDOW are non-secret config, already exported ambiently
+    # by nix-ai's ai-shell.nix for every account (including this one) — only
+    # the subscription key is a secret, and that is the one thing this
+    # function fetches, from OpenBao rather than Doppler.
     zsh.initContent = lib.mkAfter ''
-      alias zcode=claude-zai
+      zcode() {
+        openbao-run --domain open-llm \
+          --env-file "$HOME/.config/openbao/open-llm.env" \
+          --secrets apps/open-llm \
+          -- zsh -c '
+            ANTHROPIC_API_KEY= \
+            ANTHROPIC_AUTH_TOKEN="$ZAI_SUBSCRIPTION_KEY" \
+            ANTHROPIC_BASE_URL="$ZAI_CLAUDE_BASE_URL" \
+            ANTHROPIC_CUSTOM_HEADERS= \
+            CLAUDE_CODE_OAUTH_TOKEN= \
+            CLAUDE_CODE_USE_BEDROCK= \
+            CLAUDE_CODE_USE_VERTEX= \
+            OPENAI_API_KEY= \
+            ANTHROPIC_DEFAULT_FABLE_MODEL="$ZAI_CLAUDE_PRIMARY_MODEL" \
+            ANTHROPIC_DEFAULT_OPUS_MODEL="$ZAI_CLAUDE_PRIMARY_MODEL" \
+            ANTHROPIC_DEFAULT_SONNET_MODEL="$ZAI_CLAUDE_FAST_MODEL" \
+            ANTHROPIC_DEFAULT_HAIKU_MODEL="$ZAI_CLAUDE_FAST_MODEL" \
+            CLAUDE_CODE_SUBAGENT_MODEL="$ZAI_CLAUDE_FAST_MODEL" \
+            CLAUDE_CODE_AUTO_COMPACT_WINDOW="$ZAI_CLAUDE_AUTO_COMPACT_WINDOW" \
+            CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 \
+            API_TIMEOUT_MS=3000000 \
+              exec claude "$@"
+          ' zsh "$@"
+      }
     '';
   };
 
