@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.66.0](https://github.com/dryvist/nix-darwin/compare/v2.65.0...v2.66.0) (2026-09-21)
+
+
+### Features
+
+* **agent-identity:** give open-llm full tool parity with claude, via zcode alias ([#2553](https://github.com/dryvist/nix-darwin/issues/2553)) ([110d93a](https://github.com/dryvist/nix-darwin/commit/110d93a0e6b5935795d3bb1d813add1d5ebe50b0))
+* **open-llm:** fetch the Z.ai key from OpenBao instead of Doppler ([02f5564](https://github.com/dryvist/nix-darwin/commit/02f5564347b4076ad81c8a6ca10016e41b1d978d))
+* **open-llm:** fetch Z.ai key from OpenBao instead of Doppler ([f1034c1](https://github.com/dryvist/nix-darwin/commit/f1034c10e022a4cbf4ad7cc21cf5639d06c7c4e2))
+* **telemetry:** replace bespoke ws-monitor LaunchDaemon with native Cribl Edge streaming ([cf25a37](https://github.com/dryvist/nix-darwin/commit/cf25a3768236fc1b8e06b021c17872a4faf5a72f))
+
 ## [2.65.0](https://github.com/dryvist/nix-darwin/compare/v2.64.1...v2.65.0) (2026-09-19)
 
 
