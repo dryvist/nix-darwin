@@ -105,24 +105,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # nix-homebrew owns /opt/homebrew; brew-src tracks the current cask DSL.
-    nix-homebrew = {
-      url = "github:zhaofengli/nix-homebrew";
-      inputs.brew-src.follows = "brew-src";
-    };
-
-    # PINNED, not tracking master. Homebrew's 2026-09-04 "legacy-master-bootstrap"
-    # commit removed Library/Homebrew/cmd, which nix-homebrew's patch phase
-    # chmods unconditionally — every darwin-rebuild then dies at
-    # `brew-<version>-patched` with "cannot access .../Library/Homebrew/cmd".
-    # Nothing in this repo can build until this pin moves back off master.
-    #
-    # Unpin when nix-homebrew handles the new layout; check its issue tracker
-    # rather than simply bumping this rev, since master still lacks that path.
-    brew-src = {
-      url = "github:Homebrew/brew/2316567ba9be476c217c49829a70b7ffe4b806d4";
-      flake = false;
-    };
+    # brew-src is intentionally NOT overridden: nix-homebrew pins the Homebrew
+    # release tag its own bin/brew wrapper was generated from. Pointing it at a
+    # master commit desynchronizes the two and breaks every `brew` invocation.
+    nix-homebrew.url = "github:zhaofengli/nix-homebrew";
 
   };
 

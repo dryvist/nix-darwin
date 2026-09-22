@@ -163,17 +163,17 @@
     "brew-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1788461011,
-        "narHash": "sha256-qufM+5OftGLvuYfrRsoOzUoHnEgbXtQZgmyKIe0h+4I=",
+        "lastModified": 1789661079,
+        "narHash": "sha256-geVTQ51PGZ1mLULM5k7wO7qt/6xenOR/YG8X7Q3eCaI=",
         "owner": "Homebrew",
         "repo": "brew",
-        "rev": "2316567ba9be476c217c49829a70b7ffe4b806d4",
+        "rev": "edb70f031e4170c780799633a1226ff73e1077f4",
         "type": "github"
       },
       "original": {
         "owner": "Homebrew",
+        "ref": "7.0.4",
         "repo": "brew",
-        "rev": "2316567ba9be476c217c49829a70b7ffe4b806d4",
         "type": "github"
       }
     },
@@ -1447,9 +1447,7 @@
     },
     "nix-homebrew": {
       "inputs": {
-        "brew-src": [
-          "brew-src"
-        ]
+        "brew-src": "brew-src"
       },
       "locked": {
         "lastModified": 1789928041,
@@ -1680,7 +1678,6 @@
       "inputs": {
         "ai-assistant-instructions": "ai-assistant-instructions",
         "ai-llm-prompts": "ai-llm-prompts",
-        "brew-src": "brew-src",
         "claude-code-plugins": "claude-code-plugins",
         "darwin": "darwin",
         "determinate": "determinate",
