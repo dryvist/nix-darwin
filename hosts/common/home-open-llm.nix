@@ -33,9 +33,25 @@
 {
   lib,
   pkgs,
+  osConfig,
   userConfig,
+  config,
   ...
 }:
+let
+  # This account has no Doppler token. Its MCP credentials come from its own
+  # secret/apps/open-llm bucket, with the AppRole secret-zero env file above.
+  openbaoRun = [
+    (lib.getExe osConfig.programs.openbao-run.package)
+    "--domain"
+    "open-llm"
+    "--env-file"
+    "${config.home.homeDirectory}/.openbao/open-llm.env"
+    "--secrets"
+    "apps/open-llm"
+    "--"
+  ];
+in
 
 {
   home-profile.preset = "server";
@@ -58,6 +74,11 @@
     # `claude`, `codex`, `qwen-code`, `antigravity-*`, `cursor`, `opencode`,
     # and `fabric` all stay at their nix-ai default (on) — same tool set as
     # the `claude` identity.
+
+    aiMcp.servers = {
+      vikunja.launchPrefix = openbaoRun;
+      zammad.launchPrefix = openbaoRun;
+    };
   };
 
   home.packages = [
