@@ -177,6 +177,16 @@ SH
   [[ "$stderr" == *"visibility must be"* ]]
 }
 
+@test "repo-delete and org-rulesets refuse outside the claude admin path" {
+  run_creds repo-delete dryvist/some-repo
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"only on the claude account's admin path"* ]]
+
+  OPENBAO_GH_ADMIN_ISSUER_PREFIX=UNSET_ISSUER run_creds org-rulesets GET
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"only on the claude account's admin path"* ]]
+}
+
 @test "the administration scope is reachable only from repo-create" {
   # The everyday scopes are what a caller can actually hold; neither may ever
   # carry administration. Asserted here as well as in --self-check so the

@@ -66,9 +66,9 @@
 #      token is minted, used, revoked, and never leaves the process — so unlike
 #      claim/token/break-glass this one is not captured, requires a terminal, and
 #      requires the operator to type the target back. See cmd_repo_create.
-#      Exception: the `claude` account, holding its own github-admin-claude
-#      AppRole pair in ~/.openbao/github-admin-claude.env (0600), creates
-#      unattended through OpenBao (dryvist only; audited login, 10m token).
+#      Exception: the `claude` account creates unattended through OpenBao
+#      (see claude_admin_configured). It alone also has repo-delete and
+#      org-rulesets, the other administration actions.
 #
 # SECRET-ZERO is AMBIENT (no local keychain), identical to openbao-aws-creds.sh
 # after dryvist/nix-darwin#1686: BAO_ADDR (or legacy VAULT_ADDR) + the github-read / github-write
@@ -371,22 +371,96 @@ bg_repo_create_scope='{"administration":"write","metadata":"read"}'
 # Exactly one "owner/repo": both halves present, no third segment, nothing that
 # is not a legal name character. Split out so --self-check can exercise it
 # without a terminal or a network.
-# Secret-zero for the unattended path: KEY=value lines, of which only the
-# github-admin-claude pair (and BAO_ADDR) are honoured. Refused unless the file
-# is owner-only, so a pair left readable by other accounts is never used.
-admin_claude_env="${HOME}/.openbao/github-admin-claude.env"
-admin_claude_set="dryvist-repo-create"
-load_admin_claude_env() {
-  local f="$1" k v
-  [ -f "${f}" ] || return 0
-  [ -n "$(find "${f}" -maxdepth 0 -perm 600)" ] || die "${f} must be mode 0600; refusing to use it"
-  while IFS='=' read -r k v; do
-    case "${k}" in
-      OPENBAO_APPROLE_GITHUB_ADMIN_CLAUDE_ROLE_ID|OPENBAO_APPROLE_GITHUB_ADMIN_CLAUDE_SECRET_ID|BAO_ADDR)
-        export "${k}=${v}" ;;
-    esac
-  done <"${f}"
-  bao_addr="${BAO_ADDR:-${VAULT_ADDR:-}}"
+# --- The `claude` account's unattended admin path -----------------------------
+#
+# OPENBAO_GH_ADMIN_ISSUER_PREFIX names the AppRole env prefix of the identity
+# whose secret-zero only the `claude` account holds; its policy may mint a
+# secret_id for the inert github-admin-claude AppRole and nothing else. Every
+# admin action self-bootstraps: issuer login -> one single-use 15m secret_id ->
+# github-admin-claude login (10m token) -> one set -> every OpenBao token
+# revoked. Nothing long-lived is stored, and each step is an audited request.
+admin_issuer_prefix="${OPENBAO_GH_ADMIN_ISSUER_PREFIX:-}"
+admin_claude_role="github-admin-claude"
+
+claude_admin_configured() {
+  [ -n "${admin_issuer_prefix}" ] && bao_login_configured "${admin_issuer_prefix}"
+}
+
+bao_revoke_self() {
+  curl -s -o /dev/null --max-time 10 -X POST -H "X-Vault-Token: $1" \
+    "${bao_addr}/v1/auth/token/revoke-self" || true
+}
+
+# Prints a GitHub installation token for one github-admin-claude set.
+mint_claude_admin() {
+  local set_name="$1" itok rid sid atok resp gh_tok
+  require_env
+  itok="$(bao_login "${admin_issuer_prefix}")"
+  rid="$(curl -sf --max-time 10 -H "X-Vault-Token: ${itok}" \
+    "${bao_addr}/v1/auth/approle/role/${admin_claude_role}/role-id" | jq -r '.data.role_id // empty')" \
+    || { bao_revoke_self "${itok}"; die "read ${admin_claude_role} role-id failed"; }
+  sid="$(curl -sf --max-time 30 -X POST -H "X-Vault-Token: ${itok}" \
+    "${bao_addr}/v1/auth/approle/role/${admin_claude_role}/secret-id" | jq -r '.data.secret_id // empty')" \
+    || { bao_revoke_self "${itok}"; die "mint ${admin_claude_role} secret_id failed"; }
+  bao_revoke_self "${itok}"
+  { [ -n "${rid}" ] && [ -n "${sid}" ]; } || die "${admin_claude_role} role_id/secret_id came back empty"
+  atok="$(OPENBAO_APPROLE_GITHUB_ADMIN_CLAUDE_ROLE_ID="${rid}" \
+    OPENBAO_APPROLE_GITHUB_ADMIN_CLAUDE_SECRET_ID="${sid}" bao_login GITHUB_ADMIN_CLAUDE)"
+  resp="$(curl -sf --max-time 10 -X POST -H "X-Vault-Token: ${atok}" \
+    "${bao_addr}/v1/github/token/${set_name}")" \
+    || { bao_revoke_self "${atok}"; die "mint ${set_name} failed"; }
+  bao_revoke_self "${atok}"
+  gh_tok="$(jq -r '.data.token // empty' <<<"${resp}")"
+  [ -n "${gh_tok}" ] || die "no token in ${set_name} mint response"
+  printf '%s' "${gh_tok}"
+}
+
+# One administration call on the claude path: mint the set, make the call,
+# revoke the GitHub token, print "<http_code>\n<body>". The token never leaves.
+claude_admin_call() {
+  local set_name="$1" method="$2" path="$3" body="${4:-}" gh_tok resp
+  gh_tok="$(mint_claude_admin "${set_name}")"
+  resp="$(printf '%s' "${body}" | curl -s --max-time 20 -w $'\n%{http_code}' -X "${method}" \
+    -H "Authorization: Bearer ${gh_tok}" -H "Accept: application/vnd.github+json" \
+    ${body:+--data-binary @-} "https://api.github.com${path}")"
+  curl -s -o /dev/null --max-time 10 -X DELETE \
+    -H "Authorization: Bearer ${gh_tok}" -H "Accept: application/vnd.github+json" \
+    "https://api.github.com/installation/token" || true
+  printf '%s\n%s' "${resp##*$'\n'}" "${resp%$'\n'*}"
+}
+
+require_claude_admin() {
+  claude_admin_configured \
+    || die "$1 is available only on the claude account's admin path (OPENBAO_GH_ADMIN_ISSUER_PREFIX + its AppRole pair)."
+}
+
+cmd_repo_delete() {
+  local target="${1:-}" out code
+  require_claude_admin repo-delete
+  valid_repo_target "${target}" || die "usage: openbao-github-creds repo-delete <owner>/<repo>"
+  [ "${target%%/*}" = "dryvist" ] || die "the claude admin path covers dryvist only, got '${target}'"
+  out="$(claude_admin_call dryvist-repo-create DELETE "/repos/${target}")"
+  code="${out%%$'\n'*}"
+  [ "${code}" = "204" ] || die "delete ${target} failed (HTTP ${code}): $(jq -r '.message // empty' <<<"${out#*$'\n'}" 2>/dev/null)"
+  echo "$prefix deleted ${target}; administration token revoked." >&2
+}
+
+# org-rulesets <GET|POST|PUT|DELETE> [<ruleset-id>]; POST/PUT read the JSON
+# body from stdin. dryvist only, and only /orgs/dryvist/rulesets[/<id>].
+valid_ruleset_request() {
+  case "${1:-}" in GET|POST|PUT|DELETE) ;; *) return 1 ;; esac
+  case "${2:-}" in ''|*[!0-9]*) [ -z "${2:-}" ] ;; *) : ;; esac
+}
+
+cmd_org_rulesets() {
+  local method="${1:-}" id="${2:-}" body="" out code
+  require_claude_admin org-rulesets
+  valid_ruleset_request "${method}" "${id}" \
+    || die "usage: openbao-github-creds org-rulesets <GET|POST|PUT|DELETE> [<ruleset-id>]"
+  case "${method}" in POST|PUT) body="$(cat)"; jq -e . >/dev/null <<<"${body}" || die "body is not JSON" ;; esac
+  out="$(claude_admin_call dryvist-org-admin "${method}" "/orgs/dryvist/rulesets${id:+/${id}}" "${body}")"
+  code="${out%%$'\n'*}"
+  case "${code}" in 2??) printf '%s\n' "${out#*$'\n'}" ;; *) die "org-rulesets ${method} failed (HTTP ${code}): $(jq -r '.message // empty' <<<"${out#*$'\n'}" 2>/dev/null)" ;; esac
 }
 
 valid_repo_target() {
@@ -409,11 +483,8 @@ cmd_repo_create() {
     public)  private=false ;;
     *)       die "visibility must be 'private' or 'public', got '${visibility}'" ;;
   esac
-  # The `claude` automation account holds its own inert AppRole pair in a
-  # file only it can read. With that pair loaded, creation runs unattended and
-  # mints through OpenBao, so every use is an audited login.
-  load_admin_claude_env "${admin_claude_env}"
-  if bao_login_configured GITHUB_ADMIN_CLAUDE; then
+  # The `claude` account creates unattended, through OpenBao (see above).
+  if claude_admin_configured; then
     owner="${target%%/*}"
     repo="${target#*/}"
     do_repo_create "${owner}" "${repo}" "${private}" "${visibility}"
@@ -454,17 +525,9 @@ cmd_repo_create() {
 do_repo_create() {
   local owner="$1" repo="$2" private="$3" visibility="$4"
   local body resp code url
-  if bao_login_configured GITHUB_ADMIN_CLAUDE; then
-    [ "${owner}" = "dryvist" ] || die "the unattended path creates dryvist repositories only, got '${owner}'"
-    require_env
-    local bao_tok
-    bao_tok="$(bao_login GITHUB_ADMIN_CLAUDE)"
-    resp="$(curl -sf --max-time 10 -X POST -H "X-Vault-Token: ${bao_tok}" \
-      "${bao_addr}/v1/github/token/${admin_claude_set}")" || die "mint ${admin_claude_set} failed"
-    curl -s -o /dev/null --max-time 10 -X POST -H "X-Vault-Token: ${bao_tok}" \
-      "${bao_addr}/v1/auth/token/revoke-self" || true
-    tok="$(jq -r '.data.token // empty' <<<"${resp}")"
-    [ -n "${tok}" ] || die "no token in ${admin_claude_set} mint response"
+  if claude_admin_configured; then
+    [ "${owner}" = "dryvist" ] || die "the claude admin path covers dryvist only, got '${owner}'"
+    tok="$(mint_claude_admin dryvist-repo-create)"
   else
     tok="$(mint_break_glass "${owner}" "${bg_repo_create_scope}" "")"
   fi
@@ -696,7 +759,7 @@ self_check() {
     echo "self-check FAIL: break-glass read scope must never grant administration"; return 1
   fi
   self_check_repo_create || return 1
-  self_check_admin_claude_env || return 1
+  self_check_claude_admin || return 1
   self_check_write_realms || return 1
   self_check_lock_reacquire || return 1
   echo "self-check OK"
@@ -732,24 +795,25 @@ self_check_repo_create() {
   done
 }
 
-# The unattended path must load only its own pair, and only from an owner-only
-# file: a group-readable file is refused, and unrelated keys are ignored.
-self_check_admin_claude_env() {
-  local d f out
-  d="$(mktemp -d)"; f="${d}/pair.env"
-  printf '%s\n' OPENBAO_APPROLE_GITHUB_ADMIN_CLAUDE_ROLE_ID=r \
-    OPENBAO_APPROLE_GITHUB_ADMIN_CLAUDE_SECRET_ID=s OTHER_VAR=x >"${f}"
-  chmod 644 "${f}"
-  if (load_admin_claude_env "${f}") 2>/dev/null; then
-    rm -rf "${d}"; echo "self-check FAIL: admin-claude env accepted a mode 0644 file"; return 1
+# The claude admin path is off unless explicitly configured, and its ruleset
+# verb accepts only the rulesets collection or one numeric ruleset id.
+self_check_claude_admin() {
+  if (admin_issuer_prefix="" claude_admin_configured); then
+    echo "self-check FAIL: claude admin path active with no issuer prefix"; return 1
   fi
-  chmod 600 "${f}"
-  out="$(env -u OPENBAO_APPROLE_GITHUB_ADMIN_CLAUDE_ROLE_ID -u OTHER_VAR bash -c \
-    "$(declare -f die load_admin_claude_env bao_login_var_names bao_login_configured); prefix=x
-     load_admin_claude_env '${f}'; bao_login_configured GITHUB_ADMIN_CLAUDE && echo ok; echo \"\${OTHER_VAR:-unset}\"")"
-  rm -rf "${d}"
-  [ "${out}" = $'ok\nunset' ] \
-    || { echo "self-check FAIL: admin-claude env load = ${out}"; return 1; }
+  if (admin_issuer_prefix="NOT_SET_ANYWHERE" claude_admin_configured); then
+    echo "self-check FAIL: claude admin path active with no issuer secret-zero"; return 1
+  fi
+  local req
+  for req in GET: GET:12 PUT:12 POST: DELETE:7; do
+    valid_ruleset_request "${req%%:*}" "${req#*:}" \
+      || { echo "self-check FAIL: rejected ruleset request '${req}'"; return 1; }
+  done
+  for req in : PATCH: GET:x GET:1/2 GET:../x; do
+    if valid_ruleset_request "${req%%:*}" "${req#*:}"; then
+      echo "self-check FAIL: accepted ruleset request '${req}'"; return 1
+    fi
+  done
 }
 
 # Realm routing, exercised without a server. Both directions matter: a mapped
@@ -840,6 +904,8 @@ case "${1:-}" in
   token)        shift; cmd_token "$@" ;;
   break-glass)  shift; cmd_break_glass "$@" ;;
   repo-create)  shift; cmd_repo_create "$@" ;;
+  repo-delete)  shift; cmd_repo_delete "$@" ;;
+  org-rulesets) shift; cmd_org_rulesets "$@" ;;
   --self-check) self_check ;;
-  *) die "usage: openbao-github-creds {get|store|erase|claim <owner>/<repo>|release [<owner>/<repo>]|token [read|write] [<owner>[/<repo>]]|break-glass [read|write] [<owner>[/<repo>]]|repo-create <owner>/<repo> [private|public]|--self-check}" ;;
+  *) die "usage: openbao-github-creds {get|store|erase|claim <owner>/<repo>|release [<owner>/<repo>]|token [read|write] [<owner>[/<repo>]]|break-glass [read|write] [<owner>[/<repo>]]|repo-create <owner>/<repo> [private|public]|repo-delete <owner>/<repo>|org-rulesets <METHOD> [<id>]|--self-check}" ;;
 esac
