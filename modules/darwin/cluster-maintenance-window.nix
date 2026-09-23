@@ -115,6 +115,12 @@ in
       '';
     };
 
+    passwordSecret = lib.mkOption {
+      type = lib.types.str;
+      example = "<path>#<field>";
+      description = "openbao-run `--secret` spec (`path#field`) for the Vikunja password. No default; set it in the host layer.";
+    };
+
     stateFile = lib.mkOption {
       type = lib.types.str;
       default = "${userConfig.user.homeDir}/Library/Application Support/mlx-cluster/maintenance-window-task";
@@ -155,7 +161,7 @@ in
         "--env-file"
         cfg.secretZeroEnvFile
         "--secret"
-        "VIKUNJA_PASSWORD=apps/vikunja#svc_mcp_rw_password"
+        "VIKUNJA_PASSWORD=${cfg.passwordSecret}"
         "--"
         (lib.getExe windowPkg)
       ];
