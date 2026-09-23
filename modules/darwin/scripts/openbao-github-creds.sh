@@ -379,7 +379,7 @@ admin_claude_set="dryvist-repo-create"
 load_admin_claude_env() {
   local f="$1" k v
   [ -f "${f}" ] || return 0
-  [ "$(stat -f %Lp "${f}")" = "600" ] || die "${f} must be mode 0600; refusing to use it"
+  [ -n "$(find "${f}" -maxdepth 0 -perm 600)" ] || die "${f} must be mode 0600; refusing to use it"
   while IFS='=' read -r k v; do
     case "${k}" in
       OPENBAO_APPROLE_GITHUB_ADMIN_CLAUDE_ROLE_ID|OPENBAO_APPROLE_GITHUB_ADMIN_CLAUDE_SECRET_ID|BAO_ADDR)
