@@ -246,6 +246,7 @@
                 sharedModules = [
                   nix-ai.homeManagerModules.default
                   nix-home.homeManagerModules.default
+                  ./hosts/common/mcp-env.nix
                 ]
                 ++ lib.optionals (label == "macbook-m4") [
                   nix-ai-open-harness.homeManagerModules.default

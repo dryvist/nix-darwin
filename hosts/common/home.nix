@@ -150,11 +150,10 @@ in
     # doesn't belong in nix-darwin (host-specific opinion lives in nix-ai).
 
     # The canonical AI MCP registry renders the same enabled server set for
-    # Claude, Codex, and the other local clients on every host. Vikunja's
-    # credentials remain injected by the shared Doppler wrapper. openrouter
+    # Claude, Codex, and the other local clients on every host. Credentialed
+    # servers (vikunja included) are set up in ./mcp-env.nix. openrouter
     # stays at the catalog default (off): its remote endpoint rejects the
     # MCP handshake, so every client paid a failed connection per session.
-    aiMcp.servers.vikunja.disabled = lib.mkForce false;
     # openwhispr is deliberately NOT listed. `aiMcp.servers` is an
     # attrsOf submodule, so naming a server the pinned nix-ai does not define
     # does not enable anything — it CREATES one from submodule defaults
