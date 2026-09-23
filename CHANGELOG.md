@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.67.0](https://github.com/dryvist/nix-darwin/compare/v2.66.1...v2.67.0) (2026-09-23)
+
+
+### Features
+
+* **openbao-github-creds:** unattended repo-create for the claude account ([#2570](https://github.com/dryvist/nix-darwin/issues/2570)) ([37387da](https://github.com/dryvist/nix-darwin/commit/37387da012fb5e4fb946dafe5daade4097863443))
+
+
+### Bug Fixes
+
+* **homebrew:** drop brew-src override desyncing brew and its wrapper ([19ca439](https://github.com/dryvist/nix-darwin/commit/19ca4397bc60cec493cf59d2373de9e4af945f40))
+* **homebrew:** drop brew-src override desyncing brew and its wrapper ([c8f18fc](https://github.com/dryvist/nix-darwin/commit/c8f18fccffe510baef0f31fd4c66df019009a99e))
+
 ## [2.66.1](https://github.com/dryvist/nix-darwin/compare/v2.66.0...v2.66.1) (2026-09-21)
 
 
