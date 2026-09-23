@@ -49,6 +49,11 @@
     herdr.enable = lib.mkForce false;
   };
 
+  # The AppRole env prefix of this account's own OpenBao identity. Turns on
+  # openbao-github-creds' admin path (repo-create/-delete, org-rulesets); the
+  # pair itself comes from this account's Doppler config under `doppler run`.
+  home.sessionVariables.OPENBAO_GH_ADMIN_ISSUER_PREFIX = "CLAUDE_IDENTITY";
+
   # Same gui/<uid> domain problem as herdr. Nothing signs commits from this
   # account, so there is no agent to keep alive.
   services.gpg-agent.enable = lib.mkForce false;
