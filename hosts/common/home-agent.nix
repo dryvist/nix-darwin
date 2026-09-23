@@ -20,6 +20,8 @@
 }:
 
 {
+  imports = [ ./vikunja-mcp.nix ];
+
   # Headless role: drops the GUI editor, GUI pinentry, document-skills runtime
   # and the other desktop features. Unlike the operator's home this is not
   # driven by the host class — the account is headless on every host.
