@@ -187,6 +187,12 @@ in
   # `darwin-rebuild switch` is a near-instant cache hit instead of a cold build.
   # Builds `develop`, the ref this host converges from; it can also be run on
   # demand right after a merge (`launchctl kickstart -k gui/<uid>/<Label>`).
+  #
+  # The `develop` literal below is DELIBERATE and must stay `develop` even
+  # after this file exists on `main` post-promotion — this job pre-warms the
+  # next promotion's source branch, not whatever this file's own branch is.
+  # Do not "fix" it to `main`, `HEAD`, or a derived value; that would warm the
+  # wrong ref and silently defeat the job.
   # Plain launchd agent (no claude, no token) — inline ProgramArguments, logs to
   # ~/Library/Logs/nix-prebuild/, Background priority.
   #
