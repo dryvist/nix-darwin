@@ -13,7 +13,7 @@
 #   write  raw github/token, scoped to ONE repository per request. Gated by a
 #          claim: you must `claim <owner>/<repo>` (which takes a cross-agent
 #          lease) before a write token exists.
-#   admin  github/token/<...>-full-automation   installation-wide, full ceiling.
+#   admin  github-admin/token/<...>-full-automation   installation-wide, full ceiling.
 #          Inert AppRole: needs a human-wrapped single-use secret_id.
 #
 # INVOCATION MODES
@@ -73,7 +73,10 @@
 # claim additionally need the installation IDs (OPENBAO_GITHUB_DRYVIST_INSTALLATION_ID
 # / OPENBAO_GITHUB_PERSONAL_INSTALLATION_ID) so a repo name can be pinned to its
 # installation — the values are not secret (they appear in App-install URLs) but
-# are injected the same way to keep this committed script free of them.
+# are injected the same way to keep this committed script free of them. Those
+# two are the everyday App's installations; break-glass and repo-create use the
+# admin App's (OPENBAO_GITHUB_ADMIN_DRYVIST_INSTALLATION_ID /
+# OPENBAO_GITHUB_ADMIN_PERSONAL_INSTALLATION_ID).
 #
 # ponytail: no on-disk token cache and no on-disk token — git/gh call the helper
 # ~once per operation and cache in-memory for it; the hard rule is "never write a
@@ -114,6 +117,16 @@ installation_id_for() {
   case "$1" in
     dryvist) echo "${OPENBAO_GITHUB_DRYVIST_INSTALLATION_ID:-}" ;;
     *)       echo "${OPENBAO_GITHUB_PERSONAL_INSTALLATION_ID:-}" ;;
+  esac
+}
+
+# Owner -> the admin App's installation id. Break-glass and repo-create sign
+# with the admin App key (OPENBAO_GITHUB_APP_*), whose installations differ
+# from the everyday App's that back the OpenBao read/write paths above.
+admin_installation_id_for() {
+  case "$1" in
+    dryvist) echo "${OPENBAO_GITHUB_ADMIN_DRYVIST_INSTALLATION_ID:-}" ;;
+    *)       echo "${OPENBAO_GITHUB_ADMIN_PERSONAL_INSTALLATION_ID:-}" ;;
   esac
 }
 
@@ -286,8 +299,8 @@ mint_break_glass() {
     || die "break-glass needs OPENBAO_GITHUB_APP_ID (run under 'doppler run')"
   [ -n "${OPENBAO_GITHUB_APP_PRIVATE_KEY:-}" ] \
     || die "break-glass needs OPENBAO_GITHUB_APP_PRIVATE_KEY (run under 'doppler run')"
-  iid="$(installation_id_for "${owner}")"
-  [ -n "${iid}" ] || die "no installation id for owner '${owner}'"
+  iid="$(admin_installation_id_for "${owner}")"
+  [ -n "${iid}" ] || die "no admin App installation id for owner '${owner}' — set OPENBAO_GITHUB_ADMIN_*_INSTALLATION_ID"
   now="$(date +%s)"
   hdr="$(printf '{"alg":"RS256","typ":"JWT"}' | b64url)"
   # App JWT: 9-min life, iat backdated 60s for clock skew (GitHub's own guidance).
