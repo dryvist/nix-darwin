@@ -40,10 +40,6 @@ let
     block in all
     pass out all keep state
     pass in quick proto tcp from { ${lib.concatStringsSep ", " cfg.allowedSshSources} } to any port 22 flags S/SA keep state (max-src-conn 10)
-    ${lib.concatMapStrings (
-      port:
-      "pass in quick proto tcp from { ${lib.concatStringsSep ", " cfg.allowedSshSources} } to any port ${toString port} flags S/SA keep state\n"
-    ) cfg.allowedTcpPorts}
     pass in quick inet proto icmp icmp-type echoreq keep state
   '';
 
@@ -67,23 +63,9 @@ in
     allowedSshSources = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       # ponytail: single broad RFC1918 default, narrow per-fleet CIDR if a
-      # tighter allow-list is ever needed. Doubles as the source list for
-      # allowedTcpPorts below — one CIDR set for "the LAN", not a second copy.
+      # tighter allow-list is ever needed.
       default = [ "10.0.0.0/8" ];
-      description = "CIDRs permitted to reach TCP/22, and every port in allowedTcpPorts, through the pf anchor.";
-    };
-
-    allowedTcpPorts = lib.mkOption {
-      type = lib.types.listOf lib.types.port;
-      default = [ ];
-      description = ''
-        Additional TCP ports, besides 22, permitted from allowedSshSources
-        through the pf anchor. A LAN-facing daemon (e.g. a Prometheus
-        exporter) that only sets networking.applicationFirewall/its own bind
-        address still has its inbound packets dropped here first — this is
-        the pf anchor's own allow-list, checked before the anchor's
-        default-deny.
-      '';
+      description = "CIDRs permitted to reach TCP/22 through the pf anchor.";
     };
 
     exemptInterfaces = lib.mkOption {

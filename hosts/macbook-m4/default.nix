@@ -52,11 +52,6 @@ in
     # both at once.
     corosync-qnetd-arbiter.enable = false;
 
-    # Optional per the operator: mac-studio already exports GPU/CPU/power
-    # metrics for the wall's LAN scraper. Flip to `true` to add this laptop
-    # as a second source.
-    macmon-exporter.enable = false;
-
     # Persistently disable unwanted updaters and remove junk plists.
     # Edit these lists to add/remove services — enforced on every rebuild.
     streamline-login = {

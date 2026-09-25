@@ -30,10 +30,7 @@ let
   userConfig = import ../../lib/user-config.nix;
 in
 {
-  imports = [
-    ../common/default.nix
-    ./macmon-exporter.nix
-  ];
+  imports = [ ../common/default.nix ];
 
   # nix-darwin sets HostName + LocalHostName from networking.hostName, but NOT
   # ComputerName — set it explicitly so the Finder/AirDrop name matches.

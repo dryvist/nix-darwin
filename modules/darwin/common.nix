@@ -43,7 +43,7 @@ in
     ./agent-identity.nix # Creates the automation account (see the file's header)
     ./hm-activation-assert.nix # Fail the rebuild when home-manager did not apply
     ./llm-gate.nix
-    ./macmon-exporter.nix
+    ./macmon-package.nix
     ./nix-storage.nix
     ./apple-silicon-tunables.nix
     ./system-limits.nix

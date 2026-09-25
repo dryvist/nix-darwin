@@ -39,13 +39,14 @@
       url = "github:dryvist/ai-llm-prompts/30551ed25e5ee4831389fe11f55849e25bceee3f";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Pinned by release tag, not a branch: nixpkgs-26.05-darwin's macmon
-    # (0.6.1) predates its Prometheus `serve` subcommand (added 0.7.0).
-    # Source-only (flake = false); modules/darwin/macmon-exporter.nix builds
-    # it with rustPlatform.buildRustPackage against its own Cargo.lock, so no
-    # hand-computed cargoHash lives in this repo. renovate.json5's
-    # macmon-tag customManager bumps the tag in this url on a new release —
-    # see its comment for why the plain `nix` manager can't.
+    # Pinned by release tag, not a branch: this repo builds its own macmon
+    # (Apple Silicon CPU/GPU/power monitor) rather than nixpkgs' copy, so a
+    # release lands here on Renovate's own schedule rather than nixpkgs'
+    # channel cadence. Source-only (flake = false); modules/darwin/
+    # macmon-package.nix builds it with rustPlatform.buildRustPackage against
+    # its own Cargo.lock, so no hand-computed cargoHash lives in this repo.
+    # renovate.json5's macmon-tag customManager bumps the tag in this url on
+    # a new release — see its comment for why the plain `nix` manager can't.
     macmon-src = {
       url = "github:vladkens/macmon/v0.8.2";
       flake = false;
