@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.68.0](https://github.com/dryvist/nix-darwin/compare/v2.67.0...v2.68.0) (2026-09-25)
+
+
+### Features
+
+* **cluster-maintenance-window:** add passwordSecret option ([cd6bc82](https://github.com/dryvist/nix-darwin/commit/cd6bc829fa887608f61d76b31068aae32e8a10d9))
+* **cluster-maintenance-window:** add passwordSecret option ([db75cab](https://github.com/dryvist/nix-darwin/commit/db75cabbe0655c4ee7c24e6cc5cab7bf7ebca0ff))
+
+
+### Bug Fixes
+
+* **macbook-m4:** disable MiMoCode in the open harness ([#2591](https://github.com/dryvist/nix-darwin/issues/2591)) ([901ac23](https://github.com/dryvist/nix-darwin/commit/901ac23ee2beb6d684b0cc3b0ac02c2f2732cccd))
+
 ## [2.67.0](https://github.com/dryvist/nix-darwin/compare/v2.66.1...v2.67.0) (2026-09-23)
 
 
