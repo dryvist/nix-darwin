@@ -86,6 +86,8 @@ in
     openHarness = {
       enable = true;
       endpoint = "https://llm.${userConfig.internalDomain}/v1";
+      # Upstream mimo-code release asset returns 404; the package fails to build.
+      mimoCode.enable = false;
     };
 
     # Loopback LiteLLM proxy (nix-ai): every CLI names a stable role
