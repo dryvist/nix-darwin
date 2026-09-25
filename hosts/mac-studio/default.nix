@@ -37,7 +37,7 @@ in
   networking.computerName = hostConfig.hostName;
 
   # Wall kiosk browser; server class skips the workstation cask list.
-  homebrew.casks = [ "google-chrome" ];
+  homebrew.casks = [ "brave-browser" ];
 
   # ==========================================================================
   # System-Level Tuning (headless inference server)
