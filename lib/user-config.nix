@@ -90,6 +90,10 @@ in
   # uids climb from 505 (first free on these hosts). Every identity keeps
   # `staff` (gid 20) as its primary group — that is what lets it read the
   # operator's group-readable files — and additionally joins `agent`.
+  #
+  # `tools` names the CLIs that run AS this identity. The operator's shell
+  # wraps each one (hosts/common/scripts/agent-launch.sh); each starts in its
+  # own folder under the identity's workspace root.
   agentUsers = {
     claude = {
       name = "claude";
@@ -97,6 +101,10 @@ in
       homeDir = "/Users/claude";
       checkout = "git/public/nix/nix-darwin";
       converge = true;
+      tools = [
+        "claude"
+        "codex"
+      ];
     };
     # Runs opencode and cursor CLI: executes model-generated code from a
     # lower-trust tool, so no converge grant and no trusted-user status.
@@ -105,8 +113,19 @@ in
       uid = 506;
       homeDir = "/Users/open-llm";
       converge = false;
+      tools = [
+        "opencode"
+        "cursor-agent"
+        "zcode"
+      ];
     };
   };
+
+  # Shared volume holding each automation identity's workspace root
+  # (<agentGitRoot>/<identity>, its nix-home `workspace.gitHome`). Agents clone
+  # only what a task needs there, never the operator's checkouts; the operator
+  # may wipe any of it at will.
+  agentGitRoot = "/Volumes/git";
 
   # ==========================================================================
   # GPG Configuration

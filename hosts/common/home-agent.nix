@@ -32,6 +32,22 @@
     # access, which the filesystem permissions still deny.
     git.settings.safe.directory = [ "${userConfig.user.homeDir}/git" ];
 
+    # Sessions clone what a task needs into $GIT_HOME/<tool>, so git
+    # needs GitHub credentials of its own: the same OpenBao-minted wrapper as
+    # the operator's home (hosts/common/home.nix), resolved through THIS
+    # account's Doppler service token. That token is scoped to $HOME (SETUP.md)
+    # and sessions work outside it, hence the explicit --scope. The empty
+    # generic helper clears the package's osxkeychain default, which would
+    # otherwise persist the token.
+    gh.gitCredentialHelper.enable = false;
+    git.settings.credential = {
+      helper = "";
+      "https://github.com" = {
+        helper = "!doppler run --scope $HOME -- openbao-github-creds";
+        useHttpPath = true;
+      };
+    };
+
     # nix-ai enables cecli unconditionally, and its
     # tree-sitter-language-pack pin does not build on nixpkgs 26.05 — the same
     # override the operator's home carries (hosts/common/home.nix).
