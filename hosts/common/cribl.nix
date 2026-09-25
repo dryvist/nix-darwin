@@ -535,9 +535,9 @@ in
       # default output.
       packs = {
         cc-edge-the-mac-pack-io = pkgs.fetchzip {
-          url = "https://github.com/JacobPEvans/cc-edge-the-mac-pack-io/releases/download/v0.3.0/cc-edge-the-mac-pack-io-v0.3.0.crbl";
+          url = "https://github.com/dryvist/cc-edge-the-mac-pack-io/releases/download/v0.5.0/cc-edge-the-mac-pack-io-v0.5.0.crbl"; # renovate: cc-edge-the-mac-pack-io
           extension = "tar.gz";
-          hash = "sha256-rPPAkedltxT8RWgP2xXil1o6x13HQK+SRgihuheJAks=";
+          hash = "sha256-s7K7G+ieqrUA87480ksjHDerhb3paJvSYbTX3h6mO0s=";
           stripRoot = false;
         };
         cc-edge-codex-io = codexPack;
