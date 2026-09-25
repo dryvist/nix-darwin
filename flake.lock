@@ -1109,11 +1109,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1790136910,
-        "narHash": "sha256-Ho5xXKbluCp1lmvUkVwrN76fUW1NC3RARdNaFMGpEcY=",
+        "lastModified": 1790284584,
+        "narHash": "sha256-NYr7EQSiU1pgKx7OncBvwp1j3Leqkc3jbPIsYO+pukU=",
         "owner": "numtide",
         "repo": "llm-agents.nix",
-        "rev": "3a78485c5ec8c10ec53915410c724a4492cea4bb",
+        "rev": "5fd5db15997cc879c41cd4a04bd40c261659ea54",
         "type": "github"
       },
       "original": {
@@ -1242,11 +1242,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1790178966,
-        "narHash": "sha256-uYVbCxjq9QKecBQWLhV1AydJ2rgstgwa18i922uzKi4=",
+        "lastModified": 1790380065,
+        "narHash": "sha256-bSpBWRsRtguM5s4uab/Bs3Et5WvRbOIFGv8kf2Q8kP0=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "abea82eb8b7755e2a8670fea4de81b119e861677",
+        "rev": "604708f4ac6236a5cc52ea2535f73b30a8772d46",
         "type": "github"
       },
       "original": {
@@ -1534,11 +1534,11 @@
     },
     "nixpkgs-unstable": {
       "locked": {
-        "lastModified": 1790055231,
-        "narHash": "sha256-QpXotokGh5eeMG1Njiuh27oP0rK6t5+cMp7ymXSs7mc=",
+        "lastModified": 1790238896,
+        "narHash": "sha256-ym4BG18Pu2awiJIehla1Lo9xiB2QYRcCzW3SB74gEBY=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "b6c98e9e6633ee64753b594ff4a5febf0367fc00",
+        "rev": "34ca302a9572963c02e385c056be37c85ff51b77",
         "type": "github"
       },
       "original": {
@@ -1580,11 +1580,11 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1790055231,
-        "narHash": "sha256-QpXotokGh5eeMG1Njiuh27oP0rK6t5+cMp7ymXSs7mc=",
+        "lastModified": 1790178388,
+        "narHash": "sha256-kK3t7gwoz4Nx8RF46cs1Xz/skKNcK7y3KYP+gGqX6W8=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "b6c98e9e6633ee64753b594ff4a5febf0367fc00",
+        "rev": "00455b0a3690d3f5dc61e9aef4277dc86235b73f",
         "type": "github"
       },
       "original": {
@@ -1793,11 +1793,11 @@
     "token-meter-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1790078747,
-        "narHash": "sha256-WiWHpeTZ2ym6QmlDPXPb/vWNdcrAE8XEcTdM3TB5Hrw=",
+        "lastModified": 1790246493,
+        "narHash": "sha256-msAMpQWanT75S85JPGKSFHqrYpTySFOwlrpuWZP9Wnw=",
         "owner": "splunk",
         "repo": "token-meter",
-        "rev": "68fc047f774f2d2edeace90025057334390931e7",
+        "rev": "d58d3851ee680aba51c132b89afce068771411c4",
         "type": "github"
       },
       "original": {
