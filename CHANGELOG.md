@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.69.0](https://github.com/dryvist/nix-darwin/compare/v2.68.0...v2.69.0) (2026-09-25)
+
+
+### Features
+
+* **mac-studio:** never sleep the display or engage the screensaver ([ea03c77](https://github.com/dryvist/nix-darwin/commit/ea03c77f6a6a341ef3e5aa155ca099361a502b01))
+
 ## [2.68.0](https://github.com/dryvist/nix-darwin/compare/v2.67.0...v2.68.0) (2026-09-25)
 
 
