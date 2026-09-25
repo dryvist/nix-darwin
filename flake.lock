@@ -1138,6 +1138,23 @@
         "type": "github"
       }
     },
+    "macmon-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1785857126,
+        "narHash": "sha256-tdWuxpV+AAN189etks6LVo4OYDYQNd9dzfopECFgoR8=",
+        "owner": "vladkens",
+        "repo": "macmon",
+        "rev": "6919d7781b6c55a6e3bedff83a210435837e1dfe",
+        "type": "github"
+      },
+      "original": {
+        "owner": "vladkens",
+        "ref": "v0.8.2",
+        "repo": "macmon",
+        "type": "github"
+      }
+    },
     "managing-dependencies": {
       "flake": false,
       "locked": {
@@ -1684,6 +1701,7 @@
         "dotgithub": "dotgithub",
         "home-manager": "home-manager",
         "jacobpevans-cc-plugins": "jacobpevans-cc-plugins",
+        "macmon-src": "macmon-src",
         "nix-ai": "nix-ai",
         "nix-ai-open-harness": "nix-ai-open-harness",
         "nix-home": "nix-home",

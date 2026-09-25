@@ -2,10 +2,15 @@
 //
 // Inherits all org policy (auto-merge tiers, trusted orgs, dependency dashboard,
 // PR/branch limits, commit-message format, 0-day CVE handling) from the shared
-// nix preset: local>dryvist/.github:renovate-nix (= org default + native nix
-// manager). Only genuinely repo-specific config lives here: the Cribl Edge
-// custom datasource/manager and the flake-input grouping/scheduling that the
-// org's minor/patch tiers do not cover for git-refs digest updates.
+// nix preset: local>dryvist/.github:renovate-nix. That preset disables
+// Renovate's native `nix` manager org-wide — flake.lock has exactly one
+// writer, .github/workflows/deps-flake-lock.yml's `nix flake update` — so a
+// flake input pinned to a fixed tag (e.g. macmon-src below) never advances
+// through either path: the nix manager is off, and a bare relock never
+// rewrites a literal tag string in flake.nix. Only genuinely repo-specific
+// config lives here: the Cribl Edge and macmon-src custom datasource/managers,
+// and the flake-input grouping/scheduling the org's minor/patch tiers don't
+// cover for git-refs digest updates.
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
@@ -32,6 +37,19 @@
       "depNameTemplate": "cribl-edge",
       "datasourceTemplate": "custom.cribl-edge",
       "versioningTemplate": "loose"
+    },
+    // Custom regex manager: the macmon-src flake input is pinned by release
+    // tag (flake.nix), not a branch, because nixpkgs-26.05-darwin's own
+    // macmon (0.6.1) predates the `serve` subcommand modules/darwin/
+    // macmon-exporter.nix needs. depName is captured straight from the input
+    // URL, so a new tag PR needs no separate `# renovate:` annotation.
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^flake\\.nix$/"],
+      "matchStrings": [
+        "url = \"github:(?<depName>vladkens/macmon)/(?<currentValue>v[^\"]+)\";"
+      ],
+      "datasourceTemplate": "github-releases"
     }
   ],
 
