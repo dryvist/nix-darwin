@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.71.0](https://github.com/dryvist/nix-darwin/compare/v2.70.0...v2.71.0) (2026-09-25)
+
+
+### Features
+
+* **mac-studio:** use Brave Browser instead of Google Chrome ([#2605](https://github.com/dryvist/nix-darwin/issues/2605)) ([abb368c](https://github.com/dryvist/nix-darwin/commit/abb368c4a32c9842d47ac9cfdb43274ac19f300a))
+
 ## [2.70.0](https://github.com/dryvist/nix-darwin/compare/v2.69.0...v2.70.0) (2026-09-25)
 
 
