@@ -36,6 +36,9 @@ in
   # ComputerName — set it explicitly so the Finder/AirDrop name matches.
   networking.computerName = hostConfig.hostName;
 
+  # Wall kiosk browser; server class skips the workstation cask list.
+  homebrew.casks = [ "google-chrome" ];
+
   # ==========================================================================
   # System-Level Tuning (headless inference server)
   # ==========================================================================
