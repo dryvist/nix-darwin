@@ -241,6 +241,62 @@ SH
   grep -q "ghs_faketoken123" "$BATS_TEST_TMPDIR/revoke-argv"
 }
 
+@test "repo-create rejects malformed topics before touching the network" {
+  write_stub "$STUB_DIR/curl" <<SH
+echo "called" >> "\$BATS_TEST_TMPDIR/curl-calls"
+exit 22
+SH
+
+  run_creds repo-create dryvist/some-new-repo private "desc" "Nix,,bad"
+
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"topics must be"* ]]
+  [ ! -f "$BATS_TEST_TMPDIR/curl-calls" ]
+}
+
+@test "repo-create sends the description and sets topics with the same token" {
+  export OPENBAO_GITHUB_APP_ID=123456
+  export OPENBAO_GITHUB_APP_PRIVATE_KEY="stub-key-openssl-is-stubbed-below"
+  write_stub "$STUB_DIR/openssl" <<'SH'
+case "$1" in
+  base64) echo "c3R1Yg" ;;
+  dgst)   echo "c2ln" ;;
+esac
+SH
+  write_stub "$STUB_DIR/curl" <<SH
+case " \$* " in
+  *"access_tokens"*)
+    echo '{"token":"ghs_faketoken123"}'
+    exit 0
+    ;;
+  *"/installation/token"*)
+    exit 0
+    ;;
+  *"/orgs/dryvist/repos"*)
+    cat > "\$BATS_TEST_TMPDIR/create-body"
+    printf '%s\n%s' '{"html_url":"https://github.com/dryvist/zz-demo-repo"}' 201
+    exit 0
+    ;;
+  *"/repos/dryvist/zz-demo-repo/topics"*)
+    cat > "\$BATS_TEST_TMPDIR/topics-body"
+    for a in "\$@"; do echo "\$a"; done > "\$BATS_TEST_TMPDIR/topics-argv"
+    exit 0
+    ;;
+esac
+exit 22
+SH
+
+  run --separate-stderr bash -euo pipefail -c \
+    'source "$1"; do_repo_create dryvist zz-demo-repo true private "Demo repo" "nix,local-first"' \
+    _ "$SCRIPTS/openbao-github-creds.sh"
+
+  [ "$status" -eq 0 ]
+  [ "$(jq -r .description "$BATS_TEST_TMPDIR/create-body")" = "Demo repo" ]
+  [ "$(jq -c .names "$BATS_TEST_TMPDIR/topics-body")" = '["nix","local-first"]' ]
+  grep -q "ghs_faketoken123" "$BATS_TEST_TMPDIR/topics-argv"
+  grep -qx "PUT" "$BATS_TEST_TMPDIR/topics-argv"
+}
+
 @test "claim emits shell that mints in the caller, never a token value" {
   run --separate-stderr bash -euo pipefail -c \
     'source "$1"; claim_exports dryvist/some-repo' _ "$SCRIPTS/openbao-github-creds.sh"

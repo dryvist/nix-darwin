@@ -60,7 +60,7 @@
 #      taking the installation default.
 #
 #   5. repo-create (the ONLY administration-scoped path):
-#        openbao-github-creds repo-create <owner>/<repo> [private|public]
+#        openbao-github-creds repo-create <owner>/<repo> [private|public] [description] [topic,topic,...]
 #      Creates one organisation repository and nothing else. It is the inverse of
 #      every other subcommand: an ACTION, not a credential. The administration
 #      token is minted, used, revoked, and never leaves the process — so unlike
@@ -378,9 +378,10 @@ valid_repo_target() {
 }
 
 cmd_repo_create() {
-  local target="${1:-}" visibility="${2:-private}" owner repo typed private
+  local target="${1:-}" visibility="${2:-private}" description="${3:-}" topics="${4:-}"
+  local owner repo typed private
   [ -n "${target}" ] \
-    || die "usage: openbao-github-creds repo-create <owner>/<repo> [private|public]"
+    || die "usage: openbao-github-creds repo-create <owner>/<repo> [private|public] [description] [topic,topic,...]"
   valid_repo_target "${target}" \
     || die "expected exactly one <owner>/<repo>, got '${target}'. One repository per invocation; there is no batch form on purpose."
   case "${visibility}" in
@@ -388,6 +389,8 @@ cmd_repo_create() {
     public)  private=false ;;
     *)       die "visibility must be 'private' or 'public', got '${visibility}'" ;;
   esac
+  valid_topics "${topics}" \
+    || die "topics must be a comma-separated list of at most 20 lowercase names (a-z, 0-9, hyphen; max 50 chars each), got '${topics}'"
   # Every other subcommand refuses a terminal because its output is a
   # credential. This one refuses the ABSENCE of a terminal, because its output
   # is a new repository: it must never be reachable from a script, a CI job or
@@ -400,6 +403,8 @@ cmd_repo_create() {
 
   printf '%s\n' "$prefix about to create a NEW ${visibility} repository:" >&2
   printf '%s\n' "    https://github.com/${owner}/${repo}" >&2
+  [ -z "${description}" ] || printf '%s\n' "    description: ${description}" >&2
+  [ -z "${topics}" ] || printf '%s\n' "    topics: ${topics}" >&2
   printf '%s\n' "$prefix this mints a short-lived administration:write token for the ${owner} installation." >&2
   printf '%s' "$prefix type the full owner/repo to confirm: " >&2
   # An EOF at the prompt (Ctrl-D, or a terminal that closes) fails `read`, and
@@ -411,7 +416,19 @@ cmd_repo_create() {
   [ "${typed}" = "${target}" ] \
     || die "confirmation did not match ('${typed}' != '${target}') — nothing was created and no token was minted."
 
-  do_repo_create "${owner}" "${repo}" "${private}" "${visibility}"
+  do_repo_create "${owner}" "${repo}" "${private}" "${visibility}" "${description}" "${topics}"
+}
+
+# Empty, or 1-20 comma-separated GitHub topic names.
+valid_topics() {
+  local t names
+  [ -z "$1" ] && return 0
+  [[ "$1" != *, ]] || return 1
+  IFS=, read -ra names <<<"$1"
+  [ "${#names[@]}" -le 20 ] || return 1
+  for t in "${names[@]}"; do
+    [[ "${t}" =~ ^[a-z0-9][a-z0-9-]{0,49}$ ]] || return 1
+  done
 }
 
 # Mints the administration-scoped token, spends it on exactly one
@@ -421,7 +438,7 @@ cmd_repo_create() {
 # that actually touches a credential — can be driven directly in a test
 # without a terminal.
 do_repo_create() {
-  local owner="$1" repo="$2" private="$3" visibility="$4"
+  local owner="$1" repo="$2" private="$3" visibility="$4" description="${5:-}" topics="${6:-}"
   local body resp code url
   tok="$(mint_break_glass "${owner}" "${bg_repo_create_scope}" "")"
   # Spend it, then kill it. GitHub revokes the installation token the call was
@@ -448,7 +465,8 @@ do_repo_create() {
   }
   trap revoke EXIT
 
-  body="$(jq -cn --arg n "${repo}" --argjson p "${private}" '{name: $n, private: $p}')"
+  body="$(jq -cn --arg n "${repo}" --argjson p "${private}" --arg d "${description}" \
+    '{name: $n, private: $p} + (if $d == "" then {} else {description: $d} end)')"
   resp="$(printf '%s' "${body}" \
     | curl -s --max-time 20 -w $'\n%{http_code}' -X POST \
         -H "Authorization: Bearer ${tok}" -H "Accept: application/vnd.github+json" \
@@ -459,6 +477,15 @@ do_repo_create() {
     201)
       url="$(jq -r '.html_url // empty' <<<"${resp}")"
       printf '%s\n' "${url:-https://github.com/${owner}/${repo}}"
+      # Topics have no field on the create call; set them with the same token
+      # before it is revoked. A failure here must not hide the created repo.
+      if [ -n "${topics}" ]; then
+        jq -cn --arg t "${topics}" '{names: ($t | split(","))}' \
+          | curl -sf -o /dev/null --max-time 20 -X PUT \
+              -H "Authorization: Bearer ${tok}" -H "Accept: application/vnd.github+json" \
+              --data-binary @- "https://api.github.com/repos/${owner}/${repo}/topics" \
+          || echo "$prefix WARNING: repository created, but setting topics failed; set them in the repository settings." >&2
+      fi
       echo "$prefix created ${owner}/${repo} (${visibility}); administration token revoked." >&2
       ;;
     403)
@@ -776,5 +803,5 @@ case "${1:-}" in
   break-glass)  shift; cmd_break_glass "$@" ;;
   repo-create)  shift; cmd_repo_create "$@" ;;
   --self-check) self_check ;;
-  *) die "usage: openbao-github-creds {get|store|erase|claim <owner>/<repo>|release [<owner>/<repo>]|token [read|write] [<owner>[/<repo>]]|break-glass [read|write] [<owner>[/<repo>]]|repo-create <owner>/<repo> [private|public]|--self-check}" ;;
+  *) die "usage: openbao-github-creds {get|store|erase|claim <owner>/<repo>|release [<owner>/<repo>]|token [read|write] [<owner>[/<repo>]]|break-glass [read|write] [<owner>[/<repo>]]|repo-create <owner>/<repo> [private|public] [description] [topic,topic,...]|--self-check}" ;;
 esac
