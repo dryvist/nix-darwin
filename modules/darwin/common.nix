@@ -43,7 +43,6 @@ in
     ./agent-identity.nix # Creates the automation account (see the file's header)
     ./hm-activation-assert.nix # Fail the rebuild when home-manager did not apply
     ./llm-gate.nix
-    ./macmon-package.nix
     ./nix-storage.nix
     ./apple-silicon-tunables.nix
     ./system-limits.nix
@@ -98,6 +97,11 @@ in
     # macOS-specific system tools
     # ========================================================================
     mas # Mac App Store CLI
+
+    # ========================================================================
+    # Performance monitoring
+    # ========================================================================
+    macmon # Apple Silicon CPU/GPU/power monitor, consumed by the Cribl Edge Mac pack
 
     # ========================================================================
     # Network & process tools
