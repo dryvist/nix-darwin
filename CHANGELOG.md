@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.70.0](https://github.com/dryvist/nix-darwin/compare/v2.69.0...v2.70.0) (2026-09-25)
+
+
+### Features
+
+* **mac-studio:** add Google Chrome cask for the wall kiosk ([1c906e5](https://github.com/dryvist/nix-darwin/commit/1c906e5879588edb26806eab21e574e74aaf6ea8))
+
+
+### Bug Fixes
+
+* **ci:** pass TYPESAFE_API_KEY to the shared CI gate ([#2602](https://github.com/dryvist/nix-darwin/issues/2602)) ([84e7970](https://github.com/dryvist/nix-darwin/commit/84e7970019d1cebcaac5e0f52052827952222c8c))
+
 ## [2.69.0](https://github.com/dryvist/nix-darwin/compare/v2.68.0...v2.69.0) (2026-09-25)
 
 
