@@ -55,6 +55,8 @@ jobs:
       # validation (startup_failure).
       actions: write
     uses: dryvist/.github/.github/workflows/_ci-gate.yml@main
+    secrets:
+      TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
     with:
       osv_scan: true
       nix_validate: true
