@@ -77,7 +77,12 @@ in
     # --- Energy & Sleep ---
     # Always-on: never idle-sleep on AC (module sleep.ac default = 0). Wake-on-LAN,
     # network tuning, and energyMode come from the server class in ../common.
-    energy.enable = true;
+    # Display never sleeps either — wall monitor host.
+    energy = {
+      enable = true;
+      displaysleep = 0;
+      displaysleepAc = 0;
+    };
 
     # --- Auto-login: kept on this host only, deliberately (Vikunja #2132) ---
     # The MLX cluster rank/model-server agents and the GitHub runner
