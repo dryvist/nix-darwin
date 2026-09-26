@@ -309,5 +309,12 @@ in
         StandardErrorPath = "/Users/${cfg.user}/Library/Logs/offbox-sync/agent.err";
       };
     };
+
+    # Flags as in logging.nix; offload.jsonl is tailed by Cribl Edge (cribl.nix).
+    environment.etc."newsyslog.d/offbox-sync.conf".text = ''
+      # logfilename [owner:group] mode count size when flags
+      /Users/${cfg.user}/Library/Logs/offbox-sync/*.log ${cfg.user}:staff 640 3 10240 * BGJN
+      /Users/${cfg.user}/Library/Logs/offbox-sync/offload.jsonl ${cfg.user}:staff 640 3 1024 * BJN
+    '';
   };
 }

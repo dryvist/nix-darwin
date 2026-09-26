@@ -446,6 +446,34 @@ in
               connections:
                 - pipeline: firewall_logs
                   output: cribl_stream
+            # offboxSync per-job facts (modules/darwin/apps/offbox-sync.nix).
+            in_offload_facts:
+              type: file
+              disabled: false
+              mode: manual
+              interval: 10
+              path: ${userConfig.user.homeDir}/Library/Logs/offbox-sync/
+              filenames:
+                - "*/offload.jsonl"
+              tailOnly: false
+              sendToRoutes: false
+              connections:
+                - pipeline: workstation_offload
+                  output: cribl_stream
+            # Generic home for user launchd job logs (rotated in logging.nix).
+            in_local_jobs:
+              type: file
+              disabled: false
+              mode: manual
+              interval: 10
+              path: ${userConfig.user.homeDir}/Library/Logs/local-jobs/
+              filenames:
+                - "*/*.log"
+              tailOnly: false
+              sendToRoutes: false
+              connections:
+                - pipeline: workstation_jobs
+                  output: cribl_stream
         ''
         # Appended only where programs.llm-gate is enabled (Studio-only
         # module): other mlx hosts get no input for a path that never exists.

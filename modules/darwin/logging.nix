@@ -115,4 +115,10 @@ in
     # logfilename [owner:group] mode count size when flags
     ${logDir}/*.log ${userConfig.user.name}:staff 640 3 1024 * BGJN
   '';
+
+  # Generic user launchd job logs, tailed by Cribl Edge (in_local_jobs).
+  environment.etc."newsyslog.d/local-jobs.conf".text = ''
+    # logfilename [owner:group] mode count size when flags
+    ${userConfig.user.homeDir}/Library/Logs/local-jobs/*.log ${userConfig.user.name}:staff 640 3 10240 * BGJN
+  '';
 }
