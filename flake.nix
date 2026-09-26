@@ -301,6 +301,8 @@
             inherit pkgs;
             src = ./.;
             darwinConfigurations = { };
+          } // {
+            system-eval = import ./lib/checks/system-eval.nix { inherit pkgs configs; };
           };
 
           # pf anchor syntax check — Darwin-only (pfctl is a macOS system
