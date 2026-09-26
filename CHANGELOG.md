@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.74.0](https://github.com/dryvist/nix-darwin/compare/v2.73.0...v2.74.0) (2026-09-26)
+
+
+### Features
+
+* **offbox-sync:** load settings via openbao-run ([#2619](https://github.com/dryvist/nix-darwin/issues/2619)) ([9f237c0](https://github.com/dryvist/nix-darwin/commit/9f237c0983d9e301629af5672c2a9b205bd75843))
+
 ## [2.73.0](https://github.com/dryvist/nix-darwin/compare/v2.72.0...v2.73.0) (2026-09-26)
 
 
