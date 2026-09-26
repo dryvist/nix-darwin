@@ -192,6 +192,9 @@ jobs:
         timeout-minutes: 20
         run: ./scripts/workflows/build-hm.sh result-hm
 
+      - name: Evaluate Host Systems
+        run: nix build .#checks.aarch64-darwin.system-eval --no-link --print-build-logs
+
       # Only on failure: the action above already saves on a successful run,
       # and this keeps a partial store from an attempt that ran out of time.
       - name: Cache Nix Store (partial, after a failed build)
