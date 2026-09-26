@@ -188,16 +188,10 @@ let
         "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(hostname -s)" "$1" "$2" "$3" "$4" >> "$FACTS"
     }
 
-    if [ ! -r "${cfg.envFile}" ]; then
-      # NOT exit 0. See the module header.
-      emit "-" "misconfigured" 0 "env file unreadable: ${cfg.envFile}"
-      echo "offbox-sync: env file unreadable: ${cfg.envFile}" >&2
-      exit 1
-    fi
-    set -a
-    . "${cfg.envFile}"
-    set +a
-
+    # The target vars (OFFBOX_ROOT and, for sftp, OFFBOX_HOST/_USER/_KEY_FILE/
+    # _KNOWN_HOSTS) arrive already exported: openbao-run fetches them from
+    # OpenBao and execs this script, rather than this script reading them from
+    # a hand-placed file. NOT skipped when unset — see the module header.
     for v in ${lib.concatStringsSep " " requiredVars}; do
       eval "val=\''${$v:-}"
       if [ -z "$val" ]; then
@@ -252,14 +246,28 @@ in
       '';
     };
 
-    envFile = lib.mkOption {
+    secretsPath = lib.mkOption {
       type = lib.types.str;
+      default = "apps/offbox-sync";
       description = ''
-        Path to a file defining OFFBOX_HOST, OFFBOX_USER, OFFBOX_KEY_FILE,
-        OFFBOX_ROOT and OFFBOX_KNOWN_HOSTS. Kept out of the Nix store and out
-        of this repo: the target's hostname is not public. Render it with
-        sops-nix using the `userOnly` shape so a LaunchAgent can read it
-        without Keychain access, which root-run activation does not have.
+        KV v2 path (mount-relative) of the OpenBao document holding
+        OFFBOX_HOST, OFFBOX_USER, OFFBOX_KEY_FILE, OFFBOX_ROOT and
+        OFFBOX_KNOWN_HOSTS as its keys. Fetched whole via `openbao-run
+        --secrets` at each run and exported into the runner's environment —
+        the target's hostname never reaches the Nix store or this repo.
+      '';
+    };
+
+    secretZeroEnvFile = lib.mkOption {
+      type = lib.types.str;
+      default = "/Users/${cfg.user}/.config/offbox-sync/bootstrap.env";
+      description = ''
+        User-owned 0600 or 0400 env file holding this job's OpenBao
+        secret-zero: BAO_ADDR and the offbox-sync AppRole's
+        OFFBOX_SYNC_VAULT_ROLE_ID / OFFBOX_SYNC_VAULT_SECRET_ID. openbao-run
+        sources it unattended at each run — no Keychain, no interactive
+        session (see openbao-run.nix). Seeded out-of-band; openbao-run
+        refuses the file unless its mode is 0600 or 0400.
       '';
     };
 
@@ -299,10 +307,26 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    # The job fetches its target from OpenBao via openbao-run (no hand-placed
+    # env file). See llm-gate.nix for the same pattern.
+    programs.openbao-run.enable = true;
+
     launchd.user.agents.offbox-sync = {
       serviceConfig = {
         Label = "com.offbox.sync";
-        ProgramArguments = [ "${runner}" ];
+        # /bin/bash, not the Nix shebang — see homebrew.nix on Local Network.
+        ProgramArguments = [
+          "/bin/bash"
+          (lib.getExe config.programs.openbao-run.package)
+          "--domain"
+          "offbox-sync"
+          "--env-file"
+          cfg.secretZeroEnvFile
+          "--secrets"
+          cfg.secretsPath
+          "--"
+          "${runner}"
+        ];
         StartInterval = cfg.intervalSeconds;
         RunAtLoad = true;
         StandardOutPath = "/Users/${cfg.user}/Library/Logs/offbox-sync/agent.log";
