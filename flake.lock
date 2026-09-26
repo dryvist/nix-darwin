@@ -526,11 +526,11 @@
     "dotgithub": {
       "flake": false,
       "locked": {
-        "lastModified": 1790383453,
-        "narHash": "sha256-yw09Tz9Dcb979alfkvfPdaW/8XgJIHh39WGXZOWnmIo=",
+        "lastModified": 1790414696,
+        "narHash": "sha256-KMQRO+nlHzHhcUl/tqxpOoxWeASW0U3e08FbE28NdfA=",
         "owner": "dryvist",
         "repo": ".github",
-        "rev": "5c534a2c73d30f88e7ea4d49ebd1def7c40d48e7",
+        "rev": "1d13f18e3457e7c5af44f0129b253edbf568a80d",
         "type": "github"
       },
       "original": {
@@ -1242,11 +1242,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1790380208,
+        "lastModified": 1790434891,
         "narHash": "sha256-DlDmkfzA5lhaxxBR4zvv2IXxMnWTMiKW9gMRlXVaL5k=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "01e111027da6c7ab40952fa09b86f44fecde4d75",
+        "rev": "672550350e6b64d584ca5edb530f36393d2db411",
         "type": "github"
       },
       "original": {
@@ -1596,11 +1596,11 @@
     },
     "nixpkgs_4": {
       "locked": {
-        "lastModified": 1790291545,
-        "narHash": "sha256-WQhNWIW3PPijuZexyl5Zf0tJuQ7sKt5C9WPXVO4pMuM=",
+        "lastModified": 1790382633,
+        "narHash": "sha256-tUvXb7lbSYz8kuAfy+Tm0OuG3giYm5punOHc8czuc1c=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "7486293a941f7b0ec123f0c431517027f705f60f",
+        "rev": "5157396cfd0b4de9f1f83166c1f25e3ef45b180d",
         "type": "github"
       },
       "original": {
