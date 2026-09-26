@@ -231,11 +231,21 @@
                 };
                 users = {
                   ${userConfig.user.name} = import ./hosts/${label}/home.nix;
-                  # The automation accounts are headless on every host, so each
-                  # takes one shared home rather than a per-host one.
-                  ${userConfig.agentUsers.claude.name} = import ./hosts/common/home-agent.nix;
-                  ${userConfig.agentUsers.open-llm.name} = import ./hosts/common/home-open-llm.nix;
-                };
+                }
+                # The automation accounts are headless on every host, so each
+                # takes one shared home rather than a per-host one, and its
+                # workspace root is its own folder on the shared agent volume
+                # (nix-home workspace.gitHome).
+                // builtins.mapAttrs (name: _: {
+                  imports = [
+                    {
+                      claude = ./hosts/common/home-agent.nix;
+                      open-llm = ./hosts/common/home-open-llm.nix;
+                    }
+                    .${name}
+                  ];
+                  workspace.gitHome = "${userConfig.agentGitRoot}/${name}";
+                }) userConfig.agentUsers;
 
                 # Shared modules from external flakes:
                 # - nix-ai: Claude, Gemini, Copilot, MCP servers, marketplace plugins
