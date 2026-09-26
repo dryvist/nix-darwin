@@ -200,7 +200,19 @@ SH
 # trap's own DELETE call ran — so the token was never actually revoked despite
 # the repo being created and the URL printed. Every error path was unaffected,
 # because `die` exits from within the same still-live call frame.
+@test "break-glass refuses the everyday installation id for the admin App key" {
+  export OPENBAO_GITHUB_APP_ID=123456
+  export OPENBAO_GITHUB_APP_PRIVATE_KEY="stub-key"
+  unset OPENBAO_GITHUB_ADMIN_DRYVIST_INSTALLATION_ID
+  run --separate-stderr bash -euo pipefail -c \
+    'source "$1"; mint_break_glass dryvist "{}" ""' \
+    _ "$SCRIPTS/openbao-github-creds.sh"
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"OPENBAO_GITHUB_ADMIN_*_INSTALLATION_ID"* ]]
+}
+
 @test "a successful repo-create revokes the administration token afterward" {
+  export OPENBAO_GITHUB_ADMIN_DRYVIST_INSTALLATION_ID=147266793
   export OPENBAO_GITHUB_APP_ID=123456
   export OPENBAO_GITHUB_APP_PRIVATE_KEY="stub-key-openssl-is-stubbed-below"
   # openssl is only used here to build a JWT for the mint call; curl (stubbed
