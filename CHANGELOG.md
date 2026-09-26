@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.73.0](https://github.com/dryvist/nix-darwin/compare/v2.72.0...v2.73.0) (2026-09-26)
+
+
+### Features
+
+* **cribl:** ship offload facts and local job logs to the workstation index ([#2617](https://github.com/dryvist/nix-darwin/issues/2617)) ([89e6ec2](https://github.com/dryvist/nix-darwin/commit/89e6ec20daad1db4b2d030dac8d48b25b96430e8))
+
 ## [2.72.0](https://github.com/dryvist/nix-darwin/compare/v2.71.0...v2.72.0) (2026-09-25)
 
 
