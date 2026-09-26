@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.72.0](https://github.com/dryvist/nix-darwin/compare/v2.71.0...v2.72.0) (2026-09-25)
+
+
+### Features
+
+* **cribl:** bump cc-edge-the-mac-pack-io to v0.5.0, track via Renovate ([#2611](https://github.com/dryvist/nix-darwin/issues/2611)) ([5cd2ad1](https://github.com/dryvist/nix-darwin/commit/5cd2ad1bb4ebcb333cb63feb7d68bb21700beb7e))
+* **darwin:** add macmon to system packages ([#2609](https://github.com/dryvist/nix-darwin/issues/2609)) ([ffcef32](https://github.com/dryvist/nix-darwin/commit/ffcef320c97f7767020503feb7e4232b26bbf884))
+* **openbao-github-creds:** repo-create accepts a description and topics ([#2601](https://github.com/dryvist/nix-darwin/issues/2601)) ([db98d14](https://github.com/dryvist/nix-darwin/commit/db98d144aabaeea308f4fabd0f9513f5aa8a615a))
+
 ## [2.71.0](https://github.com/dryvist/nix-darwin/compare/v2.70.0...v2.71.0) (2026-09-25)
 
 
