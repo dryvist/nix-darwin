@@ -1,6 +1,6 @@
 # Evaluates every host's full system derivation (`system.build.toplevel`).
-# Evaluation needs no Darwin builder, so this runs in the Linux
-# `nix flake check`.
+# Host evaluation reads files from fetched Darwin sources, so this needs a
+# Darwin builder; the macOS CI job builds it after the Home Manager build.
 #
 # `hostLayer` stubs options that have no default here and are set by the
 # consuming host configuration. A new such option must be stubbed here.

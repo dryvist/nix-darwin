@@ -301,8 +301,6 @@
             inherit pkgs;
             src = ./.;
             darwinConfigurations = { };
-          } // {
-            system-eval = import ./lib/checks/system-eval.nix { inherit pkgs configs; };
           };
 
           # pf anchor syntax check — Darwin-only (pfctl is a macOS system
@@ -317,6 +315,11 @@
           # receives `darwinConfigurations = { }` — a check there would never
           # evaluate a host and would pass vacuously.
           aarch64-darwin = {
+            system-eval = import ./lib/checks/system-eval.nix {
+              pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+              inherit configs;
+            };
+
             cli-ownership = import ./lib/checks/cli-ownership.nix {
               pkgs = nixpkgs.legacyPackages.aarch64-darwin;
               inherit configs;
