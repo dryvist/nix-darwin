@@ -14,7 +14,7 @@
 # The predecessor of this module was a launchd agent that, with no target
 # configured, printed "no backup target configured — skipping" and exited 0. It
 # did that on every run for months while nothing was backed up, and every
-# health check agreed it was fine. Here, a missing env file or an unreadable
+# health check agreed it was fine. Here, a missing target value or an unreadable
 # target is a FAILURE: non-zero exit, and a fact with status="misconfigured".
 # Silence must never be indistinguishable from success.
 #
@@ -128,9 +128,16 @@ let
     "--sftp-concurrency ${toString cfg.transfers}"
   ];
 
-  # ":sftp:" is an on-the-fly remote; a named remote from the env file is
+  # ":sftp:" is an on-the-fly remote; a named remote from the target document is
   # "<name>:". Both take the same ${OFFBOX_ROOT}/<dest> suffix.
   destPrefix = if isSftp then ":sftp:" else "${cfg.remote}:";
+
+  bootPrefix = lib.toUpper (lib.replaceStrings [ "-" ] [ "_" ] cfg.domain);
+  launcher = pkgs.writeText "offbox-sync-launch" ''
+    export ${bootPrefix}_VAULT_ROLE_ID="$OPENBAO_APPROLE_${bootPrefix}_ROLE_ID"
+    export ${bootPrefix}_VAULT_SECRET_ID="$OPENBAO_APPROLE_${bootPrefix}_SECRET_ID"
+    exec /bin/bash ${lib.getExe config.programs.openbao-run.package} --domain ${cfg.domain} --secrets ${cfg.secretsPath} -- ${runner}
+  '';
 
   # Variables the runner requires before it will do anything. The backend-
   # specific ones are only demanded when that backend is selected — an unset
@@ -234,9 +241,9 @@ in
       description = ''
         Which rclone remote to copy into. "sftp" (the default) keeps the
         original on-the-fly SFTP behaviour, taking host, user, key and
-        known_hosts from the env file.
+        known_hosts from the target document.
 
-        Any other value is treated as the NAME of a remote the env file
+        Any other value is treated as the NAME of a remote the target document
         defines through RCLONE_CONFIG_<NAME>_* variables, so the provider,
         endpoint, bucket and keys stay out of the Nix store and out of this
         repo. Point it at a crypt remote wrapping the real one when the source
@@ -248,7 +255,7 @@ in
 
     secretsPath = lib.mkOption {
       type = lib.types.str;
-      default = "apps/offbox-sync";
+      default = "platform/object-storage/offbox-sync";
       description = ''
         KV v2 path (mount-relative) of the OpenBao document holding
         OFFBOX_HOST, OFFBOX_USER, OFFBOX_KEY_FILE, OFFBOX_ROOT and
@@ -258,17 +265,21 @@ in
       '';
     };
 
-    secretZeroEnvFile = lib.mkOption {
+    domain = lib.mkOption {
       type = lib.types.str;
-      default = "/Users/${cfg.user}/.config/offbox-sync/bootstrap.env";
+      default = "local-cloud";
       description = ''
-        User-owned 0600 or 0400 env file holding this job's OpenBao
-        secret-zero: BAO_ADDR and the offbox-sync AppRole's
-        OFFBOX_SYNC_VAULT_ROLE_ID / OFFBOX_SYNC_VAULT_SECRET_ID. openbao-run
-        sources it unattended at each run — no Keychain, no interactive
-        session (see openbao-run.nix). Seeded out-of-band; openbao-run
-        refuses the file unless its mode is 0600 or 0400.
+        OpenBao AppRole domain that may read `secretsPath`. Its role_id and
+        secret_id rotate, so they are read from Doppler at each run
+        (OPENBAO_APPROLE_<DOMAIN>_ROLE_ID/_SECRET_ID) rather than copied to
+        a file that would go stale.
       '';
+    };
+
+    secretZeroScope = lib.mkOption {
+      type = lib.types.str;
+      default = "/Users/${cfg.user}/git";
+      description = "Directory whose Doppler scope supplies the domain's secret-zero.";
     };
 
     jobs = lib.mkOption {
@@ -307,25 +318,20 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    # The job fetches its target from OpenBao via openbao-run (no hand-placed
-    # env file). See llm-gate.nix for the same pattern.
+    # The job fetches its target from OpenBao via openbao-run; Doppler supplies
+    # only the rotating AppRole secret-zero. No hand-placed file.
     programs.openbao-run.enable = true;
 
     launchd.user.agents.offbox-sync = {
       serviceConfig = {
         Label = "com.offbox.sync";
         # /bin/bash, not the Nix shebang — see homebrew.nix on Local Network.
+        # /bin/bash stays the parent process (no exec): see homebrew.nix on
+        # Local Network. Doppler supplies only the rotating secret-zero.
         ProgramArguments = [
           "/bin/bash"
-          (lib.getExe config.programs.openbao-run.package)
-          "--domain"
-          "offbox-sync"
-          "--env-file"
-          cfg.secretZeroEnvFile
-          "--secrets"
-          cfg.secretsPath
-          "--"
-          "${runner}"
+          "-c"
+          "${lib.getExe pkgs.doppler} run --scope ${cfg.secretZeroScope} -- /bin/bash ${launcher}"
         ];
         StartInterval = cfg.intervalSeconds;
         RunAtLoad = true;
