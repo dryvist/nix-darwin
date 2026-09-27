@@ -159,19 +159,31 @@ in
 
       # The router bearer: this host's own `litellm-local-workstation` key,
       # read from the secret store by openbao-run at each agent start and
-      # exec'd into the proxy as OPENAI_API_KEY. Secret-zero is the same
-      # `apps`-domain env file this host's maintenance-window agent already
-      # uses; only names and a path are committed here.
+      # exec'd into the proxy as OPENAI_API_KEY. Secret-zero (the `apps`
+      # AppRole pair) comes from doppler at the same moment, never from a
+      # copied file: the pair rotates, and a file seeded once goes stale. Only
+      # the three names openbao-run needs are injected, and openbao-run unsets
+      # the pair before exec, so the proxy sees the bearer and nothing else.
       launchPrefix = [
-        "/bin/bash"
-        (lib.getExe osConfig.programs.openbao-run.package)
-        "--domain"
-        "apps"
-        "--env-file"
-        osConfig.services.clusterMaintenanceWindow.secretZeroEnvFile
-        "--secret"
-        "OPENAI_API_KEY=apps/litellm-local-workstation#litellm_local_workstation_llm_router_key"
+        (lib.getExe pkgs.doppler)
+        "run"
+        "-p"
+        "iac-conf-mgmt"
+        "-c"
+        "prd"
+        "--only-secrets"
+        "BAO_ADDR,OPENBAO_APPROLE_APPS_ROLE_ID,OPENBAO_APPROLE_APPS_SECRET_ID"
         "--"
+        "/bin/bash"
+        "-c"
+        ''
+          export APPS_VAULT_ROLE_ID="$OPENBAO_APPROLE_APPS_ROLE_ID" APPS_VAULT_SECRET_ID="$OPENBAO_APPROLE_APPS_SECRET_ID"
+          unset OPENBAO_APPROLE_APPS_ROLE_ID OPENBAO_APPROLE_APPS_SECRET_ID
+          exec /bin/bash ${lib.getExe osConfig.programs.openbao-run.package} --domain apps \
+            --secret OPENAI_API_KEY=apps/litellm-local-workstation#litellm_local_workstation_llm_router_key \
+            -- "$@"
+        ''
+        "litellm-local"
       ];
 
       # The group the shared router serves, which the terminal rung forwards
