@@ -6,6 +6,7 @@
 
 {
   config,
+  lib,
   pkgs,
   userConfig,
   ...
@@ -77,7 +78,7 @@ in
   programs = {
     openwhispr = {
       enable = true;
-      autoStart = true;
+      autoStart = false; # launch by hand only
       modelBootstrap = true;
       localTranscriptionProvider = "whisper";
       whisperModel = "base";
@@ -172,11 +173,12 @@ in
       endpoint = "https://s3.${userConfig.internalDomain}";
     };
 
-    # Recreates the tmux "cc" session at every login — a reboot always kills
-    # the tmux server, and Termius' "tmux attach -t cc" startup command needs
-    # the session to already exist. Workstation-only: this is the box reached
-    # over SSH from Termius, not the headless mac-studio.
-    tmux-session-autostart.enable = true;
+  };
+
+  # Nothing session- or audit-related starts on its own on this host.
+  launchd.agents = {
+    herdr.enable = lib.mkForce false;
+    ai-stack-drift-check.enable = lib.mkForce false;
   };
 
   # ==========================================================================

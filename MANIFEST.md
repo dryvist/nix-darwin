@@ -58,16 +58,6 @@ Source: `modules/darwin/common.nix`
 | --- | --- |
 | mas | Mac App Store CLI |
 
-### Graphical Applications
-
-Source: `modules/darwin/common.nix`
-
-| Package | Description |
-| --- | --- |
-| gimp | GNU Image Manipulation Program photo editor |
-
----
-
 ## Cross-Platform Packages
 
 Source: nix-home (`home.packages` via flake input)
@@ -184,8 +174,6 @@ logging to `~/Library/Logs/brew-upgrade.log`. `darwin-rebuild` does not upgrade 
 | obsidian | yes | Knowledge base / note-taking |
 | bitwarden | yes | Password manager desktop app (moved from nixpkgs — EOL electron_39) |
 | wispr-flow | yes | AI-powered voice dictation |
-| superwhisper | yes | Dictation with LLM reformatting |
-| voiceink | yes | Voice-to-text app (local whisper) |
 | claude | yes | Anthropic Claude desktop app (workstation capability) |
 | claude-code@latest | yes | Anthropic Claude Code CLI (shared CLI cask on every host) |
 | chatgpt | yes | OpenAI ChatGPT desktop app (moved from nixpkgs — version lag + no self-update) |
@@ -194,12 +182,10 @@ logging to `~/Library/Logs/brew-upgrade.log`. `darwin-rebuild` does not upgrade 
 | antigravity-cli | yes | Google Antigravity CLI (`agy`; shared CLI cask on every host) |
 | antigravity | yes | Google Antigravity 2.0 standalone agent command center (workstation capability) |
 | antigravity-ide | yes | Google Antigravity IDE (workstation capability) |
-| lm-studio | yes | Local LLM inference UI + OpenAI-compatible API server |
 | postman | yes | API development environment (moved from nixpkgs — version lag caused schema mismatch) |
 | orbstack | yes | Container/Linux VM runtime — cask for TCC permission stability |
 | microsoft-teams | yes | Teams desktop app (not available on Mac App Store) |
 | firefox | yes | Mozilla Firefox browser — cask for TCC permission stability |
-| timemator | yes | Automatic time tracking (replaces Toggl Track) |
 
 ### Mac App Store
 
@@ -211,13 +197,7 @@ logging to `~/Library/Logs/brew-upgrade.log`. `darwin-rebuild` does not upgrade 
 | Microsoft Excel | 462058435 |
 | Microsoft PowerPoint | 462062816 |
 | Microsoft Outlook | 985367838 |
-| Microsoft OneNote | 784801555 |
 | OneDrive | 823766827 |
-
-Toggl Track (1291898086) is disabled via `togglTrackDisabled` in
-`modules/darwin/homebrew.nix` — the vendor pushes Enterprise/paid tiers hard
-and gates core features behind an expensive paywall; Timemator (Casks, above)
-replaces it.
 
 ---
 

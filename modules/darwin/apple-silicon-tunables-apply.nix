@@ -87,7 +87,7 @@ in
       VM_COMPRESSOR_MODE=${lib.escapeShellArg sysctlsEnv.VM_COMPRESSOR_MODE} \
         ${lib.getExe sysctlsScript} || true
 
-      HF_VOLUME=${lib.escapeShellArg cfg.huggingfaceVolume} \
+      SPOTLIGHT_OFF_VOLUMES=${lib.escapeShellArg (lib.concatStringsSep ":" cfg.spotlightDisabledVolumes)} \
       TM_EXCLUDES=${lib.escapeShellArg (lib.concatStringsSep ":" cfg.timeMachineExcludes)} \
       APPNAP_BUNDLES=${lib.escapeShellArg (lib.concatStringsSep ":" cfg.appNapDisabledFor)} \
       USER_NAME=${lib.escapeShellArg userConfig.user.name} \
