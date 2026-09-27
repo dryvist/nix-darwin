@@ -7,6 +7,7 @@
 {
   config,
   lib,
+  osConfig,
   pkgs,
   userConfig,
   ...
@@ -21,13 +22,13 @@ in
 {
   imports = [ ../common/home.nix ];
 
-  # Router endpoint for the proxy's non-Anthropic model group. The bearer file
-  # is materialized outside the store (user-owned 0600); the module's launchd
-  # wrapper reads it at exec time.
+  # Router endpoint for the proxy's non-Anthropic model group. The bearer is
+  # never on disk: `llmEndpointBearerFromEnv` plus the proxy's `launchPrefix`
+  # below resolve it from the secret store at each agent start.
   services.aiStack = {
     llmEndpoint = "router";
     llmRouterEndpoint = "https://llm.${userConfig.internalDomain}/v1";
-    llmEndpointTokenFile = "${userConfig.user.homeDir}/.config/ai-stack/router-bearer";
+    llmEndpointBearerFromEnv = true;
     # Serving hosts answer across this estate's own domain, not on loopback,
     # so a role target based there keeps its traffic inside. Stated once here,
     # from the same configured base as every other name: a consumer that let a
@@ -112,45 +113,89 @@ in
       # subagents through it.
       claudeDirect = true;
 
-      # The subagent chain this laptop's proxy walks, in order:
+      # The chain this laptop's proxy walks, in order — local first, always:
       #
-      #   subagent / fast  ->  router:fast-gpu  ->  this laptop's own model  ->  router:fast
+      #   subagent / fast / cheap  ->  this laptop's `default` model
+      #                            ->  this laptop's `small` model
+      #                            ->  router:subagent (ZDR-only key)
       #
-      # The single-GPU fast-subagent tier first (a router GROUP, one slot,
-      # session-locked: a busy slot answers 429 and the chain moves on), this
-      # laptop's own model second (keeps working through a router outage), and
-      # the router's `fast` role last — its full ladder (studio, free, cheap,
-      # long) lives in the router database and is re-ranked in the admin UI,
-      # never here. Only the ORDER of these three rungs is declared on this
-      # host; nothing here names a provider, physical model id, or price.
+      # Both local rungs are the same role-resolved models the Mac Studio
+      # serves for `default` and `small`, so a request answers the same way on
+      # either Mac. A busy or swapping local model hands over to the smaller
+      # one before anything leaves the machine; a request too large for a
+      # local window escapes straight to the router (nix-ai
+      # context_window_fallbacks), never truncated.
       #
-      # The local id is the role-resolved physical id, never a literal: the
-      # mlx catalog decides which weights `default` means on this host, and
-      # nix-ai derives the serving window from that same catalog.
+      # The router rung authenticates with this host's own
+      # `litellm-local-workstation` key (ansible-proxmox-ai roles/llm_router),
+      # which is zdr_only: every zero_data_retention: false group is stripped
+      # from its scope and the router re-checks the key on every fallback hop,
+      # so ZDR is enforced by the key for every client of this proxy, not
+      # trusted to each caller.
+      #
+      # The local ids are role-resolved physical ids, never literals: the mlx
+      # catalog decides which weights each role means on this host, and nix-ai
+      # derives each serving window from that same catalog.
       #
       # `subagent` is load-bearing as a NAME: consumers address that string
       # forever, so what sits behind it may change but the name may not.
-      # `fast` is served as an alias of the same chain (nix-ai headAliases).
       localModels = [
         {
           name = "subagent";
-          router = "fast-gpu";
-        }
-        {
-          name = "subagent-local";
           id = config.services.aiStack.models.default;
         }
+        {
+          name = "subagent-local-small";
+          id = config.services.aiStack.models.small;
+        }
+      ];
+
+      # `cheap` joins `fast` as an alias of the same chain, so neither falls
+      # through the `*` wildcard straight to the router and skips this host.
+      headAliases = [
+        "fast"
+        "cheap"
+      ];
+
+      # The router bearer: this host's own `litellm-local-workstation` key,
+      # read from the secret store by openbao-run at each agent start and
+      # exec'd into the proxy as OPENAI_API_KEY. Secret-zero (the `apps`
+      # AppRole pair) comes from doppler at the same moment, never from a
+      # copied file: the pair rotates, and a file seeded once goes stale. Only
+      # the three names openbao-run needs are injected, and openbao-run unsets
+      # the pair before exec, so the proxy sees the bearer and nothing else.
+      launchPrefix = [
+        (lib.getExe pkgs.doppler)
+        "run"
+        "-p"
+        "iac-conf-mgmt"
+        "-c"
+        "prd"
+        "--only-secrets"
+        "BAO_ADDR,OPENBAO_APPROLE_APPS_ROLE_ID,OPENBAO_APPROLE_APPS_SECRET_ID"
+        "--"
+        "/bin/bash"
+        "-c"
+        ''
+          export APPS_VAULT_ROLE_ID="$OPENBAO_APPROLE_APPS_ROLE_ID" APPS_VAULT_SECRET_ID="$OPENBAO_APPROLE_APPS_SECRET_ID"
+          unset OPENBAO_APPROLE_APPS_ROLE_ID OPENBAO_APPROLE_APPS_SECRET_ID
+          exec /bin/bash ${lib.getExe osConfig.programs.openbao-run.package} --domain apps \
+            --secret OPENAI_API_KEY=apps/litellm-local-workstation#litellm_local_workstation_llm_router_key \
+            -- "$@"
+        ''
+        "litellm-local"
       ];
 
       # The group the shared router serves, which the terminal rung forwards
       # to. Needed because that rung is a passthrough: without it LiteLLM
       # forwards this host's own rung name upstream, the router has no such
       # group, and the last rung 404s — both as a fallback and when addressed
-      # directly.
+      # directly. `subagent` is one of the groups the
+      # litellm-local-workstation key holds.
       #
       # A group name only. No provider, model id, or price is named here; what
       # the router does behind this group stays the router's business.
-      routerEntryModel = "fast";
+      routerEntryModel = "subagent";
     };
 
     # Hourly push of AI session history to the mac-studio (nix-ai module).
