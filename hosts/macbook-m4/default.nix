@@ -10,6 +10,7 @@
 
 {
   config,
+  lib,
   ...
 }:
 
@@ -27,8 +28,14 @@ in
 {
   imports = [ ../common/default.nix ];
 
+  # The daily credential-residue scan does not run on this host.
+  local.credentialResidueScan.enable = lib.mkForce false;
+
   # --- Streamline Login Items ---
   programs = {
+    # No login-time session resume on this host.
+    claude-continuity.enable = lib.mkForce false;
+
     # Workstation-only .d2 (D2 diagram language) file association: macOS has
     # no built-in UTI for it, so Finder refuses to open one at all ("There is
     # no application set to open the document"). Re-specifies ../common's
@@ -65,6 +72,7 @@ in
 
       # User-domain services to disable (updaters, redundant apps, broken daemons)
       disableUserServices = [
+        "com.microsoft.teams2.agent" # Teams background agent (Teams launches by hand only)
         "com.google.GoogleUpdater.wake" # Google hourly updater
         "us.zoom.updater" # Zoom hourly updater
         "us.zoom.updater.login.check" # Zoom login check at login
@@ -124,6 +132,13 @@ in
       # Set explicitly rather than relying on the module default: a list option
       # drops its default once any config value is set, so the generic excludes
       # must be a config def here for a private host layer to append to via merge.
+      spotlightDisabledVolumes = [
+        config.system.appleSiliconTunables.huggingfaceVolume
+        "/Volumes/Streams"
+        "/Volumes/ContainerData"
+        "/Volumes/BinaryStore"
+        "/Volumes/git"
+      ];
       timeMachineExcludes = [
         "${userConfig.user.homeDir}/.cache/uv"
         config.system.appleSiliconTunables.huggingfaceVolume

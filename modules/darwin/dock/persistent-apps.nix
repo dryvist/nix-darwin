@@ -41,16 +41,16 @@ in
       "/System/Applications/Reminders.app"
       "/System/Applications/Calendar.app"
       "/Applications/Safari.app"
-
+    ]
+    ++ lib.optionals enableWorkstationApps [
+      "/Applications/Brave Browser.app"
+      "/Applications/Wispr Flow.app"
+    ]
+    ++ [
       # Terminal (present on all hosts)
       "/Applications/Ghostty.app"
     ]
     ++ lib.optionals enableWorkstationApps [
-      # "/Applications/Toggl Track.app" # DISABLED - togglTrackDisabled in
-      # homebrew.nix gates the masApps install only; re-enabling it there does
-      # NOT restore this line automatically, uncomment it too.
-      "/Applications/Timemator.app"
-
       # Knowledge & Notes
       "/Applications/Obsidian.app"
 
@@ -58,10 +58,7 @@ in
       "${homeDir}/Applications/Home Manager Apps/Visual Studio Code.app"
 
       # Communication
-      "/System/Applications/Mail.app"
-      "/System/Applications/Messages.app"
       "/Applications/Slack.app"
-      "/Applications/Microsoft Teams.app"
     ]
     ++ [
       # AI & API tools (present on all hosts)
@@ -70,18 +67,12 @@ in
       "${homeDir}/Applications/Gemini.app"
       "/Applications/ChatGPT.app"
       "/Applications/Codex.app"
-    ]
-    ++ lib.optionals enableWorkstationApps [
-      # Third Party Browsers
-      "/Applications/Brave Browser.app"
-      "/Applications/Google Chrome.app"
     ];
 
     # ========================================================================
     # Right side of Dock (after separator) - Folders & utilities
     # ========================================================================
     # No persistent folders configured.
-    # Recent apps will appear here if show-recents is enabled.
     persistent-others = [ ];
   };
 }

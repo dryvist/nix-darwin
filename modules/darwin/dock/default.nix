@@ -59,10 +59,9 @@ _:
 
     # Show recent applications section in Dock
     # Default: true
-    # Enabled: allows temporary/non-Nix-managed apps to appear on the right
-    # side of the dock without polluting the persistent-apps list. Recent
-    # apps rotate automatically, keeping the dock clean.
-    show-recents = true;
+    # Disabled: an ad-hoc app shows only while running and leaves no tile
+    # behind after it quits.
+    show-recents = false;
 
     # Minimize windows into their application icon
     # Default: false

@@ -87,16 +87,20 @@ if [ "${ENERGY_MODE_DESIRED:-high}" != "unmanaged" ]; then
   done
 fi
 
-# --- Spotlight indexing off on the HuggingFace volume --------------------
-# Every model download otherwise re-indexes hundreds of GB.
-if [ -d "${HF_VOLUME:-}" ]; then
-  if /usr/bin/mdutil -i off "${HF_VOLUME}" >/dev/null 2>&1; then
-    log "mdutil indexing disabled on ${HF_VOLUME}"
-  else
-    warn "mdutil -i off ${HF_VOLUME} failed"
-  fi
-else
-  warn "HF volume ${HF_VOLUME:-} is missing or not mounted; skipping mdutil -i off"
+# --- Spotlight indexing off on data volumes ------------------------------
+# SPOTLIGHT_OFF_VOLUMES is a colon-separated list of mount points (model
+# caches, container data): indexing them re-reads hundreds of GB for nothing.
+if [ -n "${SPOTLIGHT_OFF_VOLUMES:-}" ]; then
+  IFS=':' read -ra _spotlight_off <<<"${SPOTLIGHT_OFF_VOLUMES}"
+  for _vol in "${_spotlight_off[@]}"; do
+    if [ ! -d "${_vol}" ]; then
+      warn "volume ${_vol} is missing or not mounted; skipping mdutil -i off"
+    elif /usr/bin/mdutil -i off "${_vol}" >/dev/null 2>&1; then
+      log "mdutil indexing disabled on ${_vol}"
+    else
+      warn "mdutil -i off ${_vol} failed"
+    fi
+  done
 fi
 
 # --- Time Machine excludes for the AI cache directories ------------------

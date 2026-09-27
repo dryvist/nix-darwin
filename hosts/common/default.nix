@@ -32,6 +32,9 @@ in
 
   # Network hostname from the per-host registry.
   networking.hostName = hostConfig.hostName;
+  # nix-darwin sets HostName + LocalHostName from networking.hostName, but NOT
+  # ComputerName — set it explicitly so the Finder/AirDrop name matches.
+  networking.computerName = hostConfig.hostName;
 
   # Workstations keep macOS' automatic timezone behavior. Server hosts pin GMT
   # (UTC-equivalent, no DST) so the Friday 00:00 launchd schedule lands at 00:00

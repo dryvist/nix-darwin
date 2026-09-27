@@ -179,6 +179,13 @@ in
       description = "HuggingFace cache volume path; Spotlight indexing disabled here.";
     };
 
+    spotlightDisabledVolumes = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ cfg.huggingfaceVolume ];
+      defaultText = lib.literalExpression "[ config.system.appleSiliconTunables.huggingfaceVolume ]";
+      description = "Volume mount points with Spotlight indexing disabled (`mdutil -i off`).";
+    };
+
     timeMachineExcludes = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [

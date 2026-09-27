@@ -32,10 +32,6 @@ in
 {
   imports = [ ../common/default.nix ];
 
-  # nix-darwin sets HostName + LocalHostName from networking.hostName, but NOT
-  # ComputerName — set it explicitly so the Finder/AirDrop name matches.
-  networking.computerName = hostConfig.hostName;
-
   # Wall kiosk browser; server class skips the workstation cask list.
   homebrew.casks = [ "brave-browser" ];
 
