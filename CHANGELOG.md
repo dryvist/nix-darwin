@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.76.0](https://github.com/dryvist/nix-darwin/compare/v2.75.0...v2.76.0) (2026-09-27)
+
+
+### Features
+
+* **macbook-m4:** serve the local proxy chain from this host's models first ([#2628](https://github.com/dryvist/nix-darwin/issues/2628)) ([1bb3ec4](https://github.com/dryvist/nix-darwin/commit/1bb3ec42099b43165e4d574fb6a66acca24ff7f7))
+
 ## [2.75.0](https://github.com/dryvist/nix-darwin/compare/v2.74.0...v2.75.0) (2026-09-27)
 
 
