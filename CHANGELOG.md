@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.75.0](https://github.com/dryvist/nix-darwin/compare/v2.74.0...v2.75.0) (2026-09-27)
+
+
+### Features
+
+* **workstation:** trim dock, autostarts, and unused casks ([#2627](https://github.com/dryvist/nix-darwin/issues/2627)) ([cf8e45f](https://github.com/dryvist/nix-darwin/commit/cf8e45f545ce7cfdc06ead7d78b06d33e8f0e333))
+
 ## [2.74.0](https://github.com/dryvist/nix-darwin/compare/v2.73.0...v2.74.0) (2026-09-26)
 
 
