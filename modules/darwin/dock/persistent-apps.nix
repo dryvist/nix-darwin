@@ -51,6 +51,9 @@ in
       "/Applications/Ghostty.app"
     ]
     ++ lib.optionals enableWorkstationApps [
+      # Knowledge & Notes
+      # "/Applications/Obsidian.app" # temporarily hidden; uncomment to restore
+
       # Development & Tools
       "${homeDir}/Applications/Home Manager Apps/Visual Studio Code.app"
 
