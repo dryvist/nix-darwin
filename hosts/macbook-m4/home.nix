@@ -7,6 +7,7 @@
 {
   config,
   lib,
+  osConfig,
   pkgs,
   userConfig,
   ...
@@ -21,15 +22,13 @@ in
 {
   imports = [ ../common/home.nix ];
 
-  # Router endpoint for the proxy's non-Anthropic model group. The bearer file
-  # is materialized outside the store (user-owned 0600); the module's launchd
-  # wrapper reads it at exec time. Its value is this host's own
-  # `litellm-local-workstation` router key (OpenBao
-  # apps/litellm-local-workstation).
+  # Router endpoint for the proxy's non-Anthropic model group. The bearer is
+  # never on disk: `llmEndpointBearerFromEnv` plus the proxy's `launchPrefix`
+  # below resolve it from the secret store at each agent start.
   services.aiStack = {
     llmEndpoint = "router";
     llmRouterEndpoint = "https://llm.${userConfig.internalDomain}/v1";
-    llmEndpointTokenFile = "${userConfig.user.homeDir}/.config/ai-stack/router-bearer";
+    llmEndpointBearerFromEnv = true;
     # Serving hosts answer across this estate's own domain, not on loopback,
     # so a role target based there keeps its traffic inside. Stated once here,
     # from the same configured base as every other name: a consumer that let a
@@ -156,6 +155,23 @@ in
       headAliases = [
         "fast"
         "cheap"
+      ];
+
+      # The router bearer: this host's own `litellm-local-workstation` key,
+      # read from the secret store by openbao-run at each agent start and
+      # exec'd into the proxy as OPENAI_API_KEY. Secret-zero is the same
+      # `apps`-domain env file this host's maintenance-window agent already
+      # uses; only names and a path are committed here.
+      launchPrefix = [
+        "/bin/bash"
+        (lib.getExe osConfig.programs.openbao-run.package)
+        "--domain"
+        "apps"
+        "--env-file"
+        osConfig.services.clusterMaintenanceWindow.secretZeroEnvFile
+        "--secret"
+        "OPENAI_API_KEY=apps/litellm-local-workstation#litellm_local_workstation_llm_router_key"
+        "--"
       ];
 
       # The group the shared router serves, which the terminal rung forwards
