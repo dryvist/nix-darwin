@@ -528,11 +528,13 @@ in
               host: ${userConfig.logging.syslog.server}
               port: 10312
               pqEnabled: true
+              pipeline: transcript_mask
             cribl_agy:
               type: tcpjson
               host: ${userConfig.logging.syslog.server}
               port: 10313
               pqEnabled: true
+              pipeline: transcript_mask
             # The copilot destination is removed with its input: nothing feeds
             # it, and a persistent-queue output with no source is a place for
             # events to accumulate unseen if one is ever connected by accident.
@@ -543,14 +545,17 @@ in
               host: ${userConfig.logging.syslog.server}
               port: 10315
               pqEnabled: true
+              pipeline: transcript_mask
             cribl_claude:
               type: tcpjson
               host: ${userConfig.logging.syslog.server}
               port: 10311
               pqEnabled: true
+              pipeline: transcript_mask
         '';
       }
-      // import ./cribl-pipelines.nix { inherit codexPack geminiPack; };
+      // import ./cribl-pipelines.nix { inherit codexPack geminiPack; }
+      // import ./cribl-transcript-mask.nix;
       # Claude Code transcripts ship via the native in_claude_logs input ->
       # cribl_claude (:10311) above; the cc-edge-claude-code pack is not
       # deployed by this module (its /home/$CLAUDE_USER path never matched
