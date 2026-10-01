@@ -81,7 +81,7 @@
       Sound = true;
       Display = true;
       FocusModes = true;
-      NowPlaying = true;
+      NowPlaying = false;
     };
 
     # --- Custom User Preferences ---

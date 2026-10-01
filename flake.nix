@@ -36,7 +36,7 @@
       flake = false;
     };
     ai-llm-prompts = {
-      url = "github:dryvist/ai-llm-prompts/30551ed25e5ee4831389fe11f55849e25bceee3f";
+      url = "github:dryvist/ai-llm-prompts";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     claude-code-plugins = {
@@ -315,6 +315,11 @@
           # receives `darwinConfigurations = { }` — a check there would never
           # evaluate a host and would pass vacuously.
           aarch64-darwin = {
+            system-eval = import ./lib/checks/system-eval.nix {
+              pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+              inherit configs;
+            };
+
             cli-ownership = import ./lib/checks/cli-ownership.nix {
               pkgs = nixpkgs.legacyPackages.aarch64-darwin;
               inherit configs;

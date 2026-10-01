@@ -137,6 +137,30 @@
             - name: sourcetype
               value: "'macos:firewall'"
   '';
+  "pipelines/workstation_offload/conf.yml" = ''
+    output: default
+    functions:
+      - id: eval
+        filter: "true"
+        conf:
+          add:
+            - name: index
+              value: "'workstation'"
+            - name: sourcetype
+              value: "'macos:offbox_sync'"
+  '';
+  "pipelines/workstation_jobs/conf.yml" = ''
+    output: default
+    functions:
+      - id: eval
+        filter: "true"
+        conf:
+          add:
+            - name: index
+              value: "'workstation'"
+            - name: sourcetype
+              value: "'macos:local_job'"
+  '';
   # AI-CLI transcript pipelines, taken VERBATIM from the released pack
   # derivations (see the let block at the top) and installed as
   # worker-level pipelines. Why not run them inside the packs: on this

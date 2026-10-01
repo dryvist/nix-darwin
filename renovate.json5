@@ -32,6 +32,21 @@
       "depNameTemplate": "cribl-edge",
       "datasourceTemplate": "custom.cribl-edge",
       "versioningTemplate": "loose"
+    },
+    {
+      // Bumps only the version in the release URL. The accompanying fetchzip
+      // `hash` is content-addressed and cannot be derived from a regex match
+      // — the Renovate PR's Nix build fails with the correct hash in its
+      // error, same as any Nix fixed-output-hash bump; land it by copying
+      // that hash in.
+      "customType": "regex",
+      "managerFilePatterns": ["/hosts/common/cribl\\.nix$/"],
+      "matchStrings": [
+        "/releases/download/v(?<currentValue>[^/]+)/cc-edge-the-mac-pack-io-v[^\"]+\\.crbl\"; # renovate: cc-edge-the-mac-pack-io"
+      ],
+      "depNameTemplate": "dryvist/cc-edge-the-mac-pack-io",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "loose"
     }
   ],
 

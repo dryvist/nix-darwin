@@ -9,7 +9,7 @@
 # Volatile iogpu/vm sysctls live in apple-silicon-sysctls.sh (so they can also
 # re-apply at boot). This script holds the persistent and verify-only knobs:
 # pmset perf flags, Energy Mode verify, Spotlight, Time Machine, App Nap, and
-# the Metal debug-env guard.
+# the Metal debug-env guard, plus removal of an unmanaged iogpu daemon.
 
 prefix="[apple-silicon-tunables]"
 log() { echo "$prefix INFO $*"; }
@@ -87,16 +87,20 @@ if [ "${ENERGY_MODE_DESIRED:-high}" != "unmanaged" ]; then
   done
 fi
 
-# --- Spotlight indexing off on the HuggingFace volume --------------------
-# Every model download otherwise re-indexes hundreds of GB.
-if [ -d "${HF_VOLUME:-}" ]; then
-  if /usr/bin/mdutil -i off "${HF_VOLUME}" >/dev/null 2>&1; then
-    log "mdutil indexing disabled on ${HF_VOLUME}"
-  else
-    warn "mdutil -i off ${HF_VOLUME} failed"
-  fi
-else
-  warn "HF volume ${HF_VOLUME:-} is missing or not mounted; skipping mdutil -i off"
+# --- Spotlight indexing off on data volumes ------------------------------
+# SPOTLIGHT_OFF_VOLUMES is a colon-separated list of mount points (model
+# caches, container data): indexing them re-reads hundreds of GB for nothing.
+if [ -n "${SPOTLIGHT_OFF_VOLUMES:-}" ]; then
+  IFS=':' read -ra _spotlight_off <<<"${SPOTLIGHT_OFF_VOLUMES}"
+  for _vol in "${_spotlight_off[@]}"; do
+    if [ ! -d "${_vol}" ]; then
+      warn "volume ${_vol} is missing or not mounted; skipping mdutil -i off"
+    elif /usr/bin/mdutil -i off "${_vol}" >/dev/null 2>&1; then
+      log "mdutil indexing disabled on ${_vol}"
+    else
+      warn "mdutil -i off ${_vol} failed"
+    fi
+  done
 fi
 
 # --- Time Machine excludes for the AI cache directories ------------------
@@ -170,6 +174,22 @@ if [ -n "${METAL_UNSET_VARS:-}" ] && [ -n "${USER_NAME:-}" ]; then
       log "Metal debug var ${_var} not set"
     fi
   done
+fi
+
+# --- Retire the hand-placed iogpu daemon ---------------------------------
+# Removes the unmanaged local.sysctl.iogpu daemon; the managed
+# set-iogpu-wired-limit daemon owns the wired limit. Matched by label, so an
+# unrelated file at the same path is left alone.
+LEGACY_IOGPU_PLIST=/Library/LaunchDaemons/sysctl.plist
+LEGACY_IOGPU_LABEL=local.sysctl.iogpu
+if [ -f "${LEGACY_IOGPU_PLIST}" ] &&
+  [ "$(/usr/libexec/PlistBuddy -c 'Print :Label' "${LEGACY_IOGPU_PLIST}" 2>/dev/null)" = "${LEGACY_IOGPU_LABEL}" ]; then
+  /bin/launchctl bootout "system/${LEGACY_IOGPU_LABEL}" >/dev/null 2>&1 || true
+  if /bin/rm -f "${LEGACY_IOGPU_PLIST}"; then
+    log "removed legacy ${LEGACY_IOGPU_LABEL} daemon"
+  else
+    warn "could not remove ${LEGACY_IOGPU_PLIST}"
+  fi
 fi
 
 exit 0

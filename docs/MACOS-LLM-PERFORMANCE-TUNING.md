@@ -150,7 +150,7 @@ Background services steal CPU, memory bandwidth, and thermal headroom.
 
 | Parameter | nix option / cmd | Default | This host | Persist | Notes |
 | --- | --- | --- | --- | --- | --- |
-| Spotlight off (model vol) | `huggingfaceVolume` → `mdutil -i off` | indexing on | `/Volumes/HuggingFace` | PERSIST | or name a dir `*.noindex` |
+| Spotlight off (data vols) | `spotlightDisabledVolumes` → `mdutil -i off` | indexing on | `/Volumes/HuggingFace` | PERSIST | or name a dir `*.noindex` |
 | Time Machine excludes | `timeMachineExcludes` → `tmutil addexclusion` | none | uv/HF/app caches | PERSIST | stops snapshot churn |
 | `caffeinate -i <cmd>` | (doc-only) | — | — | SCOPE | redundant: `energy.sleep.ac=0` |
 

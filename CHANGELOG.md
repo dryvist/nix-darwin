@@ -1,5 +1,88 @@
 # Changelog
 
+## [2.76.1](https://github.com/dryvist/nix-darwin/compare/v2.76.0...v2.76.1) (2026-10-01)
+
+
+### Bug Fixes
+
+* **darwin:** remove the unmanaged iogpu LaunchDaemon on activation ([#2645](https://github.com/dryvist/nix-darwin/issues/2645)) ([4ca0f3c](https://github.com/dryvist/nix-darwin/commit/4ca0f3cf7f53ce478b270b6db8f422abb867304b))
+
+## [2.76.0](https://github.com/dryvist/nix-darwin/compare/v2.75.0...v2.76.0) (2026-09-27)
+
+
+### Features
+
+* **macbook-m4:** serve the local proxy chain from this host's models first ([#2628](https://github.com/dryvist/nix-darwin/issues/2628)) ([1bb3ec4](https://github.com/dryvist/nix-darwin/commit/1bb3ec42099b43165e4d574fb6a66acca24ff7f7))
+
+## [2.75.0](https://github.com/dryvist/nix-darwin/compare/v2.74.0...v2.75.0) (2026-09-27)
+
+
+### Features
+
+* **workstation:** trim dock, autostarts, and unused casks ([#2627](https://github.com/dryvist/nix-darwin/issues/2627)) ([cf8e45f](https://github.com/dryvist/nix-darwin/commit/cf8e45f545ce7cfdc06ead7d78b06d33e8f0e333))
+
+## [2.74.0](https://github.com/dryvist/nix-darwin/compare/v2.73.0...v2.74.0) (2026-09-26)
+
+
+### Features
+
+* **offbox-sync:** load settings via openbao-run ([#2619](https://github.com/dryvist/nix-darwin/issues/2619)) ([9f237c0](https://github.com/dryvist/nix-darwin/commit/9f237c0983d9e301629af5672c2a9b205bd75843))
+
+## [2.73.0](https://github.com/dryvist/nix-darwin/compare/v2.72.0...v2.73.0) (2026-09-26)
+
+
+### Features
+
+* **cribl:** ship offload facts and local job logs to the workstation index ([#2617](https://github.com/dryvist/nix-darwin/issues/2617)) ([89e6ec2](https://github.com/dryvist/nix-darwin/commit/89e6ec20daad1db4b2d030dac8d48b25b96430e8))
+
+## [2.72.0](https://github.com/dryvist/nix-darwin/compare/v2.71.0...v2.72.0) (2026-09-25)
+
+
+### Features
+
+* **cribl:** bump cc-edge-the-mac-pack-io to v0.5.0, track via Renovate ([#2611](https://github.com/dryvist/nix-darwin/issues/2611)) ([5cd2ad1](https://github.com/dryvist/nix-darwin/commit/5cd2ad1bb4ebcb333cb63feb7d68bb21700beb7e))
+* **darwin:** add macmon to system packages ([#2609](https://github.com/dryvist/nix-darwin/issues/2609)) ([ffcef32](https://github.com/dryvist/nix-darwin/commit/ffcef320c97f7767020503feb7e4232b26bbf884))
+* **openbao-github-creds:** repo-create accepts a description and topics ([#2601](https://github.com/dryvist/nix-darwin/issues/2601)) ([db98d14](https://github.com/dryvist/nix-darwin/commit/db98d144aabaeea308f4fabd0f9513f5aa8a615a))
+
+## [2.71.0](https://github.com/dryvist/nix-darwin/compare/v2.70.0...v2.71.0) (2026-09-25)
+
+
+### Features
+
+* **mac-studio:** use Brave Browser instead of Google Chrome ([#2605](https://github.com/dryvist/nix-darwin/issues/2605)) ([abb368c](https://github.com/dryvist/nix-darwin/commit/abb368c4a32c9842d47ac9cfdb43274ac19f300a))
+
+## [2.70.0](https://github.com/dryvist/nix-darwin/compare/v2.69.0...v2.70.0) (2026-09-25)
+
+
+### Features
+
+* **mac-studio:** add Google Chrome cask for the wall kiosk ([1c906e5](https://github.com/dryvist/nix-darwin/commit/1c906e5879588edb26806eab21e574e74aaf6ea8))
+
+
+### Bug Fixes
+
+* **ci:** pass TYPESAFE_API_KEY to the shared CI gate ([#2602](https://github.com/dryvist/nix-darwin/issues/2602)) ([84e7970](https://github.com/dryvist/nix-darwin/commit/84e7970019d1cebcaac5e0f52052827952222c8c))
+
+## [2.69.0](https://github.com/dryvist/nix-darwin/compare/v2.68.0...v2.69.0) (2026-09-25)
+
+
+### Features
+
+* **mac-studio:** never sleep the display or engage the screensaver ([ea03c77](https://github.com/dryvist/nix-darwin/commit/ea03c77f6a6a341ef3e5aa155ca099361a502b01))
+
+## [2.68.0](https://github.com/dryvist/nix-darwin/compare/v2.67.0...v2.68.0) (2026-09-25)
+
+
+### Features
+
+* **cluster-maintenance-window:** add passwordSecret option ([cd6bc82](https://github.com/dryvist/nix-darwin/commit/cd6bc829fa887608f61d76b31068aae32e8a10d9))
+* **cluster-maintenance-window:** add passwordSecret option ([db75cab](https://github.com/dryvist/nix-darwin/commit/db75cabbe0655c4ee7c24e6cc5cab7bf7ebca0ff))
+
+
+### Bug Fixes
+
+* **macbook-m4:** disable MiMoCode in the open harness ([#2591](https://github.com/dryvist/nix-darwin/issues/2591)) ([901ac23](https://github.com/dryvist/nix-darwin/commit/901ac23ee2beb6d684b0cc3b0ac02c2f2732cccd))
+
 ## [2.67.0](https://github.com/dryvist/nix-darwin/compare/v2.66.1...v2.67.0) (2026-09-23)
 
 

@@ -99,6 +99,11 @@ in
     mas # Mac App Store CLI
 
     # ========================================================================
+    # Performance monitoring
+    # ========================================================================
+    macmon # Apple Silicon CPU/GPU/power monitor, consumed by the Cribl Edge Mac pack
+
+    # ========================================================================
     # Network & process tools
     # ========================================================================
     ngrep # Network packet grep (useful for debugging)

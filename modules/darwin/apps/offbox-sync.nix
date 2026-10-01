@@ -14,7 +14,7 @@
 # The predecessor of this module was a launchd agent that, with no target
 # configured, printed "no backup target configured — skipping" and exited 0. It
 # did that on every run for months while nothing was backed up, and every
-# health check agreed it was fine. Here, a missing env file or an unreadable
+# health check agreed it was fine. Here, a missing target value or an unreadable
 # target is a FAILURE: non-zero exit, and a fact with status="misconfigured".
 # Silence must never be indistinguishable from success.
 #
@@ -40,68 +40,7 @@
 let
   cfg = config.programs.offboxSync;
 
-  jobModule = lib.types.submodule {
-    options = {
-      name = lib.mkOption {
-        type = lib.types.str;
-        description = "Short identifier; appears in the emitted facts.";
-      };
-      source = lib.mkOption {
-        type = lib.types.str;
-        description = "Absolute local path to replicate from.";
-      };
-      dest = lib.mkOption {
-        type = lib.types.str;
-        description = "Remote path under the SFTP root, e.g. \"data\".";
-      };
-      immutable = lib.mkOption {
-        type = lib.types.bool;
-        default = false;
-        description = ''
-          Treat already-transferred files as never changing. Correct for
-          date-partitioned capture output, where a changed file means
-          corruption and should surface as an error rather than a silent
-          overwrite. Must be false for mutable trees (notes, transcripts).
-        '';
-      };
-      maxAge = lib.mkOption {
-        type = lib.types.nullOr lib.types.str;
-        default = null;
-        example = "36h";
-        description = ''
-          Only consider files newer than this. Combined with --no-traverse it
-          is what makes a short interval viable against a tree with hundreds of
-          thousands of files: the remote is never listed, only the few
-          candidates are stat'd. Leave null for mutable trees, where an edit to
-          an old file must still replicate.
-        '';
-      };
-      keepVersions = lib.mkOption {
-        type = lib.types.bool;
-        default = false;
-        description = ''
-          Preserve superseded remote files by renaming them with a dated
-          suffix instead of overwriting. Use for mutable trees so an edit
-          cannot destroy the prior remote copy. Unnecessary for immutable
-          trees, where a changed file is corruption rather than an update.
-        '';
-      };
-      minAge = lib.mkOption {
-        type = lib.types.nullOr lib.types.str;
-        default = null;
-        example = "30m";
-        description = ''
-          Per-job override of the global minAge. Needed when a source writes
-          one file over a long span with pauses in it: the global 2m floor lets
-          such a file be copied during a lull, and when the writer appends
-          afterwards an immutable job wedges permanently on an immutable-file
-          -modified error. Every later run then fails, so nothing else in that
-          job replicates either. Observed live. Set above the longest write
-          span for the source. Null inherits the global value.
-        '';
-      };
-    };
-  };
+  jobModule = import ./offbox-sync-job.nix { inherit lib; };
 
   # `--min-age` is applied to every job: a file still being written (an
   # in-flight video chunk, a half-flushed frame) must not be copied mid-write.
@@ -128,9 +67,16 @@ let
     "--sftp-concurrency ${toString cfg.transfers}"
   ];
 
-  # ":sftp:" is an on-the-fly remote; a named remote from the env file is
+  # ":sftp:" is an on-the-fly remote; a named remote from the target document is
   # "<name>:". Both take the same ${OFFBOX_ROOT}/<dest> suffix.
   destPrefix = if isSftp then ":sftp:" else "${cfg.remote}:";
+
+  bootPrefix = lib.toUpper (lib.replaceStrings [ "-" ] [ "_" ] cfg.domain);
+  launcher = pkgs.writeText "offbox-sync-launch" ''
+    export ${bootPrefix}_VAULT_ROLE_ID="$OPENBAO_APPROLE_${bootPrefix}_ROLE_ID"
+    export ${bootPrefix}_VAULT_SECRET_ID="$OPENBAO_APPROLE_${bootPrefix}_SECRET_ID"
+    exec /bin/bash ${lib.getExe config.programs.openbao-run.package} --domain ${cfg.domain} --secrets ${cfg.secretsPath} -- ${runner}
+  '';
 
   # Variables the runner requires before it will do anything. The backend-
   # specific ones are only demanded when that backend is selected — an unset
@@ -188,16 +134,10 @@ let
         "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(hostname -s)" "$1" "$2" "$3" "$4" >> "$FACTS"
     }
 
-    if [ ! -r "${cfg.envFile}" ]; then
-      # NOT exit 0. See the module header.
-      emit "-" "misconfigured" 0 "env file unreadable: ${cfg.envFile}"
-      echo "offbox-sync: env file unreadable: ${cfg.envFile}" >&2
-      exit 1
-    fi
-    set -a
-    . "${cfg.envFile}"
-    set +a
-
+    # The target vars (OFFBOX_ROOT and, for sftp, OFFBOX_HOST/_USER/_KEY_FILE/
+    # _KNOWN_HOSTS) arrive already exported: openbao-run fetches them from
+    # OpenBao and execs this script, rather than this script reading them from
+    # a hand-placed file. NOT skipped when unset — see the module header.
     for v in ${lib.concatStringsSep " " requiredVars}; do
       eval "val=\''${$v:-}"
       if [ -z "$val" ]; then
@@ -240,9 +180,9 @@ in
       description = ''
         Which rclone remote to copy into. "sftp" (the default) keeps the
         original on-the-fly SFTP behaviour, taking host, user, key and
-        known_hosts from the env file.
+        known_hosts from the target document.
 
-        Any other value is treated as the NAME of a remote the env file
+        Any other value is treated as the NAME of a remote the target document
         defines through RCLONE_CONFIG_<NAME>_* variables, so the provider,
         endpoint, bucket and keys stay out of the Nix store and out of this
         repo. Point it at a crypt remote wrapping the real one when the source
@@ -252,15 +192,33 @@ in
       '';
     };
 
-    envFile = lib.mkOption {
+    secretsPath = lib.mkOption {
       type = lib.types.str;
+      default = "platform/object-storage/offbox-sync";
       description = ''
-        Path to a file defining OFFBOX_HOST, OFFBOX_USER, OFFBOX_KEY_FILE,
-        OFFBOX_ROOT and OFFBOX_KNOWN_HOSTS. Kept out of the Nix store and out
-        of this repo: the target's hostname is not public. Render it with
-        sops-nix using the `userOnly` shape so a LaunchAgent can read it
-        without Keychain access, which root-run activation does not have.
+        KV v2 path (mount-relative) of the OpenBao document holding
+        OFFBOX_HOST, OFFBOX_USER, OFFBOX_KEY_FILE, OFFBOX_ROOT and
+        OFFBOX_KNOWN_HOSTS as its keys. Fetched whole via `openbao-run
+        --secrets` at each run and exported into the runner's environment —
+        the target's hostname never reaches the Nix store or this repo.
       '';
+    };
+
+    domain = lib.mkOption {
+      type = lib.types.str;
+      default = "local-cloud";
+      description = ''
+        OpenBao AppRole domain that may read `secretsPath`. Its role_id and
+        secret_id rotate, so they are read from Doppler at each run
+        (OPENBAO_APPROLE_<DOMAIN>_ROLE_ID/_SECRET_ID) rather than copied to
+        a file that would go stale.
+      '';
+    };
+
+    secretZeroScope = lib.mkOption {
+      type = lib.types.str;
+      default = "/Users/${cfg.user}/git";
+      description = "Directory whose Doppler scope supplies the domain's secret-zero.";
     };
 
     jobs = lib.mkOption {
@@ -299,10 +257,20 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    # The job fetches its target from OpenBao via openbao-run; Doppler supplies
+    # only the rotating AppRole secret-zero. No hand-placed file.
+    programs.openbao-run.enable = true;
+
     launchd.user.agents.offbox-sync = {
       serviceConfig = {
         Label = "com.offbox.sync";
-        ProgramArguments = [ "${runner}" ];
+        # /bin/bash stays the parent process (no exec): see homebrew.nix on
+        # Local Network.
+        ProgramArguments = [
+          "/bin/bash"
+          "-c"
+          "${lib.getExe pkgs.doppler} run --scope ${cfg.secretZeroScope} -- /bin/bash ${launcher}"
+        ];
         StartInterval = cfg.intervalSeconds;
         RunAtLoad = true;
         StandardOutPath = "/Users/${cfg.user}/Library/Logs/offbox-sync/agent.log";

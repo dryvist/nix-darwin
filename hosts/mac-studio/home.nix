@@ -10,6 +10,11 @@
 {
   imports = [ ../common/home.nix ];
 
+  # Server-room wall monitor: never let the screensaver engage. idleTime is a
+  # ByHost preference (currentHostDefaults writes it via `defaults
+  # -currentHost`, as this user, no activation script needed).
+  targets.darwin.currentHostDefaults."com.apple.screensaver".idleTime = 0;
+
   # This host holds an hourly one-way rsync replica of another host's
   # coding-agent transcripts (sessionSync). ../common/home.nix enables
   # programs.claudeUsageCollector on every host, so this host's collector

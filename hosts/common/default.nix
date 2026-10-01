@@ -28,10 +28,8 @@ in
     # Shared OpenBao-backed credential/config wrapper family.
     ./openbao-clients.nix
     ./resolver-services.nix
+    ./networking.nix
   ];
-
-  # Network hostname from the per-host registry.
-  networking.hostName = hostConfig.hostName;
 
   # Workstations keep macOS' automatic timezone behavior. Server hosts pin GMT
   # (UTC-equivalent, no DST) so the Friday 00:00 launchd schedule lands at 00:00
@@ -68,24 +66,6 @@ in
   # aborts the activation whenever this is set on such a machine — so setting
   # it either way on a laptop breaks every rebuild there.
   power.restartAfterPowerFailure = lib.mkIf hostConfig.isServer (lib.mkDefault true);
-
-  # Application firewall on every host. The MBP had this enabled by hand; the
-  # Studio shipped disabled, which left the firewall-log-shipping feed with
-  # nothing to say (its `log stream` daemon was alive but the ALF subsystem
-  # was silent). allowSigned/allowSignedApp match the working MBP posture so
-  # LAN services (sshd, llama-swap via signed python) keep accepting inbound.
-  networking.applicationFirewall = {
-    enable = true;
-    allowSigned = true;
-    allowSignedApp = true;
-    blockAllIncoming = false;
-    # Stealth: drop unsolicited ICMP/UDP probes instead of answering them.
-    # Signed apps and sshd still accept their allowed inbound (allowSigned/
-    # allowSignedApp above; the pf anchor separately permits ICMP echo from
-    # security.pf.allowedSshSources), so cluster and LAN service traffic is
-    # unaffected — this only stops the host announcing itself to a scan.
-    enableStealthMode = true;
-  };
 
   programs = {
     # Login-time resume of an armed Claude Code mission after a reboot.

@@ -53,19 +53,38 @@ in
     fi
   '';
 
-  # Stock local rules only — no remote forwarding (see header).
-  environment.etc."syslog.conf".text = ''
-    # macOS Syslog Configuration
-    # Managed by nix-darwin - do not edit manually
-    #
-    # Local logging only. Remote shipping is handled by Cribl Edge
-    # (hosts/common/cribl.nix), never by syslogd remote rules.
+  environment.etc = {
+    # Stock local rules only — no remote forwarding (see header).
+    "syslog.conf".text = ''
+      # macOS Syslog Configuration
+      # Managed by nix-darwin - do not edit manually
+      #
+      # Local logging only. Remote shipping is handled by Cribl Edge
+      # (hosts/common/cribl.nix), never by syslogd remote rules.
 
-    *.notice;authpriv,remoteauth,ftp,install,internal.none	/var/log/system.log
-    auth,authpriv.*;remoteauth.crit			/var/log/system.log
-    mail.*						/var/log/mail.log
-    install.*					/var/log/install.log
-  '';
+      *.notice;authpriv,remoteauth,ftp,install,internal.none	/var/log/system.log
+      auth,authpriv.*;remoteauth.crit			/var/log/system.log
+      mail.*						/var/log/mail.log
+      install.*					/var/log/install.log
+    '';
+
+    # Rotate via the system newsyslog run. Flags per ai-cli-logs.conf: G glob,
+    # J bzip2, B no rotation banner injected into files Cribl Edge tails,
+    # N no syslogd signal.
+    "newsyslog.d/firewall-logs.conf".text = ''
+      # logfilename [owner:group] mode count size when flags
+      ${logDir}/*.log ${userConfig.user.name}:staff 640 3 1024 * BGJN
+    '';
+
+    # Tailed by Cribl Edge: offbox-sync job facts (in_offload_facts) and
+    # generic user launchd job logs (in_local_jobs).
+    "newsyslog.d/workstation-jobs.conf".text = ''
+      # logfilename [owner:group] mode count size when flags
+      ${userConfig.user.homeDir}/Library/Logs/offbox-sync/*.log ${userConfig.user.name}:staff 640 3 10240 * BGJN
+      ${userConfig.user.homeDir}/Library/Logs/offbox-sync/offload.jsonl ${userConfig.user.name}:staff 640 3 1024 * BJN
+      ${userConfig.user.homeDir}/Library/Logs/local-jobs/*.log ${userConfig.user.name}:staff 640 3 10240 * BGJN
+    '';
+  };
 
   # Firewall log capture daemon. Runs as the login user (an admin — ULS
   # firewall entries are readable) so the output file is user-owned and the
@@ -106,13 +125,5 @@ in
   system.activationScripts.postActivation.text = lib.mkAfter ''
     /usr/bin/install -d -o ${userConfig.user.name} -g staff "${logDir}"
     /usr/bin/pkill -HUP syslogd 2>/dev/null || true
-  '';
-
-  # Rotate via the system newsyslog run. Flags per ai-cli-logs.conf: G glob,
-  # J bzip2, B no rotation banner injected into files Cribl Edge tails,
-  # N no syslogd signal.
-  environment.etc."newsyslog.d/firewall-logs.conf".text = ''
-    # logfilename [owner:group] mode count size when flags
-    ${logDir}/*.log ${userConfig.user.name}:staff 640 3 1024 * BGJN
   '';
 }
