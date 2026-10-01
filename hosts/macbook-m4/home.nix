@@ -22,8 +22,8 @@ in
   imports = [ ../common/home.nix ];
 
   # Router endpoint for the proxy's non-Anthropic model group. The bearer is
-  # never on disk: `llmEndpointBearerFromEnv` plus the proxy's `launchPrefix`
-  # below resolve it from the secret store at each agent start.
+  # never on disk: `llmEndpointBearerFromEnv` plus the proxy's host-supplied
+  # `launchPrefix` resolve it at each agent start.
   services.aiStack = {
     llmEndpoint = "router";
     llmRouterEndpoint = "https://llm.${userConfig.internalDomain}/v1";
@@ -99,8 +99,8 @@ in
     # Claude Code needs to reach it is rendered into settings.json (see the
     # module header in nix-ai). Same internal-FQDN composition rule as
     # openHarness above.
+    # Enabled by the host wrapper together with its `launchPrefix`.
     litellmLocal = {
-      enable = true;
 
       # Claude Code talks straight to Anthropic on this machine — no proxy hop,
       # no header, nothing that can rewrite a model id or the context window it
