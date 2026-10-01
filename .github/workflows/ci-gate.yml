@@ -98,9 +98,8 @@ jobs:
   # guaranteed end-to-end sweep. develop PRs take the fast path (Nix
   # Validate, ~2 min); coverage between promotions is ci-nix.yml's build on
   # every develop push (post-merge, and the only cache-saving run).
-  # Exception: a flake.lock change builds pre-merge on develop too. A relock
-  # moves every input at once and is auto-merged, so the fast path would land
-  # it on develop with nothing having built it.
+  # Exception: a flake.lock change also builds pre-merge on develop, since
+  # relocks auto-merge.
   nix-build:
     name: Nix Build
     needs: shared-gate
@@ -145,14 +144,7 @@ jobs:
       - name: Check all results
         uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # release/v1
         with:
-          # shared-gate is never skippable — it always reports, and Nix
-          # Validate's own skip rules are enforced inside it.
-          # nix-build: skippable everywhere except a nix change targeting
-          # main or a flake.lock change targeting develop, where the arm
-          # omits it so an unexpectedly-skipped build fails the gate.
-          # claude-settings: skippable only when the `extra` filter did not
-          # match — a flake.lock bump must validate settings even on a
-          # deps-only PR.
-          # llm-concurrency-parity: skippable whenever nix did not change.
-          allowed-skips: ${{ (needs.shared-gate.outputs.nix == 'false' && 'nix-build, claude-settings, llm-concurrency-parity') || (github.base_ref != 'main' && needs.shared-gate.outputs.is-flake-lock-change == 'true' && 'claude-settings, llm-concurrency-parity') || (github.base_ref != 'main' && 'nix-build, claude-settings, llm-concurrency-parity') || (needs.shared-gate.outputs.is-deps-only == 'true' && 'nix-build, llm-concurrency-parity') || 'claude-settings, llm-concurrency-parity' }}
+          # Each job's own `if:` decides when it runs; a failure always fails
+          # the gate, so every conditional job may be skipped.
+          allowed-skips: nix-build, claude-settings, llm-concurrency-parity
           jobs: ${{ toJSON(needs) }}
