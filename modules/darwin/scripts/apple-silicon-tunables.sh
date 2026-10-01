@@ -9,7 +9,7 @@
 # Volatile iogpu/vm sysctls live in apple-silicon-sysctls.sh (so they can also
 # re-apply at boot). This script holds the persistent and verify-only knobs:
 # pmset perf flags, Energy Mode verify, Spotlight, Time Machine, App Nap, and
-# the Metal debug-env guard.
+# the Metal debug-env guard, plus removal of an unmanaged iogpu daemon.
 
 prefix="[apple-silicon-tunables]"
 log() { echo "$prefix INFO $*"; }
@@ -174,6 +174,22 @@ if [ -n "${METAL_UNSET_VARS:-}" ] && [ -n "${USER_NAME:-}" ]; then
       log "Metal debug var ${_var} not set"
     fi
   done
+fi
+
+# --- Retire the hand-placed iogpu daemon ---------------------------------
+# Removes the unmanaged local.sysctl.iogpu daemon; the managed
+# set-iogpu-wired-limit daemon owns the wired limit. Matched by label, so an
+# unrelated file at the same path is left alone.
+LEGACY_IOGPU_PLIST=/Library/LaunchDaemons/sysctl.plist
+LEGACY_IOGPU_LABEL=local.sysctl.iogpu
+if [ -f "${LEGACY_IOGPU_PLIST}" ] &&
+  [ "$(/usr/libexec/PlistBuddy -c 'Print :Label' "${LEGACY_IOGPU_PLIST}" 2>/dev/null)" = "${LEGACY_IOGPU_LABEL}" ]; then
+  /bin/launchctl bootout "system/${LEGACY_IOGPU_LABEL}" >/dev/null 2>&1 || true
+  if /bin/rm -f "${LEGACY_IOGPU_PLIST}"; then
+    log "removed legacy ${LEGACY_IOGPU_LABEL} daemon"
+  else
+    warn "could not remove ${LEGACY_IOGPU_PLIST}"
+  fi
 fi
 
 exit 0
