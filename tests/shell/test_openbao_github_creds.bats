@@ -40,7 +40,7 @@ setup() {
   PATH="$STUB_DIR:$PATH"
   # A syntactically valid address that is never dialled — every curl is stubbed.
   export BAO_ADDR="http://openbao.invalid"
-  export OPENBAO_GITHUB_DRYVIST_INSTALLATION_ID=147266792
+  export OPENBAO_GITHUB_DRYVIST_INSTALLATION_ID=12345678
   unset OPENBAO_APPROLE_GITHUB_WRITE_ROLE_ID OPENBAO_APPROLE_GITHUB_WRITE_SECRET_ID
   unset OPENBAO_GITHUB_WRITE_SCOPES
 }
@@ -177,16 +177,12 @@ SH
   [[ "$stderr" == *"visibility must be"* ]]
 }
 
-@test "the administration scope is reachable only from repo-create" {
-  # The everyday scopes are what a caller can actually hold; neither may ever
-  # carry administration. Asserted here as well as in --self-check so the
-  # property is covered even if a future edit reorders the self-check.
-  run bash -euo pipefail -c \
-    'source "$1"; printf "%s\n%s\n" "$bg_read_scope" "$bg_write_scope"' \
-    _ "$SCRIPTS/openbao-github-creds.sh"
-
-  [ "$status" -eq 0 ]
-  ! grep -q 'administration' <<<"$output"
+# repo-create reads its AppRole pair through one sudo call. The stub answers
+# that call with a fake pair, one value per line, as the real root shell does.
+stub_sudo_pair() {
+  write_stub "$STUB_DIR/sudo" <<'SH'
+printf '%s\n%s\n' role-rc secret-rc-DO-NOT-LEAK
+SH
 }
 
 # do_repo_create is the mint -> spend -> revoke half of repo-create, split out
@@ -200,33 +196,20 @@ SH
 # trap's own DELETE call ran — so the token was never actually revoked despite
 # the repo being created and the URL printed. Every error path was unaffected,
 # because `die` exits from within the same still-live call frame.
-@test "break-glass refuses the everyday installation id for the admin App key" {
-  export OPENBAO_GITHUB_APP_ID=123456
-  export OPENBAO_GITHUB_APP_PRIVATE_KEY="stub-key"
-  unset OPENBAO_GITHUB_ADMIN_DRYVIST_INSTALLATION_ID
-  run --separate-stderr bash -euo pipefail -c \
-    'source "$1"; mint_break_glass dryvist "{}" ""' \
-    _ "$SCRIPTS/openbao-github-creds.sh"
-  [ "$status" -ne 0 ]
-  [[ "$stderr" == *"OPENBAO_GITHUB_ADMIN_*_INSTALLATION_ID"* ]]
-}
-
 @test "a successful repo-create revokes the administration token afterward" {
-  export OPENBAO_GITHUB_ADMIN_DRYVIST_INSTALLATION_ID=147266793
-  export OPENBAO_GITHUB_APP_ID=123456
-  export OPENBAO_GITHUB_APP_PRIVATE_KEY="stub-key-openssl-is-stubbed-below"
-  # openssl is only used here to build a JWT for the mint call; curl (stubbed
-  # below) does not validate it, so a fixed fake signature is sufficient.
-  write_stub "$STUB_DIR/openssl" <<'SH'
-case "$1" in
-  base64) echo "c3R1Yg" ;;
-  dgst)   echo "c2ln" ;;
-esac
-SH
+  stub_sudo_pair
   write_stub "$STUB_DIR/curl" <<SH
 case " \$* " in
-  *"access_tokens"*)
-    echo '{"token":"ghs_faketoken123"}'
+  *"auth/approle/login"*)
+    cat > /dev/null
+    printf '%s\n%s' '{"auth":{"client_token":"bao-tok"}}' 200
+    exit 0
+    ;;
+  *"github-admin/token/dryvist-repo-create"*)
+    echo '{"data":{"token":"ghs_faketoken123"}}'
+    exit 0
+    ;;
+  *"auth/token/revoke-self"*)
     exit 0
     ;;
   *"/installation/token"*)
@@ -253,6 +236,52 @@ SH
   grep -q "ghs_faketoken123" "$BATS_TEST_TMPDIR/revoke-argv"
 }
 
+@test "repo-create mints from the github-admin set, never with the pair in argv" {
+  stub_sudo_pair
+  write_stub "$STUB_DIR/curl" <<SH
+for a in "\$@"; do echo "\$a" >> "\$BATS_TEST_TMPDIR/curl-argv"; done
+case " \$* " in
+  *"auth/approle/login"*)
+    cat > "\$BATS_TEST_TMPDIR/login-stdin"
+    printf '%s\n%s' '{"auth":{"client_token":"bao-tok"}}' 200
+    exit 0
+    ;;
+  *"github-admin/token/dryvist-repo-create"*)
+    echo '{"data":{"token":"ghs_faketoken123"}}'
+    exit 0
+    ;;
+esac
+exit 0
+SH
+
+  run --separate-stderr bash -euo pipefail -c \
+    'source "$1"; mint_repo_create dryvist' _ "$SCRIPTS/openbao-github-creds.sh"
+
+  [ "$status" -eq 0 ]
+  [ "$output" = "ghs_faketoken123" ]
+  grep -q "secret-rc-DO-NOT-LEAK" "$BATS_TEST_TMPDIR/login-stdin"
+  ! grep -q "secret-rc-DO-NOT-LEAK" "$BATS_TEST_TMPDIR/curl-argv"
+  # The OpenBao token is revoked once the mint is done.
+  grep -q "auth/token/revoke-self" "$BATS_TEST_TMPDIR/curl-argv"
+}
+
+@test "repo-create stops when sudo declines, before any network call" {
+  write_stub "$STUB_DIR/sudo" <<'SH'
+exit 1
+SH
+  write_stub "$STUB_DIR/curl" <<SH
+echo "called" >> "\$BATS_TEST_TMPDIR/curl-calls"
+exit 22
+SH
+
+  run --separate-stderr bash -euo pipefail -c \
+    'source "$1"; mint_repo_create dryvist' _ "$SCRIPTS/openbao-github-creds.sh"
+
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"sudo declined"* ]]
+  [ ! -f "$BATS_TEST_TMPDIR/curl-calls" ]
+}
+
 @test "repo-create rejects malformed topics before touching the network" {
   write_stub "$STUB_DIR/curl" <<SH
 echo "called" >> "\$BATS_TEST_TMPDIR/curl-calls"
@@ -267,18 +296,19 @@ SH
 }
 
 @test "repo-create sends the description and sets topics with the same token" {
-  export OPENBAO_GITHUB_APP_ID=123456
-  export OPENBAO_GITHUB_APP_PRIVATE_KEY="stub-key-openssl-is-stubbed-below"
-  write_stub "$STUB_DIR/openssl" <<'SH'
-case "$1" in
-  base64) echo "c3R1Yg" ;;
-  dgst)   echo "c2ln" ;;
-esac
-SH
+  stub_sudo_pair
   write_stub "$STUB_DIR/curl" <<SH
 case " \$* " in
-  *"access_tokens"*)
-    echo '{"token":"ghs_faketoken123"}'
+  *"auth/approle/login"*)
+    cat > /dev/null
+    printf '%s\n%s' '{"auth":{"client_token":"bao-tok"}}' 200
+    exit 0
+    ;;
+  *"github-admin/token/dryvist-repo-create"*)
+    echo '{"data":{"token":"ghs_faketoken123"}}'
+    exit 0
+    ;;
+  *"auth/token/revoke-self"*)
     exit 0
     ;;
   *"/installation/token"*)

@@ -44,28 +44,18 @@
 #        export GITHUB_TOKEN="$(openbao-github-creds token read <owner>)"
 #        export GITHUB_TOKEN="$(openbao-github-creds token write <owner>/<repo>)"  # takes no lease
 #
-#   4. break-glass (OpenBao is unreachable): mint straight from the GitHub App
-#      key, bypassing OpenBao's mint path entirely. Same security posture as the
-#      normal path — ephemeral (~1h) installation token, minimally scoped — but a
-#      DIFFERENT failure domain (needs only api.github.com + the App key, not the
-#      OpenBao guest's DNS/egress). Use ONLY when tiers 1-3 are down; it does not
-#      take a write lease, so coordinate manually.
-#        export GITHUB_TOKEN="$(openbao-github-creds break-glass read <owner>)"
-#        export GITHUB_TOKEN="$(openbao-github-creds break-glass write <owner>/<repo>)"
-#      The default read scope is contents/issues/PRs/checks/actions/statuses read;
-#      write adds contents/PRs/issues write, scoped to the one named repo. The App
-#      key (OPENBAO_GITHUB_APP_ID / OPENBAO_GITHUB_APP_PRIVATE_KEY) rides the same
-#      ambient doppler env; it is the App's FULL ceiling, so break-glass always
-#      pins an explicit minimal permissions scope on the mint request rather than
-#      taking the installation default.
-#
-#   5. repo-create (the ONLY administration-scoped path):
+#   4. repo-create (the ONLY administration-scoped path):
 #        openbao-github-creds repo-create <owner>/<repo> [private|public] [description] [topic,topic,...]
 #      Creates one organisation repository and nothing else. It is the inverse of
 #      every other subcommand: an ACTION, not a credential. The administration
-#      token is minted, used, revoked, and never leaves the process — so unlike
-#      claim/token/break-glass this one is not captured, requires a terminal, and
-#      requires the operator to type the target back. See cmd_repo_create.
+#      token is minted from github-admin/token/<owner>-repo-create, used,
+#      revoked, and never leaves the process — so unlike claim/token this one is
+#      not captured, requires a terminal, and requires the operator to type the
+#      target back. See cmd_repo_create.
+#
+# Every token comes from OpenBao. This script never holds a GitHub App key, and
+# there is no path that mints around OpenBao: when OpenBao is down, nothing
+# mints.
 #
 # SECRET-ZERO is AMBIENT (no local keychain), identical to openbao-aws-creds.sh
 # after dryvist/nix-darwin#1686: BAO_ADDR (or legacy VAULT_ADDR) + the github-read / github-write
@@ -73,10 +63,9 @@
 # claim additionally need the installation IDs (OPENBAO_GITHUB_DRYVIST_INSTALLATION_ID
 # / OPENBAO_GITHUB_PERSONAL_INSTALLATION_ID) so a repo name can be pinned to its
 # installation — the values are not secret (they appear in App-install URLs) but
-# are injected the same way to keep this committed script free of them. Those
-# two are the everyday App's installations; break-glass and repo-create use the
-# admin App's (OPENBAO_GITHUB_ADMIN_DRYVIST_INSTALLATION_ID /
-# OPENBAO_GITHUB_ADMIN_PERSONAL_INSTALLATION_ID).
+# are injected the same way to keep this committed script free of them.
+# repo-create is the exception: its AppRole pair is root-only on disk, never in
+# the ambient env, so every use passes a sudo prompt (see mint_repo_create).
 #
 # ponytail: no on-disk token cache and no on-disk token — git/gh call the helper
 # ~once per operation and cache in-memory for it; the hard rule is "never write a
@@ -117,16 +106,6 @@ installation_id_for() {
   case "$1" in
     dryvist) echo "${OPENBAO_GITHUB_DRYVIST_INSTALLATION_ID:-}" ;;
     *)       echo "${OPENBAO_GITHUB_PERSONAL_INSTALLATION_ID:-}" ;;
-  esac
-}
-
-# Owner -> the admin App's installation id. Break-glass and repo-create sign
-# with the admin App key (OPENBAO_GITHUB_APP_*), whose installations differ
-# from the everyday App's that back the OpenBao read/write paths above.
-admin_installation_id_for() {
-  case "$1" in
-    dryvist) echo "${OPENBAO_GITHUB_ADMIN_DRYVIST_INSTALLATION_ID:-}" ;;
-    *)       echo "${OPENBAO_GITHUB_ADMIN_PERSONAL_INSTALLATION_ID:-}" ;;
   esac
 }
 
@@ -171,12 +150,17 @@ bao_login_configured() {
 # complete becomes a request made with an empty X-Vault-Token, and whatever
 # the caller reports afterwards is reported as though the credential were fine.
 bao_login() {
-  local approle_prefix="$1" role_id_var secret_id_var role_id secret_id resp token http_code
+  local approle_prefix="$1" role_id_var secret_id_var
   bao_login_var_names "${approle_prefix}"
   bao_login_configured "${approle_prefix}" || \
     die "${role_id_var} / ${secret_id_var} not in environment — run under 'doppler run'"
-  role_id="${!role_id_var}"
-  secret_id="${!secret_id_var}"
+  approle_login "${approle_prefix}" "${!role_id_var}" "${!secret_id_var}"
+}
+
+# The login itself, for a pair from any source. $1 only labels errors. The same
+# never-suppress-with-`||` rule as bao_login applies.
+approle_login() {
+  local approle_prefix="$1" role_id="$2" secret_id="$3" resp token http_code
   # Credential travels via a private payload on stdin, never argv (argv is
   # visible to any local process via ps).
   # AppRole logins can take 4-30s when the store's write path is slow, so the
@@ -285,73 +269,6 @@ name is already listed, re-check that the converge actually ran."
   printf '%s' "${gh_tok}"
 }
 
-# --- break-glass: mint direct from the App key, bypassing OpenBao -------------
-# base64url without padding (RFC 7515) — for the JWT header/payload/signature.
-b64url() { openssl base64 -A | tr '+/' '-_' | tr -d '='; }
-
-# Mint an ephemeral installation token straight from the GitHub App key, pinning
-# an explicit minimal permissions scope (the App key is the full ceiling, so we
-# never take the installation default). $2 is a JSON permissions object; $3 is a
-# comma-repo list ("" = every repo in the installation, for read).
-mint_break_glass() {
-  local owner="$1" scope_json="$2" repos="$3" iid now hdr pl unsigned sig jwt body resp gh_tok
-  [ -n "${OPENBAO_GITHUB_APP_ID:-}" ] \
-    || die "break-glass needs OPENBAO_GITHUB_APP_ID (run under 'doppler run')"
-  [ -n "${OPENBAO_GITHUB_APP_PRIVATE_KEY:-}" ] \
-    || die "break-glass needs OPENBAO_GITHUB_APP_PRIVATE_KEY (run under 'doppler run')"
-  iid="$(admin_installation_id_for "${owner}")"
-  [ -n "${iid}" ] || die "no admin App installation id for owner '${owner}' — set OPENBAO_GITHUB_ADMIN_*_INSTALLATION_ID"
-  now="$(date +%s)"
-  hdr="$(printf '{"alg":"RS256","typ":"JWT"}' | b64url)"
-  # App JWT: 9-min life, iat backdated 60s for clock skew (GitHub's own guidance).
-  pl="$(printf '{"iat":%d,"exp":%d,"iss":"%s"}' \
-        "$((now - 60))" "$((now + 540))" "${OPENBAO_GITHUB_APP_ID}" | b64url)"
-  unsigned="${hdr}.${pl}"
-  # Sign with the key piped in via process substitution — the private key never
-  # touches disk (no temp file to leak or leave behind).
-  sig="$(printf '%s' "${unsigned}" \
-    | openssl dgst -sha256 -sign <(printf '%s\n' "${OPENBAO_GITHUB_APP_PRIVATE_KEY}") \
-    | b64url)"
-  jwt="${unsigned}.${sig}"
-  if [ -n "${repos}" ]; then
-    body="$(jq -cn --argjson p "${scope_json}" --arg r "${repos}" \
-      '{permissions: $p, repositories: ($r | split(","))}')"
-  else
-    body="$(jq -cn --argjson p "${scope_json}" '{permissions: $p}')"
-  fi
-  resp="$(printf '%s' "${body}" \
-    | curl -sf --max-time 15 -X POST \
-        -H "Authorization: Bearer ${jwt}" -H "Accept: application/vnd.github+json" \
-        --data-binary @- "https://api.github.com/app/installations/${iid}/access_tokens")" \
-    || die "break-glass mint failed for ${owner} (App key valid? api.github.com reachable?)"
-  gh_tok="$(jq -r '.token // empty' <<<"${resp}")"
-  [ -n "${gh_tok}" ] || die "no token in break-glass response for ${owner}"
-  printf '%s' "${gh_tok}"
-}
-
-# Minimal everyday-task scopes. Read: pull/inspect PRs, issues, checks, CI.
-# Write: push + PR/issue authoring, scoped to ONE repo; checks/actions stay read.
-bg_read_scope='{"contents":"read","metadata":"read","issues":"read","pull_requests":"read","checks":"read","actions":"read","statuses":"read"}'
-bg_write_scope='{"contents":"write","pull_requests":"write","issues":"write","metadata":"read","checks":"read","actions":"read","statuses":"read"}'
-
-cmd_break_glass() {
-  refuse_tty "$@"
-  # split_repo assigns owner/repo; scope them here so a break-glass call cannot
-  # leave them set for anything that runs afterwards.
-  local owner repo
-  case "${1:-read}" in
-    read)
-      mint_break_glass "${2:-${default_owner}}" "${bg_read_scope}" ""; echo ;;
-    write)
-      [ -n "${2:-}" ] || die "usage: openbao-github-creds break-glass write <owner>/<repo>"
-      split_repo "$2"
-      mint_break_glass "${owner}" "${bg_write_scope}" "${repo}"; echo ;;
-    */*|*)
-      # `break-glass <owner>` shorthand for read
-      mint_break_glass "${1}" "${bg_read_scope}" ""; echo ;;
-  esac
-}
-
 # --- repo-create: the one administration-scoped action ------------------------
 #
 # WHY THIS IS AN ACTION AND NOT A TOKEN VERB. `administration: write` is the
@@ -364,10 +281,9 @@ cmd_break_glass() {
 # token is minted, spent on exactly one API call, revoked, and never printed.
 # Nothing the caller can capture carries administration rights.
 #
-# The GitHub-side grant is the real boundary. Once the App installation holds
-# Administration:write, anyone with the ambient App key can mint that scope by
-# hand; this verb does not widen anything, it exists so the sanctioned path is
-# the easy one and the hand-rolled JWT never gets written.
+# The scope is not chosen here. OpenBao's <owner>-repo-create permission set on
+# the github-admin mount stores it (administration:write only, asserted at
+# converge), and the request body cannot widen a named set.
 #
 # Verified 2026-09-12 against GitHub's permissions reference: POST
 # /orgs/{org}/repos requires repository permission `administration` = write and
@@ -376,7 +292,32 @@ cmd_break_glass() {
 # PERMISSIONS, not repositories — installation-wide in breadth, one capability
 # deep. Personal-account repositories are out of reach for an IAT entirely
 # (POST /user/repos does not accept one); this verb is organisations only.
-bg_repo_create_scope='{"administration":"write","metadata":"read"}'
+
+# Root-only home of the github-repo-create AppRole pair (root:wheel 0600).
+repo_create_pair_dir="/var/root/.openbao"
+
+# Mint the administration token from OpenBao. The pair is read through ONE sudo
+# call, so the human gate is the sudo prompt (Touch ID or security key), and the
+# pair crosses into this process on a pipe, never argv or the environment.
+mint_repo_create() {
+  local owner="$1" pair role_id secret_id bao_tok resp gh_tok
+  require_env
+  # shellcheck disable=SC2016  # $f expands in the root shell, not here
+  pair="$(sudo /bin/sh -c 'for f; do tr -d "\n" < "$f"; echo; done' sh \
+    "${repo_create_pair_dir}/github-repo-create.role_id" \
+    "${repo_create_pair_dir}/github-repo-create.secret_id")" \
+    || die "could not read the github-repo-create pair under ${repo_create_pair_dir} (sudo declined, or the files are missing)"
+  { IFS= read -r role_id; IFS= read -r secret_id; } <<<"${pair}"
+  bao_tok="$(approle_login github-repo-create "${role_id}" "${secret_id}")"
+  resp="$(curl -sf --max-time 10 -X POST -H "X-Vault-Token: ${bao_tok}" \
+    "${bao_addr}/v1/github-admin/token/${owner}-repo-create")" \
+    || die "mint failed at github-admin/token/${owner}-repo-create. Only organisations with a <owner>-repo-create set can create repositories here."
+  curl -s -o /dev/null --max-time 10 -X POST -H "X-Vault-Token: ${bao_tok}" \
+    "${bao_addr}/v1/auth/token/revoke-self" || true
+  gh_tok="$(jq -r '.data.token // empty' <<<"${resp}")"
+  [ -n "${gh_tok}" ] || die "no token in repo-create mint response for ${owner}"
+  printf '%s' "${gh_tok}"
+}
 
 # Exactly one "owner/repo": both halves present, no third segment, nothing that
 # is not a legal name character. Split out so --self-check can exercise it
@@ -453,7 +394,7 @@ valid_topics() {
 do_repo_create() {
   local owner="$1" repo="$2" private="$3" visibility="$4" description="${5:-}" topics="${6:-}"
   local body resp code url
-  tok="$(mint_break_glass "${owner}" "${bg_repo_create_scope}" "")"
+  tok="$(mint_repo_create "${owner}")"
   # Spend it, then kill it. GitHub revokes the installation token the call was
   # made with, so the credential stops existing once this function returns
   # rather than living out its hour. Best-effort: a failed revoke must not turn
@@ -660,8 +601,8 @@ self_check() {
   # which is far worse than the leak the guard prevents.
   refuse_tty >/dev/null 2>&1 \
     || { echo "self-check FAIL: refuse_tty blocked a non-terminal (captured) call"; return 1; }
-  out="$(write_token_body 147266792 nix-darwin)"
-  [ "${out}" = '{"installation_id":"147266792","repositories":"nix-darwin"}' ] \
+  out="$(write_token_body 12345678 nix-darwin)"
+  [ "${out}" = '{"installation_id":"12345678","repositories":"nix-darwin"}' ] \
     || { echo "self-check FAIL: write body = ${out}"; return 1; }
   owner=""; repo=""; split_repo "dryvist/nix-darwin"
   [ "${owner}" = "dryvist" ] && [ "${repo}" = "nix-darwin" ] \
@@ -672,48 +613,15 @@ self_check() {
   [ "$(read_set_for dryvist)" = "read-dryvist-all" ] \
     && [ "$(read_set_for JacobPEvans-personal)" = "read-personal-all" ] \
     || { echo "self-check FAIL: read_set mapping"; return 1; }
-  # break-glass scopes must be valid JSON objects, minimal, and never grant admin.
-  if ! jq -e . >/dev/null 2>&1 <<<"${bg_read_scope}"; then
-    echo "self-check FAIL: break-glass read scope not valid JSON"; return 1
-  fi
-  if ! jq -e . >/dev/null 2>&1 <<<"${bg_write_scope}"; then
-    echo "self-check FAIL: break-glass write scope not valid JSON"; return 1
-  fi
-  if [ "$(jq -r '.pull_requests' <<<"${bg_write_scope}")" != "write" ]; then
-    echo "self-check FAIL: break-glass write scope lacks pull_requests:write"; return 1
-  fi
-  # The EVERYDAY paths must never grant administration. That assertion predates
-  # repo-create and is not weakened by it: repo-create does not hand its token
-  # to anyone, so these two remain the only scopes a caller can ever hold.
-  if [ "$(jq -r 'has("administration")' <<<"${bg_write_scope}")" != "false" ]; then
-    echo "self-check FAIL: break-glass write scope must never grant administration"; return 1
-  fi
-  if [ "$(jq -r 'has("administration")' <<<"${bg_read_scope}")" != "false" ]; then
-    echo "self-check FAIL: break-glass read scope must never grant administration"; return 1
-  fi
   self_check_repo_create || return 1
   self_check_write_realms || return 1
   self_check_lock_reacquire || return 1
   echo "self-check OK"
 }
 
-# repo-create is the one path allowed to request administration, so the scope it
-# requests is the thing that must not drift. Assert it from both ends: the
-# capability is present, and it is the ONLY write in the object — a future edit
-# that adds contents:write "while we're in here" turns a repository-creation
-# credential into a push-anywhere one, and would otherwise pass silently.
+# The repo-create scope lives server-side (see mint_repo_create), so the part
+# left to check here is the target: the one string that reaches the API path.
 self_check_repo_create() {
-  local writes
-  if ! jq -e . >/dev/null 2>&1 <<<"${bg_repo_create_scope}"; then
-    echo "self-check FAIL: repo-create scope not valid JSON"; return 1
-  fi
-  if [ "$(jq -r '.administration' <<<"${bg_repo_create_scope}")" != "write" ]; then
-    echo "self-check FAIL: repo-create scope lacks administration:write"; return 1
-  fi
-  writes="$(jq -r '[to_entries[] | select(.value == "write")] | length' <<<"${bg_repo_create_scope}")"
-  [ "${writes}" = "1" ] \
-    || { echo "self-check FAIL: repo-create scope grants ${writes} write permissions, expected exactly 1"; return 1; }
-
   # Target validation: one repo per invocation, and nothing that could smuggle a
   # second path segment or a shell/URL metacharacter into the API path.
   local t
@@ -783,8 +691,8 @@ self_check_lock_reacquire() {
   bao_tok="$(bao_login GITHUB_WRITE)" \
     || { echo "self-check FAIL: GITHUB_WRITE is configured but its AppRole login failed"; return 1; }
   base="${bao_addr}/v1/secret"
-  d="${base}/data/locks/github-write/147266792/zz-self-check"
-  m="${base}/metadata/locks/github-write/147266792/zz-self-check"
+  d="${base}/data/locks/github-write/zz-self-check/zz-self-check"
+  m="${base}/metadata/locks/github-write/zz-self-check/zz-self-check"
 
   curl -s -o /dev/null --max-time 10 -X DELETE -H "X-Vault-Token: ${bao_tok}" "${m}"
   printf '%s' '{"options":{"cas":0},"data":{"holder":"self-check"}}' \
@@ -813,8 +721,7 @@ case "${1:-}" in
   claim)        cmd_claim "${2:-}" ;;
   release)      cmd_release "${2:-}" ;;
   token)        shift; cmd_token "$@" ;;
-  break-glass)  shift; cmd_break_glass "$@" ;;
   repo-create)  shift; cmd_repo_create "$@" ;;
   --self-check) self_check ;;
-  *) die "usage: openbao-github-creds {get|store|erase|claim <owner>/<repo>|release [<owner>/<repo>]|token [read|write] [<owner>[/<repo>]]|break-glass [read|write] [<owner>[/<repo>]]|repo-create <owner>/<repo> [private|public] [description] [topic,topic,...]|--self-check}" ;;
+  *) die "usage: openbao-github-creds {get|store|erase|claim <owner>/<repo>|release [<owner>/<repo>]|token [read|write] [<owner>[/<repo>]]|repo-create <owner>/<repo> [private|public] [description] [topic,topic,...]|--self-check}" ;;
 esac
