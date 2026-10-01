@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.77.0](https://github.com/dryvist/nix-darwin/compare/v2.76.1...v2.77.0) (2026-10-01)
+
+
+### Features
+
+* **cribl:** mask credentials in AI-CLI transcripts before they leave the host ([#2653](https://github.com/dryvist/nix-darwin/issues/2653)) ([3c0cff5](https://github.com/dryvist/nix-darwin/commit/3c0cff5ac82d8071bb86b37b074290cffed7440c))
+
 ## [2.76.1](https://github.com/dryvist/nix-darwin/compare/v2.76.0...v2.76.1) (2026-10-01)
 
 
