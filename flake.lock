@@ -525,11 +525,11 @@
     "dotgithub": {
       "flake": false,
       "locked": {
-        "lastModified": 1790882322,
-        "narHash": "sha256-S9ESfmh6mqF9tYLjTEbCfgeIWrLjERUij1WkRVS6eqk=",
+        "lastModified": 1790895561,
+        "narHash": "sha256-px8x0jIw2jzxbSrqacBhCRU5+HPjdjKiysoLzTBWG0g=",
         "owner": "dryvist",
         "repo": ".github",
-        "rev": "8d3a08ef8826fb983ca9ca561ca1793315188deb",
+        "rev": "696ba7574a7ec86edd742515603602367c97e2b6",
         "type": "github"
       },
       "original": {
@@ -1022,11 +1022,11 @@
     "jacobpevans-cc-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1790890761,
-        "narHash": "sha256-uzogA0Nzpc2il+9bMjYikPSD1DnRPK/WTiWllmCL96c=",
+        "lastModified": 1790893983,
+        "narHash": "sha256-UmBib37suxJeIff6scysJv/2TObdFi+SdLn+AjLOHHM=",
         "owner": "dryvist",
         "repo": "claude-code-plugins",
-        "rev": "e4f5eb4658a635491e3eb74e63e6eac491b7b20b",
+        "rev": "516a1a52890158053a9eca6d201badc2be7e57c6",
         "type": "github"
       },
       "original": {
@@ -1472,11 +1472,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790286119,
-        "narHash": "sha256-bEKGlB8Nj9F9cyCk8b5eZvMAxTCOeEW5tpvb8HAwh4c=",
+        "lastModified": 1790896081,
+        "narHash": "sha256-RetA/MugmmjFE8tmGwTjJW3sO5Uh+IWd+fNfonvhqtM=",
         "owner": "dryvist",
         "repo": "nix-openwhispr",
-        "rev": "74cec051a85c43287fe14a6d0f9b9f3503de4610",
+        "rev": "97ac83903216ca660d1c3bc07e109572f95a1100",
         "type": "github"
       },
       "original": {
