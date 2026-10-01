@@ -206,7 +206,8 @@ case " \$* " in
     exit 0
     ;;
   *"github-admin/token/dryvist-repo-create"*)
-    echo '{"data":{"token":"ghs_faketoken123"}}'
+    cat > /dev/null
+    printf '%s\n%s' '{"data":{"token":"ghs_faketoken123"}}' 200
     exit 0
     ;;
   *"auth/token/revoke-self"*)
@@ -247,7 +248,8 @@ case " \$* " in
     exit 0
     ;;
   *"github-admin/token/dryvist-repo-create"*)
-    echo '{"data":{"token":"ghs_faketoken123"}}'
+    cat > /dev/null
+    printf '%s\n%s' '{"data":{"token":"ghs_faketoken123"}}' 200
     exit 0
     ;;
 esac
@@ -305,7 +307,8 @@ case " \$* " in
     exit 0
     ;;
   *"github-admin/token/dryvist-repo-create"*)
-    echo '{"data":{"token":"ghs_faketoken123"}}'
+    cat > /dev/null
+    printf '%s\n%s' '{"data":{"token":"ghs_faketoken123"}}' 200
     exit 0
     ;;
   *"auth/token/revoke-self"*)
@@ -353,4 +356,46 @@ SH
     "$(grep -n 'GITHUB_TOKEN' <<<"$output" | cut -d: -f1)" ]
   [ "$(grep -n 'trap' <<<"$output" | cut -d: -f1)" -lt \
     "$(grep -n 'GITHUB_TOKEN' <<<"$output" | cut -d: -f1)" ]
+}
+
+# A server error on the write mint must never be reported as an allowlist deny:
+# that misdirection sent people editing an allowlist that was already correct.
+write_mint_stub() {
+  write_stub "$STUB_DIR/curl" <<SH
+case " \$* " in
+  *"auth/approle/login"*)
+    cat > /dev/null
+    printf '%s\n%s' '{"auth":{"client_token":"bao-tok"}}' 200
+    exit 0
+    ;;
+  *"/v1/github/token"*)
+    cat > /dev/null
+    printf '%s\n%s' '{"errors":["stub error"]}' $1
+    exit 0
+    ;;
+esac
+exit 22
+SH
+}
+
+@test "a 5xx on the write mint names the status, not the allowlist" {
+  export OPENBAO_APPROLE_GITHUB_WRITE_ROLE_ID=role-abc
+  export OPENBAO_APPROLE_GITHUB_WRITE_SECRET_ID=secret-abc
+  write_mint_stub 503
+  run --separate-stderr bash -euo pipefail -c \
+    'source "$1"; mint_write dryvist some-repo' _ "$SCRIPTS/openbao-github-creds.sh"
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"http=503"* ]]
+  [[ "$stderr" != *"allowlist"* ]]
+}
+
+@test "a 403 on the write mint explains the allowlist" {
+  export OPENBAO_APPROLE_GITHUB_WRITE_ROLE_ID=role-abc
+  export OPENBAO_APPROLE_GITHUB_WRITE_SECRET_ID=secret-abc
+  write_mint_stub 403
+  run --separate-stderr bash -euo pipefail -c \
+    'source "$1"; mint_write dryvist some-repo' _ "$SCRIPTS/openbao-github-creds.sh"
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"http 403"* ]]
+  [[ "$stderr" == *"allowlist"* ]]
 }

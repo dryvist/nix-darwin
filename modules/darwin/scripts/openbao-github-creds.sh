@@ -215,15 +215,35 @@ write_login_prefix_for() {
   printf 'GITHUB_WRITE'
 }
 
+# POST one mint request and print the GitHub token. $1 labels errors, $4 is
+# the message for a 403 (a policy deny), $5 the JSON body. The timeout matches
+# the login's: the store's write path can be slow, and a slow mint is not a
+# failed one. Every failure names its HTTP status, so a server error is never
+# reported as a deny.
+bao_mint() {
+  local what="$1" url="$2" tok="$3" deny="$4" body="${5:-"{}"}" resp code gh_tok
+  resp="$(printf '%s' "${body}" \
+    | curl -s --max-time 60 -w '\n%{http_code}' -X POST -H "X-Vault-Token: ${tok}" \
+        --data-binary @- "${url}")" \
+    || die "${what}: curl could not reach ${bao_addr}"
+  code="${resp##*$'\n'}"
+  resp="${resp%$'\n'*}"
+  case "${code}" in
+    2??) ;;
+    403) die "${what}: denied (http 403). ${deny}" ;;
+    *)   die "${what}: http=${code} $(jq -r '.errors[0] // "no error body"' <<<"${resp}" 2>/dev/null)" ;;
+  esac
+  gh_tok="$(jq -r '.data.token // empty' <<<"${resp}")"
+  [ -n "${gh_tok}" ] || die "${what}: no token in the response"
+  printf '%s' "${gh_tok}"
+}
+
 mint_read() {
-  local owner="$1" set_name bao_tok resp gh_tok
+  local owner="$1" set_name bao_tok
   set_name="$(read_set_for "${owner}")"
   bao_tok="$(bao_login GITHUB_READ)"
-  resp="$(curl -sf --max-time 10 -X POST -H "X-Vault-Token: ${bao_tok}" \
-    "${bao_addr}/v1/github/token/${set_name}")" || die "mint read token (${set_name}) failed"
-  gh_tok="$(jq -r '.data.token // empty' <<<"${resp}")"
-  [ -n "${gh_tok}" ] || die "no token in read mint response (${set_name})"
-  printf '%s' "${gh_tok}"
+  bao_mint "mint read token (${set_name})" "${bao_addr}/v1/github/token/${set_name}" \
+    "${bao_tok}" "The GITHUB_READ identity may not mint ${set_name}."
 }
 
 # Build the raw-token request body for one repo. Kept separate so --self-check
@@ -239,19 +259,16 @@ write_token_body() {
 }
 
 mint_write() {
-  local owner="$1" repo="$2" iid bao_tok body resp gh_tok prefix
+  local owner="$1" repo="$2" iid bao_tok prefix
   iid="$(installation_id_for "${owner}")"
   [ -n "${iid}" ] || die "no installation id for owner '${owner}' — set OPENBAO_GITHUB_*_INSTALLATION_ID"
   prefix="$(write_login_prefix_for "${repo}")"
   bao_tok="$(bao_login "${prefix}")"
-  body="$(write_token_body "${iid}" "${repo}")"
-  resp="$(printf '%s' "${body}" \
-    | curl -sf --max-time 10 -X POST -H "X-Vault-Token: ${bao_tok}" --data-binary @- \
-        "${bao_addr}/v1/github/token")" \
-    || die "mint write token for ${owner}/${repo} failed (identity: ${prefix}).
-Most likely ${repo} is not on the allowlist this identity is pinned to. That is
-a deny, not a bug, and there is no client-side workaround — do NOT fall back to
-a personal access token or any other standing credential to complete the write.
+  bao_mint "mint write token for ${owner}/${repo} (identity: ${prefix})" \
+    "${bao_addr}/v1/github/token" "${bao_tok}" \
+    "${repo} is not on the allowlist this identity is pinned to. That is a deny,
+not a bug, and there is no client-side workaround — do NOT fall back to a
+personal access token or any other standing credential to complete the write.
 
 If the identity above is GITHUB_WRITE, add the repository name to
 OPENBAO_GITHUB_WRITE_REPOS in the iac secret store (comma-separated; the
@@ -263,10 +280,8 @@ list inside OPENBAO_GITHUB_WRITE_SCOPES — adding it to the organisation-wide
 list instead would defeat the boundary the realm exists to draw.
 
 Either way the change is not live until the openbao role is converged. If the
-name is already listed, re-check that the converge actually ran."
-  gh_tok="$(jq -r '.data.token // empty' <<<"${resp}")"
-  [ -n "${gh_tok}" ] || die "no token in write mint response for ${owner}/${repo}"
-  printf '%s' "${gh_tok}"
+name is already listed, re-check that the converge actually ran." \
+    "$(write_token_body "${iid}" "${repo}")"
 }
 
 # --- repo-create: the one administration-scoped action ------------------------
@@ -300,7 +315,7 @@ repo_create_pair_dir="/var/root/.openbao"
 # call, so the human gate is the sudo prompt (Touch ID or security key), and the
 # pair crosses into this process on a pipe, never argv or the environment.
 mint_repo_create() {
-  local owner="$1" pair role_id secret_id bao_tok resp gh_tok
+  local owner="$1" pair role_id secret_id bao_tok gh_tok
   require_env
   # shellcheck disable=SC2016  # $f expands in the root shell, not here
   pair="$(sudo /bin/sh -c 'for f; do tr -d "\n" < "$f"; echo; done' sh \
@@ -309,13 +324,11 @@ mint_repo_create() {
     || die "could not read the github-repo-create pair under ${repo_create_pair_dir} (sudo declined, or the files are missing)"
   { IFS= read -r role_id; IFS= read -r secret_id; } <<<"${pair}"
   bao_tok="$(approle_login github-repo-create "${role_id}" "${secret_id}")"
-  resp="$(curl -sf --max-time 10 -X POST -H "X-Vault-Token: ${bao_tok}" \
-    "${bao_addr}/v1/github-admin/token/${owner}-repo-create")" \
-    || die "mint failed at github-admin/token/${owner}-repo-create. Only organisations with a <owner>-repo-create set can create repositories here."
+  gh_tok="$(bao_mint "mint github-admin/token/${owner}-repo-create" \
+    "${bao_addr}/v1/github-admin/token/${owner}-repo-create" "${bao_tok}" \
+    "Only organisations with a <owner>-repo-create set can create repositories here.")"
   curl -s -o /dev/null --max-time 10 -X POST -H "X-Vault-Token: ${bao_tok}" \
     "${bao_addr}/v1/auth/token/revoke-self" || true
-  gh_tok="$(jq -r '.data.token // empty' <<<"${resp}")"
-  [ -n "${gh_tok}" ] || die "no token in repo-create mint response for ${owner}"
   printf '%s' "${gh_tok}"
 }
 
