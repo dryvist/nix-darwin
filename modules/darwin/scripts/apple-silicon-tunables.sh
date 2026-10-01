@@ -9,7 +9,7 @@
 # Volatile iogpu/vm sysctls live in apple-silicon-sysctls.sh (so they can also
 # re-apply at boot). This script holds the persistent and verify-only knobs:
 # pmset perf flags, Energy Mode verify, Spotlight, Time Machine, App Nap, and
-# the Metal debug-env guard, plus removal of a legacy hand-placed iogpu daemon.
+# the Metal debug-env guard, plus removal of an unmanaged iogpu daemon.
 
 prefix="[apple-silicon-tunables]"
 log() { echo "$prefix INFO $*"; }
@@ -177,10 +177,9 @@ if [ -n "${METAL_UNSET_VARS:-}" ] && [ -n "${USER_NAME:-}" ]; then
 fi
 
 # --- Retire the hand-placed iogpu daemon ---------------------------------
-# A pre-nix LaunchDaemon (label local.sysctl.iogpu) set the wired limit at
-# boot. It is not root-owned, yet launchd runs it as root, and its value
-# competes with the managed set-iogpu-wired-limit daemon. Matched by label,
-# so an unrelated file at the same path is left alone.
+# Removes the unmanaged local.sysctl.iogpu daemon; the managed
+# set-iogpu-wired-limit daemon owns the wired limit. Matched by label, so an
+# unrelated file at the same path is left alone.
 LEGACY_IOGPU_PLIST=/Library/LaunchDaemons/sysctl.plist
 LEGACY_IOGPU_LABEL=local.sysctl.iogpu
 if [ -f "${LEGACY_IOGPU_PLIST}" ] &&
