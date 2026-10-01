@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.76.1](https://github.com/dryvist/nix-darwin/compare/v2.76.0...v2.76.1) (2026-10-01)
+
+
+### Bug Fixes
+
+* **darwin:** remove the unmanaged iogpu LaunchDaemon on activation ([#2645](https://github.com/dryvist/nix-darwin/issues/2645)) ([4ca0f3c](https://github.com/dryvist/nix-darwin/commit/4ca0f3cf7f53ce478b270b6db8f422abb867304b))
+
 ## [2.76.0](https://github.com/dryvist/nix-darwin/compare/v2.75.0...v2.76.0) (2026-09-27)
 
 
