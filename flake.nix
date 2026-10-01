@@ -36,7 +36,7 @@
       flake = false;
     };
     ai-llm-prompts = {
-      url = "github:dryvist/ai-llm-prompts/30551ed25e5ee4831389fe11f55849e25bceee3f";
+      url = "github:dryvist/ai-llm-prompts";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     claude-code-plugins = {
