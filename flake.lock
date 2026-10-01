@@ -1490,11 +1490,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790286119,
-        "narHash": "sha256-bEKGlB8Nj9F9cyCk8b5eZvMAxTCOeEW5tpvb8HAwh4c=",
+        "lastModified": 1790896081,
+        "narHash": "sha256-RetA/MugmmjFE8tmGwTjJW3sO5Uh+IWd+fNfonvhqtM=",
         "owner": "dryvist",
         "repo": "nix-openwhispr",
-        "rev": "74cec051a85c43287fe14a6d0f9b9f3503de4610",
+        "rev": "97ac83903216ca660d1c3bc07e109572f95a1100",
         "type": "github"
       },
       "original": {
