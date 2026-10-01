@@ -196,8 +196,7 @@ having migrated to `nix-claude-code`).
 
 ## Reproducing this benchmark
 
-Bearer token: Doppler project `iac-conf-mgmt`, config `prd`, secret
-`LLM_LARGE_BEARER_TOKEN`. Gate: `https://jevans-ms.<domain>:11434` (use
+Bearer token: `LLM_LARGE_BEARER_TOKEN` from the environment. Gate: `https://jevans-ms.<domain>:11434` (use
 `curl --resolve` against the mDNS-resolved IP until the DNS gap above is
 fixed). See `/v1/models` for what's currently being served before assuming
 this doc's model list is still current — it changes.
