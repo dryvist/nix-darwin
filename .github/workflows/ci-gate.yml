@@ -98,10 +98,13 @@ jobs:
   # guaranteed end-to-end sweep. develop PRs take the fast path (Nix
   # Validate, ~2 min); coverage between promotions is ci-nix.yml's build on
   # every develop push (post-merge, and the only cache-saving run).
+  # Exception: a flake.lock change builds pre-merge on develop too. A relock
+  # moves every input at once and is auto-merged, so the fast path would land
+  # it on develop with nothing having built it.
   nix-build:
     name: Nix Build
     needs: shared-gate
-    if: github.base_ref == 'main' && needs.shared-gate.outputs.nix == 'true' && (needs.shared-gate.outputs.is-deps-only == 'false' || needs.shared-gate.outputs.is-flake-lock-change == 'true')
+    if: (github.base_ref == 'main' || needs.shared-gate.outputs.is-flake-lock-change == 'true') && needs.shared-gate.outputs.nix == 'true' && (needs.shared-gate.outputs.is-deps-only == 'false' || needs.shared-gate.outputs.is-flake-lock-change == 'true')
     permissions:
       contents: read
       # _nix-build.yml's cache step purges superseded entries through the
@@ -145,11 +148,11 @@ jobs:
           # shared-gate is never skippable — it always reports, and Nix
           # Validate's own skip rules are enforced inside it.
           # nix-build: skippable everywhere except a nix change targeting
-          # main, where the fallback arm omits it so an unexpectedly-skipped
-          # build fails the gate.
+          # main or a flake.lock change targeting develop, where the arm
+          # omits it so an unexpectedly-skipped build fails the gate.
           # claude-settings: skippable only when the `extra` filter did not
           # match — a flake.lock bump must validate settings even on a
           # deps-only PR.
           # llm-concurrency-parity: skippable whenever nix did not change.
-          allowed-skips: ${{ (needs.shared-gate.outputs.nix == 'false' && 'nix-build, claude-settings, llm-concurrency-parity') || (github.base_ref != 'main' && 'nix-build, claude-settings, llm-concurrency-parity') || (needs.shared-gate.outputs.is-deps-only == 'true' && 'nix-build, llm-concurrency-parity') || 'claude-settings, llm-concurrency-parity' }}
+          allowed-skips: ${{ (needs.shared-gate.outputs.nix == 'false' && 'nix-build, claude-settings, llm-concurrency-parity') || (github.base_ref != 'main' && needs.shared-gate.outputs.is-flake-lock-change == 'true' && 'claude-settings, llm-concurrency-parity') || (github.base_ref != 'main' && 'nix-build, claude-settings, llm-concurrency-parity') || (needs.shared-gate.outputs.is-deps-only == 'true' && 'nix-build, llm-concurrency-parity') || 'claude-settings, llm-concurrency-parity' }}
           jobs: ${{ toJSON(needs) }}
