@@ -525,11 +525,11 @@
     "dotgithub": {
       "flake": false,
       "locked": {
-        "lastModified": 1790876549,
-        "narHash": "sha256-brQgUGdL97HvOxzQVxVgqAtqEFoP1yhAmOShyjJE/2E=",
+        "lastModified": 1790882322,
+        "narHash": "sha256-S9ESfmh6mqF9tYLjTEbCfgeIWrLjERUij1WkRVS6eqk=",
         "owner": "dryvist",
         "repo": ".github",
-        "rev": "58cd281c28e9fa6600a94e13ae3ada9dd6c2e59a",
+        "rev": "8d3a08ef8826fb983ca9ca561ca1793315188deb",
         "type": "github"
       },
       "original": {
@@ -1022,11 +1022,11 @@
     "jacobpevans-cc-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1790641952,
-        "narHash": "sha256-/YJBMh+j+4U/G27XOHn5Xy9I+fJ4kesIZMXc8+hn8uA=",
+        "lastModified": 1790890761,
+        "narHash": "sha256-uzogA0Nzpc2il+9bMjYikPSD1DnRPK/WTiWllmCL96c=",
         "owner": "dryvist",
         "repo": "claude-code-plugins",
-        "rev": "e4236ef7b0f8925931e3f5390a88357015e08ac7",
+        "rev": "e4f5eb4658a635491e3eb74e63e6eac491b7b20b",
         "type": "github"
       },
       "original": {
