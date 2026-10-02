@@ -21,19 +21,21 @@ assert !(server.system.defaults.CustomSystemPreferences ? "com.apple.commerce");
 assert workstation.system.defaults.CustomSystemPreferences."com.apple.commerce".AutoUpdate;
 assert workstation.launchd.user.agents.app-store-upgrade.serviceConfig.RunAtLoad;
 assert !(workstation.launchd.user.agents ? app-update-health);
-assert workstation.launchd.user.agents.app-store-upgrade.serviceConfig.ProgramArguments == [
-  "/usr/bin/sudo"
-  "-n"
-  (pkgs.lib.getExe pkgs.mas)
-  "update"
-  "--inaccurate"
-  "--check-min-os"
-];
-assert workstation.launchd.user.agents.brew-upgrade.serviceConfig.ProgramArguments == [
-  "/opt/homebrew/bin/brew"
-  "upgrade"
-  "--greedy"
-];
+assert
+  workstation.launchd.user.agents.app-store-upgrade.serviceConfig.ProgramArguments == [
+    "/usr/bin/sudo"
+    "-n"
+    (pkgs.lib.getExe pkgs.mas)
+    "update"
+    "--inaccurate"
+    "--check-min-os"
+  ];
+assert
+  workstation.launchd.user.agents.brew-upgrade.serviceConfig.ProgramArguments == [
+    "/opt/homebrew/bin/brew"
+    "upgrade"
+    "--greedy"
+  ];
 pkgs.runCommand "check-app-updates" { } ''
   /usr/sbin/visudo -c -f ${
     pkgs.writeText "app-updates-sudoers" workstation.environment.etc."sudoers.d/app-updates".text
