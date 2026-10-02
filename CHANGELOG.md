@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.0.0](https://github.com/dryvist/nix-darwin/compare/v2.77.0...v3.0.0) (2026-10-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* **macbook:** stop syncing session history to the studio
+
+### Refactoring
+
+* **macbook:** stop syncing session history to the studio ([fe636eb](https://github.com/dryvist/nix-darwin/commit/fe636eb8c16f47136f647cdcfc68102ff5a34a83))
+
 ## [2.77.0](https://github.com/dryvist/nix-darwin/compare/v2.76.1...v2.77.0) (2026-10-01)
 
 
