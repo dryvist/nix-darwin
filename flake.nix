@@ -341,6 +341,12 @@
               inherit configs userConfig;
             };
 
+            # Roles declared per host class resolve; an empty model id fails the assertion.
+            role-map-hosts = import ./lib/checks/role-map-hosts.nix {
+              pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+              inherit configs userConfig;
+            };
+
             pf-anchor-syntax =
               let
                 darwinPkgs = nixpkgs.legacyPackages.aarch64-darwin;

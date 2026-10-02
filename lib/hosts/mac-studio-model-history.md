@@ -5,7 +5,7 @@ Superseded measurement records for `lib/hosts/mac-studio.nix`, split out of
 (`.file-size.yml` recommends splitting rather than extending the ceiling).
 
 These verdicts are kept because they are evidence, not because they describe
-the current deployment — for that, read `mac-studio.md` "Two warm brains".
+the current deployment — for that, read `mac-studio.md` "Classes and roles".
 
 ## Resident model selection (2026-07-27)
 

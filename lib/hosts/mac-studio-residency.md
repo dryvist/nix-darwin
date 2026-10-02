@@ -67,7 +67,7 @@ again without lowering `memoryHardLimitGb` to match.
 
 `memoryHardLimitGb` is applied by the `mlx_lm` launcher via `mx.set_memory_limit`.
 It is wired up on this host because `modelServerBackend` is `mlx-lm` — nix-ai
-`modules/mlx/assertions.nix` asserts that outright — and inert under `vllm-mlx`.
+`modules/mlx/assertions.nix` asserts that outright.
 
 **It is a sizing guideline, not an enforcement.** Upstream MLX raises only when
 RAM *and swap* are exhausted; crossing the limit sheds the free-buffer cache and
