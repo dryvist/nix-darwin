@@ -25,6 +25,7 @@ in
     ./cluster-maintenance-window.nix
     ./finder.nix
     ./homebrew.nix
+    ./app-updates.nix
     ./nix-homebrew.nix
     ./keyboard.nix
     ./launchd-bootstrap.nix
