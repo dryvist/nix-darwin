@@ -28,36 +28,6 @@
     # module infer it from an endpoint could land on a public suffix and treat
     # hosts it does not control as internal.
     internalDomains = [ userConfig.baseDomain ];
-
-    # Pin the roles that must resolve on BOTH the local server and the shared
-    # router. Measured 2026-08-28: seven of eight roles named a model llama-swap
-    # serves but the router does not, so a local caller worked and every routed
-    # delegation 404'd for the same role — an asymmetry nothing reported,
-    # because a registry id had never been compared against what any endpoint
-    # actually serves. `ai-stack-drift-check` now does that comparison.
-    #
-    # Both endpoints serve these two, so a role pinned here resolves either way.
-    # `small` keeps the 9B: it is a size class, and a consumer that asks for
-    # small must not be handed a 27B.
-    #
-    # HOST-QUALIFIED ON PURPOSE: `coding`, `quickest` and `large-context`
-    # resolve differently here than on the headless host. Decision, not drift.
-    # Measured 2026-09-09: seven of eight role NAMES are unroutable at the
-    # shared router (400), while the local server resolves all eight from this
-    # same map — so these pins prefer a model BOTH endpoints serve over the
-    # one best in isolation. Do not reconcile them until the router serves the
-    # role names; cross-host comparison is unchecked and belongs in this
-    # repo's flake checks, the only ones that see every host at once.
-    roleOverrides = {
-      default = "mlx-community/Qwen3.8-27B-4bit";
-      quickest = "mlx-community/Qwen3.5-9B-MLX-4bit";
-      small = "mlx-community/Qwen3.5-9B-MLX-4bit";
-      tool-calling = "mlx-community/Qwen3.8-27B-4bit";
-      coding = "mlx-community/Qwen3.8-27B-4bit";
-      large-context = "mlx-community/Qwen3.8-27B-4bit";
-      most-capable = "mlx-community/Qwen3.8-27B-4bit";
-      oss = "mlx-community/Qwen3.8-27B-4bit";
-    };
   };
 
   # Open local-LLM fallback harness (Crush / MiMoCode / Goose). Workstation-only:

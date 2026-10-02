@@ -58,8 +58,8 @@
     # via nix-ai (kept off nix-darwin's top-level inputs to avoid pulling
     # 24 marketplace inputs + nix-devenv dev-tooling into our lock).
     nix-ai = {
-      # git-flow default is develop; pin main so we track releases, not it.
-      url = "github:dryvist/nix-ai/main";
+      # Tracks nix-ai develop (role-map integration branch).
+      url = "github:dryvist/nix-ai/develop";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         home-manager.follows = "home-manager";
@@ -337,6 +337,12 @@
             # The check evaluates real host configs, where Home Manager option
             # merging is observable, rather than duplicating the source policy.
             token-meter = import ./lib/checks/token-meter.nix {
+              pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+              inherit configs userConfig;
+            };
+
+            # Roles declared per host class resolve; an empty model id fails the assertion.
+            role-map-hosts = import ./lib/checks/role-map-hosts.nix {
               pkgs = nixpkgs.legacyPackages.aarch64-darwin;
               inherit configs userConfig;
             };
