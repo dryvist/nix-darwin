@@ -74,10 +74,11 @@
     # Enabled only on workstation hosts that explicitly import the module below.
     nix-ai-open-harness = {
       url = "github:dryvist/nix-ai-open-harness";
-      # nixpkgs is NOT followed: its nix-ai-tools packages are built against
-      # nixpkgs-unstable (functions absent from the stable release), and the
-      # upstream binary cache only hits on that same pin.
       inputs = {
+        # Its nix-ai-tools packages call nixpkgs-unstable functions absent
+        # from the stable release; share nix-home's unstable pin rather than
+        # adding another nixpkgs to the closure.
+        nixpkgs.follows = "nix-home/nixpkgs-unstable";
         home-manager.follows = "home-manager";
         # It grew its own nix-ai input; without this follow a relock drags a
         # second full nix-ai tree (~90 transitive inputs) into the lock.
