@@ -315,6 +315,10 @@
           # receives `darwinConfigurations = { }` — a check there would never
           # evaluate a host and would pass vacuously.
           aarch64-darwin = {
+            app-updates = import ./lib/checks/app-updates.nix {
+              pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+              inherit configs;
+            };
             system-eval = import ./lib/checks/system-eval.nix {
               pkgs = nixpkgs.legacyPackages.aarch64-darwin;
               inherit configs;
