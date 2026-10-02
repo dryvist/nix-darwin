@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.0](https://github.com/dryvist/nix-darwin/compare/v3.0.0...v3.1.0) (2026-10-02)
+
+
+### Features
+
+* native App Store automatic-update preferences for workstation hosts ([#2664](https://github.com/dryvist/nix-darwin/issues/2664)) ([26a0c47](https://github.com/dryvist/nix-darwin/commit/26a0c47a3bf14e1d4981b24e8d6d44469c3d94e7))
+
 ## [3.0.0](https://github.com/dryvist/nix-darwin/compare/v2.77.0...v3.0.0) (2026-10-02)
 
 
