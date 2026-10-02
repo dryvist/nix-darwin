@@ -12,6 +12,7 @@
 {
   config,
   hostConfig,
+  nix-ai,
   lib,
   pkgs,
   ...
@@ -155,6 +156,14 @@ in
       # lib/hosts/mac-studio.nix clusterMode): second gated site, same
       # bearer token and cert, mirrored external:loopback port convention.
       clusterUpstreamPort = 11440;
+      # Gated API proxies to the loopback queue front that answers 429 while a
+      # model is busy (nix-ai programs.mlx.localQueue); the port is read from the
+      # shared endpoint registry.
+      apiUpstreamPort = lib.toInt (
+        builtins.head (
+          builtins.match ".*:([0-9]+)/.*" (import "${nix-ai}/vars/ai-stack.nix").endpoints.mlx_direct
+        )
+      );
     };
 
     # ========================================================================

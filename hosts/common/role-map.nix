@@ -29,5 +29,12 @@ in
         ;
     };
     services.aiStack.models = projection.aiStackModels;
+
+    # HAProxy queue front: one backend per model the class keeps. The module
+    # asserts llama-swap concurrency equals the role map's.
+    programs.mlx.localQueue = {
+      enable = true;
+      hostClass = hostConfig.class;
+    };
   };
 }

@@ -9,6 +9,7 @@
   lib,
   pkgs,
   userConfig,
+  nix-ai,
   ...
 }:
 
@@ -75,6 +76,10 @@
       # flipping this back to false is the only step needed to re-route
       # subagents through it.
       claudeDirect = true;
+
+      # Local rungs answer through the queue front that returns 429 at once while
+      # a model is busy, so LiteLLM falls through to the next rung.
+      localEndpoint = (import "${nix-ai}/vars/ai-stack.nix").endpoints.mlx_direct;
 
       # The chain this laptop's proxy walks, in order — local first, always:
       #
