@@ -7,7 +7,6 @@
 {
   config,
   lib,
-  osConfig,
   pkgs,
   userConfig,
   ...
@@ -17,8 +16,8 @@
   imports = [ ../common/home.nix ];
 
   # Router endpoint for the proxy's non-Anthropic model group. The bearer is
-  # never on disk: `llmEndpointBearerFromEnv` plus the proxy's `launchPrefix`
-  # below resolve it from the secret store at each agent start.
+  # never on disk: `llmEndpointBearerFromEnv` plus the proxy's host-supplied
+  # `launchPrefix` resolve it at each agent start.
   services.aiStack = {
     llmEndpoint = "router";
     llmRouterEndpoint = "https://llm.${userConfig.internalDomain}/v1";
@@ -94,8 +93,8 @@
     # Claude Code needs to reach it is rendered into settings.json (see the
     # module header in nix-ai). Same internal-FQDN composition rule as
     # openHarness above.
+    # Enabled by the host wrapper together with its `launchPrefix`.
     litellmLocal = {
-      enable = true;
 
       # Claude Code talks straight to Anthropic on this machine — no proxy hop,
       # no header, nothing that can rewrite a model id or the context window it
@@ -151,34 +150,8 @@
         "cheap"
       ];
 
-      # The router bearer: this host's own `litellm-local-workstation` key,
-      # read from the secret store by openbao-run at each agent start and
-      # exec'd into the proxy as OPENAI_API_KEY. Secret-zero (the `apps`
-      # AppRole pair) comes from doppler at the same moment, never from a
-      # copied file: the pair rotates, and a file seeded once goes stale. Only
-      # the three names openbao-run needs are injected, and openbao-run unsets
-      # the pair before exec, so the proxy sees the bearer and nothing else.
-      launchPrefix = [
-        (lib.getExe pkgs.doppler)
-        "run"
-        "-p"
-        "iac-conf-mgmt"
-        "-c"
-        "prd"
-        "--only-secrets"
-        "BAO_ADDR,OPENBAO_APPROLE_APPS_ROLE_ID,OPENBAO_APPROLE_APPS_SECRET_ID"
-        "--"
-        "/bin/bash"
-        "-c"
-        ''
-          export APPS_VAULT_ROLE_ID="$OPENBAO_APPROLE_APPS_ROLE_ID" APPS_VAULT_SECRET_ID="$OPENBAO_APPROLE_APPS_SECRET_ID"
-          unset OPENBAO_APPROLE_APPS_ROLE_ID OPENBAO_APPROLE_APPS_SECRET_ID
-          exec /bin/bash ${lib.getExe osConfig.programs.openbao-run.package} --domain apps \
-            --secret OPENAI_API_KEY=apps/litellm-local-workstation#litellm_local_workstation_llm_router_key \
-            -- "$@"
-        ''
-        "litellm-local"
-      ];
+      # The router bearer reaches the proxy as OPENAI_API_KEY through
+      # `launchPrefix`, which the host wrapper supplies.
 
       # The group the shared router serves, which the terminal rung forwards
       # to. Needed because that rung is a passthrough: without it LiteLLM
@@ -198,7 +171,7 @@
     # Network gating never applies to them, where the same push from a
     # terminal-descended shell breaks whenever en0 wakes up on the storage
     # subnet (probe-verified). Credentials are the ai-sessions-backup AppRole,
-    # doppler-injected per run; nothing is stored on this machine.
+    # injected per run; nothing is stored on this machine.
     sessionArchive = {
       enable = true;
       endpoint = "https://s3.${userConfig.internalDomain}";

@@ -71,10 +71,7 @@ let
   # "<name>:". Both take the same ${OFFBOX_ROOT}/<dest> suffix.
   destPrefix = if isSftp then ":sftp:" else "${cfg.remote}:";
 
-  bootPrefix = lib.toUpper (lib.replaceStrings [ "-" ] [ "_" ] cfg.domain);
   launcher = pkgs.writeText "offbox-sync-launch" ''
-    export ${bootPrefix}_VAULT_ROLE_ID="$OPENBAO_APPROLE_${bootPrefix}_ROLE_ID"
-    export ${bootPrefix}_VAULT_SECRET_ID="$OPENBAO_APPROLE_${bootPrefix}_SECRET_ID"
     exec /bin/bash ${lib.getExe config.programs.openbao-run.package} --domain ${cfg.domain} --secrets ${cfg.secretsPath} -- ${runner}
   '';
 
@@ -208,17 +205,21 @@ in
       type = lib.types.str;
       default = "local-cloud";
       description = ''
-        OpenBao AppRole domain that may read `secretsPath`. Its role_id and
-        secret_id rotate, so they are read from Doppler at each run
-        (OPENBAO_APPROLE_<DOMAIN>_ROLE_ID/_SECRET_ID) rather than copied to
-        a file that would go stale.
+        OpenBao AppRole domain that may read `secretsPath`. openbao-run reads
+        its pair from <DOMAIN>_VAULT_ROLE_ID/_SECRET_ID in the environment,
+        which `launchPrefix` provides at each run.
       '';
     };
 
-    secretZeroScope = lib.mkOption {
-      type = lib.types.str;
-      default = "/Users/${cfg.user}/git";
-      description = "Directory whose Doppler scope supplies the domain's secret-zero.";
+    launchPrefix = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      description = ''
+        Command words run before the launcher; they must put the domain's
+        <DOMAIN>_VAULT_ROLE_ID/_SECRET_ID into the environment and exec the
+        rest of the command line. Empty: the agent's own environment must
+        already carry them.
+      '';
     };
 
     jobs = lib.mkOption {
@@ -257,8 +258,8 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    # The job fetches its target from OpenBao via openbao-run; Doppler supplies
-    # only the rotating AppRole secret-zero. No hand-placed file.
+    # The job fetches its target from OpenBao via openbao-run; launchPrefix
+    # supplies only the rotating AppRole secret-zero. No hand-placed file.
     programs.openbao-run.enable = true;
 
     launchd.user.agents.offbox-sync = {
@@ -269,7 +270,7 @@ in
         ProgramArguments = [
           "/bin/bash"
           "-c"
-          "${lib.getExe pkgs.doppler} run --scope ${cfg.secretZeroScope} -- /bin/bash ${launcher}"
+          "${lib.escapeShellArgs cfg.launchPrefix} /bin/bash ${launcher}"
         ];
         StartInterval = cfg.intervalSeconds;
         RunAtLoad = true;
