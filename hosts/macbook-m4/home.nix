@@ -12,12 +12,6 @@
   ...
 }:
 
-let
-  # The registry is the only place a host name is written. flake.nix threads in
-  # this host's own entry, not the others, so reaching a peer means importing
-  # the registry — which is pure static data and safe to read here.
-  hosts = import ../../lib/hosts.nix;
-in
 {
   imports = [ ../common/home.nix ];
 
@@ -171,16 +165,8 @@ in
       routerEntryModel = "subagent";
     };
 
-    # Hourly push of AI session history to the mac-studio (nix-ai module).
-    # Laptop-side only: the studio is the durable copy, so the direction is
-    # one-way and the studio needs no access back to this machine.
-    sessionSync = {
-      enable = true;
-      remote = hosts.mac-studio.hostName;
-    };
-
-    # Daily push of the same history to the per-vendor object buckets (nix-ai
-    # module) — the off-Mac copy behind the studio one. Runs as a launchd
+    # Daily push of AI session history to the per-vendor object buckets
+    # (nix-ai module) — the durable off-Mac copy. Runs as a launchd
     # agent on purpose: agents carry no GUI responsible app, so macOS Local
     # Network gating never applies to them, where the same push from a
     # terminal-descended shell breaks whenever en0 wakes up on the storage

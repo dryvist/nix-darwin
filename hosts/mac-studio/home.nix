@@ -15,8 +15,8 @@
   # -currentHost`, as this user, no activation script needed).
   targets.darwin.currentHostDefaults."com.apple.screensaver".idleTime = 0;
 
-  # This host holds an hourly one-way rsync replica of another host's
-  # coding-agent transcripts (sessionSync). ../common/home.nix enables
+  # This host's transcript roots still hold a replica of another host's
+  # coding-agent transcripts (from the retired sessionSync). ../common/home.nix enables
   # programs.claudeUsageCollector on every host, so this host's collector
   # would re-read the replica and post the source host's cumulative totals a
   # second time under its own identity. mkForce disables it here; the
