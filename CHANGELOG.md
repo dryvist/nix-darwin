@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.1](https://github.com/dryvist/nix-darwin/compare/v3.1.0...v3.1.1) (2026-10-02)
+
+
+### Bug Fixes
+
+* **darwin:** key app-update prefs by absolute system path ([#2673](https://github.com/dryvist/nix-darwin/issues/2673)) ([a548847](https://github.com/dryvist/nix-darwin/commit/a548847e2a2a81c1e442f5920e2bfa3deb3e1a3a))
+
 ## [3.1.0](https://github.com/dryvist/nix-darwin/compare/v3.0.0...v3.1.0) (2026-10-02)
 
 
