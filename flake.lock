@@ -516,11 +516,11 @@
     "dotgithub": {
       "flake": false,
       "locked": {
-        "lastModified": 1790947381,
-        "narHash": "sha256-5KewyOIm/a02JbWR4jDdiwpG0NHBWz35D/ut8NKwFHA=",
+        "lastModified": 1790961733,
+        "narHash": "sha256-bNz7YSIDD1P+IiDdarnV1Bd5JjgP1Js6Pd50/KZ9Dl8=",
         "owner": "dryvist",
         "repo": ".github",
-        "rev": "5fb573bd498c8672c5b7821175d5b1cf0d163508",
+        "rev": "a44231c822f44bf726b8647b3279a9d8b1843ace",
         "type": "github"
       },
       "original": {
@@ -563,11 +563,11 @@
         "treefmt-nix": "treefmt-nix_3"
       },
       "locked": {
-        "lastModified": 1790899751,
-        "narHash": "sha256-pT+QMKtQeshiNtQYPnOw6JAY5CQsWUp/udIOT1hyJg4=",
+        "lastModified": 1790947381,
+        "narHash": "sha256-5KewyOIm/a02JbWR4jDdiwpG0NHBWz35D/ut8NKwFHA=",
         "owner": "dryvist",
         "repo": ".github",
-        "rev": "cb1c52a4e29ca7625afffa3cf7c7887b06646947",
+        "rev": "5fb573bd498c8672c5b7821175d5b1cf0d163508",
         "type": "github"
       },
       "original": {
@@ -1264,11 +1264,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790931743,
-        "narHash": "sha256-JFc/y08k0rC0AP5OVd06LNauBkhQR6Yw3ciZTrWz2n4=",
+        "lastModified": 1790957896,
+        "narHash": "sha256-STUJbBFNODSCCzk8dyKCUl0nuMPbXkKLd7sr3furVWU=",
         "owner": "dryvist",
         "repo": "nix-ai-open-harness",
-        "rev": "4dbd7f2e14787292f6c2ab6dab8adbd766d6f818",
+        "rev": "484f14156477cd5fd85fac7ec7b65fc7abaec8cc",
         "type": "github"
       },
       "original": {
@@ -1305,11 +1305,11 @@
     "nix-ai_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1790897460,
-        "narHash": "sha256-Zg36XYMCn+tUtwioTX1ytb+w0Y/LFuVl7U5PZyMjX4c=",
+        "lastModified": 1790940545,
+        "narHash": "sha256-9UtbKY+wKLzidfhzP0sX+790L3kwM/zBHirkaWcWIL8=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "83a699d1e7a590997e49ca132263594e03015952",
+        "rev": "676eb0ed35dd50e632c3af8ae8295a4d9646c536",
         "type": "github"
       },
       "original": {
@@ -1422,11 +1422,11 @@
         "orbstack-kubernetes": "orbstack-kubernetes"
       },
       "locked": {
-        "lastModified": 1790947368,
-        "narHash": "sha256-5YNRuE6yc/o/z5dUdDFavxZJ0CvBnT5Wp2y1qTH/D38=",
+        "lastModified": 1790957959,
+        "narHash": "sha256-rUnoW2/ZZ23N0/QJrrYpVpW1twl/af9qZzufTli1l/M=",
         "owner": "dryvist",
         "repo": "nix-home",
-        "rev": "c02abfb69225a4b73be8951316b79f4dd13ace62",
+        "rev": "1dd221c6aa01c3e532fe66e1283352f815448d23",
         "type": "github"
       },
       "original": {
