@@ -11,11 +11,26 @@
   lib,
   pkgs,
   hostConfig,
+  nix-ai,
   ...
 }:
 
 let
   userConfig = import ../../lib/user-config.nix;
+
+  # Scrape target of the local queue front's exporter, split from the single
+  # URL in nix-ai's registry so port and path are written once.
+  queueMetrics =
+    let
+      m = builtins.match "(https?)://([^:/]+):([0-9]+)(/.*)" (import "${nix-ai}/vars/ai-stack.nix")
+      .endpoints.mlx_metrics;
+    in
+    {
+      protocol = builtins.elemAt m 0;
+      host = builtins.elemAt m 1;
+      port = builtins.elemAt m 2;
+      path = builtins.elemAt m 3;
+    };
 
   # AI-CLI transcript packs, hoisted so the same derivation both deploys as a
   # pack (provenance/UI) AND supplies its pipeline confs verbatim to the
@@ -137,6 +152,23 @@ in
               type: system_metrics
               disabled: false
               pollingInterval: 10
+              sendToRoutes: false
+              connections:
+                - pipeline: llm_metrics
+                  output: cribl_stream
+            # Loopback HAProxy exporter (local LLM queue front): native Edge
+            # Prometheus scraper, same route as in_system_metrics. Endpoint
+            # comes from nix-ai's vars/ai-stack.nix (mlx_metrics).
+            in_queue_metrics:
+              type: edge_prometheus
+              disabled: false
+              discoveryType: static
+              interval: 15
+              targets:
+                - protocol: ${queueMetrics.protocol}
+                  host: ${queueMetrics.host}
+                  port: ${queueMetrics.port}
+                  path: ${queueMetrics.path}
               sendToRoutes: false
               connections:
                 - pipeline: llm_metrics
@@ -330,15 +362,9 @@ in
               connections:
                 - pipeline: os_events
                   output: cribl_stream
-            # NO prometheus scrape input here: the Cribl prometheus scraper
-            # source is not allowed on a standalone Edge ("Source is not
-            # allowed in this deployment" at init — same wall as the
-            # cribl_tcp destination note above). MLX model-server metrics
-            # scrape (llm_metrics index) needs a redesign: either llm-gate
-            # exposes /metrics for the homelab prometheus LXC to scrape and
-            # remote_write, or the metrics ride a push path. Until then the
-            # in_system_metrics + MLX model-server log inputs above remain the
-            # inference-host telemetry.
+            # The Stream-type `prometheus` source is refused on a standalone
+            # Edge ("Source is not allowed in this deployment" at init);
+            # in_queue_metrics above uses the Edge-native `edge_prometheus`.
             # Per-AI-CLI session logs. Directories + rotation + the opt-in
             # capture wrappers come from programs.ai-cli-log-shipping
             # (enabled in ./default.nix). One input -> one dedicated tcpjson
