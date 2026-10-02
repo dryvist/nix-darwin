@@ -4,9 +4,8 @@
 # config is provided by nix-home (sharedModule); these additions are
 # macOS-specific and merge via the NixOS/home-manager module system. Holds the
 # keychain API-key reads (non-GitHub) and the custom claude/macos launcher
-# sourcing — all Mac-only. GitHub tokens now come exclusively from OpenBao via
-# the openbao-github-creds git credential helper (see hosts/macbook-m4), not a
-# keychain tier. References only lib, userConfig, and hostConfig; the ./*.zsh
+# sourcing — all Mac-only. GitHub tokens come from the host's git credential
+# helper, not a keychain tier. References only lib, userConfig, and hostConfig; the ./*.zsh
 # sources resolve from this directory.
 {
   lib,
@@ -49,8 +48,8 @@ in
       _KC_AI_DB='${userConfig.keychain.aiDb}'
 
       # --- API Keys (from macOS Keychain) ---
-      # GitHub tokens are deliberately NOT read here — they come from OpenBao via
-      # the openbao-github-creds git credential helper (see hosts/macbook-m4).
+      # GitHub tokens are deliberately NOT read here — they come from the
+      # host's git credential helper.
       #
       # These keys are NOT exported at shell init — an ambient export leaks
       # into every child process's environment for the life of the shell.
@@ -85,19 +84,6 @@ in
         OPENAI_API_KEY="$(_get_keychain_secret 'OPENAI_API_KEY' ${lib.escapeShellArg userConfig.keychain.aiAccount} ${lib.escapeShellArg userConfig.keychain.aiDb})" "$@"
       ''}
       ${lib.optionalString (!hostConfig.isServer) "}"}
-
-      # --- GitHub authentication ---
-      # GitHub tokens are minted on demand by OpenBao (ephemeral GitHub App
-      # installation tokens) through the openbao-github-creds git credential
-      # helper, wired in hosts/macbook-m4. The former keychain GH_PAT tier
-      # switching (gh-restricted / gh-dryvist / gh-admin / ...) has been retired.
-      #
-      # `git` needs nothing further. gh-auth.zsh adds gh-read / gh-claim /
-      # gh-release for `gh` and anything else that reads GITHUB_TOKEN from the
-      # environment — mint-at-call-time, never at shell init and never on disk.
-      ${lib.optionalString (!hostConfig.isServer) ''
-        source ${./gh-auth.zsh}
-      ''}
 
       # --- Keychain-selected Doppler launcher ---
       # Accepts any command. Doppler's standard project/config selectors come

@@ -155,11 +155,8 @@ in
     aiDb = "automation.keychain-db";
   };
 
-  # GitHub token configuration intentionally removed: tokens are now minted on
-  # demand by OpenBao (ephemeral GitHub App installation tokens) via the
-  # openbao-github-creds git credential helper. The former tiered-PAT keychain
-  # services (GH_PAT_RESTRICTED / DRYVIST / PRIVATE / ADMIN / ORG_ADMIN) are
-  # retired — see the openbao-github-creds wrapper in modules/darwin.
+  # GitHub token configuration intentionally absent: the host's git credential
+  # helper mints short-lived tokens on demand. No keychain token tiers exist.
 
   # ==========================================================================
   # Nix/NixOS Configuration

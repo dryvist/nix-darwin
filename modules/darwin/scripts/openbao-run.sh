@@ -35,16 +35,13 @@
 # Each --secret/--secrets reads from the KV v2 mount named by the optional leading
 # `<mount>:` prefix, defaulting to $OPENBAO_KV_MOUNT (itself defaulting to
 # "secret" for backward compat) when the prefix is omitted. This lets one
-# invocation mix mounts, e.g. an internal-only secret alongside one on the
-# internet-reachable secrets-external mount (see the acme example below).
+# invocation mix mounts (see the second --secret in the example below).
 #
-# Example (the llm-large gate):
-#   openbao-run --domain local-llm \
-#     --secret LLM_LARGE_BEARER_TOKEN=ai/llm#LLM_LARGE_BEARER_TOKEN \
-#     --secret secrets-external:AWS_ACME_ACCESS_KEY_ID=platform/acme#AWS_ACME_ACCESS_KEY_ID \
-#     --secret secrets-external:AWS_ACME_SECRET_ACCESS_KEY=platform/acme#AWS_ACME_SECRET_ACCESS_KEY \
-#     --secret secrets-external:LLM_GATE_AWS_REGION=platform/acme#region \
-#     -- caddy run --config /nix/store/....Caddyfile --adapter caddyfile
+# Example:
+#   openbao-run --domain example \
+#     --secret API_TOKEN=app/example#token \
+#     --secret other-mount:DNS_KEY=dns/example#key \
+#     -- some-command --flag
 #
 # `pkgs.writeShellApplication` wraps this in `set -euo pipefail` and lints it,
 # so this file omits its own `set` boilerplate.
