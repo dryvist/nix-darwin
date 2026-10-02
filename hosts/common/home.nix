@@ -115,36 +115,6 @@ in
     # normalizes to attrsets with a `name`); the nix-ai option takes strings.
     ai-homebrew.trustedTaps = map (t: if builtins.isString t then t else t.name) osConfig.homebrew.taps;
 
-    # --- GitHub credentials for git: OpenBao-minted, never keychain ---
-    # git resolves GitHub HTTPS credentials through the OpenBao-backed wrapper
-    # (modules/darwin/apps/openbao-github-creds.nix): ambient READ tokens per
-    # owner, write only behind `openbao-github-creds claim`. `doppler run`
-    # supplies the wrapper's secret-zero ambiently; useHttpPath makes git send
-    # path=<owner>/<repo> so the wrapper picks the right read set. gh's own
-    # git credential helper is disabled so the wrapper is the ONLY GitHub
-    # credential path for git — a push without a claim fails loud at GitHub
-    # (read token, 403) instead of silently riding a broader credential.
-    gh.gitCredentialHelper.enable = false;
-    git.settings.credential = {
-      # nixpkgs' git ships `credential.helper = osxkeychain` in the package's
-      # own /etc/gitconfig. That generic helper is consulted BEFORE the
-      # url-scoped ones below, and its `store` action writes every credential
-      # git sees into login.keychain — so an OpenBao-minted token stops being
-      # ephemeral the moment it is used, and a stale long-lived token in the
-      # keychain wins over the wrapper. An empty value resets the helper list,
-      # and ~/.config/git/config is read after the package gitconfig, so this
-      # clears it. Leaves the url-scoped helpers (a separate list) intact.
-      helper = "";
-      "https://github.com" = {
-        helper = "!doppler run -- openbao-github-creds";
-        useHttpPath = true;
-      };
-      "https://gist.github.com" = {
-        helper = "!doppler run -- openbao-github-creds";
-        useHttpPath = true;
-      };
-    };
-
     # Claude Code config (plugin disables, MCP server overrides) moved to
     # nix-ai/modules/claude-config.nix in dryvist/nix-ai#853 — Claude config
     # doesn't belong in nix-darwin (host-specific opinion lives in nix-ai).

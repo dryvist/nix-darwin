@@ -12,7 +12,7 @@ bats_require_minimum_version 1.5.0 # for `run --separate-stderr`
 SCRIPTS="$BATS_TEST_DIRNAME/../../modules/darwin/scripts"
 
 # Stubs get the shebang of the bash actually running the suite, matching the
-# convention in test_openbao_slack_creds.bats: `/usr/bin/env` is not available
+# convention elsewhere in tests/shell: `/usr/bin/env` is not available
 # in the Nix build sandbox these tests run in, and a stub that fails to exec
 # would silently answer every call the same way.
 write_stub() {
