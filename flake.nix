@@ -58,8 +58,8 @@
     # via nix-ai (kept off nix-darwin's top-level inputs to avoid pulling
     # 24 marketplace inputs + nix-devenv dev-tooling into our lock).
     nix-ai = {
-      # Tracks nix-ai develop (role-map integration branch).
-      url = "github:dryvist/nix-ai/develop";
+      # git-flow default is develop; pin main so we track releases, not it.
+      url = "github:dryvist/nix-ai/main";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         home-manager.follows = "home-manager";
