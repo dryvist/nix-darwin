@@ -13,32 +13,15 @@ let
       };
     }).config;
   workstation = configs.${hosts.macbook-m4.hostName}.config;
+  prefs = workstation.system.defaults.CustomSystemPreferences;
 in
-assert !(server.launchd.user.agents ? app-store-upgrade);
-assert !(server.launchd.user.agents ? app-update-health);
-assert !(server.environment.etc ? "sudoers.d/app-updates");
 assert !(server.system.defaults.CustomSystemPreferences ? "com.apple.commerce");
-assert workstation.system.defaults.CustomSystemPreferences."com.apple.commerce".AutoUpdate;
-assert workstation.launchd.user.agents.app-store-upgrade.serviceConfig.RunAtLoad;
-assert !(workstation.launchd.user.agents ? app-update-health);
-assert
-  workstation.launchd.user.agents.app-store-upgrade.serviceConfig.ProgramArguments == [
-    "/usr/bin/sudo"
-    "-n"
-    (pkgs.lib.getExe pkgs.mas)
-    "update"
-    "--inaccurate"
-    "--check-min-os"
-  ];
-assert
-  workstation.launchd.user.agents.brew-upgrade.serviceConfig.ProgramArguments == [
-    "/opt/homebrew/bin/brew"
-    "upgrade"
-    "--greedy"
-  ];
-pkgs.runCommand "check-app-updates" { } ''
-  /usr/sbin/visudo -c -f ${
-    pkgs.writeText "app-updates-sudoers" workstation.environment.etc."sudoers.d/app-updates".text
-  }
-  touch $out
-''
+assert !(server.system.defaults.CustomSystemPreferences ? "com.apple.SoftwareUpdate");
+assert prefs."com.apple.commerce".AutoUpdate;
+assert prefs."com.apple.SoftwareUpdate".AutomaticCheckEnabled;
+assert prefs."com.apple.SoftwareUpdate".AutomaticDownload;
+assert prefs."com.apple.SoftwareUpdate".AutomaticallyInstallAppUpdates;
+assert !(workstation.environment.etc ? "sudoers.d/app-updates");
+assert !(workstation.launchd.user.agents ? app-store-upgrade);
+assert !(server.launchd.user.agents ? app-store-upgrade);
+pkgs.runCommand "check-app-updates" { } "touch $out"
