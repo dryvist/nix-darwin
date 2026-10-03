@@ -16,78 +16,11 @@
   # Local official MLX inference server sizing. The prompt cache stays at the
   # shared 8 GiB resilience cap.
   mlx = {
-    # Every logical role resolves through the validated catalog entry; no
-    # physical model id is repeated in deployed host configuration.
-    catalog = {
-      # Qwen3-Coder-30B-A3B (17 GB, ~3B active). Swap-class and addressable by
-      # its physical id only: every role is pinned in hosts/macbook-m4/home.nix
-      # `roleOverrides` to a model the shared router also serves, and the router
-      # does not serve this one yet, so a role here would resolve locally and
-      # 404 when routed. Until 2026-09-04 this entry claimed `resident` plus
-      # seven roles that the overrides shadowed, so it was never rendered into
-      # llama-swap at all — the catalog said one thing and the host served
-      # another. Now it loads on demand for measurement; once the bench and the
-      # router entry land, the pins move here.
-      qwen3-coder-30b.class = "swap";
-      # Small always-loadable 9B (5.2 GB) for trivial local tasks via the
-      # Gemini-CLI path and the hourly Obsidian summarizer pipe, which requests
-      # this physical id directly. Swap-class, so it loads on demand and routes
-      # without evicting the resident 30B.
-      #
-      # It also claims `small`: nix-ai added that size-class role to the
-      # registry with no host assigning it, and the role-resolution assertion
-      # requires every registry role to compile into a backend alias, so the
-      # first lock bump past it fails to evaluate until an entry takes it. This
-      # is the size class the role names on both Macs.
-      qwen35-9b-mlx = {
-        class = "swap";
-        roles = [ "small" ];
-      };
-      # Qwen3.8-27B — the model every pinned role resolves to today (see the
-      # `roleOverrides` in hosts/macbook-m4/home.nix), so it is what llama-swap
-      # actually keeps warm, whatever class is written here. Swap-class so the
-      # catalog stays honest about the intent: a dense 27B on a laptop that is
-      # also a cluster peer is the interim brain, not the chosen one. The bench
-      # that decides between it and qwen3-coder-30b runs by physical id.
-      qwen38-27b.class = "swap";
-    };
-
-    # Resident judge model, in its own llama-swap group (nix-ai
-    # programs.mlx.judge, modules/mlx/options-judge.nix). Bypasses the
-    # catalog/maxResidentWorkers topology entirely: persistent + non-exclusive
-    # means it is never evicted by the main brain's exclusive group and never
-    # evicts that group itself, so it answers even while the main brain is
-    # busy serving a long request. Physical id is already cached under
-    # HF_HOME (2.1 GB weights) — see hosts/common/residency-budget.nix for the
-    # memoryHardLimitGb halving this needs.
-    judge = {
-      enable = true;
-      model = "mlx-community/Qwen3-4B-Instruct-2507-4bit";
-    };
-
-    # persistent:true only protects the judge from eviction — it does NOT
-    # preload it. The warmup LaunchAgent (native to nix-ai, mlx-warmup.py)
-    # is the actual preload mechanism: it sends a real completion to every
-    # role in this list right after llama-swap comes up, so the first REAL
-    # request never pays the cold-load cost. "judge" listed BEFORE "default":
-    # the list warms sequentially and the judge (2.1 GB, seconds to load)
-    # must not sit queued behind the 30B's slower cold load.
-    preload = [
-      "judge"
-      "default"
-    ];
+    # Catalog selection, preload, per-model concurrency and the resident-worker
+    # count derive from the role map (hosts/common/role-map.nix).
 
     cacheMemoryMb = 8192;
     prefillBatchSize = 2048;
-
-    # Two workers can be resident at once now (the catalog brain plus the
-    # judge above), so the single-worker budget hosts/common/residency-budget.nix
-    # derives (kMax still 1 there — the judge sits outside maxResidentWorkers)
-    # must be halved by hand: (100 GiB ceiling - 4 GiB baseline reserve) / 2
-    # workers = 48 GiB, rounded down for cushion. Applies to every worker
-    # equally (MLX_L1_MEMORY_LIMIT_BYTES is one shared wrapper-level export),
-    # including the judge, whose real usage (~2-3 GiB) sits nowhere near it.
-    memoryHardLimitGb = 46;
 
     # MLX retained free-buffer pool. The host wired-memory ceiling is the
     # Metal guardrail; this limits reclaimable framework buffers below it.
@@ -140,6 +73,8 @@
   apfsVolumes = [
     "HuggingFace"
     "ContainerData"
+    # Automation identities' workspaces (lib/user-config.nix agentGitRoot).
+    "git"
     # Capped: holds a continuously-appended local data set bounded only by
     # time-based retention, which does not bound a burst. The ceiling keeps it
     # from consuming the container however those retention settings drift.

@@ -53,11 +53,15 @@ in
     # macOS-specific zsh init (keychain reads, gh-token switching, launchers) —
     # split out for the byte cap; merges into programs.zsh.
     ./zsh-macos.nix
+    # Agent CLIs run as their automation identity (claude, codex, opencode…).
+    ./agent-launchers.nix
     # Worker-side cluster-mode quiesce/restore hooks (byte cap split).
     ./cluster-quiesce.nix
     # Feeds the system-level clusterLinkPrep wired ceilings into nix-ai's
     # programs.mlx.clusterMode so the watcher/lifecycle env carries them.
     ./cluster-wired-limit.nix
+    # Catalog, preload, concurrency and registry projected from the role map.
+    ./role-map.nix
     ./residency-budget.nix
     # Durable code-signing identity for the cluster executables, so their macOS
     # privacy grants survive a rebuild instead of dying with the store path.

@@ -123,9 +123,7 @@ in
       # Memory safety is now layered in absolute bytes, furthest-from-OS first:
       # per-model serving budget < L2 in-process cap (mlx-lm mx.set_memory_limit
       # = 99 GiB, just under this ceiling) < L1 wired ceiling < RAM, with the
-      # 28 GiB reserve keeping WindowServer + desktop out of swap. The old
-      # util-fraction trip pairing (gpuMemoryUtilization) was vllm-mlx-only and
-      # could never sit below the ceiling; it is retired under mlx-lm.
+      # 28 GiB reserve keeping WindowServer + desktop out of swap.
       # Interactive box, LLM-first.
       # https://docs.jacobpevans.com/d/hosts/ai/apple-silicon-memory-model/
       maxLocalLlmGb = 100;

@@ -42,6 +42,7 @@ in
     ./system-ui.nix
     ./activation-error-tracking.nix
     ./agent-identity.nix # Creates the automation account (see the file's header)
+    ./agent-workspaces.nix # Each identity's folders on the shared agent volume
     ./hm-activation-assert.nix # Fail the rebuild when home-manager did not apply
     ./llm-gate.nix
     ./nix-storage.nix

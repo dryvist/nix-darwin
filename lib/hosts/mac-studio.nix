@@ -2,22 +2,16 @@
 #
 # Serving detail lives in nix-ai's validated model catalog
 # (modules/mlx/catalog-data.nix): parser stacks, chat-template kwargs, and
-# per-class flag profiles. This host only picks entries + classes and sets
+# per-class flag profiles. The role map picks entries + classes; this host sets
 # host-scoped runtime posture. Add or fix serve args in the catalog, not here.
 let
-  # THE per-model serving concurrency for this host. Everything concurrency-
-  # shaped below derives from this one number — nothing restates it.
+  # THE proxy admission ceiling for this host. Per-model concurrency comes
+  # from the role map (modelConcurrencyLimits); this is the upper bound the
+  # proxy advertises.
   #
-  # It was previously restated: proxy.concurrencyLimit said 1 while a
-  # modelConcurrencyLimits entry said a bare 4, so the host admitted 4 while its
-  # single "source" claimed 1, and the two could drift silently. Since
-  # 2026-09-01 the per-model overrides below pin both residents to 1, so
-  # this is the admission ceiling, not what any model actually serves.
-  #
-  # It is ALSO no longer this repo's only definition of the number, just the
-  # only one nix can evaluate hermetically. dryvist/tofu-proxmox's
+  # The canonical source is dryvist/tofu-proxmox's
   # modules/proxmox-stack/constants.tf (pipeline_constants.serving.
-  # llm_concurrency) is the canonical source; ansible-proxmox-ai derives its
+  # llm_concurrency); ansible-proxmox-ai derives its
   # ai_llm_concurrency from it directly over the tofu_data.constants channel.
   # Flake evaluation has no network access, so this repo cannot derive the
   # same way — instead CI (.github/workflows/_llm-concurrency-parity.yml)
@@ -33,132 +27,17 @@ in
   # Headless, always-on LAN inference/batch server. Drives server-class macOS
   # defaults (hosts/common/default.nix) and nix-home's server preset.
   class = "server";
-
-  # Logical roles are assigned through catalog selections below. Physical
-  # model ids stay centralized in nix-ai's validated catalog.
+  # Logical roles, catalog selection and per-model concurrency come from the
+  # role map by host class (hosts/common/role-map.nix).
 
   mlx = {
-    # TWO-RESIDENT MODE (2026-08-14, supersedes single-model mode). This host is
-    # the estate's INTELLIGENCE tier: a GPU is planned to take fast-and-small,
-    # so throughput stops being the objective and both brains stay warm. The
-    # 27B takes deliberate work, the 35B MoE routine work. Rationale, the vmmap
-    # fit, and the group semantics: ./mac-studio.md "Two warm brains".
-    #
-    # singleModel and alwaysAvailableModels are GONE, not repointed — both only
-    # had meaning in single-model mode, and alwaysAvailableModels' group
-    # (swap=true, persistent=false) could never have carried a second brain.
-    #
-    # DO NOT drop the 27B's chat-template kwarg to "let it think". Unset, its
-    # template defaults reasoning_effort to xhigh, which measured 0 answer
-    # characters on 3 of 3 runs. The kwarg lives in the nix-ai catalog, and it
-    # is a prompt string, not a budget — nothing here caps thinking length.
-
-    # RESIDENCY BUDGET — k_max is the ONLY number set here. memoryHardLimitGb
-    # DERIVES from the host ceiling in hosts/common/residency-budget.nix, so
-    # changing k_max alone re-derives the per-worker budget and nobody redoes
-    # the arithmetic. k_max = 2 is what lets a swap-class load sit BESIDE a
-    # resident instead of evicting it (measured 2026-08-05 at k_max = 1).
-    #
-    # The arithmetic, the measured ~0.6 GiB cushion (NOT the 4 GiB subtraction
-    # suggests), and why overshoot spills to swap rather than panicking:
-    # ./mac-studio-residency.md. Do not restate any of it here — this file is
-    # at its size budget, which is how that document came to exist.
-    maxResidentWorkers = 2;
-
-    # Validated catalog selections (profiles in nix-ai catalog-data.nix).
-    #
-    # ROLES SPLIT ACROSS THE TWO RESIDENTS, and a role may be assigned only
-    # once (options-catalog.nix asserts uniqueness). The split follows cost,
-    # not preference: the dense 27B is the one worth waiting on, the MoE is the
-    # one worth asking often.
-    #
-    # `enable = false` on the rest is NOT a new restriction — it preserves
-    # exactly what singleModel did (those ids already 404'd). Without it every
-    # compiled entry becomes servable again, so a stray physical-id request
-    # would cold-load 20-63 GB beside two residents. Disable-not-delete.
-    catalog = {
-      # Deliberate tier. See the kwarg warning above.
-      qwen38-27b = {
-        class = "resident";
-        roles = [
-          "default"
-          "tool-calling"
-          "most-capable"
-          "oss"
-        ];
-      };
-      # Routine tier, and the 2026-07-27 throughput winner (115.2 tok/s
-      # cumulative). Thinking off. Takes "large-context" as well as "quickest":
-      # at 20 KiB/token of KV against the dense 27B's 64 KiB, a long context
-      # costs roughly a third as much unified memory here.
-      #
-      # AND "goal-judge" since 2026-08-15 — a verdict is a short classification
-      # and must not run on the worker's own weights. KEEP IN STEP WITH THE
-      # ROUTER: llama-swap and LiteLLM resolve that alias independently and
-      # once named different models. Rationale: ./mac-studio.md "The judge".
-      # AND "judge" (2026-08-23): the publish gate needs one alias on every
-      # host, never a swap-class model.
-      qwen36-35b = {
-        class = "resident";
-        roles = [
-          "quickest"
-          "large-context"
-          "goal-judge"
-          "judge"
-        ];
-      };
-      # Small on-demand 9B, and the `small` role. STAYS ENABLED, and the role
-      # has to resolve somewhere: ./mac-studio.md "The small tier".
-      qwen35-9b-mlx.class = "swap";
-      qwen35-9b-mlx.roles = [ "small" ];
-
-      # Document OCR, on demand — the one vision-language entry. The ttl and
-      # pre-cached weights are both mandatory: ./mac-studio.md "Document OCR".
-      unlimited-ocr = {
-        class = "swap";
-        tweaks.ttl = 600;
-      };
-
-      # Configured, compiled, and not servable. Re-enable deliberately, one at
-      # a time, with the residency budget re-checked.
-      qwen3-next-80b-instruct = {
-        class = "swap";
-        enable = false;
-      };
-      # THE CODING SIDECAR: `coding` only, never `tool-calling`, and swap
-      # rather than resident. All three measured: ./mac-studio-coder.md.
-      qwen3-coder-30b = {
-        class = "swap";
-        roles = [ "coding" ];
-      };
-      qwen35-9b-optiq = {
-        class = "swap";
-        enable = false;
-      };
-      qwen36-optiq = {
-        class = "swap";
-        enable = false;
-      };
-      gpt-oss-120b = {
-        class = "swap";
-        enable = false;
-      };
-      # Thinking sibling: the deep-analysis escalation tier, on demand.
-      qwen3-next-80b = {
-        class = "swap";
-        enable = false;
-      };
-    };
+    # Catalog selection, preload, per-model concurrency and the resident-worker
+    # count derive from the role map (hosts/common/role-map.nix); the host adds
+    # only runtime posture. The OCR model unloads after 600 s idle.
+    catalog.unlimited-ocr.tweaks.ttl = 600;
 
     cacheMemoryMb = 8192;
     prefillBatchSize = 2048;
-    # Both residents pinned serial until mlx-lm concurrency is qualified —
-    # they wedged repeatedly under load at 2 where the c=1 9B never did.
-    # Vikunja ai #144/#150. proxy.concurrencyLimit stays 2 for CI parity.
-    modelConcurrencyLimits = {
-      "mlx-community/Qwen3.8-27B-4bit" = 1;
-      "mlx-community/Qwen3.6-35B-A3B-4bit" = 1;
-    };
 
     # Server host: no group swap, no global idle eviction (per-class unloads
     # come from the catalog). A blanket TTL would make each resident brain pay
@@ -170,19 +49,6 @@ in
       # both derive from this one number (nix-ai effectiveConcurrency).
       concurrencyLimit = serveConcurrency;
     };
-
-    # Both residents warmed at boot — these now name two genuinely different
-    # models, where in singleModel mode every role alias resolved to the same
-    # weights and the name was cosmetic. Order matters: "default" is the
-    # deliberate 27B and takes longest to warm, so it goes first.
-    #
-    # A preload entry must name a role, not a model that reads as one. This
-    # used to say `[ "goal-judge" ]`, which cost a multi-hour misdiagnosis on
-    # 2026-08-01; see ./mac-studio.md "Preload".
-    preload = [
-      "default"
-      "quickest"
-    ];
 
     # Clustered mode: this Mac is rank 0 (coordinator) of the two-Mac JACCL
     # brain when the Thunderbolt cable is in — it binds the cluster endpoint on
@@ -241,5 +107,7 @@ in
   apfsVolumes = [
     "HuggingFace"
     "ContainerData"
+    # Automation identities' workspaces (lib/user-config.nix agentGitRoot).
+    "git"
   ];
 }
