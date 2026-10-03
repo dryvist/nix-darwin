@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.2.0](https://github.com/dryvist/nix-darwin/compare/v3.1.1...v3.2.0) (2026-10-03)
+
+
+### Features
+
+* **agents:** launch agent CLIs as their automation identity ([d6c5920](https://github.com/dryvist/nix-darwin/commit/d6c59202563c9a58d32a5a45759c202a9284cce8))
+* **agents:** per-identity git commit author ([936e1bb](https://github.com/dryvist/nix-darwin/commit/936e1bba880ba42e02fa26680951eca5883d61fc))
+* **agents:** per-identity git commit author ([6b45668](https://github.com/dryvist/nix-darwin/commit/6b45668b5ba283f257b630f98462b6dfe77aa1d4))
+* **agents:** ready each automation identity to run its sessions ([50d17d2](https://github.com/dryvist/nix-darwin/commit/50d17d25a112de038aa80319a10a54294059e5e3))
+* **agents:** run agent CLIs as their automation identity ([e91adec](https://github.com/dryvist/nix-darwin/commit/e91adecc9ced6769fcf7e7332001df76e783afee))
+* **cribl:** scrape the local queue front exporter with the Edge Prometheus scraper ([#2680](https://github.com/dryvist/nix-darwin/issues/2680)) ([c7afee7](https://github.com/dryvist/nix-darwin/commit/c7afee7ccc12faae3966daba5269658168376eea))
+* **mlx:** derive host serving from the role map ([#2679](https://github.com/dryvist/nix-darwin/issues/2679)) ([66e4393](https://github.com/dryvist/nix-darwin/commit/66e43936337fc053facca57fe04d3cf4f32af8f6))
+
 ## [3.1.1](https://github.com/dryvist/nix-darwin/compare/v3.1.0...v3.1.1) (2026-10-02)
 
 
