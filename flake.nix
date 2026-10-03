@@ -271,6 +271,7 @@
       # Claude settings JSON now computed by nix-ai (self-contained)
       # hmActivationPackage still requires Darwin (kept for macOS CI)
       lib = {
+        agentNofile = import ./lib/agent-nofile.nix;
         ci = {
           inherit (nix-ai.lib.ci) claudeSettingsJson;
           hmActivationPackage =
@@ -294,11 +295,18 @@
           pkgs = nixpkgs.legacyPackages.${system};
         in
         {
-          ${system} = import ./lib/checks.nix {
-            inherit pkgs;
-            src = ./.;
-            darwinConfigurations = { };
-          };
+          ${system} =
+            (import ./lib/checks.nix {
+              inherit pkgs;
+              src = ./.;
+              darwinConfigurations = { };
+            })
+            // {
+              agent-nofile = import ./lib/checks/agent-nofile.nix {
+                inherit pkgs darwin;
+                src = ./.;
+              };
+            };
 
           # pf anchor syntax check — Darwin-only (pfctl is a macOS system
           # binary, not a nixpkgs package): parses the REAL rendered anchor
