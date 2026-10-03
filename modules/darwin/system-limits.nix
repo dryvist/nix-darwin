@@ -137,7 +137,7 @@ in
     };
 
     # darwin-rebuild switch: apply immediately (do not wait for next boot).
-    system.activationScripts.resourceLimits.text = ''
+    system.activationScripts.postActivation.text = lib.mkAfter ''
       MAXFILES=${lib.escapeShellArg limitsEnv.MAXFILES} \
       MAXFILESPERPROC=${lib.escapeShellArg limitsEnv.MAXFILESPERPROC} \
       MAXPROC=${lib.escapeShellArg limitsEnv.MAXPROC} \
