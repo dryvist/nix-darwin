@@ -185,8 +185,8 @@ fi
 # persisted; scoped to this process. Credentials travel via a private
 # temporary payload on stdin (never argv).
 login_payload=""
-[ -n "$role_id" ] && login_payload="$(jq -n --arg r "$role_id" --arg s "$secret_id" \
-  '{role_id: $r, secret_id: $s}')"
+[ -n "$role_id" ] && login_payload="$(printf '%s\0' "$role_id" "$secret_id" | jq -Rs \
+  'split("\u0000") | {role_id: .[0], secret_id: .[1]}')"
 # Why a diagnostic at all: `curl -sSf` renders a refused connection as the
 # generic "Couldn't connect to server", which reads as a dead service and sent a
 # 2026-07-28 investigation down three wrong paths before `-v` revealed the
@@ -280,7 +280,7 @@ default_mount="${OPENBAO_KV_MOUNT:-secret}"
 # printing it, so no secret ever reaches a command substitution's pipe buffer.
 doc_json=""
 read_doc() { # $1 mount, $2 path
-  doc_json="$("$curl_bin" -sSf --max-time 30 -H "X-Vault-Token: $token" \
+  doc_json="$("$curl_bin" -sSf --max-time 30 -H @<(printf 'X-Vault-Token: %s\n' "$token") \
     "$addr/v1/$1/data/$2")" \
     || die "read failed: $1/$2 (path missing, or the credential lacks read on it?)"
 }

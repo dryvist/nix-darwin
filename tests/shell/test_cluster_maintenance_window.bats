@@ -36,14 +36,27 @@ STUB
   # endpoints the reconciler uses, and fails whichever path FAIL_PATH names so
   # the error branches are reachable.
   write_stub "$STUB_DIR/curl" << 'STUB'
-method=GET path=""
+method=GET path="" header="" body=""
 while [ "$#" -gt 0 ]; do
   case "$1" in
     -X) method="$2"; shift 2 ;;
+    -H)
+      case "$2" in
+        @*) header="$(cat "${2#@}")" ;;
+        'Content-Type: application/json') ;;
+        *) exit 97 ;;
+      esac
+      shift 2 ;;
+    --data-binary) [ "$2" = @- ] || exit 97; body="$(cat)"; shift 2 ;;
     http*) path="${1#*/api/v1}"; shift ;;
     *) shift ;;
   esac
 done
+if [ "$path" = /login ]; then
+  printf '%s' "$body" | jq -e '.username == "svc-mcp-rw" and .password == env.VIKUNJA_PASSWORD' > /dev/null || exit 97
+else
+  [ "$header" = 'Authorization: Bearer stub-jwt' ] || exit 97
+fi
 echo "$method $path" >> "$CALLS"
 if [ -n "${FAIL_PATH:-}" ] && [[ "$path" == ${FAIL_PATH} ]]; then
   echo "stub: forced failure for $path" >&2
@@ -86,7 +99,8 @@ state() { cat "$MLX_CLUSTER_WINDOW_STATE_FILE" 2> /dev/null || true; }
   run env LAUNCHCTL_MODE=running "$STUB_DIR/launchctl" print gui/501/dev.mlx-cluster.rank
   [ "$status" -eq 0 ]
   [[ "$output" == *"state = running"* ]]
-  run "$STUB_DIR/curl" -X POST "https://stub.invalid/api/v1/login"
+  run "$STUB_DIR/curl" -X POST --data-binary @- "https://stub.invalid/api/v1/login" \
+    <<< '{"username":"svc-mcp-rw","password":"stub-password"}'
   [ "$status" -eq 0 ]
   [[ "$output" == *"stub-jwt"* ]]
 }
@@ -107,6 +121,12 @@ state() { cat "$MLX_CLUSTER_WINDOW_STATE_FILE" 2> /dev/null || true; }
   [[ "$output" == *"opened window task 9001"* ]]
 }
 
+@test "login preserves password quotes, backslashes, and newlines" {
+  VIKUNJA_PASSWORD=$'stub-"password\\\nnext' LAUNCHCTL_MODE=running reconcile
+  [ "$status" -eq 0 ]
+  [ "$(state)" = "9001" ]
+}
+
 @test "staying clustered refreshes the existing window instead of opening another" {
   LAUNCHCTL_MODE=running reconcile
   : > "$CALLS"
@@ -114,8 +134,9 @@ state() { cat "$MLX_CLUSTER_WINDOW_STATE_FILE" 2> /dev/null || true; }
   [ "$status" -eq 0 ]
   [ "$(state)" = "9001" ]
   grep -q "POST /tasks/9001" "$CALLS"
-  ! grep -q "PUT /projects/54/tasks" "$CALLS"
   [[ "$output" == *"refreshed window task 9001"* ]]
+  run grep -q "PUT /projects/54/tasks" "$CALLS"
+  [ "$status" -eq 1 ]
 }
 
 @test "teardown closes the window and forgets it" {

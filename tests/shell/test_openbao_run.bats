@@ -42,10 +42,20 @@ setup() {
   write_stub "$STUB_DIR/curl" << STUB
 url=""
 want_code=""
+header=""
+body=""
 while [ "\$#" -gt 0 ]; do
   case "\$1" in
     -w) want_code=1; shift 2 ;;
-    -X|-H|--max-time|-o|--data-binary) shift 2 ;;
+    -H)
+      case "\$2" in
+        @*) header="\$(cat "\${2#@}")" ;;
+        'Content-Type: application/json') ;;
+        *) exit 97 ;;
+      esac
+      shift 2 ;;
+    --data-binary) [ "\$2" = @- ] || exit 97; body="\$(cat)"; shift 2 ;;
+    -X|--max-time|-o) shift 2 ;;
     http*) url="\$1"; shift ;;
     *) shift ;;
   esac
@@ -54,6 +64,7 @@ printf '%s\n' "\$url" >> "$CALLS"
 
 case "\$url" in
   */auth/approle/login)
+    printf '%s' "\$body" | jq -e '.role_id == env.DEMO_VAULT_ROLE_ID and .secret_id == env.DEMO_VAULT_SECRET_ID' > /dev/null || exit 97
     if [ -n "\${LOGIN_CURL_EXIT:-}" ]; then
       [ -z "\$want_code" ] || printf '000'
       exit "\$LOGIN_CURL_EXIT"
@@ -67,6 +78,10 @@ case "\$url" in
     [ -z "\$want_code" ] || printf '%s' "\$login_status"
     ;;
   */v1/*/data/*)
+    case "\$header" in
+      'X-Vault-Token: t'|'X-Vault-Token: stub-bao-token') ;;
+      *) exit 97 ;;
+    esac
     rest="\${url#*/v1/}"
     mount="\${rest%%/data/*}"
     path="\${rest#*/data/}"
@@ -96,7 +111,7 @@ run_bao() { run --separate-stderr bash -euo pipefail "$SCRIPTS/openbao-run.sh" "
 
 @test "the stub actually executes — a dead stub would fake every answer" {
   seed_doc secret app/base '{"A":"1"}'
-  run "$STUB_DIR/curl" -H "X-Vault-Token: t" "https://stub.invalid/v1/secret/data/app/base"
+  run "$STUB_DIR/curl" -H @<(printf 'X-Vault-Token: t\n') "https://stub.invalid/v1/secret/data/app/base"
   [ "$status" -eq 0 ]
   [[ "$output" == *'"A":"1"'* ]]
 }
@@ -213,6 +228,14 @@ run_bao() { run --separate-stderr bash -euo pipefail "$SCRIPTS/openbao-run.sh" "
 @test "--domain authenticates with that domain's AppRole" {
   seed_doc secret app/base '{"ALPHA":"one"}'
   run_bao --domain demo --secrets app/base -- sh -c 'echo "$ALPHA"'
+  [ "$status" -eq 0 ]
+  [ "$output" = "one" ]
+}
+
+@test "AppRole login preserves quotes, backslashes, and newlines" {
+  seed_doc secret app/base '{"ALPHA":"one"}'
+  DEMO_VAULT_ROLE_ID=$'stub-"role\\\nnext' DEMO_VAULT_SECRET_ID=$'stub-"secret\\\nnext' \
+    run_bao --domain demo --secrets app/base -- sh -c 'echo "$ALPHA"'
   [ "$status" -eq 0 ]
   [ "$output" = "one" ]
 }

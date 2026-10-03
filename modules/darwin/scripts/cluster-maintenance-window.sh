@@ -71,14 +71,14 @@ api() {
   while [ "$i" -le "$attempts" ]; do
     if [ -n "$body" ]; then
       out="$(printf '%s' "$body" | "$curl_bin" -sSf --max-time 20 -X "$method" \
-        -H "Authorization: Bearer $jwt" -H 'Content-Type: application/json' \
+        -H @<(printf 'Authorization: Bearer %s\n' "$jwt") -H 'Content-Type: application/json' \
         --data-binary @- "$api_url$path" 2>&1)" && {
         printf '%s' "$out"
         return 0
       }
     else
       out="$("$curl_bin" -sSf --max-time 20 -X "$method" \
-        -H "Authorization: Bearer $jwt" "$api_url$path" 2>&1)" && {
+        -H @<(printf 'Authorization: Bearer %s\n' "$jwt") "$api_url$path" 2>&1)" && {
         printf '%s' "$out"
         return 0
       }
@@ -137,7 +137,7 @@ fi
 }
 
 jwt=""
-login_body="$(jq -n --arg u "$username" --arg p "$password" '{username:$u, password:$p}')"
+login_body="$(printf '%s' "$password" | jq -Rs --arg u "$username" '{username:$u, password:.}')"
 if ! jwt="$(api POST /login "$login_body" | jq -re '.token')"; then
   warn "login as $username failed; window NOT reconciled this tick (clustered=$clustered, open window=${open_id:-none}). Nothing else is affected — the cluster does not wait on this."
   exit 0
