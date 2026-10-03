@@ -32,12 +32,11 @@
 # something ambient. Without --domain, an already-valid BAO_TOKEN/VAULT_TOKEN
 # in the environment is used, which is the interactive workstation path.
 #
-# Login backoff (per-domain circuit breaker): a refused AppRole login must never
-# be retried faster than a backoff allows, whatever restarts this wrapper (a
-# launchd KeepAlive or StartInterval re-runs it, and a refusal streak can lock
-# the whole role out). A refusal is an HTTP 400, 401 or 403 from the login
-# endpoint; timeouts, connection errors and 5xx are network faults, neither
-# counted nor delayed. Each domain keeps one state file:
+# Login backoff (per-domain circuit breaker): a refused AppRole login is never
+# retried before its backoff window ends, however often the wrapper is started.
+# A refusal is an HTTP 400, 401 or 403 from the login endpoint; timeouts,
+# connection errors and 5xx are network faults, neither counted nor delayed.
+# Each domain keeps one state file:
 #
 #   ${XDG_STATE_HOME:-$HOME/.local/state}/openbao-run/<domain>
 #
