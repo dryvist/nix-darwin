@@ -53,8 +53,6 @@ in
     # macOS-specific zsh init (keychain reads, gh-token switching, launchers) —
     # split out for the byte cap; merges into programs.zsh.
     ./zsh-macos.nix
-    # Agent CLIs run as their automation identity (claude, codex, opencode…).
-    ./agent-launchers.nix
     # Worker-side cluster-mode quiesce/restore hooks (byte cap split).
     ./cluster-quiesce.nix
     # Feeds the system-level clusterLinkPrep wired ceilings into nix-ai's
@@ -145,10 +143,8 @@ in
     # (modules/default.nix). Re-enable in nix-ai once the dep bound is relaxed.
     cecli.enable = lib.mkForce false;
 
-    # cursor and opencode moved to the dedicated `open-llm` identity
-    # (hosts/common/home-open-llm.nix), so a lower-trust coding agent never
-    # runs as the operator. mkForce overrides nix-ai's unconditional enable
-    # (modules/default.nix). Run them with `sudo -u open-llm -i`. The GUI
+    # The cursor and opencode CLIs are not installed on these hosts. mkForce
+    # overrides nix-ai's unconditional enable (modules/default.nix). The GUI
     # Cursor IDE (code-cursor, in the per-host home) is unaffected.
     cursor.enable = lib.mkForce false;
     opencode.enable = lib.mkForce false;

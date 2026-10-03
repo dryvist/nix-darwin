@@ -5,7 +5,6 @@
 - [Overview](#overview)
 - [Setup Summary](#setup-summary)
 - [Configuration Structure](#configuration-structure)
-- [Bootstrap the Automation Account](#bootstrap-the-automation-account)
 - [Issues Solved](#issues-solved)
 - [What Was Migrated](#what-was-migrated)
 - [Usage](#usage)
@@ -31,48 +30,6 @@ Minimal nix-darwin configuration with home-manager for macOS system management.
 ## Configuration Structure
 
 See [CLAUDE.md](CLAUDE.md) for complete directory structure with all files and descriptions.
-
-## Bootstrap the Automation Account
-
-The switch creates the `claude` account (`modules/darwin/agent-identity.nix`).
-Its checkout is cloned on the first home-manager activation
-(`hosts/common/home-agent.nix`). The switch does not do these, done once per
-identity:
-
-- **Doppler service token**, scoped to that account's home, never global:
-
-  ```sh
-  sudo -u claude -i doppler configure set token=<service-token> --scope ~
-  ```
-
-  Sessions start in the identity's `$GIT_HOME`, outside its home. A
-  `doppler run` there resolves this token only if its scope also covers
-  `$GIT_HOME`, or if the call passes `--scope "$HOME"`.
-
-- **OpenBao AppRole pair**, read from the same Doppler project/config the
-  `openbao-run` wrapper consumes (`modules/darwin/apps/openbao-run.nix`):
-  `BAO_ADDR` plus a per-domain `<DOMAIN>_VAULT_ROLE_ID` /
-  `<DOMAIN>_VAULT_SECRET_ID` pair. No values here — pull them from the store.
-
-- **Commit-signing key on GitHub.** Each identity's first activation creates
-  `~/.ssh/git_signing_ed25519` in its own home
-  (`hosts/common/home-agent-common.nix`) and prints the public key in the
-  switch output. Add that public key as an SSH **signing** key on the GitHub
-  account named in the commits' author email. Commits carry the operator's
-  name and email unless the identity sets `agentGit.author`
-  (`hosts/common/home-agent-common.nix`). An identity authored as a bot
-  account registers no key, so its commits show as unverified.
-
-- **Agent CLI sign-in.** Claude Code and Codex come from Homebrew and are on
-  each identity's PATH. Each one signs in once per identity, in a session
-  started by its launcher.
-
-The sudoers grant allows exactly one command, run as `claude`:
-
-```sh
-sudo -n /run/current-system/sw/bin/darwin-rebuild switch \
-  --flake /Users/claude/git/public/nix/nix-darwin#<host>
-```
 
 ## Issues Solved
 
