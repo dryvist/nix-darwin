@@ -77,6 +77,7 @@ let
             fi
             trap '${pkgs.tmux}/bin/tmux -N "$@" kill-server 2>/dev/null || true' EXIT
             trap 'exit 0' TERM INT
+            ${pkgs.tmux}/bin/tmux -N "$@" set-option -g @agent-launcher-pid "$$"
             ${pkgs.tmux}/bin/tmux -N "$@" wait-for session-ended &
             waiter=$!
             wait "$waiter"

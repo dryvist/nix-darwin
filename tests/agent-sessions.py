@@ -14,19 +14,18 @@ assert service["ProcessType"] == "Background" and service["LowPriorityIO"]
 assert service["SoftResourceLimits"] == service["HardResourceLimits"]
 
 
-def wait_for_waiter(process):
+def wait_for_supervisor(process, client):
     deadline = time.monotonic() + 15
     while time.monotonic() < deadline:
         assert process.poll() is None, "launcher exited before supervising its session"
-        processes = subprocess.check_output(
-            [fixture["ps"], "-eo", "pid=,ppid=,args="], text=True, timeout=15
+        supervisor = subprocess.run(
+            client + ["-N", "show-options", "-gqv", "@agent-launcher-pid"],
+            capture_output=True, text=True, timeout=15
         )
-        for line in processes.splitlines():
-            fields = line.split(maxsplit=2)
-            if len(fields) == 3 and fields[1] == str(process.pid) and fields[2].endswith("wait-for session-ended"):
-                return
+        if supervisor.returncode == 0 and supervisor.stdout.strip() == str(process.pid):
+            return
         time.sleep(0.05)
-    raise AssertionError("launcher did not start its native waiter")
+    raise AssertionError("launcher did not claim supervision of its session")
 
 
 with tempfile.TemporaryDirectory(prefix="agent-sessions-") as directory:
@@ -59,7 +58,7 @@ with tempfile.TemporaryDirectory(prefix="agent-sessions-") as directory:
                 assert "FORBIDDEN_INHERITED_MARKER" not in observed["env"]
                 assert observed["cwd"] == "/"
                 assert process.poll() is None, "launchd waiter exited while the session was alive"
-                wait_for_waiter(process)
+                wait_for_supervisor(process, client)
                 subprocess.run(client + ["has-session", "-t", "probe"], check=True, timeout=15)
                 if attempt == 1:
                     pane = subprocess.check_output(client + ["display-message", "-p", "-t", "probe", "#{pane_pid}"], timeout=15)
@@ -67,7 +66,7 @@ with tempfile.TemporaryDirectory(prefix="agent-sessions-") as directory:
                     assert process.wait(timeout=15) == -9
                     subprocess.run(client + ["has-session", "-t", "probe"], check=True, timeout=15)
                     process = subprocess.Popen(arguments, stdout=log, stderr=log)
-                    wait_for_waiter(process)
+                    wait_for_supervisor(process, client)
                     assert subprocess.check_output(client + ["display-message", "-p", "-t", "probe", "#{pane_pid}"], timeout=15) == pane
                     process.terminate()
                 else:

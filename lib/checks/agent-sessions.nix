@@ -35,7 +35,6 @@ let
     builtins.toJSON {
       inherit service;
       tmux = "${pkgs.tmux}/bin/tmux";
-      ps = if pkgs.stdenv.isDarwin then "/bin/ps" else "${pkgs.procps}/bin/ps";
     }
   );
 in
