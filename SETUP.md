@@ -58,7 +58,10 @@ identity:
   `~/.ssh/git_signing_ed25519` in its own home
   (`hosts/common/home-agent-common.nix`) and prints the public key in the
   switch output. Add that public key as an SSH **signing** key on the GitHub
-  account named in the commits' author email.
+  account named in the commits' author email. Commits carry the operator's
+  name and email unless the identity sets `agentGit.author`
+  (`hosts/common/home-agent-common.nix`). An identity authored as a bot
+  account registers no key, so its commits show as unverified.
 
 - **Agent CLI sign-in.** Claude Code and Codex come from Homebrew and are on
   each identity's PATH. Each one signs in once per identity, in a session

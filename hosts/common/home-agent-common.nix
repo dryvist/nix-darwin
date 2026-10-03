@@ -18,28 +18,61 @@ let
     runtimeInputs = [ pkgs.openssh ];
     text = builtins.readFile ./scripts/agent-signing-key.sh;
   };
+
+  inherit (config.agentGit) author;
 in
 {
-  # The workspace root is this identity's own folder on the shared agent
-  # volume (nix-home workspace.gitHome); agent-launch starts sessions there.
-  workspace.gitHome = "${userConfig.agentGitRoot}/${config.home.username}";
-
-  # Homebrew owns the Claude Code and Codex binaries on darwin
-  # (lib/checks/cli-ownership.nix), and the system PATH omits its prefix.
-  # Appended, so a Nix-provided binary of the same name still wins.
-  home.sessionVariablesExtra = ''
-    export PATH="$PATH:${osConfig.homebrew.prefix}/bin"
-  '';
-
-  # nix-home signs with the operator's GPG key, which this account does not
-  # hold. Sign with this identity's own SSH key instead.
-  programs.git.signing = {
-    format = lib.mkForce "ssh";
-    key = lib.mkForce "${signingKey}.pub";
-    signByDefault = true;
+  options.agentGit.author = lib.mkOption {
+    type = lib.types.nullOr (
+      lib.types.submodule {
+        options = {
+          name = lib.mkOption {
+            type = lib.types.str;
+            description = "git user.name for this identity's commits.";
+          };
+          email = lib.mkOption {
+            type = lib.types.str;
+            description = "git user.email for this identity's commits.";
+          };
+        };
+      }
+    );
+    default = null;
+    description = ''
+      The author this identity's commits carry. null keeps the operator's
+      name and email, which nix-home sets for every home.
+    '';
   };
 
-  home.activation.agentSigningKey = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    run ${lib.getExe agentSigningKey} ${lib.escapeShellArg signingKey}
-  '';
+  config = {
+    # The workspace root is this identity's own folder on the shared agent
+    # volume (nix-home workspace.gitHome); agent-launch starts sessions there.
+    workspace.gitHome = "${userConfig.agentGitRoot}/${config.home.username}";
+
+    # Homebrew owns the Claude Code and Codex binaries on darwin
+    # (lib/checks/cli-ownership.nix), and the system PATH omits its prefix.
+    # Appended, so a Nix-provided binary of the same name still wins.
+    home.sessionVariablesExtra = ''
+      export PATH="$PATH:${osConfig.homebrew.prefix}/bin"
+    '';
+
+    programs.git = {
+      # nix-home signs with the operator's GPG key, which this account does not
+      # hold. Sign with this identity's own SSH key instead.
+      signing = {
+        format = lib.mkForce "ssh";
+        key = lib.mkForce "${signingKey}.pub";
+        signByDefault = true;
+      };
+
+      settings.user = lib.mkIf (author != null) {
+        name = lib.mkForce author.name;
+        email = lib.mkForce author.email;
+      };
+    };
+
+    home.activation.agentSigningKey = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      run ${lib.getExe agentSigningKey} ${lib.escapeShellArg signingKey}
+    '';
+  };
 }
