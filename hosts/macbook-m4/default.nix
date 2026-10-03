@@ -135,7 +135,6 @@ in
         "/Volumes/Streams"
         "/Volumes/ContainerData"
         "/Volumes/BinaryStore"
-        "/Volumes/git"
       ];
       timeMachineExcludes = [
         "${userConfig.user.homeDir}/.cache/uv"

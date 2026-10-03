@@ -107,7 +107,5 @@ in
   apfsVolumes = [
     "HuggingFace"
     "ContainerData"
-    # Automation identities' workspaces (lib/user-config.nix agentGitRoot).
-    "git"
   ];
 }

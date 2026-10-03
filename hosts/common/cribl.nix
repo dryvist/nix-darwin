@@ -388,8 +388,8 @@ in
             # from the released pack derivations (see the pipelines/*
             # configFiles below).
             # One codex/gemini/antigravity input set PER MANAGED OS USER
-            # (aiHomes, above) — a second automation identity's transcripts
-            # ship too, each stamped with its own enduser_id.
+            # (aiHomes in ./cribl-ai-inputs.nix), each stamped with its own
+            # enduser_id.
             # v0.4.1 llm_normalize stamps antigravity history's
             # sourcetype/index too (its llm.* evals gate on fields history
             # lacks, so they skip it).

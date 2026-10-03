@@ -71,63 +71,6 @@ in
   };
 
   # ==========================================================================
-  # Automation Identities
-  # ==========================================================================
-  # Dedicated macOS accounts that AI harnesses run under, one per trust tier,
-  # so nothing an agent does runs as the operator. Consumed by
-  # modules/darwin/agent-identity.nix (accounts, the `agent` group, sudoers)
-  # and flake.nix (one home-manager home per identity).
-  #
-  # `converge` is the capability gate: only an identity with `converge = true`
-  # gets the NOPASSWD `darwin-rebuild switch` rule, and only that identity is
-  # listed in Nix `trusted-users` (modules/darwin/nix-storage.nix). Both are
-  # root-equivalent — never default them on for a new identity. `checkout` is
-  # the flake path relative to the identity's home, so the sudoers flake
-  # reference composes as "${homeDir}/${checkout}" and no absolute path or
-  # host name is ever committed; an identity without `converge` has no use for
-  # it and omits it.
-  #
-  # uids climb from 505 (first free on these hosts). Every identity keeps
-  # `staff` (gid 20) as its primary group — that is what lets it read the
-  # operator's group-readable files — and additionally joins `agent`.
-  #
-  # `tools` names the CLIs that run AS this identity. The operator's shell
-  # wraps each one (hosts/common/scripts/agent-launch.sh); each starts in its
-  # own folder under the identity's workspace root.
-  agentUsers = {
-    claude = {
-      name = "claude";
-      uid = 505;
-      homeDir = "/Users/claude";
-      checkout = "git/public/nix/nix-darwin";
-      converge = true;
-      tools = [
-        "claude"
-        "codex"
-      ];
-    };
-    # Runs opencode and cursor CLI: executes model-generated code from a
-    # lower-trust tool, so no converge grant and no trusted-user status.
-    open-llm = {
-      name = "open-llm";
-      uid = 506;
-      homeDir = "/Users/open-llm";
-      converge = false;
-      tools = [
-        "opencode"
-        "cursor-agent"
-        "zcode"
-      ];
-    };
-  };
-
-  # Shared volume holding each automation identity's workspace root
-  # (<agentGitRoot>/<identity>, its nix-home `workspace.gitHome`). Agents clone
-  # only what a task needs there, never the operator's checkouts; the operator
-  # may wipe any of it at will.
-  agentGitRoot = "/Volumes/git";
-
-  # ==========================================================================
   # GPG Configuration
   # ==========================================================================
   # NOTE: These are PUBLIC key identifiers, NOT private keys.

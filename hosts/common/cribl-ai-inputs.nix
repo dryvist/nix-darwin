@@ -1,11 +1,9 @@
 # Per-OS-user AI-CLI transcript inputs (standalone Edge GitOps config)
 #
 # Split out of ./cribl.nix for the repo file-size gate: this generates one
-# full claude/codex/gemini/antigravity input set PER MANAGED OS USER
-# (userConfig.user plus every automation identity in userConfig.agentUsers —
-# modules/darwin/agent-identity.nix), so a second OS user's transcripts are
-# collected too. The result is a plain YAML text fragment, spliced verbatim
-# into cribl.nix's `inputs.yml` body under `inputs:`.
+# full claude/codex/gemini/antigravity input set PER MANAGED OS USER (the
+# entries of aiHomes below). The result is a plain YAML text fragment, spliced
+# verbatim into cribl.nix's `inputs.yml` body under `inputs:`.
 
 { lib, userConfig }:
 
@@ -18,11 +16,7 @@ let
       user = userConfig.user.name;
       inherit (userConfig.user) homeDir;
     }
-  ]
-  ++ lib.mapAttrsToList (name: agent: {
-    user = name;
-    inherit (agent) homeDir;
-  }) userConfig.agentUsers;
+  ];
 
   # One full AI-CLI transcript input set per OS user above, input names
   # suffixed `_<user>` so each stays a distinct, independently-tracked
