@@ -223,6 +223,7 @@
                 # nix-home modules accept userConfig with sensible defaults.
                 # `hostConfig` threads the per-host attrset to home-manager modules.
                 extraSpecialArgs = {
+                  agentNofile = import ./lib/agent-nofile.nix;
                   inherit
                     dotgithub
                     hostConfig
