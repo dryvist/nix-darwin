@@ -45,6 +45,10 @@ identity:
   sudo -u claude -i doppler configure set token=<service-token> --scope ~
   ```
 
+  Sessions start in the identity's `$GIT_HOME`, outside its home. A
+  `doppler run` there resolves this token only if its scope also covers
+  `$GIT_HOME`, or if the call passes `--scope "$HOME"`.
+
 - **OpenBao AppRole pair**, read from the same Doppler project/config the
   `openbao-run` wrapper consumes (`modules/darwin/apps/openbao-run.nix`):
   `BAO_ADDR` plus a per-domain `<DOMAIN>_VAULT_ROLE_ID` /
