@@ -9,6 +9,10 @@ let
   # Server-class hosts get no GUI packages — lean by construction.
   # (isServer is normalized once in flake.nix mkHost.)
   inherit (hostConfig) isServer;
+  retiredAgentUsers = [
+    "claude"
+    "open-llm"
+  ];
 in
 {
   imports = [
@@ -41,8 +45,6 @@ in
     ./trackpad.nix
     ./system-ui.nix
     ./activation-error-tracking.nix
-    ./agent-identity.nix # Creates the automation account (see the file's header)
-    ./agent-workspaces.nix # Each identity's folders on the shared agent volume
     ./hm-activation-assert.nix # Fail the rebuild when home-manager did not apply
     ./llm-gate.nix
     ./nix-storage.nix
@@ -68,9 +70,17 @@ in
   ];
 
   # --- User Configuration ---
-  users.users.${userConfig.user.name} = {
-    inherit (userConfig.user) name;
-    home = userConfig.user.homeDir;
+  users = {
+    users.${userConfig.user.name} = {
+      inherit (userConfig.user) name;
+      home = userConfig.user.homeDir;
+    };
+
+    # Retired accounts and group. A name in knownUsers/knownGroups with no
+    # users.users/users.groups entry is deleted at activation (home directories
+    # are left in place). Remove these two lists once every host has switched.
+    knownUsers = retiredAgentUsers;
+    knownGroups = [ "agent" ];
   };
 
   # System packages from nixpkgs

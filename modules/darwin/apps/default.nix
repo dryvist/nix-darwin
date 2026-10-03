@@ -18,7 +18,6 @@ _:
     ./corosync-qnetd-arbiter.nix
     ./cribl-edge.nix
     ./cribl-stream.nix
-    ./git-apfs-volume.nix
     ./github-runner-container.nix
     ./offbox-sync.nix
     ./openbao-run.nix

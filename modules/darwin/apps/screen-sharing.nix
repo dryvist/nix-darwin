@@ -3,8 +3,7 @@
 #
 # nix-darwin has no first-class `services.screenSharing`-style option (checked
 # the nix-darwin-26.05 module tree — nothing references
-# `com.apple.screensharing`), so this follows the same shape as
-# programs.gitApfsVolume: a writeShellApplication invoked from
+# `com.apple.screensharing`), so a writeShellApplication invoked from
 # system.activationScripts.postActivation runs `launchctl enable` +
 # `launchctl kickstart` against the system's built-in
 # com.apple.screensharing launchd daemon. Plain Screen Sharing only — this
