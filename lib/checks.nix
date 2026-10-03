@@ -19,6 +19,8 @@ let
     }).home.activation.clearStrayLinkTargets;
 in
 {
+  agent-sessions = import ./checks/agent-sessions.nix { inherit pkgs; };
+
   # Check Nix formatting with nixfmt
   # Uses treefmt configured with nixfmt formatter
   # Copy source to writable $TMPDIR since treefmt needs to write temp files
