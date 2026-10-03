@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.2.1](https://github.com/dryvist/nix-darwin/compare/v3.2.0...v3.2.1) (2026-10-03)
+
+
+### Bug Fixes
+
+* **openbao-run:** back off after a refused login ([#2692](https://github.com/dryvist/nix-darwin/issues/2692)) ([d4b2a89](https://github.com/dryvist/nix-darwin/commit/d4b2a899fae7258a6ac837875dd329e180baafcf))
+
 ## [3.2.0](https://github.com/dryvist/nix-darwin/compare/v3.1.1...v3.2.0) (2026-10-03)
 
 
