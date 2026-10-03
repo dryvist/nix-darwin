@@ -6,7 +6,8 @@
 # - its session PATH reaches the Homebrew prefix, where Claude Code and Codex
 #   live on darwin (cli-ownership.nix);
 # - the operator's shell has a launcher for each tool it runs;
-# - the host declares the volume that agentGitRoot names.
+# - the host declares the volume that agentGitRoot names;
+# - agentGit.author, when set, replaces the operator's commit author.
 #
 # Pass the REAL evaluated host configurations (see cli-ownership.nix for why a
 # check fed an empty set passes vacuously).
@@ -52,7 +53,27 @@ let
     ) "${hostName}: no APFS volume for ${userConfig.agentGitRoot}"
     ++ lib.concatLists (lib.mapAttrsToList agentProblems userConfig.agentUsers);
 
-  problems = lib.concatLists (lib.mapAttrsToList problemsFor configs);
+  # agentGit.author replaces the operator's name and email that nix-home sets.
+  # Set it on every identity of one host and read back the rendered git config.
+  author = {
+    name = "agent-check";
+    email = "agent-check@example.invalid";
+  };
+  withAuthor = (lib.head (lib.attrValues configs)).extendModules {
+    modules = [
+      {
+        home-manager.users = lib.mapAttrs (_: _: { agentGit.author = author; }) userConfig.agentUsers;
+      }
+    ];
+  };
+  authorProblems = lib.concatMap (
+    name:
+    lib.optional (
+      withAuthor.config.home-manager.users.${name}.programs.git.iniContent.user.email != author.email
+    ) "${name}: agentGit.author does not reach git user.email"
+  ) (lib.attrNames userConfig.agentUsers);
+
+  problems = lib.concatLists (lib.mapAttrsToList problemsFor configs) ++ authorProblems;
 in
 assert
   problems == [ ]
