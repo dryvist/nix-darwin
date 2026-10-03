@@ -5,7 +5,9 @@
 # whole-document injection (--secrets), left-to-right override so documents
 # layer, the two authentication paths (AppRole via --domain, ambient token
 # without it), and every way it must fail loudly rather than exec a child with
-# nothing exported.
+# nothing exported. The per-domain login backoff (circuit breaker) is covered
+# at the end: what a refusal records, that an open window makes no request at
+# all, and that only a rejected credential — never a network fault — counts.
 
 bats_require_minimum_version 1.5.0 # for `run --separate-stderr`
 
@@ -29,21 +31,40 @@ setup() {
 
   # Serves KV v2 reads out of $KV_DIR (one file per mount+path, '/' -> '_') and
   # the AppRole login. An unknown path exits 22, the way `curl -f` reports a
-  # 404, so a missing document is indistinguishable from the real thing.
+  # 404, so a missing document is indistinguishable from the real thing. Every
+  # request's URL is appended to $CALLS, so a test can prove nothing was sent.
+  # Login outcomes: LOGIN_STATUS=<code> answers that HTTP status (>= 400 exits
+  # 22 after printing the status, as `curl -f -w '%{http_code}'` does);
+  # LOGIN_CURL_EXIT=<n> is a transport failure (timeout 28, refused 7) that
+  # prints 000 and no HTTP status.
+  CALLS="$BATS_TEST_TMPDIR/curl-calls"
+  : > "$CALLS"
   write_stub "$STUB_DIR/curl" << STUB
 url=""
+want_code=""
 while [ "\$#" -gt 0 ]; do
   case "\$1" in
-    -X|-H|--max-time|-o|-w|--data-binary) shift 2 ;;
+    -w) want_code=1; shift 2 ;;
+    -X|-H|--max-time|-o|--data-binary) shift 2 ;;
     http*) url="\$1"; shift ;;
     *) shift ;;
   esac
 done
+printf '%s\n' "\$url" >> "$CALLS"
 
 case "\$url" in
   */auth/approle/login)
-    if [ -n "\${LOGIN_FAIL:-}" ]; then exit 22; fi
+    if [ -n "\${LOGIN_CURL_EXIT:-}" ]; then
+      [ -z "\$want_code" ] || printf '000'
+      exit "\$LOGIN_CURL_EXIT"
+    fi
+    login_status="\${LOGIN_STATUS:-200}"
+    if [ "\$login_status" -ge 400 ]; then
+      [ -z "\$want_code" ] || printf '%s' "\$login_status"
+      exit 22
+    fi
     echo '{"auth":{"client_token":"stub-bao-token"}}'
+    [ -z "\$want_code" ] || printf '%s' "\$login_status"
     ;;
   */v1/*/data/*)
     rest="\${url#*/v1/}"
@@ -58,6 +79,9 @@ esac
 STUB
 
   export OPENBAO_RUN_CURL_BIN="$STUB_DIR/curl"
+  # The login backoff state lives under here, never in the real home.
+  export XDG_STATE_HOME="$BATS_TEST_TMPDIR/state"
+  STATE_FILE="$XDG_STATE_HOME/openbao-run/demo"
   export BAO_ADDR="https://stub.invalid"
   export DEMO_VAULT_ROLE_ID="stub-role"
   export DEMO_VAULT_SECRET_ID="stub-secret"
@@ -204,7 +228,7 @@ run_bao() { run --separate-stderr bash -euo pipefail "$SCRIPTS/openbao-run.sh" "
 
 @test "an AppRole login failure names the domain" {
   seed_doc secret app/base '{"ALPHA":"one"}'
-  LOGIN_FAIL=1 run_bao --domain demo --secrets app/base -- sh -c 'echo ran'
+  LOGIN_STATUS=403 run_bao --domain demo --secrets app/base -- sh -c 'echo ran'
   [ "$status" -ne 0 ]
   [[ "$stderr" == *"AppRole login failed for domain 'demo'"* ]]
 }
@@ -221,4 +245,204 @@ run_bao() { run --separate-stderr bash -euo pipefail "$SCRIPTS/openbao-run.sh" "
   [ "$status" -eq 0 ]
   [[ "$output" != *"s3cret-value"* ]]
   [[ "$stderr" != *"s3cret-value"* ]]
+}
+
+# --- login backoff (per-domain circuit breaker) -----------------------------
+
+# login_as <http-status> — one --domain run whose login answers that status.
+login_as() {
+  seed_doc secret app/base '{"ALPHA":"one"}'
+  LOGIN_STATUS="$1" run_bao --domain demo --secrets app/base -- sh -c 'echo ran'
+}
+
+# run_demo — one --domain run against a login that succeeds.
+run_demo() {
+  seed_doc secret app/base '{"ALPHA":"one"}'
+  run_bao --domain demo --secrets app/base -- sh -c 'echo ran'
+}
+
+# expire_window — rewrite the state so its backoff window ended long ago,
+# keeping the refusal count.
+expire_window() {
+  local count
+  read -r count _ < "$STATE_FILE"
+  printf '%s 1\n' "$count" > "$STATE_FILE"
+}
+
+@test "a first refused login records one refusal and a 60 second backoff" {
+  local before after count next
+  before="$(date +%s)"
+  login_as 403
+  after="$(date +%s)"
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"AppRole login failed for domain 'demo'"* ]]
+  [[ "$stderr" == *"refusal 1, no login for the next 60 seconds"* ]]
+  read -r count next < "$STATE_FILE"
+  [ "$count" -eq 1 ]
+  [ "$next" -ge $((before + 60)) ]
+  [ "$next" -le $((after + 60)) ]
+}
+
+@test "inside the backoff window a run exits 75 without sending any request" {
+  local count next re
+  login_as 403
+  read -r count next < "$STATE_FILE"
+  : > "$CALLS"
+  run_demo
+  [ "$status" -eq 75 ]
+  [[ "$output" != *"ran"* ]]
+  [ ! -s "$CALLS" ]
+  re="circuit open for domain 'demo': no login for ([0-9]+) more seconds"
+  [[ "$stderr" =~ $re ]]
+  [ "${BASH_REMATCH[1]}" -ge 1 ]
+  [ "${BASH_REMATCH[1]}" -le 60 ]
+  # An open circuit is not a new refusal: the state is untouched.
+  read -r count next < "$STATE_FILE"
+  [ "$count" -eq 1 ]
+}
+
+@test "once the window has passed a login is attempted again" {
+  login_as 403
+  expire_window
+  : > "$CALLS"
+  run_demo
+  [ "$status" -eq 0 ]
+  [ "$output" = "ran" ]
+  [ "$(grep -c '/v1/auth/approle/login$' "$CALLS")" -eq 1 ]
+}
+
+@test "a refusal after the window keeps counting from the saved refusals" {
+  login_as 403
+  expire_window
+  login_as 403
+  local count
+  read -r count _ < "$STATE_FILE"
+  [ "$count" -eq 2 ]
+  [[ "$stderr" == *"refusal 2, no login for the next 120 seconds"* ]]
+}
+
+@test "a successful login deletes the state and says so" {
+  login_as 403
+  expire_window
+  run_demo
+  [ "$status" -eq 0 ]
+  [ ! -e "$STATE_FILE" ]
+  [[ "$stderr" == *"circuit reset for domain 'demo'"* ]]
+}
+
+@test "deleting the state file resets the breaker by hand" {
+  login_as 403
+  rm "$STATE_FILE"
+  : > "$CALLS"
+  run_demo
+  [ "$status" -eq 0 ]
+  [ "$(grep -c '/v1/auth/approle/login$' "$CALLS")" -eq 1 ]
+}
+
+@test "a success with no state writes none and logs no reset" {
+  run_demo
+  [ "$status" -eq 0 ]
+  [ ! -e "$STATE_FILE" ]
+  [[ "$stderr" != *"circuit"* ]]
+}
+
+@test "the delay doubles per consecutive refusal and caps at 900 seconds" {
+  local expected=(60 120 240 480 900 900 900)
+  local i before after count next
+  for i in 0 1 2 3 4 5 6; do
+    [ ! -e "$STATE_FILE" ] || expire_window
+    before="$(date +%s)"
+    login_as 401
+    after="$(date +%s)"
+    read -r count next < "$STATE_FILE"
+    [ "$count" -eq $((i + 1)) ]
+    [ "$next" -ge $((before + expected[i])) ]
+    [ "$next" -le $((after + expected[i])) ]
+    [[ "$stderr" == *"no login for the next ${expected[i]} seconds"* ]]
+  done
+}
+
+@test "a 400, 401 and 403 each count as a refusal" {
+  local code
+  for code in 400 401 403; do
+    rm -f "$STATE_FILE"
+    login_as "$code"
+    [ -f "$STATE_FILE" ]
+    [[ "$stderr" == *"login refused (HTTP $code)"* ]]
+  done
+}
+
+@test "a timeout, a refused connection or a 5xx creates no state" {
+  local code
+  for code in 500 502 503 404; do
+    login_as "$code"
+    [ "$status" -ne 0 ]
+    [ ! -e "$STATE_FILE" ]
+  done
+  for code in 28 7; do
+    seed_doc secret app/base '{"ALPHA":"one"}'
+    LOGIN_CURL_EXIT="$code" run_bao --domain demo --secrets app/base -- sh -c 'echo ran'
+    [ "$status" -ne 0 ]
+    [[ "$stderr" == *"AppRole login failed for domain 'demo'"* ]]
+    [ ! -e "$STATE_FILE" ]
+  done
+}
+
+@test "a network fault leaves existing state exactly as it was" {
+  local before
+  login_as 403
+  expire_window
+  before="$(cat "$STATE_FILE")"
+  login_as 503
+  [ "$(cat "$STATE_FILE")" = "$before" ]
+  seed_doc secret app/base '{"ALPHA":"one"}'
+  LOGIN_CURL_EXIT=28 run_bao --domain demo --secrets app/base -- sh -c 'echo ran'
+  [ "$(cat "$STATE_FILE")" = "$before" ]
+}
+
+@test "the state file is 0600 and its directory 0700, whatever the umask" {
+  umask 000
+  login_as 403
+  [[ "$(ls -ld "$XDG_STATE_HOME/openbao-run")" == drwx------* ]]
+  [[ "$(ls -l "$STATE_FILE")" == -rw-------* ]]
+}
+
+@test "an existing looser state directory is tightened to 0700" {
+  mkdir -p "$XDG_STATE_HOME/openbao-run"
+  chmod 0755 "$XDG_STATE_HOME/openbao-run"
+  login_as 403
+  [[ "$(ls -ld "$XDG_STATE_HOME/openbao-run")" == drwx------* ]]
+}
+
+@test "the state holds two counters and no credential" {
+  login_as 403
+  [[ "$(cat "$STATE_FILE")" =~ ^[0-9]+\ [0-9]+$ ]]
+  [[ "$(cat "$STATE_FILE")" != *stub-role* ]]
+  [[ "$(cat "$STATE_FILE")" != *stub-secret* ]]
+  [[ "$stderr" != *stub-secret* ]]
+}
+
+@test "one domain's open circuit never blocks another domain" {
+  login_as 403
+  export OTHER_VAULT_ROLE_ID="stub-role" OTHER_VAULT_SECRET_ID="stub-secret"
+  : > "$CALLS"
+  run_bao --domain other --secrets app/base -- sh -c 'echo ran'
+  [ "$status" -eq 0 ]
+  [ "$output" = "ran" ]
+  [ "$(grep -c '/v1/auth/approle/login$' "$CALLS")" -eq 1 ]
+}
+
+@test "unreadable state is ignored with a log line, never a lockout" {
+  mkdir -p "$XDG_STATE_HOME/openbao-run"
+  printf 'garbage\n' > "$STATE_FILE"
+  run_demo
+  [ "$status" -eq 0 ]
+  [[ "$stderr" == *"login backoff state for domain 'demo' is unreadable"* ]]
+}
+
+@test "the ambient-token path touches no breaker state" {
+  seed_doc secret app/base '{"ALPHA":"one"}'
+  BAO_TOKEN=t run_bao --secrets app/base -- sh -c 'echo ran'
+  [ "$status" -eq 0 ]
+  [ ! -e "$XDG_STATE_HOME" ]
 }

@@ -32,6 +32,21 @@
 # something ambient. Without --domain, an already-valid BAO_TOKEN/VAULT_TOKEN
 # in the environment is used, which is the interactive workstation path.
 #
+# Login backoff (per-domain circuit breaker): a refused AppRole login is never
+# retried before its backoff window ends, however often the wrapper is started.
+# A refusal is an HTTP 400, 401 or 403 from the login endpoint; timeouts,
+# connection errors and 5xx are network faults, neither counted nor delayed.
+# Each domain keeps one state file:
+#
+#   ${XDG_STATE_HOME:-$HOME/.local/state}/openbao-run/<domain>
+#
+# directory 0700, file 0600, holding "<consecutive refusals> <epoch seconds
+# before which no login may be attempted>" and never a credential. The Nth
+# consecutive refusal blocks login for min(60 * 2^(N-1), 900) seconds: 60, 120,
+# 240, 480, then 900. While blocked the wrapper contacts nothing and exits 75
+# (EX_TEMPFAIL). A successful login deletes the file; deleting it by hand also
+# resets the breaker.
+#
 # Each --secret/--secrets reads from the KV v2 mount named by the optional leading
 # `<mount>:` prefix, defaulting to $OPENBAO_KV_MOUNT (itself defaulting to
 # "secret" for backward compat) when the prefix is omitted. This lets one
@@ -193,15 +208,66 @@ login_diagnosis() {
   esac
 }
 
+# Login backoff state (see the header): "<refusals> <next-allowed epoch>".
+# State is written only after a refusal, so a failed write is logged rather than
+# fatal — the login failure that follows is the exit the caller needs to see.
+refusals=0
+record_refusal() { # $1 HTTP status
+  local doublings delay
+  refusals=$((refusals + 1))
+  doublings=$((refusals - 1))
+  [ "$doublings" -le 4 ] || doublings=4
+  delay=$((60 << doublings))
+  [ "$delay" -le 900 ] || delay=900
+  if ! { mkdir -p "$state_dir" && chmod 0700 "$state_dir" \
+    && (umask 077 && printf '%s %s\n' "$refusals" "$(($(date +%s) + delay))" > "$state_file"); }; then
+    echo "$prefix WARN could not record the login backoff in $state_file" >&2
+  fi
+  echo "$prefix login refused (HTTP $1) for domain '$domain': refusal $refusals, no login for the next $delay seconds" >&2
+}
+
 if [ -n "$login_payload" ]; then
-  token="$(printf '%s' "$login_payload" \
-    | "$curl_bin" -sSf --max-time 30 -X POST -H 'Content-Type: application/json' \
-        --data-binary @- "$addr/v1/auth/approle/login" \
-    | jq -re '.auth.client_token')" \
-    || {
-      login_diagnosis
-      die "AppRole login failed for domain '$domain' at $addr"
-    }
+  state_dir="${XDG_STATE_HOME:-${HOME:?HOME is not set}/.local/state}/openbao-run"
+  state_file="$state_dir/$domain"
+  if [ -f "$state_file" ]; then
+    saved_refusals=""
+    saved_next=""
+    read -r saved_refusals saved_next < "$state_file" || true
+    case "$saved_refusals:$saved_next" in
+      *[!0-9:]* | :* | *:)
+        echo "$prefix login backoff state for domain '$domain' is unreadable ($state_file); ignoring it" >&2
+        ;;
+      *)
+        refusals=$((10#$saved_refusals))
+        remaining=$((10#$saved_next - $(date +%s)))
+        if [ "$remaining" -gt 0 ]; then
+          echo "$prefix circuit open for domain '$domain': no login for $remaining more seconds" >&2
+          exit 75
+        fi
+        ;;
+    esac
+  fi
+
+  # -f makes an HTTP error status exit 22; -w still appends the status, which is
+  # how a refusal (credential rejected) is told apart from a network fault.
+  login_rc=0
+  login_resp="$(printf '%s' "$login_payload" \
+    | "$curl_bin" -sSf --max-time 30 -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
+        --data-binary @- "$addr/v1/auth/approle/login")" || login_rc=$?
+  login_code="${login_resp: -3}"
+  if [ "$login_rc" -eq 0 ] && token="$(printf '%s' "${login_resp%???}" | jq -re '.auth.client_token')"; then
+    if [ -e "$state_file" ]; then
+      rm -f "$state_file"
+      echo "$prefix circuit reset for domain '$domain': login succeeded" >&2
+    fi
+  else
+    case "$login_code" in
+      400 | 401 | 403) record_refusal "$login_code" ;;
+      *) login_diagnosis ;;
+    esac
+    die "AppRole login failed for domain '$domain' at $addr"
+  fi
+  unset login_resp
 else
   token="$ambient_token"
 fi
