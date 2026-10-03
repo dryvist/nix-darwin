@@ -67,9 +67,8 @@
     })
   ];
 
-  # Same gui/<uid> domain problem as herdr. Nothing signs commits from this
-  # account with a GUI-backed key; its git identity/signing is provisioned
-  # separately (see SETUP.md).
+  # Same gui/<uid> domain problem as herdr. Commits are signed with an SSH key
+  # (home-agent-common.nix), so there is no gpg-agent to keep alive.
   services.gpg-agent.enable = lib.mkForce false;
 
   # WORKAROUND: Disable manpage generation to suppress options.json derivation context warning
