@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.2.2](https://github.com/dryvist/nix-darwin/compare/v3.2.1...v3.2.2) (2026-10-03)
+
+
+### Bug Fixes
+
+* apply resource limits during post-activation ([#2705](https://github.com/dryvist/nix-darwin/issues/2705)) ([1a9c583](https://github.com/dryvist/nix-darwin/commit/1a9c583cde7b73801732aef0c18de700bbacd7c1))
+
 ## [3.2.1](https://github.com/dryvist/nix-darwin/compare/v3.2.0...v3.2.1) (2026-10-03)
 
 
