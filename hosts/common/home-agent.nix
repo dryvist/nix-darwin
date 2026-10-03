@@ -49,8 +49,8 @@
     herdr.enable = lib.mkForce false;
   };
 
-  # Same gui/<uid> domain problem as herdr. Nothing signs commits from this
-  # account, so there is no agent to keep alive.
+  # Same gui/<uid> domain problem as herdr. Commits are signed with an SSH key
+  # (home-agent-common.nix), so there is no gpg-agent to keep alive.
   services.gpg-agent.enable = lib.mkForce false;
 
   # WORKAROUND: Disable manpage generation to suppress options.json derivation context warning

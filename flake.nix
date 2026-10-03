@@ -234,11 +234,20 @@
                 };
                 users = {
                   ${userConfig.user.name} = import ./hosts/${label}/home.nix;
-                  # The automation accounts are headless on every host, so each
-                  # takes one shared home rather than a per-host one.
-                  ${userConfig.agentUsers.claude.name} = import ./hosts/common/home-agent.nix;
-                  ${userConfig.agentUsers.open-llm.name} = import ./hosts/common/home-open-llm.nix;
-                };
+                }
+                # The automation accounts are headless on every host, so each
+                # takes one shared home rather than a per-host one, plus what
+                # every identity shares (hosts/common/home-agent-common.nix).
+                // builtins.mapAttrs (name: _: {
+                  imports = [
+                    ./hosts/common/home-agent-common.nix
+                    {
+                      claude = ./hosts/common/home-agent.nix;
+                      open-llm = ./hosts/common/home-open-llm.nix;
+                    }
+                    .${name}
+                  ];
+                }) userConfig.agentUsers;
 
                 # Shared modules from external flakes:
                 # - nix-ai: Claude, Gemini, Copilot, MCP servers, marketplace plugins
@@ -337,6 +346,12 @@
             # The check evaluates real host configs, where Home Manager option
             # merging is observable, rather than duplicating the source policy.
             token-meter = import ./lib/checks/token-meter.nix {
+              pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+              inherit configs userConfig;
+            };
+
+            # Automation identities: own signing key, own workspace, tools on PATH.
+            agent-identity = import ./lib/checks/agent-identity.nix {
               pkgs = nixpkgs.legacyPackages.aarch64-darwin;
               inherit configs userConfig;
             };
