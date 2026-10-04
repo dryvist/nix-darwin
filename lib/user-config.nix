@@ -144,13 +144,10 @@ in
   # Claude Code OpenTelemetry. Endpoints compose from internalDomain, never
   # re-spelled — see the let-binding above.
   #
-  # Each signal goes to the service that actually stores it, and no signal is
-  # aimed at one that does not. The span collector extracts spans only, so
-  # metrics pointed at it would be discarded; the metrics store ingests OTLP
-  # metrics and serves no logs route, so logs pointed at it would fail every
-  # export interval. nix-ai gates each signal on its own endpoint and pins the
-  # unused exporters to `none`, so an unset endpoint means that signal is not
-  # emitted at all rather than emitted to a conventional default address.
+  # Every signal enters through Cribl, which fans it to the destinations that
+  # support its format. nix-ai gates each signal on its own endpoint and pins
+  # the unused exporters to `none`, so an unset endpoint means that signal is
+  # not emitted at all rather than emitted to a conventional default address.
   #
   # Logs ride the generic endpoint (a BASE url; the exporter appends
   # /v1/logs) and carry the per-request api_request event.
@@ -162,12 +159,10 @@ in
     # Setting it is also what turns span emission on at all.
     tracesEndpoint = "https://otel.${internalDomain}/v1/traces";
 
-    # Also signal-specific and full-path. The metrics store resolves at the
-    # public apex rather than the internal zone, and is reached directly on its
-    # own port — there is no ingress vhost in front of it. Its OTLP route is
-    # under /opentelemetry, and it runs with Prometheus naming on, so the
-    # counters land under the names the vendored dashboard queries.
-    metricsEndpoint = "http://grafana.${baseDomain}:8428/opentelemetry/v1/metrics";
+    # Also signal-specific and full-path. Cribl's OTLP ingress shares the
+    # traces endpoint and fans metrics to VictoriaMetrics with Prometheus
+    # naming enabled, preserving the metric names the dashboard queries.
+    metricsEndpoint = "https://otel.${internalDomain}/v1/metrics";
 
     serviceName = "claude-code";
     # host.name is per-host, so flake.nix's mkHost merges it in — this file is
