@@ -52,6 +52,11 @@
       flake = false;
     };
 
+    homelab-contracts = {
+      url = "github:dryvist/homelab-contracts";
+      flake = false;
+    };
+
     # AI CLI ecosystem (Claude, Gemini, Copilot, MCP, marketplace).
     # Only AI flake nix-darwin imports — Claude/Gemini/Codex/MCP config
     # all flow through nix-ai. nix-claude-code is consumed transitively
@@ -67,6 +72,7 @@
         ai-llm-prompts.follows = "ai-llm-prompts";
         claude-code-plugins.follows = "claude-code-plugins";
         jacobpevans-cc-plugins.follows = "jacobpevans-cc-plugins";
+        homelab-contracts.follows = "homelab-contracts";
       };
     };
 
@@ -122,6 +128,7 @@
       darwin,
       home-manager,
       nix-ai,
+      homelab-contracts,
       nix-ai-open-harness,
       nix-openwhispr,
       nix-home,
@@ -193,6 +200,7 @@
           specialArgs = {
             inherit
               nix-ai
+              homelab-contracts
               hostConfig
               nix-homebrew
               ;
@@ -282,7 +290,9 @@
 
       # Expose custom packages for nix-update automation
       packages.aarch64-darwin = {
-        cribl-edge = nixpkgs.legacyPackages.aarch64-darwin.callPackage ./packages/cribl-edge.nix { };
+        cribl-edge = nixpkgs.legacyPackages.aarch64-darwin.callPackage ./packages/cribl-edge.nix {
+          inherit homelab-contracts;
+        };
       };
 
       # Formatter for `nix fmt` command

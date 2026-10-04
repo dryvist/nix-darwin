@@ -20,6 +20,7 @@
   lib,
   config,
   pkgs,
+  homelab-contracts,
   ...
 }:
 
@@ -96,7 +97,7 @@ in
 
     package = lib.mkOption {
       type = lib.types.package;
-      default = pkgs.callPackage ../../../packages/cribl-edge.nix { };
+      default = pkgs.callPackage ../../../packages/cribl-edge.nix { inherit homelab-contracts; };
       description = "The Cribl Edge package to use.";
     };
 

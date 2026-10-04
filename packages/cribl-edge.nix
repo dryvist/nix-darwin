@@ -5,23 +5,22 @@
   xar,
   cpio,
   gzip,
+  homelab-contracts,
 }:
+let
+  criblCatalog = builtins.fromJSON (
+    builtins.readFile "${homelab-contracts}/ansible/roles/cribl_edge/files/cribl.json"
+  );
+  version = criblCatalog.version;
+  releaseDir = builtins.head (lib.splitString "-" version);
+in
 stdenvNoCC.mkDerivation rec {
   pname = "cribl-edge";
-  version = "4.19.0-0fbd6d34"; # cribl-edge
-
-  # Release directory is the semver portion of `version`. Renovate's
-  # customManager only rewrites `version`, so the URL must derive the dir
-  # from it — hardcoding `/dl/4.17.0/` once broke this on a 4.18 bump.
-  releaseDir = lib.concatStringsSep "." [
-    (lib.versions.major version)
-    (lib.versions.minor version)
-    (lib.versions.patch version)
-  ];
+  inherit version;
 
   src = fetchurl {
     url = "https://cdn.cribl.io/dl/${releaseDir}/cribl-${version}-darwin-universal.pkg";
-    hash = "sha256-9gKBd3amQpTI64ge01u5OKhtu4hxTKpFPJayy99LiBw=";
+    hash = "sha256-Mqlvmc3LP/1y8LU66BVow83k0EniHCUW4grx51ELqkA=";
   };
 
   nativeBuildInputs = [

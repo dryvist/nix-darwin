@@ -17,7 +17,6 @@ _:
     ./claude-continuity.nix
     ./corosync-qnetd-arbiter.nix
     ./cribl-edge.nix
-    ./cribl-stream.nix
     ./github-runner-container.nix
     ./offbox-sync.nix
     ./openbao-run.nix

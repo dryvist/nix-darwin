@@ -3,9 +3,9 @@
 // Inherits all org policy (auto-merge tiers, trusted orgs, dependency dashboard,
 // PR/branch limits, commit-message format, 0-day CVE handling) from the shared
 // nix preset: local>dryvist/.github:renovate-nix (= org default + native nix
-// manager). Only genuinely repo-specific config lives here: the Cribl Edge
-// custom datasource/manager and the flake-input grouping/scheduling that the
-// org's minor/patch tiers do not cover for git-refs digest updates.
+// manager). Only genuinely repo-specific config lives here: the Cribl pack
+// manager and the flake-input grouping/scheduling that the org's minor/patch
+// tiers do not cover for git-refs digest updates.
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
@@ -13,26 +13,7 @@
     ":enablePreCommit"
   ],
 
-  // Custom datasource: Cribl Edge CDN version feed
-  // https://cdn.cribl.io/versions.json → {"version":"4.17.0-7e952fa7",...}
-  "customDatasources": {
-    "cribl-edge": {
-      "defaultRegistryUrlTemplate": "https://cdn.cribl.io/versions.json",
-      "format": "json",
-      "transformTemplates": ["{\"releases\":[{\"version\":version}]}"]
-    }
-  },
-
-  // Custom regex manager: track Cribl Edge version in packages/cribl-edge.nix
   "customManagers": [
-    {
-      "customType": "regex",
-      "managerFilePatterns": ["/packages/cribl-edge\\.nix$/"],
-      "matchStrings": ["version = \"(?<currentValue>[^\"]+)\"; # cribl-edge"],
-      "depNameTemplate": "cribl-edge",
-      "datasourceTemplate": "custom.cribl-edge",
-      "versioningTemplate": "loose"
-    },
     {
       // Bumps only the version in the release URL. The accompanying fetchzip
       // `hash` is content-addressed and cannot be derived from a regex match
@@ -93,14 +74,6 @@
       "matchManagers": ["github-actions"],
       "groupName": "github-actions",
       "schedule": ["* 15 * * 5", "* 5 * * 1"]
-    },
-    {
-      "description": "Cribl Edge version - Fri ~15:00 / Mon ~05:00 America/New_York",
-      "matchDatasources": ["custom.cribl-edge"],
-      "groupName": "cribl-edge",
-      "schedule": ["* 15 * * 5", "* 5 * * 1"],
-      "commitMessageTopic": "Cribl Edge",
-      "commitMessageExtra": "to {{newVersion}}"
     }
   ]
 }
