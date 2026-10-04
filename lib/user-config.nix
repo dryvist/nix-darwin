@@ -96,11 +96,8 @@ in
   # ==========================================================================
   logging = {
     syslog = {
-      # Homelab HAProxy LB — the Cribl Edge tcpjson target (hosts/common/
-      # cribl.nix). The old syslogd remote forward that also used this block
-      # is retired (see modules/darwin/logging.nix header); only the server
-      # name remains in use.
-      server = "haproxy.${internalDomain}";
+      # Homelab syslog CNAME — the Cribl Edge tcpjson target (hosts/common/cribl.nix).
+      server = "syslog.${internalDomain}";
     };
   };
 

@@ -118,11 +118,11 @@ Two file-input details that bite here:
 
 ## Where the data goes
 
-Inline sources on this host ship over TCP JSON to the HAProxy-fronted Cribl
-Stream workers, which forward to Splunk. Index/sourcetype are stamped at the
-Edge. TCP JSON, not Cribl TCP: the `cribl_tcp` destination is refused on a
-standalone node ("Destination is not allowed in this deployment" — it
-requires a distributed deployment) and TCP JSON is Cribl's documented
+Inline sources on this host ship over TCP JSON through the `syslog` CNAME to
+the Cribl Stream workers, which forward to Splunk. Index/sourcetype are
+stamped at the Edge. TCP JSON, not Cribl TCP: the `cribl_tcp` destination is
+refused on a standalone node ("Destination is not allowed in this deployment" —
+it requires a distributed deployment) and TCP JSON is Cribl's documented
 single-instance substitute. The receiving side (contracts port
 `cribl_tcpjson`, HAProxy frontend, Stream `tcpjson` source) is tracked in
 ansible-proxmox-apps#525; until it lands, the Edge persistent queue buffers
