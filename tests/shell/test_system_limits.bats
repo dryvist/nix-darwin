@@ -11,8 +11,8 @@ setup() {
   export SYSTEM_LIMITS_CALL_LOG="$BATS_TEST_TMPDIR/calls"
   : >"$SYSTEM_LIMITS_CALL_LOG"
 
-  cat >"$SYSTEM_LIMITS_LAUNCHCTL" <<'STUB'
-#!/usr/bin/env bash
+  printf '#!%s\n' "$BASH" >"$SYSTEM_LIMITS_LAUNCHCTL"
+  cat >>"$SYSTEM_LIMITS_LAUNCHCTL" <<'STUB'
 printf '%s\n' "$*" >>"$SYSTEM_LIMITS_CALL_LOG"
 if [ "${1:-}" = asuser ] && [ "${FAIL_GUI_LIMIT:-0}" = 1 ]; then
   exit 1
@@ -20,8 +20,8 @@ fi
 STUB
   chmod +x "$SYSTEM_LIMITS_LAUNCHCTL"
 
-  cat >"$SYSTEM_LIMITS_STAT" <<'STUB'
-#!/usr/bin/env bash
+  printf '#!%s\n' "$BASH" >"$SYSTEM_LIMITS_STAT"
+  cat >>"$SYSTEM_LIMITS_STAT" <<'STUB'
 printf '%s\n' "${SYSTEM_LIMITS_TEST_CONSOLE_UID:?}"
 STUB
   chmod +x "$SYSTEM_LIMITS_STAT"
