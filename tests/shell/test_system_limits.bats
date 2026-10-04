@@ -27,14 +27,10 @@ STUB
   chmod +x "$SYSTEM_LIMITS_STAT"
 }
 
-run_apply() {
-  run bash "$SCRIPT_UNDER_TEST"
-}
-
 @test "sets maxfiles in the current and active GUI launchd contexts" {
   export SYSTEM_LIMITS_TEST_CONSOLE_UID=501
 
-  run_apply
+  run bash "$SCRIPT_UNDER_TEST"
 
   [ "$status" -eq 0 ]
   grep -Fqx -- "limit maxfiles 65536 65536" "$SYSTEM_LIMITS_CALL_LOG"
@@ -45,7 +41,7 @@ run_apply() {
 @test "defers GUI limit until login when loginwindow owns the console" {
   export SYSTEM_LIMITS_TEST_CONSOLE_UID=0
 
-  run_apply
+  run bash "$SCRIPT_UNDER_TEST"
 
   [ "$status" -eq 0 ]
   [ "$(wc -l <"$SYSTEM_LIMITS_CALL_LOG")" -eq 1 ]
@@ -56,7 +52,7 @@ run_apply() {
   export SYSTEM_LIMITS_TEST_CONSOLE_UID=501
   export FAIL_GUI_LIMIT=1
 
-  run_apply
+  run bash "$SCRIPT_UNDER_TEST"
 
   [ "$status" -eq 1 ]
   [[ "$output" == *"GUI launchctl limit maxfiles failed for console uid 501"* ]]
