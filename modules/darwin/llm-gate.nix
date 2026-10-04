@@ -135,8 +135,8 @@ in
 
         Required whenever a gate port mirrors its loopback upstream (the default
         apiPort == apiUpstreamPort, likewise the cluster port): a wildcard bind
-        also owns 127.0.0.1:PORT, and when the loopback upstream (llama-swap)
-        drops its specific bind, Caddy captures loopback traffic into its own
+        also owns 127.0.0.1:PORT, and when the loopback upstream drops its
+        specific bind, Caddy captures loopback traffic into its own
         TLS listener ("Client sent an HTTP request to an HTTPS server"). Binding
         the LAN address guarantees loopback:PORT is answered by the upstream or
         refused, never by the gate.
@@ -164,13 +164,13 @@ in
     apiPort = lib.mkOption {
       type = lib.types.port;
       default = 11434;
-      description = "Gated OpenAI-compatible API port on the LAN bind address (mirrors the loopback llama-swap port so consumers keep the :11434 convention).";
+      description = "Gated OpenAI-compatible API port on the LAN bind address (mirrors the loopback MLX endpoint).";
     };
 
     apiUpstreamPort = lib.mkOption {
       type = lib.types.port;
       default = 11434;
-      description = "Loopback llama-swap port the API site proxies to.";
+      description = "Loopback MLX endpoint port the API site proxies to.";
     };
 
     clusterPort = lib.mkOption {

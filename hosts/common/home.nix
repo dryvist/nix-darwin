@@ -149,10 +149,8 @@ in
     cursor.enable = lib.mkForce false;
     opencode.enable = lib.mkForce false;
 
-    # Local MLX inference server (mlx_lm + llama-swap proxy on :11434).
-    # Brings the MLX model-server LaunchAgent under Nix management — without
-    # this, the registry at services.aiStack.models is materialized to nothing
-    # and llama-swap.json drifts from whatever was last activated by hand.
+    # Local MLX inference. nix-ai renders the selected resident model agents
+    # and catalog-derived LiteLLM routes under Nix management.
     # Sizing (cacheMemoryMb / prefillBatchSize) is per-host from the registry.
     # Gated on the host defining `mlx` so a non-inference host is left untouched
     # (no MLX server) rather than crashing on a missing attr.
