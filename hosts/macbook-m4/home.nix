@@ -77,21 +77,20 @@
       # subagents through it.
       claudeDirect = true;
 
-      # Local rungs answer through the queue front that returns 429 at once while
-      # a model is busy, so LiteLLM falls through to the next rung.
-      localEndpoint = (import "${nix-ai}/vars/ai-stack.nix").endpoints.mlx_direct;
+      # The remaining subagent local rung uses the direct default resident.
+      # Other role aliases (including fast, cheap, small, and judge) are
+      # rendered directly from the selected resident catalog entries.
+      localEndpoint = (import "${nix-ai}/vars/ai-stack.nix").endpoints.mlx_local;
 
-      # The chain this laptop's proxy walks, in order — local first, always:
+      # The chain this laptop's proxy walks, in order:
       #
-      #   subagent / fast / cheap  ->  this laptop's `default` model
-      #                            ->  this laptop's `small` model
+      #   subagent                 ->  this laptop's `default` resident
       #                            ->  router:subagent (ZDR-only key)
       #
-      # Both local rungs are the same role-resolved models the Mac Studio
-      # serves for `default` and `small`, so a request answers the same way on
-      # either Mac. A busy or swapping local model hands over to the smaller
-      # one before anything leaves the machine; a request too large for a
-      # local window escapes straight to the router (nix-ai
+      # The other local roles are explicit catalog-derived groups served by
+      # their resident agents, rather than extra rungs through the former
+      # single-model queue endpoint. A request too large for the default
+      # resident escapes to the shared router (nix-ai
       # context_window_fallbacks), never truncated.
       #
       # The router rung authenticates with this host's own
@@ -112,17 +111,6 @@
           name = "subagent";
           id = config.services.aiStack.models.default;
         }
-        {
-          name = "subagent-local-small";
-          id = config.services.aiStack.models.small;
-        }
-      ];
-
-      # `cheap` joins `fast` as an alias of the same chain, so neither falls
-      # through the `*` wildcard straight to the router and skips this host.
-      headAliases = [
-        "fast"
-        "cheap"
       ];
 
       # The router bearer reaches the proxy as OPENAI_API_KEY through

@@ -2,7 +2,7 @@
 # assigns to that host's class (hosts/common/role-map.nix).
 #
 # Positive half: each host's primary Home Manager user evaluates with no failed
-# assertion, so every role the class declares compiles into a llama-swap alias.
+# assertion, so every role the class declares compiles into a serving alias.
 #
 # Negative half: a model the class keeps whose id is empty leaves every role it
 # serves unresolved, and nix-ai's "every AI-stack logical role must resolve"
