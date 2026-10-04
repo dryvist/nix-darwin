@@ -18,6 +18,7 @@
 
 let
   cfg = config.system.resourceLimits;
+  agentNofile = import ../../lib/agent-nofile.nix;
   optStr = v: if v == null then "" else toString v;
 
   applyScript = pkgs.writeShellApplication {
@@ -86,7 +87,7 @@ in
     launchctlMaxFiles = {
       soft = lib.mkOption {
         type = lib.types.nullOr lib.types.ints.positive;
-        default = 524288;
+        default = agentNofile;
         description = ''
           Soft limit for `launchctl limit maxfiles`. Set both soft and hard, or
           set both null to skip the launchctl limit.
@@ -94,7 +95,7 @@ in
       };
       hard = lib.mkOption {
         type = lib.types.nullOr lib.types.ints.positive;
-        default = 524288;
+        default = agentNofile;
         description = ''
           Hard limit for `launchctl limit maxfiles`. Set both soft and hard, or
           set both null to skip the launchctl limit.

@@ -280,7 +280,7 @@ default_mount="${OPENBAO_KV_MOUNT:-secret}"
 # printing it, so no secret ever reaches a command substitution's pipe buffer.
 doc_json=""
 read_doc() { # $1 mount, $2 path
-  doc_json="$("$curl_bin" -sSf --max-time 30 -H "X-Vault-Token: $token" \
+  doc_json="$("$curl_bin" -sSf --max-time 30 -H @<(printf 'X-Vault-Token: %s\n' "$token") \
     "$addr/v1/$1/data/$2")" \
     || die "read failed: $1/$2 (path missing, or the credential lacks read on it?)"
 }
