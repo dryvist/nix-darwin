@@ -11,7 +11,7 @@ let
   criblCatalog = builtins.fromJSON (
     builtins.readFile "${homelab-contracts}/ansible/roles/cribl_edge/files/cribl.json"
   );
-  version = criblCatalog.version;
+  inherit (criblCatalog) version;
   releaseDir = builtins.head (lib.splitString "-" version);
 in
 stdenvNoCC.mkDerivation rec {
