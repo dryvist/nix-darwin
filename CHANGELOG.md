@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.3.0](https://github.com/dryvist/nix-darwin/compare/v3.2.2...v3.3.0) (2026-10-04)
+
+
+### Features
+
+* **limits:** export the shared agent file limit ([a20757a](https://github.com/dryvist/nix-darwin/commit/a20757a3139fb9a02536decad47b6256d760edad))
+
+
+### Bug Fixes
+
+* read request headers from file descriptors ([#2713](https://github.com/dryvist/nix-darwin/issues/2713)) ([9057739](https://github.com/dryvist/nix-darwin/commit/90577390aba14820427e69a1b7cb85e043c4df7f))
+
 ## [3.2.2](https://github.com/dryvist/nix-darwin/compare/v3.2.1...v3.2.2) (2026-10-03)
 
 
