@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.4.0](https://github.com/dryvist/nix-darwin/compare/v3.3.1...v3.4.0) (2026-10-04)
+
+
+### Features
+
+* **telemetry:** route agent metrics through Cribl ([#2728](https://github.com/dryvist/nix-darwin/issues/2728)) ([e188ca0](https://github.com/dryvist/nix-darwin/commit/e188ca0ea503df6b4fbea716877e28db79eca8a2))
+
+
+### Bug Fixes
+
+* **mlx:** remove obsolete local queue option ([#2729](https://github.com/dryvist/nix-darwin/issues/2729)) ([09d39af](https://github.com/dryvist/nix-darwin/commit/09d39af821bfe35437fedf37d1b4583db2613cb1))
+
 ## [3.3.1](https://github.com/dryvist/nix-darwin/compare/v3.3.0...v3.3.1) (2026-10-04)
 
 
