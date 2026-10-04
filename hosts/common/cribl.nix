@@ -36,6 +36,20 @@ let
     hash = "sha256-VzRPBode10yLdDqmcaOhwWnTpUVmF10OwVkXZtyjGJ4=";
     stripRoot = false;
   };
+  judgeEnabled = hostConfig ? mlx && (hostConfig.mlx.judge.enable or false);
+  judgeModel = if judgeEnabled then hostConfig.mlx.judge.model else null;
+  judgeProcessSetYaml = lib.optionalString judgeEnabled (
+    builtins.concatStringsSep "\n" [
+      "metadata:"
+      "      - name: telemetry_role"
+      "        value: \"'judge'\""
+      "    process:"
+      "      sets:"
+      "        - name: judge"
+      "          filter: \"cmdline.args.includes('${judgeModel}')\""
+      "          includeChildren: false"
+    ]
+  );
 
   # One full claude/codex/gemini/antigravity input set per managed OS user
   # (split out for the repo file-size gate — see ./cribl-ai-inputs.nix).
@@ -126,7 +140,7 @@ in
                 - pipeline: bench_events
                   output: cribl_stream
             # Whole-machine + per-process OS metrics (native system_metrics
-            # Source, Edge 4.18 — host CPU/mem/disk/net plus process metrics),
+            # Source — host CPU/mem/disk/net plus the optional judge process),
             # 10s poll ≈ an always-on Activity Monitor.
             # INTERIM: routed to the llm_metrics pipeline (index=llm, EVENT) —
             # the prior behavior. Stamping the os_metrics METRIC index was tried
@@ -140,6 +154,7 @@ in
               type: system_metrics
               disabled: false
               pollingInterval: 10
+              ${judgeProcessSetYaml}
               sendToRoutes: false
               connections:
                 - pipeline: llm_metrics
