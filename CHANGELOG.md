@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.1](https://github.com/dryvist/nix-darwin/compare/v3.4.0...v3.4.1) (2026-10-04)
+
+
+### Bug Fixes
+
+* **mlx:** remove stale queue endpoint config ([#2733](https://github.com/dryvist/nix-darwin/issues/2733)) ([6e1a849](https://github.com/dryvist/nix-darwin/commit/6e1a849763d542d1d030b4cd01ee2bac906857a6))
+
 ## [3.4.0](https://github.com/dryvist/nix-darwin/compare/v3.3.1...v3.4.0) (2026-10-04)
 
 
