@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.3.1](https://github.com/dryvist/nix-darwin/compare/v3.3.0...v3.3.1) (2026-10-04)
+
+
+### Bug Fixes
+
+* apply maxfiles to active GUI launchd ([#2721](https://github.com/dryvist/nix-darwin/issues/2721)) ([acf29ab](https://github.com/dryvist/nix-darwin/commit/acf29ab84e4d18ae47b7f6b2c1463f6476f62f98))
+
 ## [3.3.0](https://github.com/dryvist/nix-darwin/compare/v3.2.2...v3.3.0) (2026-10-04)
 
 
