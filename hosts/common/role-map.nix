@@ -4,8 +4,8 @@
 # state only runtime posture; no model, role or concurrency is repeated here.
 #
 # The registry holds exactly the roles the map assigns to this host class, so
-# the nix-ai assertion that every registry role compiles into a llama-swap
-# alias is checked against what the class declares.
+# the nix-ai static-serving assertion checks every registry role against the
+# LiteLLM aliases compiled for this class.
 {
   config,
   lib,
@@ -29,12 +29,5 @@ in
         ;
     };
     services.aiStack.models = projection.aiStackModels;
-
-    # HAProxy queue front: one backend per model the class keeps. The module
-    # asserts llama-swap concurrency equals the role map's.
-    programs.mlx.localQueue = {
-      enable = true;
-      hostClass = hostConfig.class;
-    };
   };
 }
