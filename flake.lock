@@ -1339,11 +1339,11 @@
     "nix-ai_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1791060457,
-        "narHash": "sha256-5la6FxRRqL8NNsqD2S/WEOiUqoo0pG6CzfO+t++c/lg=",
+        "lastModified": 1791066850,
+        "narHash": "sha256-sOVZRXhlQkxghIsdcNR7vXSn+mavujF0AYH/KUXQGmc=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "9f591895dce45d5318c371dbe099e33829aa72e8",
+        "rev": "ed53fd7097d151ca6b7869d519856c518a5a77d5",
         "type": "github"
       },
       "original": {
@@ -1456,11 +1456,11 @@
         "orbstack-kubernetes": "orbstack-kubernetes"
       },
       "locked": {
-        "lastModified": 1791062078,
-        "narHash": "sha256-NQGHOYIR5s0ujBVD1GM1q3Z+Nop3PggpIkTB1T3GDY0=",
+        "lastModified": 1791071515,
+        "narHash": "sha256-zzO8OMJ2gWEkbyGoFjCDhkvUJPkIPFbB8rzj2a+MGEs=",
         "owner": "dryvist",
         "repo": "nix-home",
-        "rev": "f9abc51865900102afbfd06cdb6335b31aa05c43",
+        "rev": "3f152dc406b06f9e2aed4d749192679b0fd9ba78",
         "type": "github"
       },
       "original": {
