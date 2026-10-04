@@ -123,7 +123,7 @@ in
           test_system_limits.bats \
           test_validate_nix_before_all.bats \
           test_verify_symlinks.bats; do
-          bats tests/shell/$f
+          bats --print-output-on-failure tests/shell/$f
         done
         touch $out
       '';
