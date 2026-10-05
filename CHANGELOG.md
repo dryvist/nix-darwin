@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.5.0](https://github.com/dryvist/nix-darwin/compare/v3.4.1...v3.5.0) (2026-10-05)
+
+
+### Features
+
+* source Cribl Edge package data from catalog ([#2737](https://github.com/dryvist/nix-darwin/issues/2737)) ([ca8210d](https://github.com/dryvist/nix-darwin/commit/ca8210d3f7f870f86f5d33fdc2f3ed7e685cb47a))
+
+
+### Bug Fixes
+
+* follow nix-home main ([#2738](https://github.com/dryvist/nix-darwin/issues/2738)) ([cf56b3b](https://github.com/dryvist/nix-darwin/commit/cf56b3ba1489e4fed4533fd4a82b61046fc498e3))
+* **telemetry:** publish judge process signal from Edge ([#2740](https://github.com/dryvist/nix-darwin/issues/2740)) ([d768853](https://github.com/dryvist/nix-darwin/commit/d768853f656364e0be0b90af119ac7b85f66653e))
+
 ## [3.4.1](https://github.com/dryvist/nix-darwin/compare/v3.4.0...v3.4.1) (2026-10-04)
 
 
