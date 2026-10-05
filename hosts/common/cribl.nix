@@ -36,8 +36,9 @@ let
     hash = "sha256-VzRPBode10yLdDqmcaOhwWnTpUVmF10OwVkXZtyjGJ4=";
     stripRoot = false;
   };
-  judgeEnabled = hostConfig ? mlx && (hostConfig.mlx.judge.enable or false);
-  judgeModel = if judgeEnabled then hostConfig.mlx.judge.model else null;
+  mlxModels = config.home-manager.users.${userConfig.user.name}.services.aiStack.models or { };
+  judgeModel = mlxModels.judge or null;
+  judgeEnabled = judgeModel != null;
   judgeProcessSetYaml = lib.optionalString judgeEnabled (
     builtins.concatStringsSep "\n" [
       "metadata:"
