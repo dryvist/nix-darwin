@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.1](https://github.com/dryvist/nix-darwin/compare/v3.5.0...v3.5.1) (2026-10-05)
+
+
+### Bug Fixes
+
+* **zsh:** drop per-shell DS_Store walk and duplicate compinit ([#2747](https://github.com/dryvist/nix-darwin/issues/2747)) ([a4214cf](https://github.com/dryvist/nix-darwin/commit/a4214cf8a2fc902e274836bd94093413b21d5c5a))
+
 ## [3.5.0](https://github.com/dryvist/nix-darwin/compare/v3.4.1...v3.5.0) (2026-10-05)
 
 
