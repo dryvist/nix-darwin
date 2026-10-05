@@ -109,7 +109,6 @@ All configuration moved to `home/home.nix`:
 **Environment**:
 
 - Session logging to ~/logs/
-- .DS_Store cleanup
 - Tab width settings
 
 ## Usage

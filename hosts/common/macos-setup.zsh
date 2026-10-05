@@ -1,4 +1,4 @@
-# macOS-specific setup and cleanup
+# macOS-specific interactive shell setup
 
 # Set tabs to 2 spaces
 tabs -2
@@ -11,7 +11,6 @@ tabs -2
 # `brew outdated` by hand when you want it; the darwin-rebuild is the source of
 # truth for what's installed.
 
-# Clean up .DS_Store files in common directories.
-# Single find across all dirs; -exec rm {} + batches args for fewer rm invocations.
-# Runs in the background to avoid blocking shell startup.
-{ find ~/.config/ "$GIT_HOME/" ~/obsidian/ -name ".DS_Store" -depth -exec rm {} + 2>/dev/null; } &!
+# Per-shell work stays constant-time: this file runs for every interactive shell
+# (each terminal tab, each agent session), so it never walks the filesystem.
+# .DS_Store files are ignored by git globally and excluded by the `tgz` alias.
