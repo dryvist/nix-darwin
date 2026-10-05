@@ -134,7 +134,14 @@ in
 
   # --- Programs Configuration ---
   programs = {
-    zsh.enable = true;
+    zsh = {
+      enable = true;
+      # The home-manager zshrc (oh-my-zsh) runs the only compinit, with a dump
+      # file named per zsh version. A second global compinit in /etc/zshrc writes
+      # one shared ~/.zcompdump that the system zsh and the Nix zsh rewrite for
+      # each other on every start, and doubles the completion work.
+      enableGlobalCompInit = false;
+    };
     raycast.enable = !isServer;
   };
 
