@@ -50,11 +50,10 @@
             - name: sourcetype
               value: "'mlx:bench'"
   '';
-  # system_metrics -> index=llm (EVENT), sourcetype mlx:metrics. INTERIM
-  # (see in_system_metrics above): the os_metrics METRIC-index route was
-  # reverted because this S2S path ships event-format data that a metric
-  # index rejects. Restore os_metrics here once the Stream side formats
-  # these as Splunk metrics via a per-index os_metrics token.
+  # system_metrics -> index=llm (EVENT), sourcetype mlx:metrics. The
+  # judge Process Set adds its start-time metric fields here; Stream republishes
+  # that one signal as a native metric for VictoriaMetrics. Host metrics remain
+  # events because this S2S path does not preserve Cribl's metric metadata.
   "pipelines/llm_metrics/conf.yml" = ''
     output: default
     functions:
@@ -66,6 +65,14 @@
               value: "'llm'"
             - name: sourcetype
               value: "'mlx:metrics'"
+      - id: eval
+        filter: "process_start_time_seconds !== undefined"
+        conf:
+          add:
+            - name: _metric
+              value: "'judge_process_start_time_seconds'"
+            - name: _value
+              value: "Number(process_start_time_seconds)"
   '';
   # Critical macOS event telemetry -> index=os. sourcetype is derived from
   # __inputId, one explicit branch per wired Source. The fallback is a visible

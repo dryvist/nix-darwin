@@ -22,9 +22,8 @@ in
   imports = [
     # Darwin system modules
     ../../modules/darwin/common.nix
-    # Cribl Edge/Stream log shipping (self-gated on `hostConfig ? mlx`).
+    # Cribl Edge log shipping (self-gated on `hostConfig ? mlx`).
     ./cribl.nix
-    ./cribl-stream-local.nix
     # Shared OpenBao-backed credential/config wrapper family.
     ./openbao-clients.nix
     ./resolver-services.nix

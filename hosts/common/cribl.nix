@@ -1,21 +1,24 @@
-# Cribl log shipping (inference hosts) — Edge GitOps config + idle local Stream
+# Cribl Edge GitOps config (inference hosts)
 #
 # Split out of default.nix (repo file-size gate): the declarative Cribl Edge
-# config tree (inputs/outputs/pipelines/packs) and the disabled local Stream
-# aggregator. Imported unconditionally by ./default.nix; the Edge block gates
-# itself on `hostConfig ? mlx` (a local LLM box), so non-inference hosts get
-# nothing. See docs/CRIBL-GITOPS.md.
+# config tree (inputs/outputs/pipelines/packs). Imported unconditionally by
+# ./default.nix; the Edge block gates itself on `hostConfig ? mlx` (a local
+# LLM box), so non-inference hosts get nothing. See docs/CRIBL-GITOPS.md.
 
 {
   config,
   lib,
   pkgs,
   hostConfig,
+  homelab-contracts,
   ...
 }:
 
 let
   userConfig = import ../../lib/user-config.nix;
+  criblCatalog = builtins.fromJSON (
+    builtins.readFile "${homelab-contracts}/ansible/roles/cribl_edge/files/cribl.json"
+  );
 
   # AI-CLI transcript packs, hoisted so the same derivation both deploys as a
   # pack (provenance/UI) AND supplies its pipeline confs verbatim to the
@@ -33,6 +36,21 @@ let
     hash = "sha256-VzRPBode10yLdDqmcaOhwWnTpUVmF10OwVkXZtyjGJ4=";
     stripRoot = false;
   };
+  mlxModels = config.home-manager.users.${userConfig.user.name}.services.aiStack.models or { };
+  judgeModel = mlxModels.judge or null;
+  judgeEnabled = judgeModel != null;
+  judgeProcessSetYaml = lib.optionalString judgeEnabled (
+    builtins.concatStringsSep "\n" [
+      "metadata:"
+      "      - name: telemetry_role"
+      "        value: \"'judge'\""
+      "    process:"
+      "      sets:"
+      "        - name: judge"
+      "          filter: \"cmdline.args.includes('${judgeModel}')\""
+      "          includeChildren: false"
+    ]
+  );
 
   # One full claude/codex/gemini/antigravity input set per managed OS user
   # (split out for the repo file-size gate — see ./cribl-ai-inputs.nix).
@@ -123,7 +141,7 @@ in
                 - pipeline: bench_events
                   output: cribl_stream
             # Whole-machine + per-process OS metrics (native system_metrics
-            # Source, Edge 4.18 — host CPU/mem/disk/net plus process metrics),
+            # Source — host CPU/mem/disk/net plus the optional judge process),
             # 10s poll ≈ an always-on Activity Monitor.
             # INTERIM: routed to the llm_metrics pipeline (index=llm, EVENT) —
             # the prior behavior. Stamping the os_metrics METRIC index was tried
@@ -137,6 +155,7 @@ in
               type: system_metrics
               disabled: false
               pollingInterval: 10
+              ${judgeProcessSetYaml}
               sendToRoutes: false
               connections:
                 - pipeline: llm_metrics
@@ -490,13 +509,12 @@ in
           outputs:
             cribl_stream:
               type: tcpjson
-              # Homelab HAProxy (FQDN), load-balanced across the Cribl Stream
-              # workers' in_cribl_s2s ingest — the live path, service port 10300.
+              # Homelab syslog CNAME for the Cribl Stream workers, service port 10300.
               host: ${userConfig.logging.syslog.server}
               port: 10300
               pqEnabled: true
             # Dedicated LLM service ports (Stream routes/enriches off the
-            # port). Same HAProxy target; cribl_gate idles without its input.
+            # port). Same syslog CNAME; cribl_gate idles without its input.
             # cribl_llm also idles for now: its :10321 frontend is not yet
             # provisioned, so in_llm_logs ships via cribl_stream (:10300)
             # instead — see the in_llm_logs connection note above. Kept
@@ -512,7 +530,7 @@ in
               port: 10322
               pqEnabled: true
             # Per-AI-CLI service ports (one port per CLI so Stream keys
-            # routing/enrichment off the frontend). Same HAProxy target as
+            # routing/enrichment off the frontend). Same syslog CNAME as
             # cribl_stream; PQ buffers locally until each frontend is live.
             cribl_codex:
               type: tcpjson
@@ -557,7 +575,7 @@ in
       # the Edge process in modules/darwin/apps/cribl-edge.nix), normalizes to
       # OTel-AI llm.* fields, stamps index/sourcetype, and routes to the
       # default output.
-      packs = {
+      packs = lib.filterAttrs (name: _: builtins.elem name criblCatalog.packs.edge_macos) {
         cc-edge-the-mac-pack-io = pkgs.fetchzip {
           url = "https://github.com/dryvist/cc-edge-the-mac-pack-io/releases/download/v0.5.0/cc-edge-the-mac-pack-io-v0.5.0.crbl"; # renovate: cc-edge-the-mac-pack-io
           extension = "tar.gz";

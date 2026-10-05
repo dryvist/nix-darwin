@@ -2,10 +2,9 @@
 #
 # Every module that supervises an Apple `container` Linux VM needs the
 # per-user container-apiserver running first. This module owns that bring-up
-# as ONE launchd one-shot agent, shared by all consumers (cribl-stream,
-# github-runner-container) — each sets `enable = lib.mkDefault true` from its
-# own config block, so however many consumers a host activates, exactly one
-# runtime agent exists.
+# as ONE launchd one-shot agent, shared by the GitHub runner container — its
+# config sets `enable = lib.mkDefault true`, so each host activates one runtime
+# agent.
 #
 # `container` is per-user (talks to the login user's container-apiserver), so
 # this is a user agent, not a root daemon — server hosts run auto-login
