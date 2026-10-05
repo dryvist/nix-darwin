@@ -20,6 +20,22 @@
     "ai-assistant-instructions": {
       "flake": false,
       "locked": {
+        "lastModified": 1791222926,
+        "narHash": "sha256-sK/EzVn2S5eYiK/EUa6vETNhdYsRo8JgviWET3pO9mY=",
+        "owner": "dryvist",
+        "repo": "ai-assistant-instructions",
+        "rev": "9c462772efc26d0bcec646c2286d80c991511291",
+        "type": "github"
+      },
+      "original": {
+        "owner": "dryvist",
+        "repo": "ai-assistant-instructions",
+        "type": "github"
+      }
+    },
+    "ai-assistant-instructions_2": {
+      "flake": false,
+      "locked": {
         "lastModified": 1791221885,
         "narHash": "sha256-nwh0sRpLgz3z56MZo2/c5p8CwruvYKSxTYdRnOk0iO4=",
         "owner": "dryvist",
@@ -35,16 +51,18 @@
     },
     "ai-llm-prompts": {
       "inputs": {
+        "ai-assistant-instructions": "ai-assistant-instructions_2",
+        "claude-code-plugins": "claude-code-plugins",
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1791090913,
-        "narHash": "sha256-TbHZ5Fi5Sc3e/4Y38LauE2LhonfeCVGIpm4YVreM+pU=",
+        "lastModified": 1791224154,
+        "narHash": "sha256-CJP9XL9fCdKz0q82oo6i1N1YUjqlL24wrgMmnHBj8II=",
         "owner": "dryvist",
         "repo": "ai-llm-prompts",
-        "rev": "9c3fb6afaa064ba2bfba6992b40760d1adac90d2",
+        "rev": "8324bba8907d959be7440f04858605b4717a4883",
         "type": "github"
       },
       "original": {
@@ -310,16 +328,16 @@
     "claude-code-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1791068816,
-        "narHash": "sha256-qD7zEVcuPhwGbpknmsWKwCiR4XMc63iUumP7vLok704=",
-        "owner": "anthropics",
-        "repo": "claude-code",
-        "rev": "2bfb629dfaff0c8318047a4beb93cf1dc5b58b18",
+        "lastModified": 1791221880,
+        "narHash": "sha256-J6kgOFCD7B85T70PjjyiJSvWJHQB224DLthOO0tWxr8=",
+        "owner": "dryvist",
+        "repo": "claude-code-plugins",
+        "rev": "105ac194aa302b1255aa4750cc1a1080fe6160e7",
         "type": "github"
       },
       "original": {
-        "owner": "anthropics",
-        "repo": "claude-code",
+        "owner": "dryvist",
+        "repo": "claude-code-plugins",
         "type": "github"
       }
     },
@@ -336,6 +354,22 @@
       "original": {
         "owner": "jeremylongshore",
         "repo": "claude-code-plugins-plus",
+        "type": "github"
+      }
+    },
+    "claude-code-plugins_2": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1791068816,
+        "narHash": "sha256-qD7zEVcuPhwGbpknmsWKwCiR4XMc63iUumP7vLok704=",
+        "owner": "anthropics",
+        "repo": "claude-code",
+        "rev": "2bfb629dfaff0c8318047a4beb93cf1dc5b58b18",
+        "type": "github"
+      },
+      "original": {
+        "owner": "anthropics",
+        "repo": "claude-code",
         "type": "github"
       }
     },
@@ -1759,7 +1793,7 @@
       "inputs": {
         "ai-assistant-instructions": "ai-assistant-instructions",
         "ai-llm-prompts": "ai-llm-prompts",
-        "claude-code-plugins": "claude-code-plugins",
+        "claude-code-plugins": "claude-code-plugins_2",
         "darwin": "darwin",
         "determinate": "determinate",
         "dotgithub": "dotgithub",
