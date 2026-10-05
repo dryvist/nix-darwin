@@ -51,9 +51,9 @@
               value: "'mlx:bench'"
   '';
   # system_metrics -> index=llm (EVENT), sourcetype mlx:metrics. The
-  # judge Process Set adds its start-time metric fields here; Stream republishes
-  # that one signal as a native metric for VictoriaMetrics. Host metrics remain
-  # events because this S2S path does not preserve Cribl's metric metadata.
+  # workstation_load branch extracts node_load5 separately. The judge Process
+  # Set adds its start-time metric fields here; Stream republishes that signal
+  # and workstation_load's node_load5 as native metrics for the metric sinks.
   "pipelines/llm_metrics/conf.yml" = ''
     output: default
     functions:
@@ -73,6 +73,30 @@
               value: "'judge_process_start_time_seconds'"
             - name: _value
               value: "Number(process_start_time_seconds)"
+  '';
+  # Send only the workstation's native five-minute load gauge through the
+  # existing Stream metric fan-out. TCP JSON preserves these ordinary fields;
+  # Stream recreates the Cribl metric before forwarding to the metric sinks.
+  "pipelines/workstation_load/conf.yml" = ''
+    output: default
+    functions:
+      - id: drop
+        filter: "!Number.isFinite(Number(node_load5))"
+      - id: eval
+        filter: "true"
+        conf:
+          add:
+            - name: _metric
+              value: "'node_load5'"
+            - name: _value
+              value: "Number(node_load5)"
+            - name: host_role
+              value: "'workstation'"
+            - name: index
+              value: "'llm'"
+            - name: sourcetype
+              value: "'mlx:metrics'"
+          remove: [node_load5]
   '';
   # Critical macOS event telemetry -> index=os. sourcetype is derived from
   # __inputId, one explicit branch per wired Source. The fallback is a visible

@@ -51,6 +51,14 @@ let
       "          includeChildren: false"
     ]
   );
+  workstationLoadConnectionYaml =
+    lib.optionalString ((hostConfig.class or "server") == "workstation")
+      (
+        builtins.concatStringsSep "\n" [
+          "  - pipeline: workstation_load"
+          "        output: cribl_stream"
+        ]
+      );
 
   # One full claude/codex/gemini/antigravity input set per managed OS user
   # (split out for the repo file-size gate — see ./cribl-ai-inputs.nix).
@@ -141,16 +149,10 @@ in
                 - pipeline: bench_events
                   output: cribl_stream
             # Whole-machine + per-process OS metrics (native system_metrics
-            # Source — host CPU/mem/disk/net plus the optional judge process),
-            # 10s poll ≈ an always-on Activity Monitor.
-            # INTERIM: routed to the llm_metrics pipeline (index=llm, EVENT) —
-            # the prior behavior. Stamping the os_metrics METRIC index was tried
-            # (nix-darwin#1824) but Splunk rejects it: this Edge->S2S->Stream
-            # path delivers EVENT-format JSON on the legacy token, and a metric
-            # index refuses event data (invalid_index). True os_metrics-as-metrics
-            # needs a Stream-side metric route (ansible-proxmox-apps cribl_stream:
-            # metric formatting + a per-index os_metrics token, like host_metrics).
-            # Until that lands, keep the data flowing as events here.
+            # Source), polled every 10s. The event path remains unchanged. On
+            # workstations, a second branch extracts only node_load5 and stamps
+            # it for the existing Stream metric fan-out; other host metrics stay
+            # events because this TCP JSON path does not preserve metric metadata.
             in_system_metrics:
               type: system_metrics
               disabled: false
@@ -160,6 +162,7 @@ in
               connections:
                 - pipeline: llm_metrics
                   output: cribl_stream
+              ${workstationLoadConnectionYaml}
             # Critical macOS logs + power/thermal telemetry -> index=os (event),
             # sourcetype macos:* (the os_events pipeline derives sourcetype from
             # __inputId). Native Sources where Edge 4.18 has them; the three exec
