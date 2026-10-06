@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.6.0](https://github.com/dryvist/nix-darwin/compare/v3.5.1...v3.6.0) (2026-10-06)
+
+
+### Features
+
+* **cribl:** forward workstation load metrics ([#2755](https://github.com/dryvist/nix-darwin/issues/2755)) ([9f9d892](https://github.com/dryvist/nix-darwin/commit/9f9d892b6c396259880c28f13a4c204aee653478))
+
 ## [3.5.1](https://github.com/dryvist/nix-darwin/compare/v3.5.0...v3.5.1) (2026-10-05)
 
 
