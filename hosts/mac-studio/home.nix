@@ -6,9 +6,7 @@
 # (from the registry class) already drops the GUI/desktop features.
 
 {
-  config,
   lib,
-  nix-ai,
   userConfig,
   ...
 }:
@@ -17,10 +15,7 @@
   imports = [ ../common/home.nix ];
 
   services.aiStack = {
-    llmEndpoint = "router";
-    llmRouterEndpoint = "https://llm.${userConfig.internalDomain}/v1";
     llmEndpointTokenFile = "${userConfig.user.homeDir}/.config/ai-stack/router-bearer";
-    internalDomains = [ userConfig.baseDomain ];
   };
 
   # Server-room wall monitor: never let the screensaver engage. idleTime is a
@@ -41,15 +36,6 @@
 
     litellmLocal = {
       enable = true;
-      claudeDirect = true;
-      localEndpoint = (import "${nix-ai}/vars/ai-stack.nix").endpoints.mlx_local;
-      localModels = [
-        {
-          name = "subagent";
-          id = config.services.aiStack.models.default;
-        }
-      ];
-      routerEntryModel = "subagent";
     };
 
     # Token Meter's universal service and menu-bar opt-in live in
