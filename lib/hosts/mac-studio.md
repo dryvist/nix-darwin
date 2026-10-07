@@ -58,6 +58,9 @@ ceiling to 4 was reverted the same day: MLX batches concurrent sequences on
 shared GPU compute, so on a compute-bound dense model more slots stretch latency
 instead of adding throughput. Memory was never the binding constraint.
 
+The published inventory keeps the MLX ceiling in `serving.mlx_llm_concurrency`,
+separate from the active GPU profile's `serving.llm_concurrency`.
+
 Hybrid attention only grows a KV cache on `full_attention` layers; the dense 27B
 (64 layers, `full_attention_interval=4`, `kvHeads=4`, `headDim=256`) costs
 `2 x 16 x 4 x 256 x 2 B = 64 KiB` per token.

@@ -124,8 +124,8 @@ jobs:
     uses: ./.github/workflows/_claude-settings.yml
 
   # Cross-repo mechanical check: lib/hosts/mac-studio.nix's serveConcurrency
-  # must equal dryvist/tofu-proxmox's pipeline_constants.serving.llm_concurrency
-  # (the single source of truth). See _llm-concurrency-parity.yml header.
+  # must equal dryvist/tofu-proxmox's pipeline_constants.serving.mlx_llm_concurrency.
+  # See _llm-concurrency-parity.yml header.
   llm-concurrency-parity:
     name: LLM Concurrency Parity
     needs: shared-gate
