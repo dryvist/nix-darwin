@@ -5,30 +5,18 @@
 # This file adds only the host-unique bits — the TCC-sensitive GUI app list.
 
 {
-  config,
   lib,
   pkgs,
   userConfig,
-  nix-ai,
   ...
 }:
 
 {
   imports = [ ../common/home.nix ];
 
-  # Router endpoint for the proxy's non-Anthropic model group. The bearer is
-  # never on disk: `llmEndpointBearerFromEnv` plus the proxy's host-supplied
-  # `launchPrefix` resolve it at each agent start.
+  # This host receives the router bearer from its launch environment.
   services.aiStack = {
-    llmEndpoint = "router";
-    llmRouterEndpoint = "https://llm.${userConfig.internalDomain}/v1";
     llmEndpointBearerFromEnv = true;
-    # Serving hosts answer across this estate's own domain, not on loopback,
-    # so a role target based there keeps its traffic inside. Stated once here,
-    # from the same configured base as every other name: a consumer that let a
-    # module infer it from an endpoint could land on a public suffix and treat
-    # hosts it does not control as internal.
-    internalDomains = [ userConfig.baseDomain ];
   };
 
   # Open local-LLM fallback harness (Crush / MiMoCode / Goose). Workstation-only:
@@ -54,78 +42,6 @@
       endpoint = "https://llm.${userConfig.internalDomain}/v1";
       # Upstream mimo-code release asset returns 404; the package fails to build.
       mimoCode.enable = false;
-    };
-
-    # Loopback LiteLLM proxy (nix-ai): every CLI names a stable role
-    # (`lead`/`subagent`/`judge`/`cheap`) and the shared router decides which
-    # model a role means. Claude Code's own OAuth credential is forwarded only
-    # on the `claude-*` group; the router leg authenticates with the bearer
-    # file below. The proxy takes no credential of its own, and everything
-    # Claude Code needs to reach it is rendered into settings.json (see the
-    # module header in nix-ai). Same internal-FQDN composition rule as
-    # openHarness above.
-    # Enabled by the host wrapper together with its `launchPrefix`.
-    litellmLocal = {
-
-      # Claude Code talks straight to Anthropic on this machine — no proxy hop,
-      # no header, nothing that can rewrite a model id or the context window it
-      # advertises. Routing Claude Code through the loopback proxy repeatedly
-      # cost subagents their 1M window (they came back 200k) and forced a
-      # re-diagnosis each time. The proxy still runs for the OpenAI-shaped
-      # clients, and `localModels`/`routerEntryModel` below stay declared, so
-      # flipping this back to false is the only step needed to re-route
-      # subagents through it.
-      claudeDirect = true;
-
-      # The remaining subagent local rung uses the direct default resident.
-      # Other role aliases (including fast, cheap, small, and judge) are
-      # rendered directly from the selected resident catalog entries.
-      localEndpoint = (import "${nix-ai}/vars/ai-stack.nix").endpoints.mlx_local;
-
-      # The chain this laptop's proxy walks, in order:
-      #
-      #   subagent                 ->  this laptop's `default` resident
-      #                            ->  router:subagent (ZDR-only key)
-      #
-      # The other local roles are explicit catalog-derived groups served by
-      # their resident agents, rather than extra rungs through the former
-      # single-model queue endpoint. A request too large for the default
-      # resident escapes to the shared router (nix-ai
-      # context_window_fallbacks), never truncated.
-      #
-      # The router rung authenticates with this host's own
-      # `litellm-local-workstation` key (ansible-proxmox-ai roles/llm_router),
-      # which is zdr_only: every zero_data_retention: false group is stripped
-      # from its scope and the router re-checks the key on every fallback hop,
-      # so ZDR is enforced by the key for every client of this proxy, not
-      # trusted to each caller.
-      #
-      # The local ids are role-resolved physical ids, never literals: the mlx
-      # catalog decides which weights each role means on this host, and nix-ai
-      # derives each serving window from that same catalog.
-      #
-      # `subagent` is load-bearing as a NAME: consumers address that string
-      # forever, so what sits behind it may change but the name may not.
-      localModels = [
-        {
-          name = "subagent";
-          id = config.services.aiStack.models.default;
-        }
-      ];
-
-      # The router bearer reaches the proxy as OPENAI_API_KEY through
-      # `launchPrefix`, which the host wrapper supplies.
-
-      # The group the shared router serves, which the terminal rung forwards
-      # to. Needed because that rung is a passthrough: without it LiteLLM
-      # forwards this host's own rung name upstream, the router has no such
-      # group, and the last rung 404s — both as a fallback and when addressed
-      # directly. `subagent` is one of the groups the
-      # litellm-local-workstation key holds.
-      #
-      # A group name only. No provider, model id, or price is named here; what
-      # the router does behind this group stays the router's business.
-      routerEntryModel = "subagent";
     };
 
     # Daily push of AI session history to the per-vendor object buckets

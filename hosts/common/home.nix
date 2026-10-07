@@ -85,6 +85,15 @@ in
   # (normalized in flake.nix mkHost, so the attr always exists).
   home-profile.preset = hostConfig.class;
 
+  # MLX-capable Macs share the same router endpoint and local proxy roles.
+  # The bearer source stays in each host config because it depends on how that
+  # host receives the credential.
+  services.aiStack = lib.mkIf (hostConfig ? mlx) {
+    llmEndpoint = "router";
+    llmRouterEndpoint = "https://llm.${userConfig.internalDomain}/v1";
+    internalDomains = [ userConfig.baseDomain ];
+  };
+
   # ==========================================================================
   # Monitoring / Observability
   # ==========================================================================
@@ -155,6 +164,24 @@ in
     # Gated on the host defining `mlx` so a non-inference host is left untouched
     # (no MLX server) rather than crashing on a missing attr.
     mlx = lib.mkIf (hostConfig ? mlx) ({ enable = true; } // hostConfig.mlx);
+
+    # Every MLX-capable Mac uses the same loopback proxy roles. Host configs
+    # provide the bearer and decide whether to run the launchd agent.
+    litellmLocal = lib.mkIf (hostConfig ? mlx) {
+      # Claude Code talks directly to Anthropic; the proxy remains for the
+      # OpenAI-shaped clients and cannot change Claude model ids or windows.
+      claudeDirect = true;
+      localEndpoint = (import "${nix-ai}/vars/ai-stack.nix").endpoints.mlx_local;
+      # Keep the client-facing alias stable while its local id follows the
+      # host's catalog. The terminal router rung must use the same group name.
+      localModels = [
+        {
+          name = "subagent";
+          id = config.services.aiStack.models.default;
+        }
+      ];
+      routerEntryModel = "subagent";
+    };
 
     # Token Meter is a shared primary-user service: every registered Mac
     # reports its local coding-agent use, including server-class hosts. nix-ai
