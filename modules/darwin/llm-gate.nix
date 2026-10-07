@@ -7,6 +7,7 @@
   lib,
   config,
   pkgs,
+  launchdTrampolineArgs,
   ...
 }:
 
@@ -239,34 +240,36 @@ in
     # Caddy exits and launchd retries on the ThrottleInterval.
     launchd.user.agents.llm-gate.serviceConfig = {
       Label = "com.nix-darwin.llm-gate";
-      # /bin/bash, not the Nix shebang — see homebrew.nix on Local Network.
-      ProgramArguments = [
-        "/bin/bash"
-        (lib.getExe config.programs.openbao-run.package)
-        "--domain"
-        "llm-gate"
-        "--env-file"
-        cfg.secretZeroEnvFile
-      ]
-      ++ lib.optionals (cfg.tlsMode == "route53") [
-        "--secret"
-        "secrets-external:AWS_ACME_ACCESS_KEY_ID=platform/acme#access_key_id"
-        "--secret"
-        "secrets-external:AWS_ACME_SECRET_ACCESS_KEY=platform/acme#secret_access_key"
-        "--secret"
-        "secrets-external:LLM_GATE_AWS_REGION=platform/acme#region"
-      ]
-      ++ [
-        "--secret"
-        "LLM_LARGE_BEARER_TOKEN=ai/llm#LLM_LARGE_BEARER_TOKEN"
-        "--"
-        (lib.getExe caddyPkg)
-        "run"
-        "--config"
-        "${caddyfile}"
-        "--adapter"
-        "caddyfile"
-      ];
+      # The named trampoline execs Apple /bin/bash, preserving its original image.
+      ProgramArguments = launchdTrampolineArgs "llm-gate" (
+        [
+          "/bin/bash"
+          (lib.getExe config.programs.openbao-run.package)
+          "--domain"
+          "llm-gate"
+          "--env-file"
+          cfg.secretZeroEnvFile
+        ]
+        ++ lib.optionals (cfg.tlsMode == "route53") [
+          "--secret"
+          "secrets-external:AWS_ACME_ACCESS_KEY_ID=platform/acme#access_key_id"
+          "--secret"
+          "secrets-external:AWS_ACME_SECRET_ACCESS_KEY=platform/acme#secret_access_key"
+          "--secret"
+          "secrets-external:LLM_GATE_AWS_REGION=platform/acme#region"
+        ]
+        ++ [
+          "--secret"
+          "LLM_LARGE_BEARER_TOKEN=ai/llm#LLM_LARGE_BEARER_TOKEN"
+          "--"
+          (lib.getExe caddyPkg)
+          "run"
+          "--config"
+          "${caddyfile}"
+          "--adapter"
+          "caddyfile"
+        ]
+      );
       KeepAlive = true;
       ThrottleInterval = 15;
       WorkingDirectory = cfg.dataDir;

@@ -250,6 +250,7 @@
                 # GUI apps use home-manager copyApps (~/Applications/Home Manager Apps/,
                 # stable paths for TCC persistence), so no app-trampoline module is needed.
                 sharedModules = [
+                  ./modules/home-manager/launchd-trampolines.nix
                   nix-ai.homeManagerModules.default
                   nix-home.homeManagerModules.default
                 ]
@@ -352,6 +353,14 @@
             token-meter = import ./lib/checks/token-meter.nix {
               pkgs = nixpkgs.legacyPackages.aarch64-darwin;
               inherit configs userConfig;
+            };
+
+            launchd-programs = import ./lib/checks/launchd-programs.nix {
+              pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+              configs = configs // {
+                default = configs.${primaryHost.hostName};
+              };
+              inherit userConfig;
             };
 
             # Roles declared per host class resolve; an empty model id fails the assertion.

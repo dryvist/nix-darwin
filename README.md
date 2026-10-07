@@ -79,6 +79,15 @@ nix shell nixpkgs#pre-commit -c pre-commit install
 
 See **[MANIFEST.md](MANIFEST.md)** for the complete package inventory.
 
+## Launchd and TCC
+
+Each launchd job starts from a distinctly named executable at a stable path,
+never a generic shell or interpreter. The shared trampoline waits for the Nix
+store and execs the original program and arguments unchanged, preserving the
+final process image, including Apple's bash for network-gated jobs. A
+rendered-plist check enforces the first-program rule. A process that needs a macOS
+privacy permission runs as its own named binary.
+
 ## Directory Structure
 
 ```text

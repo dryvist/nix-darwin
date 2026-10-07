@@ -34,6 +34,7 @@
   lib,
   config,
   pkgs,
+  launchdTrampolineArgs,
   ...
 }:
 
@@ -265,9 +266,8 @@ in
     launchd.user.agents.offbox-sync = {
       serviceConfig = {
         Label = "com.offbox.sync";
-        # /bin/bash stays the parent process (no exec): see homebrew.nix on
-        # Local Network.
-        ProgramArguments = [
+        # The named trampoline execs this original Apple bash command line.
+        ProgramArguments = launchdTrampolineArgs "offbox-sync" [
           "/bin/bash"
           "-c"
           "${lib.escapeShellArgs cfg.launchPrefix} /bin/bash ${launcher}"

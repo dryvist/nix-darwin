@@ -28,6 +28,7 @@
   lib,
   config,
   pkgs,
+  launchdTrampolineArgs,
   ...
 }:
 
@@ -157,9 +158,8 @@ in
     # cluster mode off installs nothing.
     launchd.daemons.cluster-link-prep.serviceConfig = {
       Label = "com.nix-darwin.cluster-link-prep";
-      # /nix/store is not guaranteed mounted when launchd starts root daemons;
-      # wait4path first, exactly as ./boot-activation.nix does.
-      ProgramArguments = [
+      # The named trampoline waits for /nix/store before execing this argument vector.
+      ProgramArguments = launchdTrampolineArgs "cluster-link-prep" [
         "/bin/sh"
         "-c"
         "/bin/wait4path /nix/store && exec ${lib.getExe prepPkg}"

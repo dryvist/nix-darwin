@@ -16,6 +16,7 @@
   startArgs,
   declaredConfigSha,
   userConfig,
+  launchdTrampolineArgs,
 }:
 {
   serviceConfig = {
@@ -44,8 +45,8 @@
     # declarative config is installed in activation, and the managed-state
     # retirement is a one-shot migration that also moved to activation. All
     # the wrapper did on this path was re-derive a mode that is known at
-    # build time and then exec the same binary. The remaining `/bin/sh -c`
-    # is the mount-wait above, not a wrapper.
+    # build time and then exec the same binary. The named trampoline waits for
+    # the store, then execs this original /bin/sh -c argument vector unchanged.
     #
     # MANAGED KEEPS THE WRAPPER, because enrolment genuinely needs run-time
     # work: reading a secrets file, parsing the leader URL into token, host,
@@ -54,7 +55,7 @@
     # branch is untested by any live converge — treat it as legacy support
     # rather than a supported path, and if it ever gains a user, exercise it
     # before trusting it.
-    ProgramArguments = [
+    ProgramArguments = launchdTrampolineArgs "cribl-edge" [
       "/bin/sh"
       "-c"
       (
