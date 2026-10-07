@@ -21,7 +21,7 @@
 #      pflogd and the default pf ruleset has no `log` rules; adding those is
 #      a deliberate security-engineering change, not log plumbing.
 
-{ lib, ... }:
+{ lib, launchdTrampolineArgs, ... }:
 
 let
   userConfig = import ../../lib/user-config.nix;
@@ -97,7 +97,7 @@ in
       UserName = userConfig.user.name;
       RunAtLoad = true;
       KeepAlive = true;
-      ProgramArguments = [
+      ProgramArguments = launchdTrampolineArgs "firewall-log-shipping" [
         "/bin/sh"
         "-c"
         ''

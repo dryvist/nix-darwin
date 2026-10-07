@@ -20,6 +20,7 @@
   lib,
   config,
   pkgs,
+  launchdTrampolineArgs,
   homelab-contracts,
   ...
 }:
@@ -223,6 +224,7 @@ in
         startArgs
         declaredConfigSha
         userConfig
+        launchdTrampolineArgs
         ;
     };
 
