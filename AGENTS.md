@@ -98,6 +98,15 @@ path-scoping when `.nix` / `flake.*` files are in context.
 Contains the full decision matrix for the nix repos including homebrew constraints
 and on-demand patterns.
 
+## Launchd and TCC
+
+Each launchd job starts from a distinctly named executable at a stable path,
+never a generic shell or interpreter. The shared trampoline waits for the Nix
+store and execs the original program and arguments unchanged, preserving the
+final process image, including Apple's bash for network-gated jobs. A
+rendered-plist check enforces the first-program rule. A process that needs a
+macOS privacy permission runs as its own named binary.
+
 ## Related Repos
 
 | Repo | Scope | Used via |

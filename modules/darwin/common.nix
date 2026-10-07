@@ -19,6 +19,7 @@ in
     ./sops.nix
     ./apps
     ./dock
+    ./launchd-trampolines.nix
   ]
   ++ (if builtins.pathExists ./local.nix then [ ./local.nix ] else [ ])
   ++ [
