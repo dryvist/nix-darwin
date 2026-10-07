@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Assert lib/hosts/mac-studio.nix's serveConcurrency matches
-# dryvist/tofu-proxmox's pipeline_constants.serving.llm_concurrency.
+# dryvist/tofu-proxmox's pipeline_constants.serving.mlx_llm_concurrency.
 #
 # nix's flake evaluation is hermetic (no network access at build time), so it
 # cannot derive this value from tofu-proxmox the way ansible-proxmox-ai does
@@ -21,20 +21,26 @@ if [[ -z "$nix_value" ]]; then
 fi
 
 # Restrict the search to the `serving = { ... }` block so a coincidental
-# llm_concurrency elsewhere in the file can never match.
+# mlx_llm_concurrency elsewhere in the file can never match.
 tofu_value=$(awk '/serving = {/{f=1} f{print} f && /}/{exit}' "$tofu_file" \
-  | grep -oE 'llm_concurrency = [0-9]+' | grep -oE '[0-9]+') || true
+  | grep -oE 'mlx_llm_concurrency = [0-9]+' | grep -oE '[0-9]+') || true
+# Keep the parity check green while the source schema change is under review;
+# once the published field exists, it takes precedence over the legacy value.
 if [[ -z "$tofu_value" ]]; then
-  echo "::error::could not find pipeline_constants.serving.llm_concurrency in $tofu_file"
-  echo "::error::has the value been promoted to dryvist/tofu-proxmox's main branch yet?"
+  tofu_value=$(awk '/serving = {/{f=1} f{print} f && /}/{exit}' "$tofu_file" \
+    | grep -oE 'llm_concurrency = [0-9]+' | grep -oE '[0-9]+') || true
+fi
+if [[ -z "$tofu_value" ]]; then
+  echo "::error::could not find pipeline_constants.serving.mlx_llm_concurrency in $tofu_file"
+  echo "::error::has the value been promoted to dryvist/tofu-proxmox's default branch yet?"
   exit 1
 fi
 
 if [[ "$nix_value" != "$tofu_value" ]]; then
   echo "::error::LLM serving concurrency drift: $nix_file serveConcurrency=$nix_value" \
-    "but dryvist/tofu-proxmox pipeline_constants.serving.llm_concurrency=$tofu_value." \
+    "but dryvist/tofu-proxmox pipeline_constants.serving.mlx_llm_concurrency=$tofu_value." \
     "Raise both together — see the private serving-concurrency reference."
   exit 1
 fi
 
-echo "OK: serveConcurrency ($nix_value) matches tofu-proxmox's published serving.llm_concurrency."
+echo "OK: serveConcurrency ($nix_value) matches tofu-proxmox's published serving.mlx_llm_concurrency."

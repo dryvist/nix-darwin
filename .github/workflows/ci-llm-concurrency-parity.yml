@@ -2,7 +2,7 @@
 #
 # ci-gate.yml runs this on every PR that touches nix files, but that only
 # catches drift introduced by a nix-darwin commit. A change made purely on
-# the dryvist/tofu-proxmox side (pipeline_constants.serving.llm_concurrency)
+# the dryvist/tofu-proxmox side (pipeline_constants.serving.mlx_llm_concurrency)
 # would ship with no nix-darwin PR to trigger the check — this daily run
 # closes that gap. Calls the reusable workflow for DRY.
 
