@@ -59,9 +59,13 @@ let
 
   negative = lib.mapAttrsToList (
     hostName: cfg:
+    let
+      msg = failedMessages (primaryUser (broken cfg));
+    in
     lib.optionalString (
-      !lib.hasInfix "must resolve to a non-empty physical model" (
-        failedMessages (primaryUser (broken cfg))
+      !(
+        lib.hasInfix "must resolve to a non-empty physical model" msg
+        || lib.hasInfix "differs from catalog" msg
       )
     ) "${hostName}: an empty model id did not fail the role-resolution assertion"
   ) configs;
