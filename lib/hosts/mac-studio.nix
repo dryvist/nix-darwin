@@ -9,15 +9,9 @@ let
   # from the role map (modelConcurrencyLimits); this is the upper bound the
   # proxy advertises.
   #
-  # The canonical source is dryvist/tofu-proxmox's
-  # modules/proxmox-stack/constants.tf (pipeline_constants.serving.
-  # llm_concurrency); ansible-proxmox-ai derives its
-  # ai_llm_concurrency from it directly over the tofu_data.constants channel.
-  # Flake evaluation has no network access, so this repo cannot derive the
-  # same way — instead CI (.github/workflows/_llm-concurrency-parity.yml)
-  # fetches dryvist/tofu-proxmox's published constant and fails the build
-  # when it disagrees with the value below. Raise both together; the check
-  # enforces that now, not this comment.
+  # MLX's published admission limit is separate from the active GPU profile.
+  # dryvist/tofu-proxmox publishes serving.mlx_llm_concurrency; this flake is
+  # hermetic, so CI checks this literal against that field.
   serveConcurrency = 2;
 in
 {
