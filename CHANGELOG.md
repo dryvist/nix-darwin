@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.7.1](https://github.com/dryvist/nix-darwin/compare/v3.7.0...v3.7.1) (2026-10-07)
+
+
+### Bug Fixes
+
+* **ci:** move full Nix builds to main merges ([#2777](https://github.com/dryvist/nix-darwin/issues/2777)) ([bc75053](https://github.com/dryvist/nix-darwin/commit/bc750531fab80eb6fa9b770b7b1ac3bf77bbd0c5))
+* **ci:** pin shared workflow revisions ([#2778](https://github.com/dryvist/nix-darwin/issues/2778)) ([89ff361](https://github.com/dryvist/nix-darwin/commit/89ff3618d147280838e770410d41319f0234649c))
+* **llm-gate:** route to queued default resident ([d710333](https://github.com/dryvist/nix-darwin/commit/d7103337bc58e817557174bba3107ec8227382f3))
+* **llm-gate:** route to queued default resident ([6d6d620](https://github.com/dryvist/nix-darwin/commit/6d6d620b7ae8134f47bbe33cf5961f9ed7191101))
+
 ## [3.7.0](https://github.com/dryvist/nix-darwin/compare/v3.6.1...v3.7.0) (2026-10-07)
 
 
