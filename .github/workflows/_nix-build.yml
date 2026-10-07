@@ -5,17 +5,11 @@ name: _nix-build
 on:
   workflow_call:
 
-# Performance: cancel superseded builds — but NEVER on the default branch.
-#
-# `develop` pushes are the only runs that save the Nix store cache (see `save:`
-# below). This block used to set `cancel-in-progress: true` unconditionally,
-# which cancelled them: ci-nix.yml guards its own group with the same condition,
-# but the two groups have different names so both apply independently, and this
-# one still killed the run. Every develop merge that raced the next one threw
-# away the cache write, so PRs restored a stale cache and cold-built the tail.
+# Cache-saving main builds finish before the next main build starts. Temporary
+# refs supersede each other so stale validation builds do not consume runners.
 concurrency:
   group: nix-build-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/develop' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   build:
@@ -81,15 +75,8 @@ jobs:
             auto-optimise-store = false
             warn-dirty = false
 
-      # Restore-only on PRs; saves on the DEFAULT branch. See .claude/rules/ci-workflows.md.
-      #
-      # `save:` MUST name the repository's default branch (`develop` under
-      # git-flow), not `main`. GitHub scopes an Actions cache to the branch that
-      # created it plus the default branch — nothing else. Saving only on `main`
-      # (not the default here) put every cache in a scope no pull request could
-      # read, so each PR restored nothing and cold-built the full closure. The
-      # symptom is a "Cache Nix Store" step that completes in ~2s while three
-      # multi-GB caches sit unused in the repo's cache list.
+      # Restore-only on PRs; saves after full builds land on main. GitHub makes
+      # main-scoped caches readable by PRs from other branches.
       - name: Cache Nix Store
         uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7
         with:
@@ -123,11 +110,8 @@ jobs:
           # on substitutable paths beats a larger one that hits but is slow to
           # unpack. Optimise for total wall time, never for hit rate.
           gc-max-store-size-macos: 6G
-          # Literal, not `github.event.repository.default_branch`: that context is
-          # empty on some triggers, which would silently evaluate to a ref that
-          # never matches and reintroduce this exact bug with no signal. If the
-          # default branch ever changes, change this line with it.
-          save: ${{ github.ref == 'refs/heads/develop' }}
+          # Only full builds on main save the cache used by subsequent PRs.
+          save: ${{ github.ref == 'refs/heads/main' }}
           # Delete superseded caches, or the quota silently thrashes.
           #
           # Nothing removed an old entry when flake.lock changed, so entries
@@ -139,11 +123,8 @@ jobs:
           # chain), so this is the steady state, not a spike. PRs were already
           # cold-starting because an unrelated lock bump evicted what they needed.
           #
-          # Gated to the same condition as `save`: purge acts only on caches
-          # scoped to the current GITHUB_REF, so on a PR ref it would find
-          # nothing anyway. Keeping the conditions identical means the branch
-          # that writes is the only branch that deletes.
-          purge: ${{ github.ref == 'refs/heads/develop' }}
+          # Keep only current main cache entries; PRs cannot purge main caches.
+          purge: ${{ github.ref == 'refs/heads/main' }}
           purge-prefixes: |
             nix-${{ runner.os }}-
           # `0` selects every matching cache created more than 0 seconds ago,
@@ -198,7 +179,7 @@ jobs:
       # Only on failure: the action above already saves on a successful run,
       # and this keeps a partial store from an attempt that ran out of time.
       - name: Cache Nix Store (partial, after a failed build)
-        if: failure() && github.ref == 'refs/heads/develop'
+        if: failure() && github.ref == 'refs/heads/main'
         uses: nix-community/cache-nix-action/save@7df957e333c1e5da7721f60227dbba6d06080569 # v7
         with:
           primary-key: nix-${{ runner.os }}-${{ hashFiles('flake.lock') }}
