@@ -10,7 +10,7 @@ setup() {
   REPO_ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
   SCRIPT="$REPO_ROOT/scripts/workflows/check-ci-invariants.sh"
   GOOD="$REPO_ROOT/.github/workflows/_nix-build.yml"
-  GOOD_CALLER="$REPO_ROOT/.github/workflows/ci-nix.yml"
+  GOOD_CALLER="$REPO_ROOT/.github/workflows/ci-gate.yml"
   WORK="$BATS_TEST_TMPDIR/wf.yml"
   CALLER="$BATS_TEST_TMPDIR/caller.yml"
   cp "$GOOD" "$WORK"
@@ -44,7 +44,12 @@ setup() {
 # caller kills the run at graph validation -- startup_failure, no job, no logs,
 # and no check-runs at all, so the PR shows a CLEAN merge state with nothing red.
 @test "fails when the caller does not grant actions: write" {
-  sed -i.bak '/actions: write/d' "$CALLER"
+  cat >"$CALLER" <<'YAML'
+name: fake
+jobs:
+  nix-build:
+    uses: ./.github/workflows/_nix-build.yml
+YAML
   run bash "$SCRIPT" "$GOOD" "$CALLER"
   [ "$status" -eq 1 ]
   [[ "$output" == *"without 'actions: write'"* ]]
@@ -106,18 +111,18 @@ YAML
   [ "$status" -eq 0 ]
 }
 
-@test "fails when ci-nix stops exempting develop from cancellation" {
-  sed -i.bak "s|github.ref != 'refs/heads/develop'|true|" "$CALLER"
+@test "fails when the full-build caller cancels main builds" {
+  sed -i.bak "s|github.ref != 'refs/heads/main'|true|" "$CALLER"
   run bash "$SCRIPT" "$GOOD" "$CALLER"
   [ "$status" -eq 1 ]
-  [[ "$output" == *"only branch that saves"* ]]
+  [[ "$output" == *"exempt main"* ]]
 }
 
-@test "fails when the cache saves on main instead of develop" {
-  sed -i.bak "s|refs/heads/develop' }}|refs/heads/main' }}|g" "$WORK"
+@test "fails when the cache saves on develop instead of main" {
+  sed -i.bak "s|refs/heads/main' }}|refs/heads/develop' }}|g" "$WORK"
   run bash "$SCRIPT" "$WORK" "$GOOD_CALLER"
   [ "$status" -eq 1 ]
-  [[ "$output" == *"unreadable to every PR"* ]]
+  [[ "$output" == *"pinned to refs/heads/main"* ]]
 }
 
 @test "fails when the timeout is raised past the cap" {
@@ -145,11 +150,11 @@ YAML
   [[ "$output" == *"fromJSON is required"* ]]
 }
 
-@test "fails when cancel-in-progress stops exempting develop" {
+@test "fails when cancel-in-progress stops exempting main" {
   sed -i.bak 's|cancel-in-progress: .*|cancel-in-progress: true|' "$WORK"
   run bash "$SCRIPT" "$WORK" "$GOOD_CALLER"
   [ "$status" -eq 1 ]
-  [[ "$output" == *"only branch that saves"* ]]
+  [[ "$output" == *"exempt main"* ]]
 }
 
 @test "fails when the cache is shrunk below the non-substitutable tail" {
