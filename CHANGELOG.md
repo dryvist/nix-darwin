@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.7.0](https://github.com/dryvist/nix-darwin/compare/v3.6.1...v3.7.0) (2026-10-07)
+
+
+### Features
+
+* **launchd:** render jobs behind named trampolines and check rendered plists ([931626e](https://github.com/dryvist/nix-darwin/commit/931626e4bd9d9c107553a687075c72446ecdbce7))
+* **launchd:** render jobs behind named trampolines and check rendered plists ([fe0c82c](https://github.com/dryvist/nix-darwin/commit/fe0c82c995b967ba2f294cd3a846444f75f6c71f))
+* **serving:** track MLX concurrency separately ([7b90d5e](https://github.com/dryvist/nix-darwin/commit/7b90d5ea3c5e28bbf5af47ee0d62eca6f3352b10))
+* **serving:** track MLX concurrency separately ([abca89f](https://github.com/dryvist/nix-darwin/commit/abca89fad74518e0fdc70cdec3e8d2f61ebe2efe))
+
 ## [3.6.1](https://github.com/dryvist/nix-darwin/compare/v3.6.0...v3.6.1) (2026-10-07)
 
 
