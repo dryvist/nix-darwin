@@ -28,18 +28,7 @@ let
   };
 
   userConfig = import ../../lib/user-config.nix;
-
-  defaultResidentContract =
-    let
-      residents = lib.filterAttrs (
-        _: contract: contract.roles ? default
-      ) config.home-manager.users.${userConfig.user.name}.programs.mlx.staticResidentContracts;
-    in
-    if builtins.length (builtins.attrNames residents) == 1 then
-      builtins.head (builtins.attrValues residents)
-    else
-      throw "llm-gate requires exactly one static resident assigned to the default role";
-  defaultResidentPort = defaultResidentContract.servicePort;
+  llmApiUpstreamPort = 11427;
 in
 {
   imports = [
@@ -168,9 +157,8 @@ in
       # lib/hosts/mac-studio.nix clusterMode): second gated site, same
       # bearer token and cert, mirrored external:loopback port convention.
       clusterUpstreamPort = 11440;
-      # Route to the catalog-selected default worker so requests enter its
-      # bounded queue directly.
-      apiUpstreamPort = defaultResidentPort;
+      # Worker port declared by the local AI stack.
+      apiUpstreamPort = llmApiUpstreamPort;
     };
 
     # ========================================================================
@@ -209,6 +197,6 @@ in
   # is already done by this point, so a non-zero exit would report a half-applied
   # system without fixing anything.
   system.activationScripts.postActivation.text = lib.mkAfter ''
-    SERVING_GATE_PORT=${toString defaultResidentPort} ${lib.getExe servingGate} || true
+    SERVING_GATE_PORT=${toString llmApiUpstreamPort} ${lib.getExe servingGate} || true
   '';
 }

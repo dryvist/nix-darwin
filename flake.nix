@@ -369,11 +369,6 @@
               inherit configs userConfig;
             };
 
-            llm-gate-default-resident = import ./lib/checks/llm-gate-default-resident.nix {
-              pkgs = nixpkgs.legacyPackages.aarch64-darwin;
-              inherit configs userConfig;
-            };
-
             pf-anchor-syntax =
               let
                 darwinPkgs = nixpkgs.legacyPackages.aarch64-darwin;
