@@ -49,7 +49,7 @@ permissions:
 jobs:
   validate:
     name: Validate Nix
-    uses: dryvist/.github/.github/workflows/_nix-validate.yml@main
+    uses: dryvist/.github/.github/workflows/_nix-validate.yml@1ee6eaa788a7d713019c71493cd2a03b9021dc2a # v1.7.1
     with:
       all_systems: false
       runner_label: ubuntu-latest
