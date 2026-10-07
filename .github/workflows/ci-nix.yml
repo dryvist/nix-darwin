@@ -1,12 +1,10 @@
 # Nix CI - Build workflow (standalone)
 #
-# Runs on push to develop to populate the Nix store cache. PRs use
-# ci-gate.yml instead. main is deliberately NOT a trigger: git-flow promotes
-# the already-built develop tree unchanged, and the cache is only saved on
-# develop (see _nix-build.yml `save:`), so a main rebuild is a pure duplicate.
-# Calls reusable workflow for DRY.
+# Validates Nix changes on develop pushes. PRs use ci-gate.yml.
+# The full macOS build runs after a merge to main in ci-gate.yml.
+# Calls the shared validator for DRY.
 
-name: Nix Build
+name: Nix Validation
 
 on:
   push:
@@ -16,6 +14,9 @@ on:
       - 'flake.lock'
       - 'modules/**'
       - 'scripts/**'
+      - '.github/workflows/ci-nix.yml'
+      - '.github/workflows/ci-gate.yml'
+      - '.github/workflows/_nix-build.yml'
   # Keep the cache alive through quiet weeks.
   #
   # GitHub deletes any cache not accessed within the retention window
@@ -35,36 +36,20 @@ on:
     - cron: '0 9 * * 5' # Fridays 09:00 UTC (early morning US)
   workflow_dispatch:
 
-# Never cancel a run on a cache-saving branch.
-#
-# This workflow is the ONLY thing that populates the Nix store cache, and it does
-# so on the default branch. The build takes hours, so with `cancel-in-progress`
-# unconditionally true every merge killed the run that was about to save — and
-# the next merge killed its replacement. Measured over the last 40 runs:
-# develop 16 success / 23 cancelled, main 20 success / 0 cancelled. The branch
-# that saves the cache is the one that almost never finishes.
-#
-# Superseding is still right for throwaway refs, so this cancels everywhere else
-# and only protects develop, whose completion saves the cache.
+# This workflow only runs the bounded Nix validation on develop, schedule, and
+# manual dispatch. Superseding a validation cannot discard the macOS build
+# cache, which is written by the post-merge main build in ci-gate.yml.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: >-
-    ${{ github.ref != 'refs/heads/develop' }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
-  # _nix-build.yml purges superseded Nix caches, which needs the Actions cache
-  # API. A called workflow can never exceed its caller's grant, so omitting this
-  # fails the run at graph validation — startup_failure, with no job and no logs
-  # to explain it.
-  #
-  # Every caller of _nix-build.yml needs this independently; permissions are
-  # per-job, so a grant on one job in a workflow does nothing for another job in
-  # the same file. ci-gate.yml's nix-build job carries its own block for exactly
-  # this reason. check-ci-invariants.sh asserts it for every caller.
-  actions: write
 
 jobs:
-  build:
-    name: Build Nix
-    uses: ./.github/workflows/_nix-build.yml
+  validate:
+    name: Validate Nix
+    uses: dryvist/.github/.github/workflows/_nix-validate.yml@main
+    with:
+      all_systems: false
+      runner_label: ubuntu-latest

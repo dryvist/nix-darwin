@@ -32,10 +32,14 @@ name: CI Gate
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  # The full macOS build is post-merge; PRs use the shared Nix Validate check.
+  push:
+    branches: [main]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # Main merge builds populate the Nix cache; let them finish. PR updates cancel.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
@@ -93,17 +97,13 @@ jobs:
   # ==========================================================================
   # REPO-LOCAL CHECKS (reusable workflows the shared gate cannot host)
   # ==========================================================================
-  # Full-build placement: the ~20-27 min macOS system build runs pre-merge
-  # only on PRs targeting main — i.e. the develop->main promotion PR, the
-  # guaranteed end-to-end sweep. develop PRs take the fast path (Nix
-  # Validate, ~2 min); coverage between promotions is ci-nix.yml's build on
-  # every develop push (post-merge, and the only cache-saving run).
-  # Exception: a flake.lock change also builds pre-merge on develop, since
-  # relocks auto-merge.
+  # Full-build placement: only a commit that has landed on main runs the
+  # macOS build. Every PR, including promotion PRs and lockfile updates, uses
+  # Nix Validate; ci-nix.yml also validates develop pushes.
   nix-build:
     name: Nix Build
     needs: shared-gate
-    if: (github.base_ref == 'main' || needs.shared-gate.outputs.is-flake-lock-change == 'true') && needs.shared-gate.outputs.nix == 'true' && (needs.shared-gate.outputs.is-deps-only == 'false' || needs.shared-gate.outputs.is-flake-lock-change == 'true')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.shared-gate.outputs.nix == 'true'
     permissions:
       contents: read
       # _nix-build.yml's cache step purges superseded entries through the
