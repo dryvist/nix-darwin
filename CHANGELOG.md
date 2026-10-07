@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.6.1](https://github.com/dryvist/nix-darwin/compare/v3.6.0...v3.6.1) (2026-10-07)
+
+
+### Bug Fixes
+
+* **mlx:** accept catalog assertion in role map check ([5212d51](https://github.com/dryvist/nix-darwin/commit/5212d51b7f0768615534b48df2effb3769077ef7))
+* **mlx:** accept catalog assertion in role map negative check ([adcbe77](https://github.com/dryvist/nix-darwin/commit/adcbe7757b17fe4f856b47237d77f5981979dfa5))
+
 ## [3.6.0](https://github.com/dryvist/nix-darwin/compare/v3.5.1...v3.6.0) (2026-10-06)
 
 
