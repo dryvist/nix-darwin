@@ -33,7 +33,7 @@
 
 set -u
 
-PORT="${SERVING_GATE_PORT:-11434}"
+PORT="${SERVING_GATE_PORT:?SERVING_GATE_PORT must be set by the host configuration}"
 BASE="http://127.0.0.1:${PORT}"
 SLEEP="${SERVING_GATE_SLEEP:-15}"
 # Measured, not guessed: a cold llama-swap model swap on this host exceeded 90s
