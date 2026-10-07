@@ -12,7 +12,6 @@
 {
   config,
   hostConfig,
-  nix-ai,
   lib,
   pkgs,
   ...
@@ -29,6 +28,18 @@ let
   };
 
   userConfig = import ../../lib/user-config.nix;
+
+  defaultResidentContract =
+    let
+      residents = lib.filterAttrs (
+        _: contract: contract.roles ? default
+      ) config.home-manager.users.${userConfig.user.name}.programs.mlx.staticResidentContracts;
+    in
+    if builtins.length (builtins.attrNames residents) == 1 then
+      builtins.head (builtins.attrValues residents)
+    else
+      throw "llm-gate requires exactly one static resident assigned to the default role";
+  defaultResidentPort = defaultResidentContract.servicePort;
 in
 {
   imports = [
@@ -149,23 +160,17 @@ in
       # service itself was healthy. Pinning one address means the bind list and
       # DNS are two places that must agree, and nothing detects them disagreeing.
       #
-      # Known ceiling, accepted: a wildcard listener also owns 127.0.0.1 on
-      # these ports, which mirror the loopback MLX service ports. If the MLX
-      # service ever drops its specific loopback bind, Caddy can capture loopback
-      # callers into its own TLS listener and they see an HTTP-to-HTTPS error
-      # (INC-17114). The loopback service bind is what keeps that from
-      # happening.
+      # The clustered site still mirrors its loopback service port. That
+      # service's specific loopback bind keeps local HTTP callers from being
+      # captured by Caddy's wildcard TLS listener. The regular API gate targets
+      # the catalog-selected resident on its worker port.
       # Clustered-mode endpoint (mlx-lm rank 0 on loopback :11440, see
       # lib/hosts/mac-studio.nix clusterMode): second gated site, same
       # bearer token and cert, mirrored external:loopback port convention.
       clusterUpstreamPort = 11440;
-      # Gated API proxies to the loopback MLX endpoint; its port is read from
-      # the shared endpoint registry.
-      apiUpstreamPort = lib.toInt (
-        builtins.head (
-          builtins.match ".*:([0-9]+)/.*" (import "${nix-ai}/vars/ai-stack.nix").endpoints.mlx_local
-        )
-      );
+      # Route to the catalog-selected default worker so requests enter its
+      # bounded queue directly.
+      apiUpstreamPort = defaultResidentPort;
     };
 
     # ========================================================================
@@ -204,6 +209,6 @@ in
   # is already done by this point, so a non-zero exit would report a half-applied
   # system without fixing anything.
   system.activationScripts.postActivation.text = lib.mkAfter ''
-    ${lib.getExe servingGate} || true
+    SERVING_GATE_PORT=${toString defaultResidentPort} ${lib.getExe servingGate} || true
   '';
 }
