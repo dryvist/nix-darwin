@@ -3,11 +3,11 @@
     "agent-limits-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1791300278,
-        "narHash": "sha256-4SrslFhVBMuToborrl3dSshM9lg/4ohuYUnxEVmKvY8=",
+        "lastModified": 1791357901,
+        "narHash": "sha256-8PslT9cfvWhRVnrBE2IbcFjk9vomKxPj4deYSprDEwQ=",
         "owner": "dryvist",
         "repo": "nix-darwin",
-        "rev": "a948256251f7bbac80ca854ae3a6c6a036b7a8c0",
+        "rev": "89545dd2a2b633570896a4cce49f9d37d4c584bd",
         "type": "github"
       },
       "original": {
@@ -1252,11 +1252,11 @@
     "nix-agent-sandbox-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1791256960,
-        "narHash": "sha256-rXBJsiOawr2eFWL6nioyciSKFfhkAkzFR7nd22avoiU=",
+        "lastModified": 1791355198,
+        "narHash": "sha256-OH1+CrBCrEllL+gbsk/DbWDqsdl5Pxo66G10RnT/s2c=",
         "owner": "dryvist",
         "repo": "nix-agent-sandbox",
-        "rev": "24afba6172e1f811d5853f690bd78867e9cb435f",
+        "rev": "aca08dfa94510820ef3c60abf3cfc4f01de06af5",
         "type": "github"
       },
       "original": {
@@ -1341,11 +1341,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1791314043,
-        "narHash": "sha256-Qen/ouHoWG8QdmD07oGS6CG3gG9Bg8ozKYdIcCsjDKk=",
+        "lastModified": 1791427116,
+        "narHash": "sha256-MhmhUUWSeRyvCU2EalTdvlwzBIYZp7m2fmo6EIZBl38=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "d34f9579c2fa736e057bd6aef6242b50c8e66dc1",
+        "rev": "a72a7877f873dbcfb3af1b42ee9b32e39d19d5b9",
         "type": "github"
       },
       "original": {
