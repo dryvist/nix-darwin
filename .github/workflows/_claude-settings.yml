@@ -28,15 +28,15 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/determinate-nix-action@8d87e8d5e5b8a8309d4281094560f127d9a265f1 # v3
 
-      # Restore-only on PRs; saves on main. See .claude/rules/ci-workflows.md.
+      # Keep this validator's bounded cache separate from other Nix workflows.
       - name: Cache Nix Store
         uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7
         with:
-          primary-key: nix-${{ runner.os }}-${{ hashFiles('flake.lock') }}
+          primary-key: nix-${{ runner.os }}-claude-settings-v2-${{ hashFiles('flake.lock') }}
           restore-prefixes-first-match: |
-            nix-${{ runner.os }}-
-          gc-max-store-size-linux: 3G
-          save: ${{ github.ref == 'refs/heads/main' }}
+            nix-${{ runner.os }}-claude-settings-v2-
+          gc-max-store-size-linux: 1G
+          save: ${{ github.ref == 'refs/heads/develop' }}
 
       - name: Start Validation Timer
         id: validation-timer
