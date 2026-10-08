@@ -8,6 +8,11 @@ We use `nix-community/cache-nix-action@v7` for Nix store caching. It is Nix-awar
 free, and uses the `actions/cache` backend. PRs are restore-only (`save: false`);
 saves happen on pushes to **the repository's default branch**, which is `develop` here.
 
+The Claude Settings validator has its own versioned `nix-<OS>-claude-settings-v2-`
+cache namespace, a 1G Linux store cap, and a fallback scoped to that namespace.
+This keeps its cache independent from the larger Nix build cache while retaining
+reuse across lockfile changes.
+
 > **Say "default branch", never "main".** An earlier version of this file said saves
 > happen "on main pushes". GitHub scopes a cache to the writing branch, the default
 > branch, and a PR's base branch — so on a git-flow repo a main-scoped cache is
@@ -50,7 +55,8 @@ Both are asserted by `scripts/workflows/check-ci-invariants.sh`, which runs as a
 - Long-term stability of `cache-nix-action@v7` — it is community-maintained; check for
   upstream issues before upgrading major versions.
 - Cache hit rates over time as `flake.lock` changes. First runs after a lockfile update
-  will fall back to prefix-matching, which may be slower than a full cache hit.
+  will fall back to a Claude Settings cache in the same namespace, which may be slower
+  than an exact cache hit.
 - Whether the baseline (8-10min) holds as the configuration grows.
 
 ## Performance Expectations
