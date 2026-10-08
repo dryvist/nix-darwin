@@ -3,11 +3,11 @@
     "agent-limits-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1791357901,
-        "narHash": "sha256-8PslT9cfvWhRVnrBE2IbcFjk9vomKxPj4deYSprDEwQ=",
+        "lastModified": 1791428057,
+        "narHash": "sha256-/UFQcuqdZXYbTDrdDzu55n3Cj918+t9QnjLKhVRQ3XM=",
         "owner": "dryvist",
         "repo": "nix-darwin",
-        "rev": "89545dd2a2b633570896a4cce49f9d37d4c584bd",
+        "rev": "6a801046e701cc11c02b267e607eea3f9c22140c",
         "type": "github"
       },
       "original": {
@@ -591,11 +591,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1791209925,
-        "narHash": "sha256-JLc2IKnm1O3tZ3rqSBhUpN2LvA8DLKwBh87unNx16OA=",
+        "lastModified": 1791419629,
+        "narHash": "sha256-Xf/kz/ZURuyo/1c/7i7/gdQokl65sNs1+z9hs+YCHtw=",
         "owner": "dryvist",
         "repo": ".github",
-        "rev": "3b36c54473a90f7b3bacb7f3eda7e89fb2905e33",
+        "rev": "adc2e0ef4298c6cc4500d2aeb2dfb9430eaaa4df",
         "type": "github"
       },
       "original": {
@@ -1252,11 +1252,11 @@
     "nix-agent-sandbox-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1791355198,
-        "narHash": "sha256-OH1+CrBCrEllL+gbsk/DbWDqsdl5Pxo66G10RnT/s2c=",
+        "lastModified": 1791468773,
+        "narHash": "sha256-RaX38q3WL6scuSv5/N51FoNP3otlnc5NerPIhV0wzhM=",
         "owner": "dryvist",
         "repo": "nix-agent-sandbox",
-        "rev": "aca08dfa94510820ef3c60abf3cfc4f01de06af5",
+        "rev": "be5d1391529ab7b1801d3302a0d80e773558c9a0",
         "type": "github"
       },
       "original": {
@@ -1275,11 +1275,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791130370,
+        "lastModified": 1791417305,
         "narHash": "sha256-XAy1nNNp6JNj0fo3m96VC0fqb+QP1rwCjXPPXr4nS8s=",
         "owner": "dryvist",
         "repo": "nix-agy",
-        "rev": "12c60f3107941549d70df76885d11ff3501b07e7",
+        "rev": "c4d373c7a9bcfd4fad5b2362c1cea3cd3cff3b40",
         "type": "github"
       },
       "original": {
@@ -1341,11 +1341,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1791444535,
-        "narHash": "sha256-ASHvsFOSwwEZ8mLxt04THPNRNcMxB385Ug3dSy/Wt88=",
+        "lastModified": 1791479040,
+        "narHash": "sha256-6avsJwsnF6xVRnNesLnOevqRDyzrxVMNwbv78eM6OWE=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "958be12c13ccaef280cece32ca7e4c34d7a432e3",
+        "rev": "b0082987615e92f8add9c1f03c196c8ce92e9412",
         "type": "github"
       },
       "original": {
@@ -1480,11 +1480,11 @@
         "visual-explainer-marketplace": "visual-explainer-marketplace"
       },
       "locked": {
-        "lastModified": 1791247398,
-        "narHash": "sha256-FC3TM66iQPCGNjrXV4XsGuLBEU6HLgEi7yEJ7toLGJ8=",
+        "lastModified": 1791423493,
+        "narHash": "sha256-GTwcC2cntoVGqO5VN0Zn3XJ/Yy0jqDfAR+tuVNhRvfQ=",
         "owner": "dryvist",
         "repo": "nix-claude-code",
-        "rev": "8cc4250e62286a244bbd2950a02475b3947ee552",
+        "rev": "e670d0ba236433496d856b15f9282f899ecc0435",
         "type": "github"
       },
       "original": {
@@ -1497,11 +1497,11 @@
     "nix-claude-code-launcher-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1791248055,
-        "narHash": "sha256-p0Sz3ymMuVgQVx1DxEt6A1Ywz3SYVZfAgbkTdR1I1uc=",
+        "lastModified": 1791444680,
+        "narHash": "sha256-YSO+Y+8TbGywwEU2mkYd8WHI8PDEpz6C3Iiwr7u4Jm0=",
         "owner": "dryvist",
         "repo": "nix-claude-code",
-        "rev": "3de5f597431df22c40e0fa49169a19e1e653dbc8",
+        "rev": "dd5c8cecb7a0cf5a1b38120b86e95b579249977d",
         "type": "github"
       },
       "original": {
@@ -1536,11 +1536,11 @@
     "nix-codex-launcher-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1791074092,
+        "lastModified": 1791417533,
         "narHash": "sha256-3mbs+nXwCHnE8BgXIWZpyz/BrbrQWOCklGio7m6j4w4=",
         "owner": "dryvist",
         "repo": "nix-codex",
-        "rev": "2b687ad86fc8f5055db0e553e417db9c8e7a8068",
+        "rev": "4ba2ff1500d570ec585166dbaba269f55ab135ea",
         "type": "github"
       },
       "original": {
