@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.7.2](https://github.com/dryvist/nix-darwin/compare/v3.7.1...v3.7.2) (2026-10-08)
+
+
+### Bug Fixes
+
+* **ci:** scope Claude Settings cache ([#2784](https://github.com/dryvist/nix-darwin/issues/2784)) ([34f9229](https://github.com/dryvist/nix-darwin/commit/34f9229c5bb1a540585257969fc46cdbc931f98b))
+* **nix-darwin:** pin nix-ai admission update ([#2783](https://github.com/dryvist/nix-darwin/issues/2783)) ([6a80104](https://github.com/dryvist/nix-darwin/commit/6a801046e701cc11c02b267e607eea3f9c22140c))
+
 ## [3.7.1](https://github.com/dryvist/nix-darwin/compare/v3.7.0...v3.7.1) (2026-10-07)
 
 
