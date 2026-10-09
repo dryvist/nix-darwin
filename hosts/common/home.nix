@@ -152,12 +152,6 @@ in
     # (modules/default.nix). Re-enable in nix-ai once the dep bound is relaxed.
     cecli.enable = lib.mkForce false;
 
-    # The cursor and opencode CLIs are not installed on these hosts. mkForce
-    # overrides nix-ai's unconditional enable (modules/default.nix). The GUI
-    # Cursor IDE (code-cursor, in the per-host home) is unaffected.
-    cursor.enable = lib.mkForce false;
-    opencode.enable = lib.mkForce false;
-
     # Local MLX inference. nix-ai renders the selected resident model agents
     # and catalog-derived LiteLLM routes under Nix management.
     # Sizing (cacheMemoryMb / prefillBatchSize) is per-host from the registry.
