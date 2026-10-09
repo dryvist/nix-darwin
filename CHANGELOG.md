@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.7.3](https://github.com/dryvist/nix-darwin/compare/v3.7.2...v3.7.3) (2026-10-09)
+
+
+### Bug Fixes
+
+* **litellm-local:** derive the local model endpoint from the model server ([#2795](https://github.com/dryvist/nix-darwin/issues/2795)) ([2aa1860](https://github.com/dryvist/nix-darwin/commit/2aa18605016a1942696c889dfb952927226f3f0c))
+
 ## [3.7.2](https://github.com/dryvist/nix-darwin/compare/v3.7.1...v3.7.2) (2026-10-08)
 
 
