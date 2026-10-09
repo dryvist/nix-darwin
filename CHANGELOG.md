@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.7.4](https://github.com/dryvist/nix-darwin/compare/v3.7.3...v3.7.4) (2026-10-09)
+
+
+### Bug Fixes
+
+* **home:** stop forcing cursor and opencode CLIs off ([2e0dd55](https://github.com/dryvist/nix-darwin/commit/2e0dd55ea69dcfe19fc0f408a51efb1c5a3c36a2))
+* **home:** stop forcing cursor and opencode CLIs off ([f9866ba](https://github.com/dryvist/nix-darwin/commit/f9866ba1678c8bd55aa570a5d7a1b15e06434e79))
+
 ## [3.7.3](https://github.com/dryvist/nix-darwin/compare/v3.7.2...v3.7.3) (2026-10-09)
 
 
