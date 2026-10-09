@@ -171,7 +171,6 @@ in
       # Claude Code talks directly to Anthropic; the proxy remains for the
       # OpenAI-shaped clients and cannot change Claude model ids or windows.
       claudeDirect = true;
-      localEndpoint = (import "${nix-ai}/vars/ai-stack.nix").endpoints.mlx_local;
       # Keep the client-facing alias stable while its local id follows the
       # host's catalog. The terminal router rung must use the same group name.
       localModels = [
