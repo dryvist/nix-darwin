@@ -20,11 +20,11 @@
     "ai-assistant-instructions": {
       "flake": false,
       "locked": {
-        "lastModified": 1791647091,
-        "narHash": "sha256-2SuIcolJT7Io5zi1VGwY5shwpwncqWZoPT1XJ+hBo3o=",
+        "lastModified": 1791655210,
+        "narHash": "sha256-BQPjT0uRjQFtcTLkajkZAhLiqQViaYx4zHWkPudTOCI=",
         "owner": "dryvist",
         "repo": "ai-assistant-instructions",
-        "rev": "4efd51a5a3f55687058c12bcb48f256752bda7ea",
+        "rev": "c56fabd4eb43eb66fc22ce1e84d804655fc8aba4",
         "type": "github"
       },
       "original": {
@@ -584,11 +584,11 @@
     "dotgithub": {
       "flake": false,
       "locked": {
-        "lastModified": 1791645772,
-        "narHash": "sha256-9cu0KWvY3nkuFLM3CvuS/IK11h6uhucyJTpOinxHt9E=",
+        "lastModified": 1791655866,
+        "narHash": "sha256-nGTCLJsckqrGdG7vicgvEcRSrYj3xNeVAgxEP2q39lE=",
         "owner": "dryvist",
         "repo": ".github",
-        "rev": "670adfb3d3583219d6ba8946318569ce3f0f3944",
+        "rev": "72cab94668517f90e369381006f252493838551d",
         "type": "github"
       },
       "original": {
@@ -1043,11 +1043,11 @@
     "homelab-contracts": {
       "flake": false,
       "locked": {
-        "lastModified": 1791638620,
-        "narHash": "sha256-qEr3f7L+NxOrUR61Dzlim1rlPf+ipGBoPJQ+c8SIHCg=",
+        "lastModified": 1791653913,
+        "narHash": "sha256-S3SQ/4FWqewYBCSuFnnzDdck6aH+qXb/x3wnAOJUGZI=",
         "owner": "dryvist",
         "repo": "homelab-contracts",
-        "rev": "7d35756294e8b868c3fb79c92bfbf912063b3bb5",
+        "rev": "0e35299b1128102c993fa274dba5d2385d8f06e0",
         "type": "github"
       },
       "original": {
@@ -1097,11 +1097,11 @@
     "jacobpevans-cc-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1791647218,
-        "narHash": "sha256-PJO22UJ60YF5V3nSSfJFA9SEIJG1zC5IJfAPHY7+awo=",
+        "lastModified": 1791655841,
+        "narHash": "sha256-AHmXSdKPXe3pnyDCyKsivjyKCiNFXmMMS3Akj5efKnY=",
         "owner": "dryvist",
         "repo": "claude-code-plugins",
-        "rev": "9d278544022eb79525a50ff235758b92867dc90a",
+        "rev": "6391a538f217e99267ac92771df31457cb15380d",
         "type": "github"
       },
       "original": {
