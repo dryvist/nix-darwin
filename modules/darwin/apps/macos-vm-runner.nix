@@ -168,6 +168,11 @@ in
       groups.${serviceUser}.gid = cfg.gid;
     };
 
+    environment.etc."newsyslog.d/macos-vm-runner.conf".text = ''
+      # logfilename [owner:group] mode count size when flags
+      ${stateDir}/runner.log ${serviceUser}:${serviceUser} 640 3 10240 * BJN
+    '';
+
     system.activationScripts.postActivation.text = lib.mkAfter ''
       /usr/bin/install -d -o root -g wheel -m 0755 ${lib.escapeShellArg appDir}
       /usr/bin/install -d -o ${serviceUser} -g ${serviceUser} -m 0700 ${lib.escapeShellArg stateDir}
@@ -193,8 +198,9 @@ in
       KeepAlive.PathState.${privateKeyPath} = true;
       ThrottleInterval = 30;
       ProcessType = "Interactive";
-      StandardOutPath = "/var/log/macos-vm-runner.log";
-      StandardErrorPath = "/var/log/macos-vm-runner.log";
+      # The service account cannot write /var/log; it owns its state directory.
+      StandardOutPath = "${stateDir}/runner.log";
+      StandardErrorPath = "${stateDir}/runner.log";
     };
   };
 }
