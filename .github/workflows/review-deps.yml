@@ -17,6 +17,7 @@ jobs:
     # Only run on PRs with the 'dependencies' label
     if: contains(github.event.pull_request.labels.*.name, 'dependencies')
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     environment: automation
     permissions:
       contents: write
@@ -48,9 +49,11 @@ jobs:
           DIFF=$(git diff ${{ github.event.pull_request.base.sha }}...HEAD -- flake.lock)
           printf '%s\n' "$DIFF" > "$RUNNER_TEMP/flake-lock.diff"
           # Save diff to output (escape for multiline)
-          echo "content<<EOF" >> $GITHUB_OUTPUT
-          echo "$DIFF" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          {
+            echo "content<<EOF"
+            echo "$DIFF"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Render review prompt
         id: prompt
@@ -60,9 +63,11 @@ jobs:
             | DIFF_FILE="$RUNNER_TEMP/flake-lock.diff" awk \
               '/steps\.diff\.outputs\.content/ { while ((getline line < ENVIRON["DIFF_FILE"]) > 0) print line; next } { print }' \
               > "$RUNNER_TEMP/review-prompt.md"
-          echo 'content<<EOF' >> "$GITHUB_OUTPUT"
-          cat "$RUNNER_TEMP/review-prompt.md" >> "$GITHUB_OUTPUT"
-          echo 'EOF' >> "$GITHUB_OUTPUT"
+          {
+            echo 'content<<EOF'
+            cat "$RUNNER_TEMP/review-prompt.md"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
 
       - name: Run Claude Code Review
         id: claude-review
@@ -85,17 +90,17 @@ jobs:
           if [ -f "${{ steps.claude-review.outputs.execution_file }}" ]; then
             # Check if the review contains AUTO-MERGE decision
             if grep -q "DECISION: AUTO-MERGE" "${{ steps.claude-review.outputs.execution_file }}"; then
-              echo "decision=auto-merge" >> $GITHUB_OUTPUT
+              echo "decision=auto-merge" >> "$GITHUB_OUTPUT"
               echo "Claude recommended auto-merge"
             elif grep -q "DECISION: HOLD" "${{ steps.claude-review.outputs.execution_file }}"; then
-              echo "decision=hold" >> $GITHUB_OUTPUT
+              echo "decision=hold" >> "$GITHUB_OUTPUT"
               echo "Claude recommended holding for human review"
             else
-              echo "decision=hold" >> $GITHUB_OUTPUT
+              echo "decision=hold" >> "$GITHUB_OUTPUT"
               echo "::warning::Could not parse decision from Claude response, defaulting to hold"
             fi
           else
-            echo "decision=hold" >> $GITHUB_OUTPUT
+            echo "decision=hold" >> "$GITHUB_OUTPUT"
             echo "::warning::Execution file not found, defaulting to hold"
           fi
 

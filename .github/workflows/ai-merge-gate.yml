@@ -1,6 +1,10 @@
 name: AI Merge Gate
 on: pull_request
 permissions: read-all
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   gate:
     uses: dryvist/ai-workflows/.github/workflows/_ai-merge-gate.yml@main
