@@ -64,35 +64,36 @@ EOF
   [[ "$output" =~ "OK" ]]
 }
 
-# ── Stale packages fail ───────────────────────────────────────────────────────
+# ── Stale packages are reported, never failed ─────────────────────────────────
 
-@test "validate-package-freshness.sh: stale critical package exits 1" {
+@test "validate-package-freshness.sh: stale critical package is reported and exits 0" {
   make_flake_lock "nixpkgs" "$STALE_CRITICAL"
   run bash "$SCRIPT_UNDER_TEST"
-  [ "$status" -eq 1 ]
-  [[ "$output" =~ "VALIDATION FAILED" ]]
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "STALE" ]]
+  [[ "$output" =~ "report only" ]]
 }
 
-@test "validate-package-freshness.sh: stale general package (home-manager) exits 1" {
+@test "validate-package-freshness.sh: stale general package (home-manager) is reported and exits 0" {
   make_flake_lock "nixpkgs" "$FRESH" ',
     "home-manager": {
       "locked": { "lastModified": '"$STALE_GENERAL"' }
     }'
   run bash "$SCRIPT_UNDER_TEST"
-  [ "$status" -eq 1 ]
-  [[ "$output" =~ "VALIDATION FAILED" ]]
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "STALE" ]]
 }
 
 # ── Dynamic ROOT_NIXPKGS_NODE resolution ─────────────────────────────────────
 
-@test "validate-package-freshness.sh: stale nixpkgs_3 fails when root points to it" {
+@test "validate-package-freshness.sh: stale nixpkgs_3 is reported when root points to it" {
   # When determinate brings its own nixpkgs, Nix renames ours to nixpkgs_3.
   # The script reads root.inputs.nixpkgs and must treat that node as critical.
   make_flake_lock "nixpkgs_3" "$STALE_CRITICAL"
   run bash "$SCRIPT_UNDER_TEST"
-  [ "$status" -eq 1 ]
+  [ "$status" -eq 0 ]
   [[ "$output" =~ "nixpkgs_3" ]]
-  [[ "$output" =~ "VALIDATION FAILED" ]]
+  [[ "$output" =~ "STALE" ]]
 }
 
 @test "validate-package-freshness.sh: fresh nixpkgs_3 passes when root points to it" {

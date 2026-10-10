@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Validate Package Freshness - Pre-commit Hook
 #
-# PURPOSE: Prevent committing flake.lock with outdated package versions
+# PURPOSE: Report flake.lock inputs that are old. REPORT-ONLY: the script always exits 0, so
+#   a stale pin never blocks a commit or a merge; a first-party bump is a deliberate PR.
 # SCOPE: Depth-1 only — checks direct inputs from .nodes.root.inputs, not transitive deps
-# FAIL THRESHOLDS:
-#   - Critical packages (nixpkgs, home-manager, ai-assistant-instructions): >30 days = FAIL
-#   - All direct inputs: >90 days = FAIL
+# REPORT THRESHOLDS:
+#   - Critical packages (nixpkgs, home-manager, ai-assistant-instructions): >30 days = STALE
+#   - All direct inputs: >90 days = STALE
 # EXEMPTIONS: Packages in EXEMPT_PACKAGES array skip age checks
 #
 # USAGE: Run as pre-commit hook or manually: ./scripts/validate-package-freshness.sh
@@ -85,7 +86,7 @@ matches_exemption_pattern() {
 }
 
 # Main validation loop
-FAILED=0
+STALE=0
 WARNINGS=0
 CURRENT_TIME=$(date +%s)
 
@@ -115,8 +116,8 @@ while IFS= read -r package; do
   DAYS_OLD=$(( (CURRENT_TIME - LAST_MOD) / 86400 ))
 
   if [[ $DAYS_OLD -gt $CRITICAL_THRESHOLD_DAYS ]]; then
-    echo -e "  ${RED}✗ FAIL${NC}: $package is ${RED}$DAYS_OLD days${NC} old (threshold: $CRITICAL_THRESHOLD_DAYS days)"
-    FAILED=$((FAILED + 1))
+    echo -e "  ${RED}✗ STALE${NC}: $package is ${RED}$DAYS_OLD days${NC} old (threshold: $CRITICAL_THRESHOLD_DAYS days)"
+    STALE=$((STALE + 1))
   else
     echo -e "  ${GREEN}✓ OK${NC}:   $package ($DAYS_OLD days old)"
   fi
@@ -150,8 +151,8 @@ while IFS=$'\t' read -r input_key node_name; do
   DAYS_OLD=$(( (CURRENT_TIME - LAST_MOD) / 86400 ))
 
   if [[ $DAYS_OLD -gt $GENERAL_THRESHOLD_DAYS ]]; then
-    echo -e "  ${RED}✗ FAIL${NC}: $input_key is ${RED}$DAYS_OLD days${NC} old (threshold: $GENERAL_THRESHOLD_DAYS days)"
-    FAILED=$((FAILED + 1))
+    echo -e "  ${RED}✗ STALE${NC}: $input_key is ${RED}$DAYS_OLD days${NC} old (threshold: $GENERAL_THRESHOLD_DAYS days)"
+    STALE=$((STALE + 1))
   elif [[ $DAYS_OLD -gt 60 ]]; then
     # Warn if approaching threshold
     echo -e "  ${YELLOW}⚠  WARN${NC}: $input_key is $DAYS_OLD days old (approaching threshold)"
@@ -176,18 +177,16 @@ done < <(jq -r '.nodes | keys[]' "$FLAKE_LOCK")
 # Summary
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-if [[ $FAILED -gt 0 ]]; then
-  echo -e "${RED}✗ VALIDATION FAILED${NC}: $FAILED package(s) exceed staleness threshold"
+if [[ $STALE -gt 0 ]]; then
+  echo -e "${YELLOW}⚠  STALE (report only)${NC}: $STALE package(s) exceed the age threshold"
   echo ""
-  echo "To fix outdated packages:"
-  echo "  1. Update flake inputs: nix flake update"
-  echo "  2. Or update specific input: nix flake update <package>"
-  echo "  3. Review changes: nix flake metadata"
-  echo "  4. Test rebuild: darwin-rebuild switch --flake ."
+  echo "This does not fail the run. To bump a pin, open a pull request:"
+  echo "  1. Update the input: nix flake update <package>"
+  echo "  2. Review changes: nix flake metadata"
   echo ""
-  echo "To exempt a package (intentional pin):"
+  echo "To hide an intentional pin from this report:"
   echo "  Add to EXEMPT_PACKAGES array in scripts/validate-package-freshness.sh"
-  exit 1
+  exit 0
 elif [[ $WARNINGS -gt 0 ]]; then
   echo -e "${YELLOW}⚠  PASSED WITH WARNINGS${NC}: $WARNINGS package(s) approaching threshold"
   exit 0

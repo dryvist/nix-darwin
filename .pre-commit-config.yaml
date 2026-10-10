@@ -147,8 +147,8 @@ repos:
         pass_filenames: false
 
       # Package freshness validation
-      # HARD FAIL if packages are too old (prevents security issues)
-      # Critical packages: <30 days, All packages: <90 days
+      # Report-only: prints inputs that are too old and always exits 0
+      # Critical packages: >30 days, All packages: >90 days
       - id: validate-package-freshness
         name: Validate package freshness (staleness check)
         entry: scripts/validate-package-freshness.sh

@@ -1,10 +1,11 @@
 name: Package Staleness Check
 
-# Purpose: Block PR merges if packages are too old
-# Thresholds:
-#   - Critical packages (nixpkgs, darwin, home-manager): >30 days = FAIL
-#   - All packages: >90 days = FAIL
-# Override: Add 'skip-version-check' label to bypass (emergency only)
+# Purpose: Report flake.lock inputs that are old. Report-only: the job never
+# fails and never blocks a merge, because a first-party bump is a deliberate
+# pull request and age alone is not a reason to force one.
+# Thresholds (scripts/validate-package-freshness.sh):
+#   - Critical packages (nixpkgs, home-manager, ai-assistant-instructions): >30 days = STALE
+#   - All direct inputs: >90 days = STALE
 
 on:
   pull_request:
@@ -16,7 +17,6 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write # Needed to post comments
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -36,97 +36,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Check for skip label
-        id: check-skip
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
-        with:
-          script: |
-            const labels = context.payload.pull_request?.labels || [];
-            const skipLabel = labels.find(l => l.name === 'skip-version-check');
-            if (skipLabel) {
-              core.notice('⊘ SKIP: skip-version-check label detected');
-              core.setOutput('skip', 'true');
-            } else {
-              core.setOutput('skip', 'false');
-            }
-
-      - name: Run package freshness validation
-        if: steps.check-skip.outputs.skip == 'false'
-        id: validate
-        continue-on-error: true
+      - name: Report package freshness
+        shell: bash
         run: |
-          # Run validation script and capture output
-          bash scripts/validate-package-freshness.sh > staleness-report.txt 2>&1
-          EXIT_CODE=$?
-          echo "exit_code=$EXIT_CODE" >> "$GITHUB_OUTPUT"
-
-          # Capture report for PR comment (safe - no untrusted input)
           {
-            echo "STALENESS_REPORT<<EOF"
-            cat staleness-report.txt
-            echo "EOF"
-          } >> "$GITHUB_ENV"
-
-          exit "$EXIT_CODE"
-
-      - name: Post staleness report as PR comment
-        if: steps.check-skip.outputs.skip == 'false' && steps.validate.outputs.exit_code != '0'
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
-        with:
-          script: |
-            // SECURITY: All inputs here are from trusted sources (our own script output)
-            // No untrusted user input (PR title, body, etc.) is used
-            const report = process.env.STALENESS_REPORT;
-            const exitCode = process.env.EXIT_CODE;
-
-            const comment = `## ⚠️ Package Staleness Check Failed
-
-            ${report}
-
-            **Exit Code:** ${exitCode}
-
-            ### Resolution Options
-
-            1. **Update packages** (recommended):
-
-            \`\`\`bash
-            nix flake update
-            git add flake.lock
-            git commit -m "chore(deps): update flake inputs"
-            \`\`\`
-
-            2. **Update specific package**:
-
-            \`\`\`bash
-            nix flake update <package-name>
-            \`\`\`
-
-            3. **Exempt package** (intentional pin):
-
-            Add to EXEMPT_PACKAGES array in scripts/validate-package-freshness.sh
-
-            4. **Emergency bypass** (use sparingly):
-
-            Add skip-version-check label to this PR
-
-            *This check enforces package freshness to prevent security vulnerabilities and outdated dependencies.*`;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
-        env:
-          EXIT_CODE: ${{ steps.validate.outputs.exit_code }}
-
-      - name: Fail if packages are stale
-        if: steps.check-skip.outputs.skip == 'false' && steps.validate.outputs.exit_code != '0'
-        run: |
-          echo "::error::Package staleness check failed. See PR comment for details."
-          exit 1
-
-      - name: Success summary
-        if: steps.check-skip.outputs.skip == 'false' && steps.validate.outputs.exit_code == '0'
-        run: |
-          echo "::notice::✓ All packages are fresh and within acceptable age ranges"
+            echo '```text'
+            bash scripts/validate-package-freshness.sh | sed -E 's/\x1B\[[0-9;]*m//g'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
