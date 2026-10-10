@@ -28,6 +28,30 @@
       "depNameTemplate": "dryvist/cc-edge-the-mac-pack-io",
       "datasourceTemplate": "github-releases",
       "versioningTemplate": "loose"
+    },
+    {
+      // Bumps the sand release version only. The bottle `hash` is content-
+      // addressed: the Renovate PR's Nix build fails with the correct hash in
+      // its error, which is copied in (same policy as cribl-edge above).
+      "customType": "regex",
+      "managerFilePatterns": ["/modules/darwin/apps/macos-vm-runner\\.nix$/"],
+      "matchStrings": ["version = \"(?<currentValue>[^\"]+)\"; # renovate: sand"],
+      "depNameTemplate": "khoi/sand",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "loose"
+    },
+    {
+      // Digest-pins the macOS base VM. The -base image publishes only the
+      // `latest` tag, so the sha256 digest is the immutable reference.
+      "customType": "regex",
+      "managerFilePatterns": ["/modules/darwin/apps/macos-vm-runner\\.nix$/"],
+      "matchStrings": [
+        "ghcr\\.io/cirruslabs/macos-tahoe-base@(?<currentDigest>sha256:[a-f0-9]{64})\"; # renovate: macos-tahoe-base"
+      ],
+      "depNameTemplate": "ghcr.io/cirruslabs/macos-tahoe-base",
+      "currentValueTemplate": "latest",
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
     }
   ],
 
