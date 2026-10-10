@@ -7,12 +7,7 @@ on:
   #   - cron: "0 3 * * 2,5"
   # --- END DISABLED ---
 
-permissions:
-  actions: write
-  contents: read
-  id-token: write
-  issues: write
-  pull-requests: read
+permissions: {}
 
 jobs:
   dispatch:
@@ -29,6 +24,12 @@ jobs:
         run: gh workflow run "$WORKFLOW_NAME" --repo "${{ github.repository }}"
 
   recommend:
+    permissions:
+      actions: write
+      contents: read
+      id-token: write
+      issues: write
+      pull-requests: read
     if: github.event_name != 'schedule'
     uses: dryvist/ai-workflows/.github/workflows/best-practices.yml@main
     secrets: inherit
