@@ -210,6 +210,7 @@ Managed by nix-darwin modules but installed externally (not via nixpkgs or Homeb
 | Cribl Edge | `modules/darwin/apps/cribl-edge.nix` | Log collection agent (installed via .pkg, Nix manages LaunchDaemon + ACLs) |
 | llm-gate (Caddy) | `modules/darwin/llm-gate.nix` | API-only TLS + bearer gate for the LLM API (llm-large tier) on server hosts; sops-rendered Caddyfile |
 | GitHub Actions Runner | `modules/darwin/apps/github-runner-container.nix` | Ephemeral org runner in an Apple `container` VM; env-driven image, PAT via sops |
+| macOS VM GitHub Actions Runner | `modules/darwin/apps/macos-vm-runner.nix` | Ephemeral org runner per job in a Tart macOS VM (khoi/sand); root-only App key |
 
 ---
 
