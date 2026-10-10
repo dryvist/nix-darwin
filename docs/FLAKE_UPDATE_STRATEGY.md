@@ -2,50 +2,48 @@
 
 ## Overview
 
-This repository uses automated daily flake updates via GitHub Actions workflow (`.github/workflows/deps-update-flake.yml`).
+`flake.lock` has one writer: `.github/workflows/deps-flake-lock.yml`. The workflow calls the shared
+`dryvist/.github/.github/workflows/_update-flake-lock.yml` reusable workflow. Every run writes to the
+branch `chore/flake-lock`, so this repository has at most one open flake pull request.
 
-## Update Schedule
+## Triggers
 
-- **Daily (except Tue/Fri)**: AI-focused inputs only
-- **Tuesday & Friday**: All flake inputs (including darwin, home-manager, system packages)
-- **Manual trigger**: `workflow_dispatch` with optional `update_all` flag
-- **Triggered sync**: `repository_dispatch` for `ai-assistant-instructions` only (fast path)
+| Trigger | Relocks |
+| --- | --- |
+| `schedule` (Thursday 18:00 UTC) | Every input except dryvist inputs |
+| `repository_dispatch` (`update-flake-input`) | The named dryvist input only |
+| `workflow_dispatch` | On demand: `gh workflow run deps-flake-lock.yml` |
 
-## AI-Focused Inputs (Daily Updates)
+## Dryvist Inputs
 
-The following inputs update daily:
+Each dryvist input names a floating major tag: `github:dryvist/<repo>?ref=vN`.
+`flake.lock` holds the exact revision. A bump is a pull request.
 
-- `nixpkgs` (stable 25.11 channel)
-- `ai-assistant-instructions` (source of truth for AI agent config)
-- `claude-code-plugins` (official Anthropic)
-- `claude-cookbooks` (Anthropic cookbooks)
-- `claude-plugins-official` (official plugin directory)
-- `jacobpevans-cc-plugins` (personal custom plugins)
-- `anthropic-agent-skills` (Anthropic reusable skills)
-- `superpowers-marketplace` (superpowers development system)
+| Bump | Merge |
+| --- | --- |
+| Patch | Auto-merges after the Merge Gate is green |
+| Minor | A person merges it. It never auto-merges. |
+| Major | A person merges it. It never auto-merges. |
+
+A pull request that contains a minor or major dryvist bump does not auto-merge.
+
+## nixpkgs
+
+A `nixpkgs*` move never auto-merges. The pull request is labelled `needs-review`.
 
 ## Claude Code Update Philosophy
 
 **Strategy**: Always update when available. Manually research and validate new versions.
 Accept updates by default; revert only if issues discovered during testing.
 
-### Rationale
-
-Claude Code evolves rapidly with new features, bug fixes, and improvements. An aggressive
-update approach ensures:
-
-- Latest features and bug fixes are available immediately
-- Better integration with evolving AI development workflows
-- Reduced risk of stale tooling dependencies
-
 ### Workflow
 
-1. **Automated Update**: Daily flake updates automatically include claude-code and plugins
-2. **PR Creation**: GitHub Actions creates a PR with flake.lock changes
-3. **CI Validation**: Automated checks validate flake structure and build
-4. **Manual Review**: User reviews PR and manually validates during darwin-rebuild
-5. **Accept by Default**: Merge PR unless testing reveals bugs or breaking changes
-6. **Revert on Issues**: Only revert if integration problems discovered
+1. **Update**: The weekly relock includes the third-party `claude-code` input.
+2. **PR Creation**: The relock workflow opens a pull request with `flake.lock` changes.
+3. **CI Validation**: Automated checks validate flake structure and build.
+4. **Manual Review**: User reviews the PR and validates during darwin-rebuild.
+5. **Accept by Default**: Merge the PR unless testing reveals bugs or breaking changes.
+6. **Revert on Issues**: Revert only if integration problems are found.
 
 ## Validation Gates
 
@@ -64,7 +62,7 @@ claude --version
 
 ## PR Review Notes
 
-- CI validates flake structure and build
-- AI tool updates (including claude-code) run daily
-- Claude Code philosophy: Always accept updates, manually validate, revert only if issues found
-- Full dependency updates (darwin, home-manager) run Tue/Fri
+- CI validates flake structure and build.
+- The weekly relock includes `claude-code`. Dryvist inputs are excluded from it.
+- A dryvist patch bump auto-merges. A minor or major bump waits for a person.
+- A `nixpkgs*` move waits for a person.
