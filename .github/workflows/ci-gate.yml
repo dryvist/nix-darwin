@@ -64,6 +64,8 @@ jobs:
     with:
       osv_scan: true
       nix_validate: true
+      # Profile nix: a changed path no filter maps runs the full Nix Validate.
+      profile: nix
       # This flake declares checks.aarch64-darwin.pf-anchor-syntax, which
       # shells out to /sbin/pfctl; `--all-systems` would make a Linux runner
       # try to build it and fail on platform mismatch.
