@@ -85,9 +85,16 @@ let
   # sand's config is YAML. The App ID is the one value kept out of this file:
   # it is substituted at start from appIdFile, so no identifier reaches the
   # store. The other values are JSON-quoted, which is valid YAML.
-  sandTemplate = pkgs.writeText "macos-vm-runner-sand.yml.in" ''
-    runners:
-      - name: ${builtins.toJSON cfg.runnerName}
+  #
+  # One entry per VM. sand clones each entry under its own name (the Tart VM
+  # name), so the names must differ.
+  runnerEntry =
+    i:
+    let
+      name = builtins.toJSON "${cfg.runnerName}-${toString i}";
+    in
+    ''
+      - name: ${name}
         vm:
           source:
             type: oci
@@ -104,14 +111,18 @@ let
             appId: @APP_ID@
             organization: ${builtins.toJSON cfg.organization}
             privateKeyPath: ${builtins.toJSON cfg.privateKeyPath}
-            runnerName: ${builtins.toJSON cfg.runnerName}
+            runnerName: ${name}
             extraLabels: ${builtins.toJSON cfg.extraLabels}
             runnerGroup: ${builtins.toJSON cfg.runnerGroup}
         healthCheck:
           command: "pgrep -fl /Users/admin/actions-runner/run.sh"
           interval: 30
           delay: 60
-  '';
+    '';
+
+  sandTemplate = pkgs.writeText "macos-vm-runner-sand.yml.in" (
+    "runners:\n" + lib.concatMapStrings runnerEntry (lib.range 1 cfg.runnerCount)
+  );
 
   runnerPkg = pkgs.writeShellApplication {
     name = "macos-vm-runner";
@@ -159,7 +170,7 @@ in
       type = lib.types.str;
       default = "${config.networking.hostName}-tart";
       defaultText = lib.literalExpression "\"\${config.networking.hostName}-tart\"";
-      description = "Base runner name. sand appends a per-boot suffix, so this never collides with the Linux container runner on the same host.";
+      description = "Base runner name. Entry n is `<runnerName>-<n>`, and sand appends a per-boot suffix, so names never collide with the Linux container runner on the same host.";
     };
 
     runnerGroup = lib.mkOption {
@@ -187,6 +198,15 @@ in
       type = lib.types.ints.positive;
       default = 8;
       description = "Memory per VM in GB (sand's ramGb). 8 is 8192 MB.";
+    };
+
+    # ponytail: one sand process runs every entry, and an error from one entry
+    # propagates out of sand's task group and ends sand for all of them; launchd
+    # restarts it after ThrottleInterval. Upgrade: one daemon per runner.
+    runnerCount = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 1;
+      description = "Runner VMs kept running at once, each an entry in sand's runners list. Capped at two by the assertion below.";
     };
 
     uid = lib.mkOption {
@@ -221,6 +241,13 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = cfg.runnerCount <= 2;
+        message = "programs.macos-vm-runner.runnerCount is ${toString cfg.runnerCount}; Apple's macOS Software License Agreement allows at most two macOS VMs per Apple-branded host.";
+      }
+    ];
+
     # Service account and its group. Declared the way the retired agent
     # identities were: knownUsers/knownGroups must list the name, or nix-darwin
     # never creates it. Removing the name later deletes the account and home.

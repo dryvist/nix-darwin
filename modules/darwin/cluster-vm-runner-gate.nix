@@ -7,7 +7,8 @@
 #
 # The runner's VM memory is what the cluster budget needs while a rank serves.
 # A job still running on a VM when a rank goes live is interrupted: booting the
-# daemon out sends SIGTERM to sand, and the VM is torn down with the job.
+# daemon out sends SIGTERM to sand, and each VM is torn down with its job. One
+# daemon runs every configured VM, so this single label stops all of them.
 #
 # The timer interval is short (60s, against the maintenance window's 600s)
 # because the runner's VM memory is the thing that must be free before a rank
