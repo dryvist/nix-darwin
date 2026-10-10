@@ -118,6 +118,7 @@ in
           test_cluster_rebuild_gate.bats \
           test_cribl_llm_classifier.bats \
           test_cribl_transcript_mask.bats \
+          test_darwin_rebuild_windowed.bats \
           test_hm_collision_clear.bats \
           test_openbao_run.bats \
           test_system_limits.bats \

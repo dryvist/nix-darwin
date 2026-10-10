@@ -40,6 +40,7 @@ in
     ./boot-activation.nix # Creates /run/current-system at boot
     ./auto-recovery.nix
     ./security.nix
+    ./darwin-rebuild-windowed.nix # Window-gated darwin-rebuild; off unless enabled
     ./sudo-touchid.nix # Touch ID for sudo (see the file's header)
     ./ssh-hardening.nix
     ./pf-hardening.nix
