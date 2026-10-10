@@ -28,15 +28,15 @@
     # Direct inputs for independent updating (follows into nix-ai)
     # These are non-flake repos — zero transitive deps, always a 6-line flake.lock diff
     jacobpevans-cc-plugins = {
-      url = "github:dryvist/claude-code-plugins";
+      url = "github:dryvist/claude-code-plugins?ref=v6";
       flake = false;
     };
     ai-assistant-instructions = {
-      url = "github:dryvist/ai-assistant-instructions";
+      url = "github:dryvist/ai-assistant-instructions?ref=v1";
       flake = false;
     };
     ai-llm-prompts = {
-      url = "github:dryvist/ai-llm-prompts";
+      url = "github:dryvist/ai-llm-prompts?ref=v1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     claude-code-plugins = {
@@ -48,12 +48,12 @@
     # main; `nix flake update dotgithub` pulls the latest. The git module
     # tolerates the file being absent (pre-merge) and activates once present.
     dotgithub = {
-      url = "github:dryvist/.github";
+      url = "github:dryvist/.github?ref=v1";
       flake = false;
     };
 
     homelab-contracts = {
-      url = "github:dryvist/homelab-contracts";
+      url = "github:dryvist/homelab-contracts?ref=v5";
       flake = false;
     };
 
@@ -64,7 +64,7 @@
     # 24 marketplace inputs + nix-devenv dev-tooling into our lock).
     nix-ai = {
       # git-flow default is develop; pin main so we track releases, not it.
-      url = "github:dryvist/nix-ai/main";
+      url = "github:dryvist/nix-ai?ref=v7";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         home-manager.follows = "home-manager";
@@ -94,7 +94,7 @@
 
     # Cross-platform home-manager modules (git, zsh, vscode, monitoring, shells)
     nix-home = {
-      url = "github:dryvist/nix-home/main";
+      url = "github:dryvist/nix-home?ref=v1";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
     };
