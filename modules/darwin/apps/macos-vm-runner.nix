@@ -28,6 +28,10 @@
 let
   cfg = config.programs.macos-vm-runner;
 
+  # Hidden, non-admin service account the runner daemon runs as. The
+  # underscore prefix is the macOS convention for service accounts.
+  serviceUser = "_macos-vm-runner";
+
   # tart and sshpass are found on PATH by sand; the daemon's PATH and the
   # wrapper's runtimeInputs both come from this one list.
   toolPath = lib.makeBinPath [
@@ -184,22 +188,58 @@ in
       description = "Memory per VM in GB (sand's ramGb). 8 is 8192 MB.";
     };
 
+    uid = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 402;
+      description = "uid of the service account. Must be free on the host: nix-darwin skips an existing account whose uid differs rather than failing, so check `dscl . -list /Users UniqueID` before the first activation.";
+    };
+
+    gid = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 402;
+      description = "gid of the service account's own group. Must be free on the host (same skip behaviour as uid).";
+    };
+
+    stateDir = lib.mkOption {
+      type = lib.types.str;
+      default = "/var/lib/macos-vm-runner";
+      description = "Home of the service account: the Tart VM store (TART_HOME), sand's runner cache and the rendered sand config. Owned by the service account, mode 0700.";
+    };
+
     appIdFile = lib.mkOption {
       type = lib.types.str;
       default = "/Library/Application Support/macos-vm-runner/app-id";
-      description = "Root-only file holding the GitHub App's numeric App ID. Operator-placed.";
+      description = "File holding the GitHub App's numeric App ID, owned by the service account with mode 0400. Operator-placed.";
     };
 
     privateKeyPath = lib.mkOption {
       type = lib.types.str;
       default = "/Library/Application Support/macos-vm-runner/app-private-key.pem";
-      description = "Root-only GitHub App private key PEM. Operator-placed; the App is single-purpose (self-hosted runners, read and write, organization scope).";
+      description = "GitHub App private key PEM, owned by the service account with mode 0400. Operator-placed; the App is single-purpose (self-hosted runners, read and write, organization scope).";
     };
   };
 
   config = lib.mkIf cfg.enable {
+    # Service account and its group. Declared the way the retired agent
+    # identities were: knownUsers/knownGroups must list the name, or nix-darwin
+    # never creates it. Removing the name later deletes the account and home.
+    users = {
+      knownUsers = [ serviceUser ];
+      knownGroups = [ serviceUser ];
+      users.${serviceUser} = {
+        inherit (cfg) uid gid;
+        home = cfg.stateDir;
+        description = "macOS VM runner (ephemeral Tart VMs)";
+        isHidden = true;
+      };
+      groups.${serviceUser}.gid = cfg.gid;
+    };
+
+    # The key directory is root-owned and traversable: the service account reads
+    # the two files it holds, and cannot create or replace them.
     system.activationScripts.postActivation.text = lib.mkAfter ''
-      /usr/bin/install -d -o root -g wheel -m 0700 ${lib.escapeShellArg (dirOf cfg.appIdFile)} ${lib.escapeShellArg (dirOf cfg.privateKeyPath)}
+      /usr/bin/install -d -o root -g wheel -m 0755 ${lib.escapeShellArg (dirOf cfg.appIdFile)} ${lib.escapeShellArg (dirOf cfg.privateKeyPath)}
+      /usr/bin/install -d -o ${serviceUser} -g ${serviceUser} -m 0700 ${lib.escapeShellArg cfg.stateDir}
     '';
 
     # PathState, not RunAtLoad: the daemon starts only once the App ID and the
