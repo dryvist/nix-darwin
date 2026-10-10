@@ -120,22 +120,12 @@ let
       pkgs.tart
       pkgs.sshpass
     ];
-    text = ''
-      app_id="$(tr -d '[:space:]' < ${lib.escapeShellArg cfg.appIdFile})"
-      if [[ ! $app_id =~ ^[0-9]+$ ]]; then
-        echo "macos-vm-runner: ${cfg.appIdFile} must hold the numeric App ID" >&2
-        exit 1
-      fi
-
-      # Rendered config lives in the service account's state directory, never in the store.
-      runtime_dir=${lib.escapeShellArg "${cfg.stateDir}/run"}
-      mkdir -p "$runtime_dir"
-      chmod 0700 "$runtime_dir"
-      umask 077
-      sed "s/@APP_ID@/$app_id/" ${sandTemplate} > "$runtime_dir/sand.yml"
-
-      exec sand run --config "$runtime_dir/sand.yml"
-    '';
+    runtimeEnv = {
+      MACOS_VM_RUNNER_APP_ID_FILE = cfg.appIdFile;
+      MACOS_VM_RUNNER_STATE_DIR = cfg.stateDir;
+      MACOS_VM_RUNNER_SAND_TEMPLATE = "${sandTemplate}";
+    };
+    text = builtins.readFile ../scripts/macos-vm-runner.sh;
   };
 in
 {
