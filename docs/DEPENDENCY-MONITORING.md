@@ -18,8 +18,9 @@ lock PR.
 ## flake.lock: one workflow, one branch, one pull request
 
 `deps-flake-lock.yml` calls the shared
-`dryvist/.github/.github/workflows/_update-flake-lock.yml`, which runs a bare
-`nix flake update` — every root input moves together.
+`dryvist/.github/.github/workflows/_update-flake-lock.yml`. The scheduled run
+relocks every input except dryvist inputs. A dispatch relocks only the named
+dryvist input.
 
 | Trigger | When |
 | --- | --- |
@@ -32,13 +33,18 @@ carries more than one open flake pull request. A dispatch arriving while that
 pull request is open re-runs the relock from the base branch and amends it, so
 no earlier bump is lost.
 
-### Auto-merge is gated on nixpkgs
+### Dryvist inputs: pin and merge rules
 
-- **No `nixpkgs*` input moved** — the pull request auto-merges once CI is green.
-  This keeps release propagation hands-off.
-- **A `nixpkgs*` input moved** — auto-merge is withheld and the pull request is
-  labelled `needs-review`. This repository configures live machines, and a
-  channel jump rebuilds the world.
+Each dryvist input names a floating major tag (`github:dryvist/<repo>?ref=vN`).
+`flake.lock` holds the exact revision. A bump arrives as a pull request.
+
+- **Patch bump** — auto-merges after the Merge Gate is green.
+- **Minor or major bump** — never auto-merges. A person merges it.
+- A pull request that contains a minor or major dryvist bump does not auto-merge.
+
+### nixpkgs
+
+A `nixpkgs*` move never auto-merges. The pull request is labelled `needs-review`.
 
 ### Why Renovate cannot do this
 
