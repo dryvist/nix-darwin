@@ -5,14 +5,25 @@
 # runs the job, and destroys the VM. Job code never runs on the host, and
 # every VM starts from the unmodified base image.
 #
-# Runs as a ROOT LaunchDaemon, not a user agent: the GitHub App private key is
-# root-only by design, and a process that cannot read that key cannot register
-# a runner. The VM, not the process owner, is the isolation boundary for job
-# code.
+# Runs as a LaunchDaemon under a hidden service account, not as root, and not
+# as the operator. That account owns the App ID file, the App key, the Tart VM
+# store (TART_HOME) and sand's cache under its state directory. The VM is the
+# isolation boundary for job code.
 #
-# Operator-placed inputs (never committed here):
-#   appIdFile       one line: the GitHub App's numeric App ID (root-only)
-#   privateKeyPath  the App private key PEM (root-only)
+# Runtime constraint, UNVERIFIED on the target host. Tart's FAQ says that from
+# macOS 15 Virtualization.framework needs an unlocked login.keychain, which
+# exists and unlocks only in a GUI user session, and that without one a VM
+# fails with "Interaction is not allowed with the Security Server"
+# (https://tart.run/faq/, section "Headless machines"). A service account has
+# no login session. Apple DTS says a VM started from a launchd daemon is not
+# daemon-safe, because Virtualization links AppKit
+# (https://developer.apple.com/forums/thread/841688). If VMs fail to start under
+# this account, the daemon topology is the cause, not the uid.
+#
+# Operator-placed inputs (never committed here), owned by the service account
+# with mode 0400:
+#   appIdFile       one line: the GitHub App's numeric App ID
+#   privateKeyPath  the App private key PEM
 # Until both exist the daemon does not start (PathState below).
 #
 # Installed without Homebrew: tart from nixpkgs, sshpass from nixpkgs, and sand
@@ -116,8 +127,8 @@ let
         exit 1
       fi
 
-      # Rendered config lives under /var/run (cleared at boot), never in the store.
-      runtime_dir=/var/run/macos-vm-runner
+      # Rendered config lives in the service account's state directory, never in the store.
+      runtime_dir=${lib.escapeShellArg "${cfg.stateDir}/run"}
       mkdir -p "$runtime_dir"
       chmod 0700 "$runtime_dir"
       umask 077
@@ -248,9 +259,13 @@ in
     launchd.daemons.macos-vm-runner.serviceConfig = {
       Label = cfg.launchdLabel;
       ProgramArguments = [ (lib.getExe runnerPkg) ];
+      UserName = serviceUser;
+      GroupName = serviceUser;
       EnvironmentVariables = {
         PATH = "${toolPath}:/usr/bin:/bin:/usr/sbin:/sbin";
-        HOME = "/var/root";
+        HOME = cfg.stateDir;
+        # Tart keeps VM images under TART_HOME, which defaults to ~/.tart.
+        TART_HOME = "${cfg.stateDir}/tart";
       };
       KeepAlive.PathState = {
         ${cfg.appIdFile} = true;
