@@ -24,8 +24,8 @@
 # re-applies the identical guard to every label it is handed.
 # Pattern reference: runs-on.com/configuration/job-labels (Fork PRs).
 #
-# dependency_review and zizmor are left off to keep this migration purely
-# structural (this repo has never run them); enabling them is a fast-follow.
+# dependency_review is left off to keep this migration purely structural
+# (this repo has never run it); enabling it is a fast-follow.
 
 name: CI Gate
 
@@ -74,7 +74,6 @@ jobs:
       # changed — a lockfile bump must still validate.
       nix_skip_deps_only: true
       dependency_review: false
-      zizmor: false
       queue_timeout_minutes: 30
       runner_label: ${{ github.event.pull_request.head.repo.full_name == github.repository && format('runs-on={0}/runner=2cpu-linux-x64', github.run_id) || 'ubuntu-latest' }}
       nix_validate_runner_label: ${{ github.event.pull_request.head.repo.full_name == github.repository && format('runs-on={0}/cpu=4/ram=16/family=m7+c7/extras=s3-cache', github.run_id) || 'ubuntu-latest' }}

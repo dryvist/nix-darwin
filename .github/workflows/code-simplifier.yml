@@ -7,11 +7,7 @@ on:
   #   - cron: "0 4 * * 0,3,6"
   # --- END DISABLED ---
 
-permissions:
-  actions: write
-  contents: write
-  id-token: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   dispatch:
@@ -28,6 +24,11 @@ jobs:
         run: gh workflow run "$WORKFLOW_NAME" --repo "${{ github.repository }}"
 
   simplify:
+    permissions:
+      actions: write
+      contents: write
+      id-token: write
+      pull-requests: write
     if: github.event_name != 'schedule'
     uses: dryvist/ai-workflows/.github/workflows/cc-code-simplifier.yml@main
     secrets: inherit
