@@ -2,8 +2,9 @@
 #
 # When enabled, installs darwin-rebuild-windowed (./scripts/darwin-rebuild-windowed.sh)
 # and renders one sudoers NOPASSWD line for the operator user. That line runs the
-# wrapper for this host only. The wrapper performs `darwin-rebuild switch` after an
-# OpenBao window token and the cluster state both pass its checks.
+# wrapper for this host only. The wrapper performs `darwin-rebuild switch` after the
+# window proxy's socket reports a valid ai-admin window and the cluster state passes
+# its checks.
 #
 # Disabled by default, in which case no grant for darwin-rebuild exists (see
 # security.nix). The grant names the wrapper's exact store path and the configured
@@ -25,7 +26,8 @@ let
     # writeShellApplication exports these unconditionally, so they override any
     # value the caller's environment carries.
     runtimeEnv = {
-      DARWIN_REBUILD_WINDOWED_BAO_ADDR_FILE = cfg.baoAddrFile;
+      DARWIN_REBUILD_WINDOWED_WINDOW_SOCKET = cfg.windowSocket;
+      DARWIN_REBUILD_WINDOWED_OWNER_UID = toString cfg.windowOwnerUid;
       DARWIN_REBUILD_WINDOWED_CLUSTER_STATE_DIR = cfg.clusterStateDir;
       DARWIN_REBUILD_WINDOWED_DARWIN_REBUILD_BIN = "/run/current-system/sw/bin/darwin-rebuild";
       DARWIN_REBUILD_WINDOWED_CURL_BIN = "/usr/bin/curl";
@@ -51,10 +53,15 @@ in
       description = "Flake the wrapper switches to, as github:<owner>/<repo> without an attribute; the host name is appended as #<hostname>. Set by the host configuration.";
     };
 
-    baoAddrFile = lib.mkOption {
+    windowSocket = lib.mkOption {
       type = lib.types.strMatching "/.+";
-      default = "/etc/darwin-rebuild-windowed/bao-addr";
-      description = "Absolute path of a file containing BAO_ADDR=https://... . The file and its directory must be owned by root and writable by no other uid.";
+      default = "${userConfig.user.homeDir}/.local/state/openbao-window/proxy.sock";
+      description = "Absolute path of the unix socket the window proxy listens on. The wrapper sends lookup-self to it without a token. The socket and its directory must be owned by windowOwnerUid and writable by no group or other uid.";
+    };
+
+    windowOwnerUid = lib.mkOption {
+      type = lib.types.int;
+      description = "uid that owns the window socket and its directory: the operator's uid. Required when enabled.";
     };
 
     clusterStateDir = lib.mkOption {

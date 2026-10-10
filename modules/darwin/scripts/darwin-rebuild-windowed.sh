@@ -4,35 +4,36 @@
 #
 #   1. exactly one argument, a hostname of lowercase letters, digits and hyphens
 #   2. the process runs as the trusted uid
-#   3. a well-formed window token arrives on stdin (not argv, not env)
-#   4. the OpenBao address file and its directory are owned by the trusted uid
-#      and writable by no other uid; the file holds an https BAO_ADDR=
-#   5. OpenBao auth/token/lookup-self accepts the token, lists the ai-admin
-#      policy, names the ai-admin-session role (meta.role_name, or display_name
-#      when meta has none) and reports a ttl above zero
+#   3. the window socket and its directory are owned by the owner uid and are
+#      writable by no group or other uid
+#   4. the window socket answers auth/token/lookup-self. The request carries no
+#      token: the proxy listening on the socket adds its own
+#   5. the lookup-self response lists the ai-admin policy, names the
+#      ai-admin-session role in meta.role_name, and reports a ttl above zero
 #   6. the host is not clustered: link-state "up" together with peer-state.json
 #      "armed": true. Missing state files mean not clustered; a file that cannot
 #      be read, or holds an unexpected value, denies
 #   7. then runs exactly: darwin-rebuild switch --flake <fixed ref>#<hostname> --refresh
 #
 # Every decision goes to syslog under the tag darwin-rebuild-windowed and to
-# stderr. A denial exits 1; a run exits with darwin-rebuild's status.
+# stderr. A denial exits 1; a run exits with darwin-rebuild's status. The
+# wrapper revokes nothing and signals no process.
 #
 # writeShellApplication (modules/darwin/darwin-rebuild-windowed.nix) provides
 # strict mode, PATH and the variables below. The shell tests set them to stubs.
-#   DARWIN_REBUILD_WINDOWED_BAO_ADDR_FILE       file holding BAO_ADDR=https://...
+#   DARWIN_REBUILD_WINDOWED_WINDOW_SOCKET       unix socket of the window proxy
+#   DARWIN_REBUILD_WINDOWED_OWNER_UID           uid that owns the socket and its directory
 #   DARWIN_REBUILD_WINDOWED_CLUSTER_STATE_DIR   directory holding link-state and peer-state.json
 #   DARWIN_REBUILD_WINDOWED_DARWIN_REBUILD_BIN  darwin-rebuild executable
 #   DARWIN_REBUILD_WINDOWED_CURL_BIN            curl executable for lookup-self
 #   DARWIN_REBUILD_WINDOWED_LOGGER_BIN          logger executable
-#   DARWIN_REBUILD_WINDOWED_TRUSTED_UID         uid that must run the script and own the config
+#   DARWIN_REBUILD_WINDOWED_TRUSTED_UID         uid that must run the script
 #   DARWIN_REBUILD_WINDOWED_FLAKE_REF           flake (without #attr) the switch builds
 
 hostname_re='^[a-z0-9-]+$'
-token_re='^[A-Za-z0-9._-]+$'
-bao_addr_re='^https://[A-Za-z0-9._:/-]+$'
 
-bao_file="${DARWIN_REBUILD_WINDOWED_BAO_ADDR_FILE:?not set}"
+window_socket="${DARWIN_REBUILD_WINDOWED_WINDOW_SOCKET:?not set}"
+owner_uid="${DARWIN_REBUILD_WINDOWED_OWNER_UID:?not set}"
 cluster_dir="${DARWIN_REBUILD_WINDOWED_CLUSTER_STATE_DIR:?not set}"
 darwin_rebuild="${DARWIN_REBUILD_WINDOWED_DARWIN_REBUILD_BIN:?not set}"
 curl_bin="${DARWIN_REBUILD_WINDOWED_CURL_BIN:?not set}"
@@ -50,11 +51,11 @@ deny() {
   exit 1
 }
 
-# trusted_path <path> <f|d>: the path exists with that type, is owned by the
-# trusted uid, and has neither group nor other write permission. find(1)
-# gives the same answer on BSD and GNU.
+# trusted_path <path> <type>: the path exists with that find(1) type (f, d or s),
+# is owned by the owner uid, and has neither group nor other write permission.
+# find(1) gives the same answer on BSD and GNU.
 trusted_path() {
-  [ -n "$(find "$1" -maxdepth 0 -type "$2" -user "$trusted_uid" ! -perm -020 ! -perm -002 -print 2>/dev/null)" ]
+  [ -n "$(find "$1" -maxdepth 0 -type "$2" -user "$owner_uid" ! -perm -020 ! -perm -002 -print 2>/dev/null)" ]
 }
 
 # json_ok <jq filter>: exits 0 when the filter holds for the lookup-self
@@ -69,25 +70,19 @@ host="$1"
 
 [ "$(id -u)" = "$trusted_uid" ] || deny "not running as the trusted uid"
 
-token=""
-IFS= read -r token || true
-[[ "$token" =~ $token_re && "${#token}" -le 512 ]] || deny "no well-formed window token on stdin"
+trusted_path "$window_socket" s || deny "window socket is not a socket owned by the owner uid, or others can write it"
+trusted_path "${window_socket%/*}" d || deny "window socket's directory is not owned by the owner uid, or others can write it"
 
-trusted_path "$bao_file" f || deny "OpenBao address file is not owned by the trusted uid, or others can write it"
-trusted_path "${bao_file%/*}" d || deny "OpenBao address file's directory is not owned by the trusted uid, or others can write it"
-bao_addr="$(sed -n 's/^BAO_ADDR=//p' "$bao_file")" || deny "OpenBao address file is unreadable"
-[[ "$bao_addr" =~ $bao_addr_re ]] || deny "BAO_ADDR is missing or is not an https URL"
-bao_addr="${bao_addr%/}"
-
-if ! response="$("$curl_bin" -sS -f --max-time 15 \
-  -H @<(printf 'X-Vault-Token: %s\n' "$token") \
-  "$bao_addr/v1/auth/token/lookup-self" 2> /dev/null)"; then
-  deny "window token rejected, or OpenBao did not answer lookup-self"
+# -q ignores any curl configuration file, so no option can come from one.
+if ! response="$("$curl_bin" -q -sS -f --max-time 15 \
+  --unix-socket "$window_socket" \
+  http://localhost/v1/auth/token/lookup-self 2> /dev/null)"; then
+  deny "window socket rejected lookup-self, or the proxy did not answer"
 fi
-json_ok '(.data.policies // []) | index("ai-admin") != null' || deny "window token lacks the ai-admin policy"
-json_ok '(.data.meta.role_name // .data.display_name) == "ai-admin-session"' || deny "window token is not the ai-admin-session role"
-json_ok '(.data.ttl | type == "number") and .data.ttl > 0' || deny "window token has no ttl above zero"
-log "window token accepted: ai-admin policy, ai-admin-session role, ttl above zero"
+json_ok '(.data.policies // []) | index("ai-admin") != null' || deny "window lacks the ai-admin policy"
+json_ok '.data.meta.role_name == "ai-admin-session"' || deny "window is not the ai-admin-session role"
+json_ok '(.data.ttl | type == "number") and .data.ttl > 0' || deny "window has no ttl above zero"
+log "window accepted: ai-admin policy, ai-admin-session role, ttl above zero"
 
 link_file="$cluster_dir/link-state"
 peer_file="$cluster_dir/peer-state.json"

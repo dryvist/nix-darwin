@@ -104,6 +104,7 @@ in
           bash
           jq
           perl
+          python3
           yq-go
         ];
         HM_COLLISION_CLEAR_SWEEP = hmCollisionClearSweep;
