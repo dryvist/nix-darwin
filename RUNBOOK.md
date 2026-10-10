@@ -396,7 +396,6 @@ gh issue list --search "Dependency Dashboard in:title"
 
    Wait for all checks to pass:
    - `nix flake check` (syntax validation)
-   - Package staleness check
    - AI review (risk assessment)
 
 3. **Review AI risk assessment**:
@@ -464,8 +463,6 @@ sudo darwin-rebuild switch --flake .
    ```
 
 2. Common failures:
-   - **Package staleness**: Renovate tried to update one package but others are still stale
-     - Resolution: Wait for Renovate to update all packages, or manually update: `nix flake update`
    - **Build failure**: Package has breaking changes
      - Resolution: Check PR comments for migration guide, fix configuration
    - **Conflict**: PR is out of date with main
