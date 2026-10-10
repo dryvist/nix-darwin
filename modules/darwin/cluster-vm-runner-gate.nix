@@ -12,6 +12,20 @@
 # The timer interval is short (60s, against the maintenance window's 600s)
 # because the runner's VM memory is the thing that must be free before a rank
 # serves, and a 10-minute lag would leave it resident through a rank start.
+#
+# WHICH "CLUSTERED". The gate uses mlx-cluster-rank-live, the same detector as
+# the rebuild gate (which refuses activation) and the maintenance window (which
+# opens and closes the hands-off window). Three reasons, all from this repo:
+#   - It is the single definition the repo's own enforcement and coordination
+#     consumers share; a second definition could disagree with the window.
+#   - It reads live launchd state with no marker file. The documented
+#     "link-state up AND armed true" pair (cluster-zero notes) is written by
+#     the nix-ai watcher outside this repo, and a file-based state can latch.
+#   - The rebuild gate's block window opens at rank activation, so this gate's
+#     transitions line up with the ones the gate already enforces.
+# Known gap, shared with the rebuild gate and the window: between arming and
+# rank start (link up, armed, no rank yet) rank-live reports not clustered, so
+# the runner keeps running until the rank is live.
 {
   lib,
   config,

@@ -10,12 +10,15 @@
 # reconciler: it cannot delay a rank start or a teardown, and a missed edge
 # converges on the next tick.
 #
-# "Clustered" is the one definition every consumer shares, mlx-cluster-rank-live.
+# "Clustered" is mlx-cluster-rank-live, the detector the rebuild gate and the
+# maintenance window also call. The reason is recorded in the module header.
 # Undetermined (no GUI launchd domain) is treated as not clustered and logged
 # as such, the same policy the maintenance window uses.
 #
-# Every tick logs its decision. A failed launchctl call logs and retries on the
-# next tick; nothing here blocks anything.
+# Every tick logs its decision: stopped, started, already in the requested
+# state, not installed, or a launchctl failure. rank-live logs its own verdict
+# on stderr each tick. A failed launchctl call logs and retries on the next
+# tick; nothing here blocks anything.
 #
 # Environment (module-injected):
 #   MLX_CLUSTER_RANK_LIVE_BIN  the single "a rank is live" detector
