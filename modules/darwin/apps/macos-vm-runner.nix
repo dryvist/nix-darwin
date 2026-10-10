@@ -26,6 +26,11 @@
 #   privateKeyPath  the App private key PEM
 # Until both exist the daemon does not start (PathState below).
 #
+# Runner group: sand 1.4.0 has no runner-group setting, so every VM registers
+# into the organization's default runner group. That group must not allow
+# public repositories (org settings, Actions, Runner groups): a public repo,
+# including a fork pull request, must never be able to target these labels.
+#
 # Installed without Homebrew: tart from nixpkgs, sshpass from nixpkgs, and sand
 # from its pinned upstream release bottle. sand is not in nixpkgs, and its
 # Homebrew formula is HEAD-only with a third-party tart dependency.
@@ -113,7 +118,6 @@ let
             privateKeyPath: ${builtins.toJSON cfg.privateKeyPath}
             runnerName: ${name}
             extraLabels: ${builtins.toJSON cfg.extraLabels}
-            runnerGroup: ${builtins.toJSON cfg.runnerGroup}
         healthCheck:
           command: "pgrep -fl /Users/admin/actions-runner/run.sh"
           interval: 30
@@ -171,12 +175,6 @@ in
       default = "${config.networking.hostName}-tart";
       defaultText = lib.literalExpression "\"\${config.networking.hostName}-tart\"";
       description = "Base runner name. Entry n is `<runnerName>-<n>`, and sand appends a per-boot suffix, so names never collide with the Linux container runner on the same host.";
-    };
-
-    runnerGroup = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = null;
-      description = "Org runner group to register into. null uses the default group. Requires no repository scope.";
     };
 
     extraLabels = lib.mkOption {
