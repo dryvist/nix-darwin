@@ -13,7 +13,8 @@ if "$rank_live_bin"; then
 else
   rc=$?
   if [ "$rc" -gt 1 ]; then
-    log "cluster state undetermined (rc=$rc); treating as not clustered"
+    log "cluster state undetermined (rc=$rc); leaving $label unchanged"
+    exit 0
   fi
 fi
 
