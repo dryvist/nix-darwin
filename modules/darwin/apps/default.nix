@@ -18,6 +18,7 @@ _:
     ./corosync-qnetd-arbiter.nix
     ./cribl-edge.nix
     ./github-runner-container.nix
+    ./macos-vm-runner.nix
     ./offbox-sync.nix
     ./openbao-run.nix
     ./orbstack.nix

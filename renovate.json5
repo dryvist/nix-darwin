@@ -28,6 +28,19 @@
       "depNameTemplate": "dryvist/cc-edge-the-mac-pack-io",
       "datasourceTemplate": "github-releases",
       "versioningTemplate": "loose"
+    },
+    {
+      // Digest-pins the macOS base VM. The -base image publishes only the
+      // `latest` tag, so the sha256 digest is the immutable reference.
+      "customType": "regex",
+      "managerFilePatterns": ["/modules/darwin/apps/macos-vm-runner\\.nix$/"],
+      "matchStrings": [
+        "ghcr\\.io/cirruslabs/macos-tahoe-base@(?<currentDigest>sha256:[a-f0-9]{64})\"; # renovate: macos-tahoe-base"
+      ],
+      "depNameTemplate": "ghcr.io/cirruslabs/macos-tahoe-base",
+      "currentValueTemplate": "latest",
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
     }
   ],
 
