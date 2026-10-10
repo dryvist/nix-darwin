@@ -12,6 +12,7 @@ let
 
   gatePkg = pkgs.writeShellApplication {
     name = "cluster-vm-runner-gate";
+    runtimeInputs = [ pkgs.jq ];
     runtimeEnv = {
       MLX_CLUSTER_RANK_LIVE_BIN = lib.getExe config.system.clusterRebuildGate.rankLivePackage;
       VM_RUNNER_LABEL = runnerLabel;
@@ -30,5 +31,11 @@ in
       StandardOutPath = "/var/log/cluster-vm-runner-gate.log";
       StandardErrorPath = "/var/log/cluster-vm-runner-gate.log";
     };
+
+    # One line a minute; rotate through the system newsyslog run (root).
+    environment.etc."newsyslog.d/cluster-vm-runner-gate.conf".text = ''
+      # logfilename [owner:group] mode count size when flags
+      /var/log/cluster-vm-runner-gate.log root:wheel 640 3 1024 * BJN
+    '';
   };
 }
