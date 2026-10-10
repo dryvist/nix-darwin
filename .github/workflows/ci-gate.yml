@@ -140,6 +140,7 @@ jobs:
     needs: [shared-gate, nix-build, claude-settings, llm-concurrency-parity]
     if: ${{ !cancelled() }}
     runs-on: ${{ github.event.pull_request.head.repo.full_name == github.repository && format('runs-on={0}/runner=2cpu-linux-x64', github.run_id) || 'ubuntu-latest' }}
+    timeout-minutes: 5
     steps:
       - name: Check all results
         uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # release/v1

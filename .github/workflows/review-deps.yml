@@ -17,6 +17,7 @@ jobs:
     # Only run on PRs with the 'dependencies' label
     if: contains(github.event.pull_request.labels.*.name, 'dependencies')
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     environment: automation
     permissions:
       contents: write
