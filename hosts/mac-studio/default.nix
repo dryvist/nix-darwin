@@ -186,9 +186,18 @@ in
       # local LLM endpoint; the VM reservation must still leave the wired-memory
       # budget to MLX.
       cpus = 6;
-      memory = "16g";
+      memory = "8g";
       secretsFile = config.sops.templates."github-runner.env".path;
     };
+
+    # ========================================================================
+    # macOS VM GitHub Actions Runner (ephemeral Tart VM per job)
+    # ========================================================================
+    # Defaults (4 vCPU, 8 GB, one VM at a time, Tahoe base image, labels tart and
+    # nix-darwin) live in modules/darwin/apps/macos-vm-runner.nix. Inert until the
+    # App ID file and App private key are placed; the cluster VM-runner gate
+    # boots the daemon out while a rank is live.
+    macos-vm-runner.enable = true;
   };
 
   # The serving gate runs last: a rebuild bounces dev.mlx-model-server, and this
