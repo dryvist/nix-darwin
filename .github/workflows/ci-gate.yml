@@ -2,7 +2,7 @@
 # cannot host.
 #
 # Change detection, Nix Validate, Markdown Lint and File Size all run inside
-# dryvist/.github/.github/workflows/_ci-gate.yml@main. Nix Validate gets its
+# dryvist/.github/.github/workflows/_ci-gate.yml@v1. Nix Validate gets its
 # own larger runner through `nix_validate_runner_label`; the doc checks stay on
 # the 2cpu runner. Repo-local jobs gate on the shared gate's exported change
 # detection — there is no second `changes` job here.
@@ -58,12 +58,14 @@ jobs:
       # actions: write must be granted here or the run fails at graph
       # validation (startup_failure).
       actions: write
-    uses: dryvist/.github/.github/workflows/_ci-gate.yml@d93c868d5e3a12d012eb381200d17b34c10eea59 # v1.7.0
+    uses: dryvist/.github/.github/workflows/_ci-gate.yml@v1
     secrets:
       TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
     with:
       osv_scan: true
       nix_validate: true
+      # Profile nix: a changed path no filter maps runs the full Nix Validate.
+      profile: nix
       # This flake declares checks.aarch64-darwin.pf-anchor-syntax, which
       # shells out to /sbin/pfctl; `--all-systems` would make a Linux runner
       # try to build it and fail on platform mismatch.
@@ -140,6 +142,7 @@ jobs:
     needs: [shared-gate, nix-build, claude-settings, llm-concurrency-parity]
     if: ${{ !cancelled() }}
     runs-on: ${{ github.event.pull_request.head.repo.full_name == github.repository && format('runs-on={0}/runner=2cpu-linux-x64', github.run_id) || 'ubuntu-latest' }}
+    timeout-minutes: 5
     steps:
       - name: Check all results
         uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # release/v1
