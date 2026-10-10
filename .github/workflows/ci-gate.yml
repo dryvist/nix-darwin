@@ -24,8 +24,7 @@
 # re-applies the identical guard to every label it is handed.
 # Pattern reference: runs-on.com/configuration/job-labels (Fork PRs).
 #
-# dependency_review is left off to keep this migration purely structural
-# (this repo has never run it); enabling it is a fast-follow.
+# dependency_review is off in this repo.
 
 name: CI Gate
 
