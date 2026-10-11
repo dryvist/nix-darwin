@@ -251,6 +251,16 @@ run_bao() { run --separate-stderr bash -euo pipefail "$SCRIPTS/openbao-run.sh" "
   [ "$output" = "0" ]
 }
 
+@test "other domains' AppRole and legacy credentials and tokens do not reach the exec'd command" {
+  seed_doc secret app/base '{"ALPHA":"one"}'
+  OPENBAO_APPROLE_OTHER_ROLE_ID=other-role OPENBAO_APPROLE_OTHER_SECRET_ID=other-secret \
+    OTHER_VAULT_ROLE_ID=legacy-role OTHER_VAULT_SECRET_ID=legacy-secret \
+    BAO_TOKEN=ambient-bao VAULT_TOKEN=ambient-vault \
+    run_bao --domain demo --secrets app/base -- sh -c 'env | grep -c -E "^(OPENBAO_APPROLE_|[A-Z0-9_]+_VAULT_(ROLE|SECRET)_ID=|BAO_TOKEN=|VAULT_TOKEN=)" || true'
+  [ "$status" -eq 0 ]
+  [ "$output" = "0" ]
+}
+
 @test "an AppRole login failure names the domain" {
   seed_doc secret app/base '{"ALPHA":"one"}'
   LOGIN_STATUS=403 run_bao --domain demo --secrets app/base -- sh -c 'echo ran'
