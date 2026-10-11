@@ -110,7 +110,7 @@ done
 # ambient session. Must be user-owned 0600 or 0400 — refuse anything looser,
 # since the file authenticates to OpenBao.
 if [ -n "$env_file" ]; then
-  [ -f "$env_file" ] || die "--env-file '$env_file' does not exist (seed it: BAO_ADDR + <DOMAIN>_VAULT_ROLE_ID/_SECRET_ID)"
+  [ -f "$env_file" ] || die "--env-file '$env_file' does not exist (seed it: BAO_ADDR + OPENBAO_APPROLE_<DOMAIN>_ROLE_ID/_SECRET_ID)"
   perms="$(/usr/bin/stat -f '%Lp' "$env_file")"
   [ "$perms" = "600" ] || [ "$perms" = "400" ] || die "--env-file '$env_file' must be mode 0600 or 0400 (is $perms)"
   set -a
@@ -133,8 +133,10 @@ addr="$(resolve BAO_ADDR)"
 [ -n "$addr" ] || addr="$(resolve VAULT_ADDR)"
 [ -n "$addr" ] || die "BAO_ADDR not in $src"
 
-# This domain's AppRole role_id/secret_id, named e.g. LLM_GATE_VAULT_ROLE_ID
-# (domain uppercased, - -> _).
+# This domain's AppRole role_id/secret_id, named
+# OPENBAO_APPROLE_<DOMAIN>_ROLE_ID/_SECRET_ID (the names the scheduled rotator
+# publishes) or the legacy <DOMAIN>_VAULT_ROLE_ID/_SECRET_ID, domain
+# uppercased with - -> _. The pair is taken from one naming only, never mixed.
 #
 # BASH 3.2 ONLY. Apple ships bash 3.2 and launchd jobs here are launched
 # through /bin/bash on purpose (see the launchd-interpreter convention), so
@@ -146,14 +148,20 @@ role_id=""
 secret_id=""
 ambient_token=""
 if [ -n "$domain" ]; then
-  env_prefix="$(printf '%s' "$domain" | tr '[:lower:]-' '[:upper:]_')"
-  role_id="$(resolve "${env_prefix}_VAULT_ROLE_ID")"
-  secret_id="$(resolve "${env_prefix}_VAULT_SECRET_ID")"
+  domain_upper="$(printf '%s' "$domain" | tr '[:lower:]-' '[:upper:]_')"
+  env_prefix="OPENBAO_APPROLE_${domain_upper}"
+  cred_suffix=""
+  if [ -z "$(resolve "${env_prefix}_ROLE_ID")" ]; then
+    env_prefix="$domain_upper"
+    cred_suffix="_VAULT"
+  fi
+  role_id="$(resolve "${env_prefix}${cred_suffix}_ROLE_ID")"
+  secret_id="$(resolve "${env_prefix}${cred_suffix}_SECRET_ID")"
   # A domain names an AppRole, so its absence is FATAL rather than a fall
   # through to whatever token happens to be ambient — an unattended agent that
   # silently borrowed an interactive credential would be worse than a failure.
-  [ -n "$role_id" ] || die "${env_prefix}_VAULT_ROLE_ID not in $src"
-  [ -n "$secret_id" ] || die "${env_prefix}_VAULT_SECRET_ID not in $src"
+  [ -n "$role_id" ] || die "neither OPENBAO_APPROLE_${domain_upper}_ROLE_ID nor ${domain_upper}_VAULT_ROLE_ID in $src"
+  [ -n "$secret_id" ] || die "${env_prefix}${cred_suffix}_SECRET_ID not in $src"
 else
   # Interactive workstation path: no AppRole named, so use the token the
   # caller already holds from a native login.
@@ -333,6 +341,7 @@ unset doc_json
 # The login token and AppRole bootstrap creds die with this shell; only the
 # exported secret values (from the loop above) reach the exec'd child.
 unset token ambient_token
-[ -n "$env_prefix" ] && unset "${env_prefix}_VAULT_ROLE_ID" "${env_prefix}_VAULT_SECRET_ID"
+[ -n "$env_prefix" ] && unset "OPENBAO_APPROLE_${domain_upper}_ROLE_ID" "OPENBAO_APPROLE_${domain_upper}_SECRET_ID" \
+  "${domain_upper}_VAULT_ROLE_ID" "${domain_upper}_VAULT_SECRET_ID"
 
 exec "$@"
