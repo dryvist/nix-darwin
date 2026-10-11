@@ -105,41 +105,18 @@ flake.nix
 | Host | Machine-specific | `hosts/<name>/` | Both |
 | Shared | Variables, defaults | `lib/` | Imported |
 
-## Getting a nix-ai change onto a Mac: the promotion contract
+## Getting a dryvist change onto a Mac
 
-This repo's `nix-ai` input tracks nix-ai's **`main`** branch, not `develop`
-(`github:dryvist/nix-ai/main` in `flake.nix`). Merging a PR into nix-ai's
-`develop` does not make that change reachable by any Mac here — three
-separate steps have to happen, in order:
+Dryvist inputs name a floating major tag (`github:dryvist/<repo>?ref=vN`).
+The `flake.lock` entry holds the exact revision. A change reaches a Mac in
+three steps, in order:
 
-**This is `nix-ai`-specific, not a general flake-input rule.** The
-`nix-home` input (`github:dryvist/nix-home`, no `/main` suffix) tracks
-whatever GitHub reports as that repo's default branch — currently
-`develop` — so a nix-home change needs only step 2 and step 3 below, never
-a develop→main promotion of its own. Check an input's `flake.lock` entry
-for a `ref` before assuming either contract applies.
-
-1. **Promote nix-ai `develop` → `main`.** Only commits on nix-ai's `main`
-   exist as far as this repo's `nix-ai` input is concerned.
-2. **Bump this repo's `flake.lock`** (`nix flake update nix-ai` or
-   equivalent) to pin the new nix-ai `main` revision.
-3. **Promote this repo's own `develop` → `main`**, since a Mac converges
-   from `main`.
-
-Skipping any one of the three produces the exact same symptom: the change
-looks merged (visible in nix-ai's `develop`, or even its `main`) but no
-`darwin-rebuild switch` on any Mac ever picks it up. This gap has caused a
-real merged-but-not-deployed incident more than once — treat "merged" and
-"deployed" as separate questions and verify both.
-
-**Operational note:** step 1's `main` promotion may or may not trigger a
-release-please version-bump follow-on PR in nix-ai, depending on whether the
-promoted commits carry a releasable conventional-commit type (`feat`/`fix`
-bump; `docs`/`chore`/`refactor`/`test`/`ci` do not). When it does, `main`
-gains a further commit after the promotion lands. **Converging to "the tip
-of nix-ai's main" means converging to whatever tip exists after that PR
-resolves, not the tip at the moment the promotion PR merged** — check
-`main`'s actual head before pinning step 2, not the promotion PR's merge
-commit.
+1. **Release the producing repo.** A git-flow repo (default branch `develop`)
+   releases only when `develop` is promoted to `main`. The published release
+   moves the repo's floating `vN` tag.
+2. **Bump this repo's `flake.lock`.** The bump arrives as a pull request. A
+   patch bump auto-merges after the Merge Gate is green. A minor or major bump
+   waits for a person to merge it.
+3. **Deploy.** The Mac rebuild builds from the merged `flake.lock`.
 
 For a complete list of installed packages and managed settings, see [MANIFEST.md](MANIFEST.md).

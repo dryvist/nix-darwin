@@ -9,8 +9,9 @@
 # substitute: it fails the build on drift instead of trusting a comment.
 #
 # Called by ci-gate.yml (PR, path-filtered on nix changes) and
-# ci-llm-concurrency-parity.yml (daily schedule, to catch drift introduced
-# purely on the tofu-proxmox side with no nix-darwin commit of its own).
+# ci-llm-concurrency-parity.yml (daily schedule). The tofu-proxmox constants
+# are read at the release tag pinned below; Renovate bumps that tag, and the
+# bump PR runs this check against the new release.
 name: _llm-concurrency-parity
 
 on:
@@ -30,8 +31,10 @@ jobs:
 
       - name: Fetch dryvist/tofu-proxmox serving constants
         run: |
+          # renovate: datasource=github-tags depName=dryvist/tofu-proxmox
+          TOFU_PROXMOX_REF="v3.35.0"
           curl -fsSL -o /tmp/constants.tf \
-          https://raw.githubusercontent.com/dryvist/tofu-proxmox/develop/modules/proxmox-stack/constants-serving.tf
+            "https://raw.githubusercontent.com/dryvist/tofu-proxmox/${TOFU_PROXMOX_REF}/modules/proxmox-stack/constants-serving.tf"
 
       - name: Assert parity
         run: |

@@ -35,14 +35,14 @@ latest was v0.30.0.
 **Pre-commit hook**: `scripts/validate-package-freshness.sh`
 
 - Runs on every commit (via `.pre-commit-config.yaml`)
-- FAILS if critical packages >30 days old
-- FAILS if any package >90 days old
+- Reports critical packages >30 days old
+- Reports any package >90 days old
+- Report-only: always exits 0, because a first-party bump is a deliberate pull request
 
 **CI check**: `.github/workflows/ci-package-staleness.yml`
 
 - Runs on every PR affecting `flake.lock`
-- Blocks merge unless `skip-version-check` label added
-- Posts comment with staleness report
+- Report-only: writes the staleness report to the job summary and never fails
 
 **Renovate Bot**: `.github/renovate.json5`
 
@@ -97,15 +97,15 @@ If package MUST be pinned to old version (broken nixpkgs, compatibility):
 
 ## Consequences of Suggesting Outdated Versions
 
-1. **Pre-commit hook blocks commit** with error:
+1. **Pre-commit hook reports the stale input**:
 
    ```text
-   ✗ FAIL: @charmbracelet/crush@0.1.1 is 365 days old (limit: 90 days)
+   ✗ STALE: @charmbracelet/crush@0.1.1 is 365 days old (limit: 90 days)
    ```
 
-2. **CI blocks PR merge** with comment showing staleness report
+2. **CI writes the staleness report** to the job summary, where a reviewer sees it
 
-3. **Manual override required** - must add to exemption list with justification
+3. **An intentional pin** goes on the exemption list with justification
 
 4. **User trust decreases** - AI appears to make uninformed suggestions
 

@@ -222,8 +222,33 @@ run_bao() { run --separate-stderr bash -euo pipefail "$SCRIPTS/openbao-run.sh" "
   unset DEMO_VAULT_ROLE_ID
   BAO_TOKEN=t run_bao --domain demo --secrets app/base -- sh -c 'echo ran'
   [ "$status" -ne 0 ]
-  [[ "$stderr" == *"DEMO_VAULT_ROLE_ID not in environment"* ]]
+  [[ "$stderr" == *"neither OPENBAO_APPROLE_DEMO_ROLE_ID nor DEMO_VAULT_ROLE_ID in environment"* ]]
   [[ "$output" != *"ran"* ]]
+}
+
+@test "--domain reads the rotator's OPENBAO_APPROLE_ names when the legacy ones are gone" {
+  seed_doc secret app/base '{"ALPHA":"one"}'
+  unset DEMO_VAULT_ROLE_ID DEMO_VAULT_SECRET_ID
+  OPENBAO_APPROLE_DEMO_ROLE_ID=stub-role OPENBAO_APPROLE_DEMO_SECRET_ID=stub-secret \
+    run_bao --domain demo --secrets app/base -- sh -c 'echo "$ALPHA"'
+  [ "$status" -eq 0 ]
+  [ "$output" = "one" ]
+}
+
+@test "the OPENBAO_APPROLE_ pair is never completed from a legacy secret_id" {
+  seed_doc secret app/base '{"ALPHA":"one"}'
+  OPENBAO_APPROLE_DEMO_ROLE_ID=stub-role \
+    run_bao --domain demo --secrets app/base -- sh -c 'echo ran'
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"OPENBAO_APPROLE_DEMO_SECRET_ID not in environment"* ]]
+}
+
+@test "neither naming of the AppRole pair reaches the exec'd command" {
+  seed_doc secret app/base '{"ALPHA":"one"}'
+  OPENBAO_APPROLE_DEMO_ROLE_ID=stub-role OPENBAO_APPROLE_DEMO_SECRET_ID=stub-secret \
+    run_bao --domain demo --secrets app/base -- sh -c 'env | grep -c -E "^(OPENBAO_APPROLE_DEMO|DEMO_VAULT)_" || true'
+  [ "$status" -eq 0 ]
+  [ "$output" = "0" ]
 }
 
 @test "an AppRole login failure names the domain" {

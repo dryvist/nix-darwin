@@ -396,7 +396,6 @@ gh issue list --search "Dependency Dashboard in:title"
 
    Wait for all checks to pass:
    - `nix flake check` (syntax validation)
-   - Package staleness check
    - AI review (risk assessment)
 
 3. **Review AI risk assessment**:
@@ -405,7 +404,8 @@ gh issue list --search "Dependency Dashboard in:title"
    - Check risk level: LOW, MEDIUM, or HIGH
    - The `risk:*` label is **advisory only** — it does not authorize or trigger
      auto-merge. Renovate owns merging (minor/patch auto-merge publisher-agnostically
-     after green CI; majors are reviewed).
+     after green CI; majors are reviewed). Dryvist refs are the exception: a patch
+     bump auto-merges, and a minor or major bump waits for a person.
    - LOW risk: signals a routine update to the reviewer
    - MEDIUM/HIGH risk: review changes carefully
 
@@ -428,7 +428,8 @@ gh issue list --search "Dependency Dashboard in:title"
 
 **Auto-merge (patch/minor updates):**
 
-Renovate will auto-merge after CI passes. No action needed.
+Renovate will auto-merge after CI passes. No action needed. Dryvist minor and
+major bumps are the exception: they wait for a person to merge them.
 
 **Manual merge (major updates or high risk):**
 
@@ -464,8 +465,6 @@ sudo darwin-rebuild switch --flake .
    ```
 
 2. Common failures:
-   - **Package staleness**: Renovate tried to update one package but others are still stale
-     - Resolution: Wait for Renovate to update all packages, or manually update: `nix flake update`
    - **Build failure**: Package has breaking changes
      - Resolution: Check PR comments for migration guide, fix configuration
    - **Conflict**: PR is out of date with main
@@ -571,11 +570,10 @@ gh issue list --search "Dependency Dashboard in:title"
 
 Renovate has a 3 concurrent PR limit. Merge some PRs to allow new ones.
 
-**`deps-update-flake.yml` and Renovate:**
+**`deps-flake-lock.yml` and Renovate:**
 
-`deps-update-flake.yml` runs only on manual dispatch — it never fires on a schedule,
-so it cannot collide with Renovate on its own. Trigger it only when you need an
-immediate JacobPEvans flake-input bump.
+Renovate does not write `flake.lock`. Only `deps-flake-lock.yml` does. Dispatch
+it with `gh workflow run deps-flake-lock.yml` to open a dryvist input bump now.
 
 ---
 
