@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.10.1](https://github.com/dryvist/nix-darwin/compare/v3.10.0...v3.10.1) (2026-10-11)
+
+
+### Bug Fixes
+
+* **openbao:** scrub credentials before exec without compgen ([#2861](https://github.com/dryvist/nix-darwin/issues/2861)) ([0ae84b2](https://github.com/dryvist/nix-darwin/commit/0ae84b2f72f9abfccc61b0ff91be92be398d6e88))
+
 ## [3.10.0](https://github.com/dryvist/nix-darwin/compare/v3.9.0...v3.10.0) (2026-10-11)
 
 
