@@ -33,7 +33,7 @@ def is_nix_config_repo():
 
         # This is more robust than checking the local path as it works for any
         # clone location and handles both SSH and HTTPS remote URLs.
-        return remote_url.endswith("JacobPEvans/nix-darwin.git") or remote_url.endswith("JacobPEvans/nix.git")
+        return remote_url.endswith("dryvist/nix-darwin.git") or remote_url.endswith("dryvist/nix.git")
     except subprocess.CalledProcessError:
         # Git command failed (not in a git repo, no remote configured, etc.)
         return False
