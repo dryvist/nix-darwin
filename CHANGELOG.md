@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.8.1](https://github.com/dryvist/nix-darwin/compare/v3.8.0...v3.8.1) (2026-10-11)
+
+
+### Bug Fixes
+
+* **hooks:** match the current remote so the pre-push check runs ([#2833](https://github.com/dryvist/nix-darwin/issues/2833)) ([7c172b3](https://github.com/dryvist/nix-darwin/commit/7c172b374ac2eae4933cf54a2428528ca393f4b9))
+
 ## [3.8.0](https://github.com/dryvist/nix-darwin/compare/v3.7.4...v3.8.0) (2026-10-11)
 
 
