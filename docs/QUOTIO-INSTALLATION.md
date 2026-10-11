@@ -132,5 +132,5 @@ This derivation would require:
 
 ## Related
 
-- [Issue #461](https://github.com/JacobPEvans/nix-darwin/issues/461) - Add Quotio app
+- [Issue #461](https://github.com/dryvist/nix-darwin/issues/461) - Add Quotio app
 - [Quotio Documentation](https://www.quotio.dev/)
