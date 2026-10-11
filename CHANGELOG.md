@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.9.0](https://github.com/dryvist/nix-darwin/compare/v3.8.2...v3.9.0) (2026-10-11)
+
+
+### Features
+
+* **cribl:** collect sudo authentication and PAM library-validation events ([#2844](https://github.com/dryvist/nix-darwin/issues/2844)) ([16130d4](https://github.com/dryvist/nix-darwin/commit/16130d49133e5257ebf492e81e24f3af0ce6bc97))
+
 ## [3.8.2](https://github.com/dryvist/nix-darwin/compare/v3.8.1...v3.8.2) (2026-10-11)
 
 
