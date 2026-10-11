@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.10.0](https://github.com/dryvist/nix-darwin/compare/v3.9.0...v3.10.0) (2026-10-11)
+
+
+### Features
+
+* **dock:** add Foresight below Wispr Flow ([10a357f](https://github.com/dryvist/nix-darwin/commit/10a357f0b35338b1a7f173afd3400aebd6f9bcef))
+* **dock:** add Foresight below Wispr Flow ([#2857](https://github.com/dryvist/nix-darwin/issues/2857)) ([25615a2](https://github.com/dryvist/nix-darwin/commit/25615a207a9b3019736ef3d7e22fc14aa7acc47e))
+
+
+### Bug Fixes
+
+* **darwin:** disable screen sharing on activation when the option is off ([#2851](https://github.com/dryvist/nix-darwin/issues/2851)) ([b3b8b05](https://github.com/dryvist/nix-darwin/commit/b3b8b0524907068efbdb265b723b84c551775382))
+
 ## [3.9.0](https://github.com/dryvist/nix-darwin/compare/v3.8.2...v3.9.0) (2026-10-11)
 
 
