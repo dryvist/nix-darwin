@@ -1396,11 +1396,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791664658,
-        "narHash": "sha256-n5LfwLHr+an+9asJPqk755V7q5eUEstE9J24yIRvpOk=",
+        "lastModified": 1791714032,
+        "narHash": "sha256-lVEEdmUwyuCa2V11g4Aiguy0Q+2rgX3IeZ/9kPdDKws=",
         "owner": "dryvist",
         "repo": "nix-ai-open-harness",
-        "rev": "f5ad6862422fb7ee9dedc2400a339d60568722e5",
+        "rev": "19d1c4fd4a72c5d89a8a1885ae8493196c85929f",
         "type": "github"
       },
       "original": {
@@ -1630,11 +1630,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791682365,
-        "narHash": "sha256-4XXQTY9a6SLPOPrWsRIQ27tPrUIrKMPcTWxhydW0vzg=",
+        "lastModified": 1791714557,
+        "narHash": "sha256-/QLbYmJ75Rzu1gQLdMYsSOPwQzs2pzC0bBL+sAe7skA=",
         "owner": "dryvist",
         "repo": "nix-openwhispr",
-        "rev": "19f2e0c0c48fd7b4d7d61b876a0d0f62d29e9d11",
+        "rev": "39a30ecaa7ed83ae2d0ea363ed0b7737d2ea612a",
         "type": "github"
       },
       "original": {
