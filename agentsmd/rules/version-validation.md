@@ -48,7 +48,7 @@ latest was v0.30.0.
 
 - Auto-creates PRs for outdated packages within 24 hours
 - Groups updates by criticality (critical Mon/Thu, AI tools Sun/Wed/Fri, npm Mon)
-- Auto-merges patch + minor updates
+- Auto-merges patch + minor updates (`dryvist/**`: patch only)
 - Requires human review for major updates
 
 ### 4. Follow Exemption Procedure
