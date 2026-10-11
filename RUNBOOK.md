@@ -768,8 +768,8 @@ sudo darwin-rebuild switch --flake ~/.config/nix
 - **System settings**: `hosts/<hostname>/default.nix`
 - **User settings**: `hosts/<hostname>/home.nix`
 - **Shared darwin settings**: `modules/darwin/common.nix`
-- **User dev tools**: nix-home (see [nix-home](https://github.com/JacobPEvans/nix-home))
-- **AI tools**: nix-ai (see [nix-ai](https://github.com/JacobPEvans/nix-ai))
+- **User dev tools**: nix-home (see [nix-home](https://github.com/dryvist/nix-home))
+- **AI tools**: nix-ai (see [nix-ai](https://github.com/dryvist/nix-ai))
 
 ---
 
@@ -784,7 +784,7 @@ nothing to edit locally.
 ### Add a Permission Permanently
 
 1. Edit the appropriate JSON file in the
-   [ai-assistant-instructions](https://github.com/JacobPEvans/ai-assistant-instructions)
+   [ai-assistant-instructions](https://github.com/dryvist/ai-assistant-instructions)
    repository.
 2. Add the command to the correct category (`allow`, `ask`, or `deny`).
 3. Pull the change into this repo's lockfile:
@@ -795,7 +795,7 @@ nothing to edit locally.
 
 4. Rebuild to apply: `sudo darwin-rebuild switch --flake .`
 
-See [nix-ai](https://github.com/JacobPEvans/nix-ai) for how the rules are composed into
+See [nix-ai](https://github.com/dryvist/nix-ai) for how the rules are composed into
 Claude settings.
 
 ### Quick Permission Approval
@@ -823,8 +823,8 @@ Workflow files:
 Look for the "Cache Nix Store" step in any CI run. It reports cache hit/miss and key:
 
 ```bash
-gh run list --repo JacobPEvans/nix-darwin --limit 5
-gh run view <run-id> --log --repo JacobPEvans/nix-darwin | grep -A5 "Cache Nix Store"
+gh run list --repo dryvist/nix-darwin --limit 5
+gh run view <run-id> --log --repo dryvist/nix-darwin | grep -A5 "Cache Nix Store"
 ```
 
 ### When CI Is Slow

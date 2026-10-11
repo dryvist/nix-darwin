@@ -1,8 +1,8 @@
 # Architecture
 
 > **Note**: This repo is part of a trio. See also
-> [nix-ai](https://github.com/JacobPEvans/nix-ai) and
-> [nix-home](https://github.com/JacobPEvans/nix-home)
+> [nix-ai](https://github.com/dryvist/nix-ai) and
+> [nix-home](https://github.com/dryvist/nix-home)
 > for AI tools and dev environment documentation.
 
 Detailed structure of the nix-darwin configuration.
