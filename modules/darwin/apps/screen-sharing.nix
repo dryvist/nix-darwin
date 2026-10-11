@@ -1,5 +1,6 @@
-# macOS Screen Sharing (VNC), enabled by default so remote recovery after a
-# reboot doesn't need physical console access.
+# macOS Screen Sharing (VNC). Enabled hosts get the service started so remote
+# recovery after a reboot doesn't need physical console access; every other
+# host has it disabled and stopped on each activation.
 #
 # nix-darwin has no first-class `services.screenSharing`-style option (checked
 # the nix-darwin-26.05 module tree — nothing references
@@ -26,10 +27,19 @@ in
 {
   options.programs.screenSharing.enable = lib.mkEnableOption "macOS Screen Sharing (VNC) launchd service";
 
-  config = lib.mkIf cfg.enable {
-    system.activationScripts.postActivation.text = lib.mkAfter ''
-      echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Enabling macOS Screen Sharing..."
-      ${lib.getExe enablePkg}
-    '';
-  };
+  # When off, every activation disables and stops the service, so a toggle in
+  # System Settings does not persist across rebuilds.
+  config.system.activationScripts.postActivation.text = lib.mkAfter (
+    if cfg.enable then
+      ''
+        echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Enabling macOS Screen Sharing..."
+        ${lib.getExe enablePkg}
+      ''
+    else
+      ''
+        echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Disabling macOS Screen Sharing..."
+        /bin/launchctl disable system/com.apple.screensharing
+        /bin/launchctl bootout system/com.apple.screensharing 2>/dev/null || true
+      ''
+  );
 }
