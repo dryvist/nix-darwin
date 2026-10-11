@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.8.2](https://github.com/dryvist/nix-darwin/compare/v3.8.1...v3.8.2) (2026-10-11)
+
+
+### Bug Fixes
+
+* **openbao-run:** scrub every AppRole pair before exec ([#2838](https://github.com/dryvist/nix-darwin/issues/2838)) ([e86567e](https://github.com/dryvist/nix-darwin/commit/e86567e2352be7dd2858f755abf834d773852b5c))
+
 ## [3.8.1](https://github.com/dryvist/nix-darwin/compare/v3.8.0...v3.8.1) (2026-10-11)
 
 
