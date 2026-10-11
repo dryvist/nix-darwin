@@ -79,7 +79,7 @@
     # Focused fallback harness for open/local-LLM agent CLIs (Crush + MiMoCode).
     # Enabled only on workstation hosts that explicitly import the module below.
     nix-ai-open-harness = {
-      url = "github:dryvist/nix-ai-open-harness";
+      url = "github:dryvist/nix-ai-open-harness?ref=v0";
       inputs = {
         # Its nix-ai-tools packages call nixpkgs-unstable functions absent
         # from the stable release; share nix-home's unstable pin rather than
@@ -100,7 +100,7 @@
     };
 
     nix-openwhispr = {
-      url = "github:dryvist/nix-openwhispr";
+      url = "github:dryvist/nix-openwhispr?ref=v1";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
     };
