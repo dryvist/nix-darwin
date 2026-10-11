@@ -338,10 +338,15 @@ for spec in "${specs[@]}"; do
 done
 unset doc_json
 
-# The login token and AppRole bootstrap creds die with this shell; only the
-# exported secret values (from the loop above) reach the exec'd child.
+# The login token, any ambient token, and every AppRole bootstrap cred die
+# with this shell; only the exported secret values reach the exec'd child.
 unset token ambient_token
-[ -n "$env_prefix" ] && unset "OPENBAO_APPROLE_${domain_upper}_ROLE_ID" "OPENBAO_APPROLE_${domain_upper}_SECRET_ID" \
-  "${domain_upper}_VAULT_ROLE_ID" "${domain_upper}_VAULT_SECRET_ID"
+while IFS= read -r name; do
+  case "$name" in
+    OPENBAO_APPROLE_*|*_VAULT_ROLE_ID|*_VAULT_SECRET_ID|BAO_TOKEN|VAULT_TOKEN)
+      unset "$name"
+      ;;
+  esac
+done < <(compgen -e)
 
 exec "$@"
