@@ -45,6 +45,7 @@ in
     ++ lib.optionals enableWorkstationApps [
       "/Applications/Brave Browser.app"
       "/Applications/Wispr Flow.app"
+      "/Applications/Foresight.app"
     ]
     ++ [
       # Terminal (present on all hosts)
