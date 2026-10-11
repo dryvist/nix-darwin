@@ -342,15 +342,26 @@ unset doc_json
 # with this shell; only the exported secret values reach the exec'd child.
 unset token ambient_token
 # `export -p`, not `compgen -e`: the packaged non-interactive bash has no
-# compgen builtin, and a missing builtin would silently scrub nothing.
-while IFS= read -r line; do
-  [[ "$line" =~ ^declare\ -[a-zA-Z-]*\ ([A-Za-z_][A-Za-z0-9_]*) ]] || continue
-  name="${BASH_REMATCH[1]}"
-  case "$name" in
-    OPENBAO_APPROLE_*|*_VAULT_ROLE_ID|*_VAULT_SECRET_ID|BAO_TOKEN|VAULT_TOKEN)
-      unset "$name"
-      ;;
+# compgen builtin, and a missing builtin would silently scrub nothing. Both
+# output forms are read: `declare -x NAME` and, in POSIX mode, `export NAME`.
+is_credential_name() {
+  case "$1" in
+    OPENBAO_APPROLE_*|*_VAULT_ROLE_ID|*_VAULT_SECRET_ID|BAO_TOKEN|VAULT_TOKEN) return 0 ;;
   esac
+  return 1
+}
+while IFS= read -r line; do
+  [[ "$line" =~ ^(declare\ -[a-zA-Z-]*|export)\ ([A-Za-z_][A-Za-z0-9_]*) ]] || continue
+  name="${BASH_REMATCH[2]}"
+  if is_credential_name "$name"; then unset "$name"; fi
 done < <(export -p)
+
+# Fail closed on what the child would actually inherit: a name bash cannot
+# list or unset (not an identifier) still passes through exec.
+while IFS= read -r -d '' entry; do
+  if is_credential_name "${entry%%=*}"; then
+    die "refusing to exec: credential variable ${entry%%=*} is still in the environment"
+  fi
+done < <(env -0)
 
 exec "$@"

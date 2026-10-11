@@ -272,6 +272,25 @@ run_bao() { run --separate-stderr bash -euo pipefail "$SCRIPTS/openbao-run.sh" "
   [ "$output" = "0" ]
 }
 
+@test "credentials are scrubbed in POSIX mode, where export -p prints export NAME" {
+  seed_doc secret app/base '{"ALPHA":"one"}'
+  POSIXLY_CORRECT=1 \
+    OPENBAO_APPROLE_OTHER_ROLE_ID=other-role OPENBAO_APPROLE_OTHER_SECRET_ID=other-secret \
+    OTHER_VAULT_ROLE_ID=legacy-role BAO_TOKEN=ambient-bao \
+    run_bao --domain demo --secrets app/base -- sh -c 'env | grep -c -E "^(OPENBAO_APPROLE_|[A-Z0-9_]+_VAULT_(ROLE|SECRET)_ID=|BAO_TOKEN=)" || true'
+  [ "$status" -eq 0 ]
+  [ "$output" = "0" ]
+}
+
+@test "a credential name bash cannot unset refuses to exec instead of passing through" {
+  seed_doc secret app/base '{"ALPHA":"one"}'
+  run --separate-stderr env 'OPENBAO_APPROLE_bad-name=leak' \
+    bash -euo pipefail "$SCRIPTS/openbao-run.sh" --domain demo --secrets app/base -- sh -c 'echo ran'
+  [ "$status" -ne 0 ]
+  [ "$output" != "ran" ]
+  [[ "$stderr" == *"refusing to exec: credential variable OPENBAO_APPROLE_bad-name"* ]]
+}
+
 @test "an AppRole login failure names the domain" {
   seed_doc secret app/base '{"ALPHA":"one"}'
   LOGIN_STATUS=403 run_bao --domain demo --secrets app/base -- sh -c 'echo ran'

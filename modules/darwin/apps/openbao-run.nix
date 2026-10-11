@@ -25,6 +25,7 @@ let
   openbaoRunScript = pkgs.writeShellApplication {
     name = "openbao-run";
     runtimeInputs = [
+      pkgs.coreutils
       pkgs.jq
     ];
     text = builtins.readFile ./../scripts/openbao-run.sh;
