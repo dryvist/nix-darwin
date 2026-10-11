@@ -7,4 +7,4 @@ permissions:
 
 jobs:
   copilot-setup-steps:
-    uses: dryvist/ai-workflows/.github/workflows/_copilot-setup-steps.yml@main
+    uses: dryvist/ai-workflows/.github/workflows/_copilot-setup-steps.yml@0562bd5a12e6a0cf0f140d870798b4e9129449a8 # v0.48.4
