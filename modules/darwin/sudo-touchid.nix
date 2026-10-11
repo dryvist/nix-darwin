@@ -40,12 +40,20 @@
 # The credential cache is the one replay window Touch ID would otherwise leave
 # open — see the timestamp_timeout note below.
 
-{ lib, hostConfig, ... }:
+{ lib, pkgs, hostConfig, ... }:
 
 lib.mkIf (!hostConfig.isServer) {
   security.pam.services.sudo_local = {
+    # A YubiKey touch (FIDO2, pam_u2f) gets the first attempt, Touch ID the
+    # second, the password the last. `cue` prints "touch your key"; with no key
+    # attached the module fails at once and Touch ID follows. `nouserok` skips
+    # it for a user who has not enrolled a key, so it can never lock anyone out.
+    # The fixed origin lets one enrollment (`pamu2fcfg -o pam://sudo -i
+    # pam://sudo`, saved to ~/.config/Yubico/u2f_keys) serve every Mac.
+    text = lib.mkBefore "auth       sufficient     ${pkgs.pam_u2f}/lib/security/pam_u2f.so cue nouserok origin=pam://sudo appid=pam://sudo";
+
     # /etc/pam.d/sudo already begins with `auth include sudo_local`, so
-    # pam_tid gets the first attempt and pam_opendirectory (password) remains
+    # pam_tid gets the next attempt and pam_opendirectory (password) remains
     # the fallback when a finger is unavailable — a failed or cancelled Touch
     # ID does not lock anyone out.
     touchIdAuth = true;
