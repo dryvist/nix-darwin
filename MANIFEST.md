@@ -19,7 +19,6 @@ Source: `modules/darwin/common.nix`
 
 | Package | Description |
 | --- | --- |
-| entire | AI-session capture for git (records live agent sessions) |
 | git | Version control |
 | gnupg | GPG encryption and signing |
 | vim | Text editor |

@@ -93,7 +93,6 @@ in
     # ========================================================================
     # Core CLI tools (bootstrapping - needed before home-manager)
     # ========================================================================
-    entire # AI-session capture for git (records live agent sessions)
     git
     gnupg
     vim
