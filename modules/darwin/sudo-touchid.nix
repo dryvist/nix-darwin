@@ -40,7 +40,12 @@
 # The credential cache is the one replay window Touch ID would otherwise leave
 # open — see the timestamp_timeout note below.
 
-{ lib, pkgs, hostConfig, ... }:
+{
+  lib,
+  pkgs,
+  hostConfig,
+  ...
+}:
 
 lib.mkIf (!hostConfig.isServer) {
   security.pam.services.sudo_local = {
