@@ -225,7 +225,12 @@ in
               # WindowServer freeze & responsiveness anomalies: "synchronize timed out",
               # and WindowServer "failed to act" or "Clearing datagram buffer" (replacing
               # bespoke ws-monitor.sh LaunchDaemon polling with native streaming).
-              predicate: '(process == "kernel" AND (eventMessage CONTAINS[c] "jetsam" OR eventMessage CONTAINS[c] "memorystatus" OR eventMessage CONTAINS[c] "low swap" OR eventMessage CONTAINS[c] "panic" OR eventMessage CONTAINS[c] "IOGPU" OR eventMessage CONTAINS[c] "AGX" OR eventMessage CONTAINS[c] "thermal")) OR eventMessage CONTAINS[c] "memory pressure" OR process == "DumpPanic" OR process == "ReportCrash" OR process == "thermalmonitord" OR subsystem == "com.apple.thermalmonitord" OR eventMessage CONTAINS[c] "userspace watchdog timeout" OR eventMessage CONTAINS[c] "GPU restart" OR eventMessage CONTAINS[c] "gpu hang" OR eventMessage CONTAINS[c] "synchronize timed out" OR (process == "WindowServer" AND (eventMessage CONTAINS[c] "failed to act" OR eventMessage CONTAINS[c] "Clearing datagram buffer"))'
+              # sudo authentication: each PAM module's verdict, the Touch ID
+              # (LocalAuthentication) result, and the password fallback; plus
+              # kernel library-validation rejections of third-party PAM
+              # modules. Measured over 2 h: 2,031 events, 1,968 of them
+              # library-validation rejections.
+              predicate: '(process == "kernel" AND (eventMessage CONTAINS[c] "jetsam" OR eventMessage CONTAINS[c] "memorystatus" OR eventMessage CONTAINS[c] "low swap" OR eventMessage CONTAINS[c] "panic" OR eventMessage CONTAINS[c] "IOGPU" OR eventMessage CONTAINS[c] "AGX" OR eventMessage CONTAINS[c] "thermal")) OR eventMessage CONTAINS[c] "memory pressure" OR process == "DumpPanic" OR process == "ReportCrash" OR process == "thermalmonitord" OR subsystem == "com.apple.thermalmonitord" OR eventMessage CONTAINS[c] "userspace watchdog timeout" OR eventMessage CONTAINS[c] "GPU restart" OR eventMessage CONTAINS[c] "gpu hang" OR eventMessage CONTAINS[c] "synchronize timed out" OR (process == "WindowServer" AND (eventMessage CONTAINS[c] "failed to act" OR eventMessage CONTAINS[c] "Clearing datagram buffer")) OR (process == "sudo" AND (eventMessage CONTAINS "pam_sm_authenticate" OR eventMessage CONTAINS "evaluatePolicy on" OR eventMessage CONTAINS "Authorization result" OR eventMessage CONTAINS "authtok")) OR (process == "kernel" AND eventMessage CONTAINS "Library Validation failed")'
               sendToRoutes: false
               connections:
                 - pipeline: os_events
