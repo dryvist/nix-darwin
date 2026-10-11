@@ -94,7 +94,7 @@ See the `nix-package-placement` rule — lives in
 [ai-assistant-instructions][nix-pkg-placement] and auto-loads via
 path-scoping when `.nix` / `flake.*` files are in context.
 
-[nix-pkg-placement]: https://github.com/JacobPEvans/ai-assistant-instructions/blob/main/agentsmd/rules/nix-package-placement.md
+[nix-pkg-placement]: https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/nix-package-placement.md
 Contains the full decision matrix for the nix repos including homebrew constraints
 and on-demand patterns.
 

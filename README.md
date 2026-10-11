@@ -26,7 +26,7 @@ as flake inputs.
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/JacobPEvans/nix-darwin.git $GIT_HOME_PUBLIC/nix-darwin
+git clone https://github.com/dryvist/nix-darwin.git $GIT_HOME_PUBLIC/nix-darwin
 cd $GIT_HOME_PUBLIC/nix-darwin
 
 # 2. Build and activate for the first time
@@ -162,9 +162,9 @@ Contributions welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 <!-- Badge references -->
 [license-img]: https://img.shields.io/badge/License-MIT-blue.svg
 [license-link]: LICENSE
-[ci-gate-img]: https://github.com/JacobPEvans/nix-darwin/actions/workflows/ci-gate.yml/badge.svg
-[ci-gate-link]: https://github.com/JacobPEvans/nix-darwin/actions/workflows/ci-gate.yml
-[nix-build-img]: https://github.com/JacobPEvans/nix-darwin/actions/workflows/ci-nix.yml/badge.svg
-[nix-build-link]: https://github.com/JacobPEvans/nix-darwin/actions/workflows/ci-nix.yml
+[ci-gate-img]: https://github.com/dryvist/nix-darwin/actions/workflows/ci-gate.yml/badge.svg
+[ci-gate-link]: https://github.com/dryvist/nix-darwin/actions/workflows/ci-gate.yml
+[nix-build-img]: https://github.com/dryvist/nix-darwin/actions/workflows/ci-nix.yml/badge.svg
+[nix-build-link]: https://github.com/dryvist/nix-darwin/actions/workflows/ci-nix.yml
 
 > Part of a [larger ecosystem of ~40 repos](https://docs.jacobpevans.com) — see how it all fits together.
