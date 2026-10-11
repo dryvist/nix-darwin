@@ -261,6 +261,17 @@ run_bao() { run --separate-stderr bash -euo pipefail "$SCRIPTS/openbao-run.sh" "
   [ "$output" = "0" ]
 }
 
+@test "credentials are scrubbed under a bash with no compgen builtin, as packaged" {
+  seed_doc secret app/base '{"ALPHA":"one"}'
+  printf 'enable -n compgen\n' > "$BATS_TEST_TMPDIR/no-compgen"
+  BASH_ENV="$BATS_TEST_TMPDIR/no-compgen" \
+    OPENBAO_APPROLE_OTHER_ROLE_ID=other-role OPENBAO_APPROLE_OTHER_SECRET_ID=other-secret \
+    OTHER_VAULT_ROLE_ID=legacy-role BAO_TOKEN=ambient-bao \
+    run_bao --domain demo --secrets app/base -- sh -c 'env | grep -c -E "^(OPENBAO_APPROLE_|[A-Z0-9_]+_VAULT_(ROLE|SECRET)_ID=|BAO_TOKEN=)" || true'
+  [ "$status" -eq 0 ]
+  [ "$output" = "0" ]
+}
+
 @test "an AppRole login failure names the domain" {
   seed_doc secret app/base '{"ALPHA":"one"}'
   LOGIN_STATUS=403 run_bao --domain demo --secrets app/base -- sh -c 'echo ran'

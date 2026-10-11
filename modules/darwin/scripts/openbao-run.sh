@@ -341,12 +341,16 @@ unset doc_json
 # The login token, any ambient token, and every AppRole bootstrap cred die
 # with this shell; only the exported secret values reach the exec'd child.
 unset token ambient_token
-while IFS= read -r name; do
+# `export -p`, not `compgen -e`: the packaged non-interactive bash has no
+# compgen builtin, and a missing builtin would silently scrub nothing.
+while IFS= read -r line; do
+  [[ "$line" =~ ^declare\ -[a-zA-Z-]*\ ([A-Za-z_][A-Za-z0-9_]*) ]] || continue
+  name="${BASH_REMATCH[1]}"
   case "$name" in
     OPENBAO_APPROLE_*|*_VAULT_ROLE_ID|*_VAULT_SECRET_ID|BAO_TOKEN|VAULT_TOKEN)
       unset "$name"
       ;;
   esac
-done < <(compgen -e)
+done < <(export -p)
 
 exec "$@"
