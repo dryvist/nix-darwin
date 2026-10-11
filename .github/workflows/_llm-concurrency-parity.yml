@@ -32,7 +32,7 @@ jobs:
       - name: Fetch dryvist/tofu-proxmox serving constants
         run: |
           # renovate: datasource=github-tags depName=dryvist/tofu-proxmox
-          TOFU_PROXMOX_REF="v3.35.0"
+          TOFU_PROXMOX_REF="v3.36.0"
           curl -fsSL -o /tmp/constants.tf \
             "https://raw.githubusercontent.com/dryvist/tofu-proxmox/${TOFU_PROXMOX_REF}/modules/proxmox-stack/constants-serving.tf"
 
