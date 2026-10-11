@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.8.0](https://github.com/dryvist/nix-darwin/compare/v3.7.4...v3.8.0) (2026-10-11)
+
+
+### Features
+
+* **darwin:** add a window-gated darwin-rebuild wrapper ([#2809](https://github.com/dryvist/nix-darwin/issues/2809)) ([9facd06](https://github.com/dryvist/nix-darwin/commit/9facd068906d2725e6db6fd874b78c7ed13abedd))
+* **darwin:** add macOS VM GitHub Actions runner ([#2807](https://github.com/dryvist/nix-darwin/issues/2807)) ([acafcce](https://github.com/dryvist/nix-darwin/commit/acafccea1b49d47e7fa439be343efc1f4858ad3b))
+* **openbao-run:** read the rotator's OPENBAO_APPROLE_ credential names ([#2827](https://github.com/dryvist/nix-darwin/issues/2827)) ([9fcae5e](https://github.com/dryvist/nix-darwin/commit/9fcae5e81aafee18d9055c07c784acb6fec84434))
+
+
+### Bug Fixes
+
+* **ci:** read the serving constants at a pinned release tag ([#2820](https://github.com/dryvist/nix-darwin/issues/2820)) ([4106a83](https://github.com/dryvist/nix-darwin/commit/4106a836ae238d3aa98c37d524b55b12c7e81275))
+* **ci:** report stale flake inputs without failing ([#2821](https://github.com/dryvist/nix-darwin/issues/2821)) ([c3aa55e](https://github.com/dryvist/nix-darwin/commit/c3aa55e1c68f1439fefd10e2c23a8664b752b938))
+
 ## [3.7.4](https://github.com/dryvist/nix-darwin/compare/v3.7.3...v3.7.4) (2026-10-09)
 
 
