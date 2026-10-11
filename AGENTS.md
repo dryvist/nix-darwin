@@ -90,11 +90,10 @@ cd <branch>
 
 ### Package placement
 
-See the `nix-package-placement` rule — lives in
-[ai-assistant-instructions][nix-pkg-placement] and auto-loads via
-path-scoping when `.nix` / `flake.*` files are in context.
+See the package-placement standard at
+[docs.jacobpevans.com/nix/package-placement][nix-pkg-placement].
 
-[nix-pkg-placement]: https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/nix-package-placement.md
+[nix-pkg-placement]: https://docs.jacobpevans.com/nix/package-placement
 Contains the full decision matrix for the nix repos including homebrew constraints
 and on-demand patterns.
 
