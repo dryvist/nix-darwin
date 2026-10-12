@@ -32,13 +32,14 @@
 # something ambient. Without --domain, an already-valid BAO_TOKEN/VAULT_TOKEN
 # in the environment is used, which is the interactive workstation path.
 #
-# Login backoff (per-domain circuit breaker): a refused AppRole login is never
+# Login backoff (per-domain, per-AppRole circuit breaker): a refused login is never
 # retried before its backoff window ends, however often the wrapper is started.
 # A refusal is an HTTP 400, 401 or 403 from the login endpoint; timeouts,
 # connection errors and 5xx are network faults, neither counted nor delayed.
-# Each domain keeps one state file:
+# Each AppRole role_id keeps one state file, named with its first 16 SHA-256
+# hex chars (role_id only; never secret_id):
 #
-#   ${XDG_STATE_HOME:-$HOME/.local/state}/openbao-run/<domain>
+#   ${XDG_STATE_HOME:-$HOME/.local/state}/openbao-run/<domain>.<role_id-hash>
 #
 # directory 0700, file 0600, holding "<consecutive refusals> <epoch seconds
 # before which no login may be attempted>" and never a credential. The Nth
@@ -236,7 +237,10 @@ record_refusal() { # $1 HTTP status
 
 if [ -n "$login_payload" ]; then
   state_dir="${XDG_STATE_HOME:-${HOME:?HOME is not set}/.local/state}/openbao-run"
-  state_file="$state_dir/$domain"
+  role_id_hash="$(printf '%s' "$role_id" | sha256sum)"
+  role_id_hash="${role_id_hash%% *}"
+  role_id_hash="${role_id_hash:0:16}"
+  state_file="$state_dir/$domain.$role_id_hash"
   if [ -f "$state_file" ]; then
     saved_refusals=""
     saved_next=""
