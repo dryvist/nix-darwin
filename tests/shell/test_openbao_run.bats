@@ -5,13 +5,18 @@
 # whole-document injection (--secrets), left-to-right override so documents
 # layer, the two authentication paths (AppRole via --domain, ambient token
 # without it), and every way it must fail loudly rather than exec a child with
-# nothing exported. The per-domain login backoff (circuit breaker) is covered
-# at the end: what a refusal records, that an open window makes no request at
-# all, and that only a rejected credential — never a network fault — counts.
+# nothing exported. The per-domain, per-AppRole login backoff (circuit breaker)
+# is covered at the end: refusal timing, credential isolation, no requests while
+# open, and only rejected credentials — never network faults — counting.
 
 bats_require_minimum_version 1.5.0 # for `run --separate-stderr`
 
 SCRIPTS="$BATS_TEST_DIRNAME/../../modules/darwin/scripts"
+
+state_path() {
+  printf '%s/openbao-run/%s.%s' "$XDG_STATE_HOME" "$1" \
+    "$(printf '%s' "$2" | sha256sum | cut -c1-16)"
+}
 
 # Stubs get the shebang of the bash actually running the suite, matching the
 # convention elsewhere in tests/shell: `/usr/bin/env` is not available
@@ -81,10 +86,10 @@ STUB
   export OPENBAO_RUN_CURL_BIN="$STUB_DIR/curl"
   # The login backoff state lives under here, never in the real home.
   export XDG_STATE_HOME="$BATS_TEST_TMPDIR/state"
-  STATE_FILE="$XDG_STATE_HOME/openbao-run/demo"
   export BAO_ADDR="https://stub.invalid"
   export DEMO_VAULT_ROLE_ID="stub-role"
   export DEMO_VAULT_SECRET_ID="stub-secret"
+  STATE_FILE="$(state_path demo "$DEMO_VAULT_ROLE_ID")"
 }
 
 # seed_doc <mount> <path> <json-object>
@@ -495,6 +500,64 @@ expire_window() {
   [ "$status" -eq 0 ]
   [ "$output" = "ran" ]
   [ "$(grep -c '/v1/auth/approle/login$' "$CALLS")" -eq 1 ]
+}
+
+@test "a refusal for role A does not block role B for the same domain" {
+  local role_a role_b state_a
+  role_a="role-a-credential"
+  role_b="role-b-credential"
+  state_a="$(state_path demo "$role_a")"
+  seed_doc secret app/base '{"ALPHA":"one"}'
+
+  DEMO_VAULT_ROLE_ID="$role_a" LOGIN_STATUS=403 \
+    run_bao --domain demo --secrets app/base -- sh -c 'echo ran'
+  [ "$status" -ne 0 ]
+  [ -f "$state_a" ]
+
+  : > "$CALLS"
+  DEMO_VAULT_ROLE_ID="$role_b" \
+    run_bao --domain demo --secrets app/base -- sh -c 'echo ran'
+  [ "$status" -eq 0 ]
+  [ "$output" = "ran" ]
+  [ "$(grep -c '/v1/auth/approle/login$' "$CALLS")" -eq 1 ]
+  [ -f "$state_a" ]
+}
+
+@test "role A remains blocked on its next run after another role logs in" {
+  local role_a role_b state_a
+  role_a="role-a-credential"
+  role_b="role-b-credential"
+  state_a="$(state_path demo "$role_a")"
+  seed_doc secret app/base '{"ALPHA":"one"}'
+
+  DEMO_VAULT_ROLE_ID="$role_a" LOGIN_STATUS=403 \
+    run_bao --domain demo --secrets app/base -- sh -c 'echo ran'
+  [ -f "$state_a" ]
+
+  DEMO_VAULT_ROLE_ID="$role_b" \
+    run_bao --domain demo --secrets app/base -- sh -c 'echo ran'
+  [ "$status" -eq 0 ]
+
+  : > "$CALLS"
+  DEMO_VAULT_ROLE_ID="$role_a" \
+    run_bao --domain demo --secrets app/base -- sh -c 'echo ran'
+  [ "$status" -eq 75 ]
+  [ ! -s "$CALLS" ]
+  [ -f "$state_a" ]
+}
+
+@test "the state filename contains no raw role_id" {
+  local role_id expected_path
+  role_id="role-id-that-must-not-appear"
+  expected_path="$(state_path demo "$role_id")"
+  seed_doc secret app/base '{"ALPHA":"one"}'
+
+  DEMO_VAULT_ROLE_ID="$role_id" LOGIN_STATUS=403 \
+    run_bao --domain demo --secrets app/base -- sh -c 'echo ran'
+
+  [ -f "$expected_path" ]
+  [[ "${expected_path##*/}" == demo.???????????????? ]]
+  [[ "$expected_path" != *"$role_id"* ]]
 }
 
 @test "unreadable state is ignored with a log line, never a lockout" {
