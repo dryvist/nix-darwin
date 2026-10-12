@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.10.2](https://github.com/dryvist/nix-darwin/compare/v3.10.1...v3.10.2) (2026-10-12)
+
+
+### Bug Fixes
+
+* **litellm-local:** name the local chain head medium ([#2870](https://github.com/dryvist/nix-darwin/issues/2870)) ([1008979](https://github.com/dryvist/nix-darwin/commit/1008979cf89edf7de0b7009e45d615afdeef4eab))
+* **openbao-run:** keep the login circuit per credential ([#2866](https://github.com/dryvist/nix-darwin/issues/2866)) ([41be8c7](https://github.com/dryvist/nix-darwin/commit/41be8c7c095b13c81164e07b3c1ee55613d3fa8d))
+
 ## [3.10.1](https://github.com/dryvist/nix-darwin/compare/v3.10.0...v3.10.1) (2026-10-11)
 
 
