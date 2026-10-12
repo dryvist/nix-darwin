@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.11.0](https://github.com/dryvist/nix-darwin/compare/v3.10.2...v3.11.0) (2026-10-12)
+
+
+### Features
+
+* **hosts:** per-host model serving width for the workstation ([#2874](https://github.com/dryvist/nix-darwin/issues/2874)) ([deb9205](https://github.com/dryvist/nix-darwin/commit/deb92059a72c23a77084d52b96373d011a3e3f3c))
+
 ## [3.10.2](https://github.com/dryvist/nix-darwin/compare/v3.10.1...v3.10.2) (2026-10-12)
 
 
