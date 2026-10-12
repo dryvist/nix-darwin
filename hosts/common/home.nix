@@ -165,15 +165,16 @@ in
       # Claude Code talks directly to Anthropic; the proxy remains for the
       # OpenAI-shaped clients and cannot change Claude model ids or windows.
       claudeDirect = true;
-      # Keep the client-facing alias stable while its local id follows the
-      # host's catalog. The terminal router rung must use the same group name.
+      # The chain head is the `medium` capability, so its local id can follow the
+      # host's catalog while clients keep one name. The terminal router rung
+      # uses the same group name.
       localModels = [
         {
-          name = "subagent";
+          name = "medium";
           id = config.services.aiStack.models.default;
         }
       ];
-      routerEntryModel = "subagent";
+      routerEntryModel = "medium";
     };
 
     # Token Meter is a shared primary-user service: every registered Mac
