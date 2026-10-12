@@ -70,7 +70,32 @@ let
     ) "${hostName}: an empty model id did not fail the role-resolution assertion"
   ) configs;
 
-  failures = lib.filter (m: m != "") (positive ++ negative);
+  # A host's own `modelConcurrency` reaches the worker widths nix-ai renders.
+  expectedWidths.jevans-mbp = {
+    mimo-9b = 4;
+    qwen38-27b = 2;
+  };
+  widthFailures = lib.concatMap (
+    hostName:
+    if !(configs ? ${hostName}) then
+      [ "${hostName}: missing from the evaluated hosts, so its serving widths are unchecked" ]
+    else
+      let
+        mlx = (primaryUser configs.${hostName}).programs.mlx;
+      in
+      lib.concatMap (
+        key:
+        let
+          id = mlx.roleMap.models.${key}.id;
+        in
+        lib.optional (mlx.modelConcurrencyLimits.${id} != expectedWidths.${hostName}.${key})
+          "${hostName}: ${key} serves width ${toString mlx.modelConcurrencyLimits.${id}}, expected ${
+            toString expectedWidths.${hostName}.${key}
+          }"
+      ) (lib.attrNames expectedWidths.${hostName})
+  ) (lib.attrNames expectedWidths);
+
+  failures = lib.filter (m: m != "") (positive ++ negative ++ widthFailures);
 in
 assert
   failures == [ ] || throw "Role-map host check failed:\n${lib.concatStringsSep "\n" failures}";

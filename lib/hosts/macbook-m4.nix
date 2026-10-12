@@ -13,6 +13,15 @@
   # CI hmActivationPackage output. Exactly one host should set this.
   primary = true;
 
+  # Serving width per role-map model on this host, wider than the shared
+  # catalog's single-slot default: the small model decodes four requests at a
+  # time and the medium model two. nix-ai derives each worker's decode flags,
+  # LiteLLM admission and request timeouts from these numbers.
+  modelConcurrency = {
+    mimo-9b = 4;
+    qwen38-27b = 2;
+  };
+
   # Local official MLX inference server sizing. The prompt cache stays at the
   # shared 8 GiB resilience cap.
   mlx = {
