@@ -102,7 +102,7 @@ in
     # ========================================================================
     # General client for the secret store: AppRole login, KV reads, and SSH
     # certificate signing (`bao ssh`, `bao write <mount>/sign/<role>`). The
-    # openbao-*-creds wrappers in modules/darwin/apps wrap three specific
+    # openbao-*-creds wrappers in modules/darwin/apps wrap specific
     # credential types; anything they do not wrap previously had no tool at
     # all, which pushed operators into hand-rolled curl against the HTTP API.
     openbao

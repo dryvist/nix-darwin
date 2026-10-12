@@ -20,6 +20,7 @@ _:
     ./github-runner-container.nix
     ./macos-vm-runner.nix
     ./offbox-sync.nix
+    ./openbao-azure-creds.nix
     ./openbao-run.nix
     ./orbstack.nix
     ./raycast.nix
