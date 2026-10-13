@@ -27,7 +27,7 @@ jobs:
       contents: read
       id-token: write
       pull-requests: write
-    uses: dryvist/ai-workflows/.github/workflows/cc-dep-review.yml@af87a8986b908d98c5cd2a1486d4038820123c86 # v0.48.9
+    uses: dryvist/ai-workflows/.github/workflows/cc-dep-review.yml@286459bf39f4c269e10d6b28e8c29ba225faed5e # v0.49.0
     secrets: inherit
 
   release-notes:
@@ -35,5 +35,5 @@ jobs:
       contents: read
       id-token: write
       pull-requests: write
-    uses: dryvist/ai-workflows/.github/workflows/cc-release-notes.yml@af87a8986b908d98c5cd2a1486d4038820123c86 # v0.48.9
+    uses: dryvist/ai-workflows/.github/workflows/cc-release-notes.yml@286459bf39f4c269e10d6b28e8c29ba225faed5e # v0.49.0
     secrets: inherit
