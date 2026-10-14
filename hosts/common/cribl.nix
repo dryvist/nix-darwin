@@ -82,6 +82,13 @@ in
       enable = true;
       mode = "standalone";
       standalone.configFiles = {
+        # Edge's default worker heap is 1024 MB; the worker peaked at 949 MB
+        # before each out-of-memory abort, so it runs against that cap.
+        "cribl.yml" = ''
+          workers:
+            memory: 2048
+        '';
+
         # File source schema (Edge 4.18): manual mode requires `path` (a
         # directory) + `filenames` (glob allowlist) — a bare `filenames` list
         # fails validation ("should have required property 'path'") and takes
