@@ -71,7 +71,9 @@
     UserName = cfg.serviceUser;
     GroupName = cfg.serviceGroup;
     WorkingDirectory = cfg.dataDir;
-    StandardOutPath = "${cfg.dataDir}/logs/cribl-stdout.log";
+    # stdout repeats what Cribl already writes to its own rotated logs under
+    # log/; stderr keeps the FATAL traces and early-boot errors.
+    StandardOutPath = "/dev/null";
     StandardErrorPath = "${cfg.dataDir}/logs/cribl-stderr.log";
     # Cribl does not hot-reload config written from outside its own API
     # (see the extraActivation note above), so a config-only generation
