@@ -72,9 +72,26 @@ let
 
   # A host's own `modelConcurrency` reaches the worker widths nix-ai renders.
   expectedWidths.jevans-mbp = {
-    mimo-9b = 4;
+    qwen35-9b = 4;
     qwen38-27b = 2;
   };
+  expectedSmallModels = {
+    jevans-mbp = "mlx-community/Qwen3.5-9B-OptiQ-4bit";
+    jevans-ms = "mlx-community/MiMo-V2.6-Distill-Qwen-9B-OptiQ-4bit";
+  };
+  roleFailures = lib.concatMap (
+    hostName:
+    if !(builtins.hasAttr hostName configs) then
+      [ "missing host in class-specific role check" ]
+    else
+      let
+        roleModels = (primaryUser (builtins.getAttr hostName configs)).services.aiStack.models or { };
+        expectedModel = builtins.getAttr hostName expectedSmallModels;
+      in
+      lib.optional (
+        (roleModels.small or null) != expectedModel
+      ) "small role model differs from its class-specific expectation"
+  ) (lib.attrNames expectedSmallModels);
   widthFailures = lib.concatMap (
     hostName:
     if !(configs ? ${hostName}) then
@@ -95,7 +112,7 @@ let
       ) (lib.attrNames expectedWidths.${hostName})
   ) (lib.attrNames expectedWidths);
 
-  failures = lib.filter (m: m != "") (positive ++ negative ++ widthFailures);
+  failures = lib.filter (m: m != "") (positive ++ negative ++ widthFailures ++ roleFailures);
 in
 assert
   failures == [ ] || throw "Role-map host check failed:\n${lib.concatStringsSep "\n" failures}";
