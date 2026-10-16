@@ -74,6 +74,10 @@ let
       name = "wispr-flow";
       greedy = true;
     } # AI-powered voice dictation
+    {
+      name = "granola";
+      greedy = true;
+    } # AI-powered meeting notes
 
     # --- API Development ---
     {
@@ -117,6 +121,7 @@ let
   workstationMasApps = {
     "Monarch Money Tweaks" = 6753774259; # Personal finance enhancements
     "Windows App" = 1295203466; # Microsoft Remote Desktop / Windows 365 / AVD client
+    "Omi - Smart Meeting Notes" = 6502156163; # AI meeting notes & memory assistant
     # Microsoft 365 applications.
     "Microsoft Word" = 462054704;
     "Microsoft Excel" = 462058435;
