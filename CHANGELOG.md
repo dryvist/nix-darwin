@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.13.0](https://github.com/dryvist/nix-darwin/compare/v3.12.0...v3.13.0) (2026-10-16)
+
+
+### Features
+
+* configure access-tier SSH principals ([#2891](https://github.com/dryvist/nix-darwin/issues/2891)) ([7d5ebb4](https://github.com/dryvist/nix-darwin/commit/7d5ebb49b170fe53df29ac62a21a40c9431df1dd))
+* **dock:** set Wispr Flow as baseline app and position first among meeting tools ([f12ba9d](https://github.com/dryvist/nix-darwin/commit/f12ba9dae8f301c94ebc07a8f58484aeee759c59))
+* **dock:** update dock arrangement, add Omi and Granola, and refine category groupings ([#2889](https://github.com/dryvist/nix-darwin/issues/2889)) ([03a3fd5](https://github.com/dryvist/nix-darwin/commit/03a3fd5bef0cee7bd5064086ebe1823823dca592))
+
 ## [3.12.0](https://github.com/dryvist/nix-darwin/compare/v3.11.1...v3.12.0) (2026-10-16)
 
 
