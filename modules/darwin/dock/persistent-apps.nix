@@ -35,25 +35,32 @@ in
     # `hostConfig` capabilities to include GUI applications only on hosts where
     # they are installed (workstations), while keeping server Docks clean.
     persistent-apps = [
-      # System settings & time (system apps present on all hosts)
+      # System Settings & Time (system apps present on all hosts)
       "/System/Applications/System Settings.app"
       "/System/Applications/Clock.app"
+
+      # Tasks & Scheduling (system apps present on all hosts)
       "/System/Applications/Reminders.app"
       "/System/Applications/Calendar.app"
     ]
     ++ lib.optionals enableWorkstationApps [
-      # Communication before Safari (Slack before Teams)
+      # Communication (Slack before Teams)
       "/Applications/Slack.app"
       "/System/Applications/Messages.app"
       "/Applications/Microsoft Teams.app"
     ]
     ++ [
+      # Primary Browser (present on all hosts)
       "/Applications/Safari.app"
     ]
     ++ lib.optionals enableWorkstationApps [
-      # Browsers, Knowledge, Voice & Meeting tools
+      # Secondary Browser
       "/Applications/Brave Browser.app"
+
+      # Knowledge Base & Notes
       "/Applications/Obsidian.app"
+
+      # Meeting Assistants & Voice Intelligence
       "/Applications/Foresight.app"
       "/Applications/Omi.app"
       "/Applications/Wispr Flow.app"
@@ -64,20 +71,21 @@ in
       "/Applications/Ghostty.app"
     ]
     ++ lib.optionals enableWorkstationApps [
-      # Development & Tools
+      # Development & Editors
       "${homeDir}/Applications/Home Manager Apps/Visual Studio Code.app"
     ]
     ++ [
-      # AI & API tools (present on all hosts; ChatGPT removed, Codex kept)
+      # AI & API Tools (present on all hosts; ChatGPT removed, Codex kept)
       "/Applications/ProxMan.app"
       "/Applications/Claude.app"
       "${homeDir}/Applications/Gemini.app"
       "/Applications/Codex.app"
     ]
     ++ lib.optionals enableWorkstationApps [
-      # Windows App at the very end
+      # Remote Desktop (positioned at the very end of app icons)
       "/Applications/Windows App.app"
-      # Spacer after Windows App to separate true dock apps from recently opened apps
+
+      # Visual Spacer: separates permanent Dock apps from dynamic running apps
       {
         spacer = {
           small = false;
