@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.11.1](https://github.com/dryvist/nix-darwin/compare/v3.11.0...v3.11.1) (2026-10-16)
+
+
+### Bug Fixes
+
+* **cribl:** raise the Edge worker heap limit and stop the stdout log ([#2883](https://github.com/dryvist/nix-darwin/issues/2883)) ([86e8e88](https://github.com/dryvist/nix-darwin/commit/86e8e882949fab664274e129594ec41434d06afd))
+
 ## [3.11.0](https://github.com/dryvist/nix-darwin/compare/v3.10.2...v3.11.0) (2026-10-12)
 
 
