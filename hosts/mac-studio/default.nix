@@ -39,7 +39,9 @@ in
 
   users.users.${hostAdminUser} = {
     name = hostAdminUser;
-    uid = 502;
+    # nix-darwin requires a fixed UID for known users. 590 is unused by this
+    # repository's declared accounts; assume no unmanaged account already owns it.
+    uid = 590;
     home = "/Users/${hostAdminUser}";
     shell = "/bin/bash";
     createHome = true;
