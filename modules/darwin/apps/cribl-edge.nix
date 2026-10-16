@@ -207,6 +207,7 @@ in
     system.activationScripts.extraActivation.text = ''
       ${./scripts/cribl-edge-activate.sh} "${cfg.dataDir}" "${cfg.serviceUser}:${cfg.serviceGroup}" "${cfg.mode}"
       ${lib.optionalString (cfg.mode == "standalone") standaloneConfigInstall}
+      /bin/rm -f "${cfg.dataDir}/logs/cribl-stdout.log"
       ${lib.optionalString (cfg.packs != { }) (
         lib.concatStringsSep "\n" (
           lib.mapAttrsToList (name: src: ''
