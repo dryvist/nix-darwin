@@ -18,7 +18,7 @@
   # time and the medium model two. nix-ai derives each worker's decode flags,
   # LiteLLM admission and request timeouts from these numbers.
   modelConcurrency = {
-    mimo-9b = 4;
+    qwen35-9b = 4;
     qwen38-27b = 2;
   };
 
