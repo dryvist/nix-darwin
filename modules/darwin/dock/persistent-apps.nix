@@ -40,34 +40,49 @@ in
       "/System/Applications/Clock.app"
       "/System/Applications/Reminders.app"
       "/System/Applications/Calendar.app"
+    ]
+    ++ lib.optionals enableWorkstationApps [
+      # Communication before Safari (Slack before Teams)
+      "/Applications/Slack.app"
+      "/System/Applications/Messages.app"
+      "/Applications/Microsoft Teams.app"
+    ]
+    ++ [
       "/Applications/Safari.app"
     ]
     ++ lib.optionals enableWorkstationApps [
+      # Browsers, Knowledge, Voice & Meeting tools
       "/Applications/Brave Browser.app"
-      "/Applications/Wispr Flow.app"
+      "/Applications/Obsidian.app"
       "/Applications/Foresight.app"
+      "/Applications/Omi.app"
+      "/Applications/Wispr Flow.app"
+      "/Applications/Granola.app"
     ]
     ++ [
       # Terminal (present on all hosts)
       "/Applications/Ghostty.app"
     ]
     ++ lib.optionals enableWorkstationApps [
-      # Knowledge & Notes
-      # "/Applications/Obsidian.app" # temporarily hidden; uncomment to restore
-
       # Development & Tools
       "${homeDir}/Applications/Home Manager Apps/Visual Studio Code.app"
-
-      # Communication
-      "/Applications/Slack.app"
     ]
     ++ [
-      # AI & API tools (present on all hosts)
+      # AI & API tools (present on all hosts; ChatGPT removed, Codex kept)
       "/Applications/ProxMan.app"
       "/Applications/Claude.app"
       "${homeDir}/Applications/Gemini.app"
-      "/Applications/ChatGPT.app"
       "/Applications/Codex.app"
+    ]
+    ++ lib.optionals enableWorkstationApps [
+      # Windows App at the very end
+      "/Applications/Windows App.app"
+      # Spacer after Windows App to separate true dock apps from recently opened apps
+      {
+        spacer = {
+          small = false;
+        };
+      }
     ];
 
     # ========================================================================
