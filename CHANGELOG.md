@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.12.0](https://github.com/dryvist/nix-darwin/compare/v3.11.1...v3.12.0) (2026-10-16)
+
+
+### Features
+
+* **macbook:** serve the small role from Qwen3.5-9B ([#2887](https://github.com/dryvist/nix-darwin/issues/2887)) ([6ada170](https://github.com/dryvist/nix-darwin/commit/6ada1709e8b62c6ddffb491b734d9b12a183d2e3))
+
 ## [3.11.1](https://github.com/dryvist/nix-darwin/compare/v3.11.0...v3.11.1) (2026-10-16)
 
 
