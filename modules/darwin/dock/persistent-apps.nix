@@ -59,11 +59,15 @@ in
 
       # Knowledge Base & Notes
       "/Applications/Obsidian.app"
-
-      # Meeting Assistants & Voice Intelligence
+    ]
+    ++ [
+      # Voice Intelligence (present on all hosts)
+      "/Applications/Wispr Flow.app"
+    ]
+    ++ lib.optionals enableWorkstationApps [
+      # Meeting Assistants (workstation only)
       "/Applications/Foresight.app"
       "/Applications/Omi.app"
-      "/Applications/Wispr Flow.app"
       "/Applications/Granola.app"
     ]
     ++ [
