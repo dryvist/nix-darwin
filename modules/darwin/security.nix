@@ -19,9 +19,9 @@ let
   # ==========================================================================
   # The two-Mac Thunderbolt-RDMA cluster (see cluster-link-prep.nix) is
   # driven by launchd user agents under these label prefixes. `gui/501` is
-  # ${userConfig.user.name}'s login-session domain (uid 501, the sole macOS
-  # account on both hosts — launchd's gui/<uid> syntax needs the literal
-  # numeric uid; it cannot be derived at sudoers-match time).
+  # ${userConfig.user.name}'s login-session domain (uid 501 — launchd's gui/<uid>
+  # syntax needs the literal numeric uid; it cannot be derived at sudoers-match
+  # time).
   clusterLaunchdTargets = [
     {
       domain = "gui/501";

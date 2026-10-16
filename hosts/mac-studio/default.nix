@@ -28,6 +28,7 @@ let
   };
 
   userConfig = import ../../lib/user-config.nix;
+  hostAdminUser = "host-admin";
   llmApiUpstreamPort = 11427;
 in
 {
@@ -35,6 +36,24 @@ in
     ../common/default.nix
     ./nix-prebuild.nix
   ];
+
+  users.users.${hostAdminUser} = {
+    name = hostAdminUser;
+    # nix-darwin requires a fixed UID for known users. 590 is unused by this
+    # repository's declared accounts; assume no unmanaged account already owns it.
+    uid = 590;
+    home = "/Users/${hostAdminUser}";
+    shell = "/bin/bash";
+    createHome = true;
+  };
+  users.knownUsers = [ hostAdminUser ];
+
+  security.sshCaPublicKey = "/etc/ssh/trusted-user-ca-keys.pem";
+  security.sshCaPrincipals.${hostAdminUser} = [ "ai-agent" ];
+
+  environment.etc."sudoers.d/host-admin".text = ''
+    ${hostAdminUser} ALL=(ALL) NOPASSWD: ALL
+  '';
 
   # Wall kiosk browser; server class skips the workstation cask list.
   homebrew.casks = [ "brave-browser" ];

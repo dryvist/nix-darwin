@@ -355,6 +355,12 @@
               inherit configs userConfig;
             };
 
+            ssh-principals = import ./lib/checks/ssh-principals.nix {
+              pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+              macbook = configs.${hosts.macbook-m4.hostName};
+              studio = configs.${hosts.mac-studio.hostName};
+            };
+
             launchd-programs = import ./lib/checks/launchd-programs.nix {
               pkgs = nixpkgs.legacyPackages.aarch64-darwin;
               configs = configs // {
