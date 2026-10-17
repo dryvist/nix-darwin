@@ -3,10 +3,9 @@
   description = "nix-darwin configuration for M4 Max MacBook Pro";
 
   inputs = {
-    # Channel branch = intended major-version pin (26.05, stable). Renovate
-    # CANNOT bump this: it updates an input when its ref changes, and a
-    # channel branch's ref never changes. deps-flake-lock.yml relocks the whole
-    # file on a schedule instead.
+    # Channel branch = intended major-version pin (26.05, stable). Renovate's
+    # Nix lock-file maintenance refreshes the locked revision even when this
+    # channel branch reference itself has not changed.
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
 
     # Consolidated systems input for darwin-only configuration
@@ -43,12 +42,11 @@
       url = "github:anthropics/claude-code";
       flake = false;
     };
-    # dryvist org-wide config hub. Source of the org-default .gitignore
-    # (configs/gitignore) that seeds the global git excludes file. Tracks
-    # main; `nix flake update dotgithub` pulls the latest. The git module
-    # tolerates the file being absent (pre-merge) and activates once present.
+    # Shared org configuration source. The configs/gitignore file seeds the
+    # global git excludes file. Tracks v1; Renovate updates the lock input.
+    # The git module tolerates the file being absent and activates once present.
     dotgithub = {
-      url = "github:dryvist/.github?ref=v1";
+      url = "github:JacobPEvans/.github?ref=v1";
       flake = false;
     };
 
