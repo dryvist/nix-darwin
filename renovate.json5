@@ -2,15 +2,14 @@
 //
 // Inherits all org policy (auto-merge tiers, trusted orgs, dependency dashboard,
 // PR/branch limits, commit-message format, 0-day CVE handling) from the shared
-// nix preset: local>dryvist/.github:renovate-nix (= org default + native nix
+// nix preset: github>JacobPEvans/.github:renovate-nix (= org default + native nix
 // manager). Only genuinely repo-specific config lives here: the Cribl pack
 // manager and the flake-input grouping/scheduling that the org's minor/patch
 // tiers do not cover for git-refs digest updates.
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "local>dryvist/.github:renovate-nix",
-    ":enablePreCommit"
+    "github>JacobPEvans/.github:renovate-nix"
   ],
 
   "customManagers": [
@@ -44,49 +43,15 @@
     }
   ],
 
-  // Flake-input grouping/scheduling. These match git-refs (flake input) digest
-  // updates, which the org's minor/patch/major tiers do not schedule — so the
-  // cadence for critical inputs is set here deliberately.
+  // Repo-specific guard: these cluster-critical files need supervised changes.
   "packageRules": [
     {
-      // Cluster-critical configs must NEVER be auto-updated by Renovate. The
-      // wired-memory ceilings, the cluster rank server args (extraServerArgs,
-      // e.g. --prompt-cache-size), and the static Thunderbolt link config are
-      // correctness-critical for Mac-to-Mac cluster parity and panic avoidance
-      // (INC-17070 / INC-17076 / INC-17077): any change must be a deliberate,
-      // supervised PR, never an automated bump. This disables ONLY the org-wide
-      // `# renovate:`-annotated .nix version-pin customManager for these files
-      // (harmless today since none is annotated; a standing guard so a future
-      // annotation here can never trigger an update). It does NOT affect
-      // flake.lock / flake-input maintenance — those live in flake.{nix,lock}
-      // and keep their normal cadence.
       "matchFileNames": [
         "hosts/common/cluster-wired-limit.nix",
         "hosts/common/cluster-quiesce.nix",
         "modules/darwin/cluster-link-prep.nix"
       ],
       "enabled": false
-    },
-    // REMOVED 2026-08-05: two `matchDatasources: ["git-refs"]` rules,
-    // `critical-infrastructure` and `ai-tools-external`. Only Renovate's `nix`
-    // manager emits the git-refs datasource for flake inputs, and that manager
-    // is disabled org-wide in renovate-nix.json — flake.lock now has exactly
-    // one writer, .github/workflows/deps-flake-lock.yml. The rules could no
-    // longer match anything.
-    //
-    // The `critical-infrastructure` rule also carried
-    // `minimumReleaseAge: "2 days"` labelled "for nixpkgs-darwin Hydra eval
-    // lag". It never once fired: Renovate advances an input when its REFERENCE
-    // changes, and nixpkgs is pinned to a channel branch whose reference never
-    // changes, so there was nothing for the age gate to hold back. Verified
-    // 2026-08-05 — no Renovate PR has ever bumped nixpkgs here. Hydra
-    // alignment is instead reported by the relock workflow, which compares the
-    // locked rev against channels.nixos.org.
-    {
-      "description": "GitHub Actions updates - Fri ~15:00 / Mon ~05:00 America/New_York",
-      "matchManagers": ["github-actions"],
-      "groupName": "github-actions",
-      "schedule": ["* 15 * * 5", "* 5 * * 1"]
     }
   ]
 }

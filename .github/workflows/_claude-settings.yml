@@ -100,7 +100,7 @@ jobs:
               print("::error::homelab.allowRules declared in lib/user-config.nix but NOT "
                     "rendered into autoMode.allow.")
               print("::error::Most likely the nix-ai flake input predates the "
-                    "homelab.allowRules wiring - bump flake.lock (deps-update-flake.yml).")
+                    "homelab.allowRules wiring - bump flake.lock through Renovate Nix lock-file maintenance.")
               for m in missing:
                   print(f"::error:: unrendered rule: {m[:70]}...")
               sys.exit(1)

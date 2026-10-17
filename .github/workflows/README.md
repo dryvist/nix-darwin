@@ -152,7 +152,6 @@ jobs:
 | --- | --- |
 | `review-code.yml` | Claude Code PR review |
 | `review-deps.yml` | Dependency update reviews |
-| `deps-update-flake.yml` | JacobPEvans flake.lock updates (manual dispatch) |
 
 ## Configuration
 
@@ -161,8 +160,6 @@ jobs:
 | Secret | Required By |
 | --- | --- |
 | `CLAUDE_OAUTH_TOKEN` | `review-code.yml` |
-
-Note: `deps-update-flake.yml` uses only `GITHUB_TOKEN` (no additional secrets needed).
 
 ### Auto-Merge Compatibility
 
