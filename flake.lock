@@ -588,11 +588,11 @@
     "dotgithub": {
       "flake": false,
       "locked": {
-        "lastModified": 1792225030,
-        "narHash": "sha256-XPFh4NzeWqWAv7IPIEG09+rVbZlYr/Q5733Oxif1ryk=",
+        "lastModified": 1792268011,
+        "narHash": "sha256-6CswH2jJud7ouUUCqbepiDWL4hR2KwmsKTr5rC8xg40=",
         "owner": "JacobPEvans",
         "repo": ".github",
-        "rev": "602d44da37723b2f97dd00a51f9dd0fef1050d62",
+        "rev": "be2c3eb47b3119e742b4e0bf712f1c0ada56ec2d",
         "type": "github"
       },
       "original": {
