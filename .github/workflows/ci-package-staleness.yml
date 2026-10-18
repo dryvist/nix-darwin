@@ -4,7 +4,7 @@ name: Package Staleness Check
 # fails and never blocks a merge, because a first-party bump is a deliberate
 # pull request and age alone is not a reason to force one.
 # Thresholds (scripts/validate-package-freshness.sh):
-#   - Critical packages (nixpkgs, home-manager, ai-assistant-instructions): >30 days = STALE
+#   - Critical packages (nixpkgs, home-manager, ai-llm-prompts): >30 days = STALE
 #   - All direct inputs: >90 days = STALE
 
 on:
