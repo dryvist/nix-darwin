@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.13.4](https://github.com/dryvist/nix-darwin/compare/v3.13.3...v3.13.4) (2026-10-18)
+
+
+### Bug Fixes
+
+* **deps:** bump nix-ai to v7.26.2 and drop the removed reboot option ([#2921](https://github.com/dryvist/nix-darwin/issues/2921)) ([0d17a8b](https://github.com/dryvist/nix-darwin/commit/0d17a8b8e7462c3cf9dfc34f9db346a049789f30))
+
 ## [3.13.3](https://github.com/dryvist/nix-darwin/compare/v3.13.2...v3.13.3) (2026-10-18)
 
 
