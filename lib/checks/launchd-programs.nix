@@ -91,10 +91,7 @@ let
   hostChecks = pkgs.lib.mapAttrsToList (
     hostName: darwinConfig:
     let
-      cfg =
-        (darwinConfig.extendModules {
-          modules = [ { services.clusterMaintenanceWindow.passwordSecret = "ci-stub#password"; } ];
-        }).config;
+      cfg = darwinConfig.config;
       homeGeneration = cfg.home-manager.users.${userConfig.user.name}.home.activationPackage;
       launchd = cfg.system.build.launchd;
     in

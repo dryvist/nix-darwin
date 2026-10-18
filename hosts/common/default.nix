@@ -39,16 +39,6 @@ in
   services = {
     # SSH/Remote Login — macOS Remote Login via launchd (Settings > General > Sharing).
     openssh.enable = true;
-
-    # Both hosts are cluster-mode nodes, so both announce their own maintenance
-    # window while a rank is live and close it at teardown. Enabled here rather
-    # than per host for the same reason clusterLinkPrep is: the pair is
-    # symmetric, and a window that only one side of a cluster opens is worse
-    # than none.
-    clusterMaintenanceWindow = {
-      enable = true;
-      projectId = 54;
-    };
   };
 
   # Screen Sharing (VNC) — off by default (network attack surface with no

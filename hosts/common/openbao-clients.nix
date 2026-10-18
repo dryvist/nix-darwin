@@ -10,8 +10,8 @@ _:
 
 {
   programs = {
-    # Env injector for interactive use. The llm-gate and maintenance-window
-    # modules also enable this; the option merges.
+    # Env injector for interactive use. The llm-gate module also enables this;
+    # the option merges.
     openbao-run.enable = true;
   };
 }
