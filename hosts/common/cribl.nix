@@ -123,7 +123,7 @@ in
               connections:
                 - pipeline: llm_logs
                   output: cribl_stream
-            # Clustered-mode logs (rank + link watcher + prefetch, both Macs).
+            # Clustered-mode logs (rank and lifecycle commands, both hosts).
             # Same proven path and pipeline as in_llm_logs above; the "*/"
             # lead on every pattern is the #1623 lesson.
             in_cluster_logs:

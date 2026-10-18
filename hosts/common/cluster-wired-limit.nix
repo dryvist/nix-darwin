@@ -4,8 +4,8 @@
 # ONCE in nix-darwin's system.clusterLinkPrep (clusterWiredLimitMb + the
 # computed, read-only standaloneWiredLimitMb), which also emits the exact-value
 # sudoers grants. This module feeds those SAME values into nix-ai's
-# programs.mlx.clusterMode so the link watcher and cluster-join/cluster-detach
-# commands actually receive CLUSTER_WIRED_LIMIT_MB and
+# programs.mlx.clusterMode so the cluster-join/cluster-detach commands receive
+# CLUSTER_WIRED_LIMIT_MB and
 # CLUSTER_STANDALONE_WIRED_LIMIT_MB in their environment.
 #
 # Without this bridge the pin is a no-op — the sudoers grants exist with
@@ -13,7 +13,7 @@
 #
 # Both ranks need the ceiling, so this is NOT gated on role. Deriving from
 # osConfig (never re-declaring the numbers) makes drift between the sudoers
-# grant and the watcher restore impossible.
+# grant and the detach restore impossible.
 {
   lib,
   osConfig,

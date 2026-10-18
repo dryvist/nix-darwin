@@ -11,17 +11,15 @@
   # Model-server logs: the manager (Go) and its workers (Python) share
   # the same two files. Keep the worker sourcetype backend-neutral so a
   # selected MLX server change does not require downstream rewrites.
-  # in_cluster_logs (rank/watcher/peer-liveness) shares this same
+  # in_cluster_logs (rank and lifecycle decisions) shares this same
   # pipeline but is a third, unrelated event shape — discriminate on
-  # __inputId FIRST (same pattern as os_events below), or its lines
-  # fall through the content regex and land mislabeled as
-  # mlx:model-server, indistinguishable from real worker output
-  # (verified live: thousands of cluster-watcher decision lines tagged
-  # mlx:model-server before this fix).
+  # __inputId FIRST (same pattern as os_events below) to keep its lines
+  # from falling through the content regex and landing mislabeled as
+  # mlx:model-server output.
   #
   # None of the three source formats carries a timestamp Cribl can
   # reliably parse at the line start (llama-swap's own `[INFO] Request
-  # ...` access lines and the cluster-watcher lines have no leading
+  # ...` access lines and the cluster lifecycle lines have no leading
   # timestamp at all), so _time for llamaswap and mlx:cluster is
   # arrival/index time — same honest, already-documented pattern used
   # for firewall_logs below. Only the Python worker lines (mlx:model-server)
