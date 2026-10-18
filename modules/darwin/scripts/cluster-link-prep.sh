@@ -10,9 +10,11 @@
 # Thunderbolt member out of bridge0.
 #
 # Consumed environment:
-#   CLUSTER_LINK_IP   this host's link address (role-derived synthetic)
+#   CLUSTER_LINK_IP        this host's link address (role-derived synthetic)
+#   CLUSTER_PEER_LINK_IP   the other end's link address, removed if present here
 
 : "${CLUSTER_LINK_IP:?CLUSTER_LINK_IP must be set}"
+: "${CLUSTER_PEER_LINK_IP:?CLUSTER_PEER_LINK_IP must be set}"
 
 prefix="[cluster-link-prep]"
 
@@ -122,6 +124,15 @@ while IFS= read -r tb_dev; do
   dev_state="$(/sbin/ifconfig "$tb_dev" 2>/dev/null)"
   has_ip=false
   case "$dev_state" in *"inet $CLUSTER_LINK_IP "*) has_ip=true ;; esac
+  # A role change leaves the old role's address behind; on this host it shadows the peer.
+  case "$dev_state" in *"inet $CLUSTER_PEER_LINK_IP "*)
+    if /sbin/ifconfig "$tb_dev" inet "$CLUSTER_PEER_LINK_IP" delete; then
+      echo "$prefix removed peer address $CLUSTER_PEER_LINK_IP from $tb_dev"
+    else
+      echo "$prefix WARN failed to remove peer address $CLUSTER_PEER_LINK_IP from $tb_dev" >&2
+    fi
+    ;;
+  esac
   is_active=false
   case "$dev_state" in *"status: active"*) is_active=true ;; esac
   if $is_active; then
