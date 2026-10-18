@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.1](https://github.com/dryvist/nix-darwin/compare/v4.0.0...v4.0.1) (2026-10-18)
+
+
+### Bug Fixes
+
+* **cluster:** remove the peer link address in link prep ([760c18e](https://github.com/dryvist/nix-darwin/commit/760c18e5a30ccca359159b51786c4267c899a069))
+
 ## [4.0.0](https://github.com/dryvist/nix-darwin/compare/v3.13.4...v4.0.0) (2026-10-18)
 
 
