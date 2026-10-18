@@ -1,15 +1,11 @@
 // Renovate configuration for nix-darwin.
 //
-// Inherits all org policy (auto-merge tiers, trusted orgs, dependency dashboard,
-// PR/branch limits, commit-message format, 0-day CVE handling) from the shared
-// nix preset: github>JacobPEvans/.github:renovate-nix (= org default + native nix
-// manager). Only genuinely repo-specific config lives here: the Cribl pack
-// manager and the flake-input grouping/scheduling that the org's minor/patch
-// tiers do not cover for git-refs digest updates.
+// Inherits organization Renovate policy from the shared Nix preset. Only
+// repository-specific custom managers and supervised-file holds live here.
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "github>JacobPEvans/.github:renovate-nix"
+    "local>dryvist/.github:renovate-nix"
   ],
 
   "customManagers": [
