@@ -154,11 +154,9 @@ done < <(/usr/sbin/networksetup -listallhardwareports \
 # Say so when nothing was addressed. This prep is invoked from postActivation
 # with `|| echo "…non-fatal failure"` so it can never fail a rebuild — which
 # means a run that assigns NO address still reports a clean activation, and the
-# cluster silently cannot form (the watcher's only link test is a ping to the
-# peer's address, so with no local address it never sees "up"). That is exactly
-# how the 2026-07-25 failure stayed invisible across a rebuild. Still exit 0 —
-# an uncabled host is the normal state and must not be an error — but leave a
-# greppable line so the cause is one search away instead of a live debug.
+# manual join refuses before ranks start if the local address is missing.
+# Still exit 0 — an uncabled host is the normal state and must not be an error
+# — but leave a greppable line for diagnosing an unconfigured link.
 if ! $assigned; then
   echo "$prefix WARN no Thunderbolt port had carrier; $CLUSTER_LINK_IP was NOT assigned." >&2
   echo "$prefix WARN if a cable IS connected, check the ports are up: ifconfig <tb-dev> up" >&2
