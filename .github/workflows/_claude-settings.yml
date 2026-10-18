@@ -27,7 +27,7 @@ jobs:
 
       # Performance: Install Nix with built-in caching
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@d0c908e6cbe9f89f36ed8205a3ab6f092636916a # v3
+        uses: DeterminateSystems/determinate-nix-action@d0c908e6cbe9f89f36ed8205a3ab6f092636916a # v3.23.1
 
       # Keep this validator's bounded cache separate from other Nix workflows.
       - name: Cache Nix Store
@@ -100,7 +100,7 @@ jobs:
               print("::error::homelab.allowRules declared in lib/user-config.nix but NOT "
                     "rendered into autoMode.allow.")
               print("::error::Most likely the nix-ai flake input predates the "
-                    "homelab.allowRules wiring - bump flake.lock (deps-update-flake.yml).")
+                    "homelab.allowRules wiring - bump flake.lock through Renovate Nix lock-file maintenance.")
               for m in missing:
                   print(f"::error:: unrendered rule: {m[:70]}...")
               sys.exit(1)

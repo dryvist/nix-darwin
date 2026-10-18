@@ -2,7 +2,7 @@
 # cannot host.
 #
 # Change detection, Nix Validate, Markdown Lint and File Size all run inside
-# dryvist/.github/.github/workflows/_ci-gate.yml@v1. Nix Validate gets its
+# JacobPEvans/.github/.github/workflows/_ci-gate.yml@v1. Nix Validate gets its
 # own larger runner through `nix_validate_runner_label`; the doc checks stay on
 # the 2cpu runner. Repo-local jobs gate on the shared gate's exported change
 # detection — there is no second `changes` job here.
@@ -57,7 +57,7 @@ jobs:
       # actions: write must be granted here or the run fails at graph
       # validation (startup_failure).
       actions: write
-    uses: dryvist/.github/.github/workflows/_ci-gate.yml@41ca3a7c0f8853acbfa38ef905a6231cdddf968d # v1.19.0
+    uses: JacobPEvans/.github/.github/workflows/_ci-gate.yml@v1
     secrets:
       TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
     with:

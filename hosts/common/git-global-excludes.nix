@@ -6,7 +6,7 @@
 # non-dryvist clones the per-repo .gitignore can't reach.
 #
 # `pathExists` guard: tolerates the file being absent on the pinned input
-# (e.g. before dryvist/.github#43 merges configs/gitignore to main). Absent =>
+# (e.g. before JacobPEvans/.github#43 merges configs/gitignore to main). Absent =>
 # empty list => no-op. After merge, `nix flake update dotgithub` activates it.
 #
 # Kept in its own module (not home.nix) to stay under the per-file size cap and

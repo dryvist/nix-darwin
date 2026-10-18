@@ -24,7 +24,7 @@ repos:
       - id: check-merge-conflict
       - id: detect-private-key
 
-  # Markdown linting (uses .markdownlint-cli2.yaml — canonical from dryvist/.github)
+  # Markdown linting (uses .markdownlint-cli2.yaml — canonical from JacobPEvans/.github)
   - repo: https://github.com/DavidAnson/markdownlint-cli2
     rev: v0.23.3
     hooks:

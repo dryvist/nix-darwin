@@ -570,10 +570,11 @@ gh issue list --search "Dependency Dashboard in:title"
 
 Renovate has a 3 concurrent PR limit. Merge some PRs to allow new ones.
 
-**`deps-flake-lock.yml` and Renovate:**
+**Renovate lock-file maintenance:**
 
-Renovate does not write `flake.lock`. Only `deps-flake-lock.yml` does. Dispatch
-it with `gh workflow run deps-flake-lock.yml` to open a dryvist input bump now.
+The shared Nix preset owns `flake.lock` updates through weekend lock-file
+maintenance. To change an input declaration, edit `flake.nix`, run `nix flake
+lock`, and include the matching lock update in the same pull request.
 
 ---
 
