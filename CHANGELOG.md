@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.13.1](https://github.com/dryvist/nix-darwin/compare/v3.13.0...v3.13.1) (2026-10-18)
+
+
+### Bug Fixes
+
+* **llm-gate:** update the caddy plugin source hash ([0138d61](https://github.com/dryvist/nix-darwin/commit/0138d612321059a2a3f1fdfd2f8ebc59e5cc13a0))
+* **llm-gate:** update the caddy plugin source hash ([#2905](https://github.com/dryvist/nix-darwin/issues/2905)) ([30769e5](https://github.com/dryvist/nix-darwin/commit/30769e5ec0001084e6f82840a4f90926cca315e7))
+
 ## [3.13.0](https://github.com/dryvist/nix-darwin/compare/v3.12.0...v3.13.0) (2026-10-16)
 
 
