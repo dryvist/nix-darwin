@@ -1,5 +1,16 @@
 # Changelog
 
+## [4.0.0](https://github.com/dryvist/nix-darwin/compare/v3.13.4...v4.0.0) (2026-10-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* **cluster:** update cluster roles and quiesce settings
+
+### Features
+
+* **cluster:** update cluster roles and quiesce settings ([880d98c](https://github.com/dryvist/nix-darwin/commit/880d98c1903866f83f62f745461284c4ca3c19da))
+
 ## [3.13.4](https://github.com/dryvist/nix-darwin/compare/v3.13.3...v3.13.4) (2026-10-18)
 
 
