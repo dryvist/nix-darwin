@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.13.2](https://github.com/dryvist/nix-darwin/compare/v3.13.1...v3.13.2) (2026-10-18)
+
+
+### Bug Fixes
+
+* **flake:** drop the ai-assistant-instructions input in favor of the prompt catalog ([#2914](https://github.com/dryvist/nix-darwin/issues/2914)) ([65efbbc](https://github.com/dryvist/nix-darwin/commit/65efbbca925715e596b908920ce185e7c634c222))
+
 ## [3.13.1](https://github.com/dryvist/nix-darwin/compare/v3.13.0...v3.13.1) (2026-10-18)
 
 
