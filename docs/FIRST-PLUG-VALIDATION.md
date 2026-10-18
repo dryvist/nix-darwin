@@ -53,7 +53,7 @@ and its rules in the nix-ai
     first-plug blocker but a known operational gap going forward.
 
 - [ ] **Unplug test.** Yank the cable mid-generation: router falls back, ranks
-  stop, standalone serving re-warms, worker agents restore.
+  stop, standalone serving re-warms.
   - _Result:_ **(verify)** — not directly confirmed in this session's record.
 
 - [ ] **Second cable.** Test whether JACCL uses a second link between the same
