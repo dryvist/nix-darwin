@@ -11,9 +11,9 @@
 # Without this bridge the pin is a no-op — the sudoers grants exist with
 # nothing configured to invoke them (INC-17076, INC-17062).
 #
-# Both ranks need the ceiling, so this is NOT gated on role like
-# cluster-quiesce.nix. Deriving from osConfig (never re-declaring the numbers)
-# makes drift between the sudoers grant and the watcher restore impossible.
+# Both ranks need the ceiling, so this is NOT gated on role. Deriving from
+# osConfig (never re-declaring the numbers) makes drift between the sudoers
+# grant and the watcher restore impossible.
 {
   lib,
   osConfig,

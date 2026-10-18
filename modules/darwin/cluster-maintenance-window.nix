@@ -15,12 +15,6 @@
 # being lost with the edge that missed it. The cost is bounded latency
 # (`interval`), which is the right thing to trade for coordination.
 #
-# LABEL. `dev.mlx-cluster.maintenance-window` is in the cluster-quiesce KEEP
-# allowlist prefix (`dev.mlx-cluster.`), which is load-bearing rather than
-# cosmetic: quiesce boots out every user agent outside that allowlist at
-# link-up, so an agent named anything else would be killed by the very event
-# that opens the window and would never live to refresh or close it.
-#
 # CREDENTIALS. The agent runs under `openbao-run`, exactly as the llm-gate
 # agent does: secret-zero (the secret backend address and this domain's
 # AppRole) lives in a user-owned 0600 env file, the service-account password is

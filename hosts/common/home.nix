@@ -53,8 +53,6 @@ in
     # macOS-specific zsh init (keychain reads, gh-token switching, launchers) —
     # split out for the byte cap; merges into programs.zsh.
     ./zsh-macos.nix
-    # Worker-side cluster-mode quiesce/restore hooks (byte cap split).
-    ./cluster-quiesce.nix
     # Feeds the system-level clusterLinkPrep wired ceilings into nix-ai's
     # programs.mlx.clusterMode so the watcher/lifecycle env carries them.
     ./cluster-wired-limit.nix

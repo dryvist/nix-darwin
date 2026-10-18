@@ -43,9 +43,7 @@
     # This host wants the base value, so it says nothing and inherits it.
 
     # Clustered mode: this Mac is rank 1 (worker) of the two-Mac JACCL cluster
-    # when the Thunderbolt cable is in. The worker-side quiesce/restore hooks
-    # (GUI quit + agent bootout allowlist sweep) are wired by
-    # hosts/common/cluster-quiesce.nix. Standalone config above is untouched.
+    # when the Thunderbolt cable is in. Standalone config above is untouched.
     clusterMode = {
       # Clustered ranks run under their own wired ceiling, applied by
       # clusterLinkPrep.clusterWiredLimitMb before any shard loads and
