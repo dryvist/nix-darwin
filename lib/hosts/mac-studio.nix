@@ -44,41 +44,17 @@ in
       concurrencyLimit = serveConcurrency;
     };
 
-    # Clustered mode: this Mac is rank 0 (coordinator) of the two-Mac JACCL
-    # brain when the Thunderbolt cable is in — it binds the cluster endpoint on
-    # loopback :11440, gated by llm-gate (hosts/mac-studio/default.nix). The
-    # Manual cluster-join quiesces normal serving before ranks start. During
-    # cluster-detach, configured agents are restored.
+    # Clustered mode: the MacBook Pro is rank 0, coordinator, and HTTP
+    # endpoint. This Studio is rank 1, worker, adding memory to the model.
+    # Standalone serving above remains configured while detached.
     clusterMode = {
-      # Clustering is the operating goal for this pair: one TB5 cable turns
-      # both Macs into a single inference cluster neither can match alone.
-      # RE-ENABLED 2026-08-07 after closing every root cause the 2026-08-05
-      # disable found:
-      #
-      #   - Standdown tight-loop (560 pair-wide standdowns, 1686
-      #     rendezvous-absent strikes since 2026-07-12): fixed. nix-ai writes a
-      #     halt marker on peer-absent standdown so the warmup-agent reload
-      #     loop cannot recur unbounded.
-      #   - PD-debt exhaustion: fixed — nix-ai#1478 (merged, self-reboot);
-      #     preflight check implemented in nix-ai PR #1556 (tracking #1442).
-      #   - Warmup-slot starvation: fixed via repair-attempt caps in nix-ai's
-      #     cluster resilience module.
-      #   - bridge0 re-enslaving the Thunderbolt ports on reboot: fix in
-      #     flight, dryvist/nix-darwin#1768 / PR #2073. Until it lands, a
-      #     reboot on either rank needs a manual un-enslave of the TB ports
-      #     before the link can come back up.
-      #   - TCC store-path grants for the cluster interpreter and signing
-      #     identity: fixed (hosts/common/mlx-cluster-signing.nix,
-      #     appleInterpreter in hosts/common/home.nix).
-      #
-      # Invariant: this pair is enabled and disabled as a unit. A half-enabled
-      # pair reads as "clustered" while no cluster can ever form — see the
-      # matching block in lib/hosts/macbook-m4.nix. Re-enabling requires cable
-      # physically in, both ranks up on the same generation, and a supervised
-      # session — the same bar the 2026-07-12 disable note set and every prior
-      # re-enable met.
+      # The coordinator drives this rank over SSH when joining the pair.
       enable = true;
-      role = "coordinator";
+      role = "worker";
+      quiesce.launchdLabels = [
+        "dev.mlx-model-server"
+        "dev.mlx-model-server.mimo-9b"
+      ];
       # Catalog-selected cluster model, identical on both ranks. The expert-pruned
       # REAP-50 build (~98 GB, glm4_moe) halves the per-rank shard to ~49 GB
       # so it fits under the cluster wired ceiling with real KV headroom; the
