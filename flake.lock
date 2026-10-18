@@ -34,37 +34,19 @@
         "type": "github"
       }
     },
-    "ai-assistant-instructions_2": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1791599289,
-        "narHash": "sha256-HrfsbTRLKJQ8AV3wBm8gQQfytWZ4hz7Moh7KMeQ6b8s=",
-        "owner": "dryvist",
-        "repo": "ai-assistant-instructions",
-        "rev": "8726293d4189159500e8814ccc7e3afbec8ec859",
-        "type": "github"
-      },
-      "original": {
-        "owner": "dryvist",
-        "ref": "v1",
-        "repo": "ai-assistant-instructions",
-        "type": "github"
-      }
-    },
     "ai-llm-prompts": {
       "inputs": {
-        "ai-assistant-instructions": "ai-assistant-instructions_2",
         "claude-code-plugins": "claude-code-plugins",
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1792327191,
-        "narHash": "sha256-3cxwt3P/LBFuUEAhsx3723WYsf6Sq8CFkeppP9sz8ZE=",
+        "lastModified": 1792331015,
+        "narHash": "sha256-eZlDVKywn2ZnRRd22kgiCTMhHsghDx/sT3pyNPVs3Ao=",
         "owner": "dryvist",
         "repo": "ai-llm-prompts",
-        "rev": "94a7e1fa93b34c9fddb3f115961f714c613a25a6",
+        "rev": "6616abe7af4f516ec6dfc1284986ef8547732d65",
         "type": "github"
       },
       "original": {
@@ -207,11 +189,11 @@
     "browser-use-skills": {
       "flake": false,
       "locked": {
-        "lastModified": 1792144538,
-        "narHash": "sha256-9sgmu+2peIZgfPvlFNab95n0uYG3yYslYhOIpHMNhvg=",
+        "lastModified": 1792263201,
+        "narHash": "sha256-6cDX2m7R/I801+F3IkaAkkZfhVUdiG/9blWuTlk3gmc=",
         "owner": "browser-use",
         "repo": "browser-use",
-        "rev": "ccd22fef47a1a36e0c4596fef5db73a5117b9d06",
+        "rev": "aa093a843da5edbf323c0b4145c9b6a0db3ecde8",
         "type": "github"
       },
       "original": {
@@ -1192,11 +1174,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1792208234,
-        "narHash": "sha256-saSZGid3+foF4+VZzlDSJdhVO/y1+JdlRHRVnelA93s=",
+        "lastModified": 1792313697,
+        "narHash": "sha256-6s36k2+nehnx3iGyUHAsQ/wp+fOC5KHs3ZewWC08rBw=",
         "owner": "numtide",
         "repo": "llm-agents.nix",
-        "rev": "28e4f11a163a174d62cc99c220e1c17fb1a2f51e",
+        "rev": "c9a210097d675ce2e66ef5d1ca53304f9d6bc982",
         "type": "github"
       },
       "original": {
@@ -1318,9 +1300,6 @@
     "nix-ai": {
       "inputs": {
         "agent-limits-src": "agent-limits-src",
-        "ai-assistant-instructions": [
-          "ai-assistant-instructions"
-        ],
         "ai-llm-prompts": [
           "ai-llm-prompts"
         ],
@@ -1368,11 +1347,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1792219525,
-        "narHash": "sha256-hYEd/c73hANx6dVcUA5yxUwoiVEfkYsRMxkslMbb6N0=",
+        "lastModified": 1792335313,
+        "narHash": "sha256-wEvE6IGvLoit5fxRqR2ShaWeEK7WK3/TJkAfoF7YLdY=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "7dfbc211d0c62d5edb575cfe552c06d52e1b8f5b",
+        "rev": "f5030af8f798f48bc928d4a57b89574225699718",
         "type": "github"
       },
       "original": {
@@ -1457,10 +1436,7 @@
     },
     "nix-claude-code": {
       "inputs": {
-        "ai-assistant-instructions": [
-          "nix-ai",
-          "ai-assistant-instructions"
-        ],
+        "ai-assistant-instructions": "ai-assistant-instructions",
         "anthropic-agent-skills": "anthropic-agent-skills",
         "axton-obsidian-visual-skills": "axton-obsidian-visual-skills",
         "bills-claude-skills": "bills-claude-skills",
@@ -1744,11 +1720,11 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1791966044,
-        "narHash": "sha256-t1hT8UW97rFCWCJO7/pClvu0AhLN5V3uir2M0ic4w/Q=",
+        "lastModified": 1792116957,
+        "narHash": "sha256-EjZqHKObBfIOeHZnMRVV87HB3pPq/WBkmRJWyFxmZu8=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "319e4cebef10cbb636c6ea392137b52ad105336a",
+        "rev": "f20cd90e28fe0403873f473b29e42662cd86e8c4",
         "type": "github"
       },
       "original": {
@@ -1826,11 +1802,11 @@
     "ponytail": {
       "flake": false,
       "locked": {
-        "lastModified": 1792191853,
-        "narHash": "sha256-IJlhfkdXI6pMZZCZO7XBRg88LBiNfzc5Gnm4ofGybL8=",
+        "lastModified": 1792288514,
+        "narHash": "sha256-sVnxA4rfxa2SlS2g+2+q3odRq0VJz1z7PEVHW2QRPQI=",
         "owner": "DietrichGebert",
         "repo": "ponytail",
-        "rev": "16352ac229eb08a9598dcae48fe9f2b342567d86",
+        "rev": "09c434ab73ca43761c5d8b0c5d341926c2fba710",
         "type": "github"
       },
       "original": {
@@ -1841,7 +1817,6 @@
     },
     "root": {
       "inputs": {
-        "ai-assistant-instructions": "ai-assistant-instructions",
         "ai-llm-prompts": "ai-llm-prompts",
         "claude-code-plugins": "claude-code-plugins_2",
         "darwin": "darwin",

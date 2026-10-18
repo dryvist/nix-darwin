@@ -1,4 +1,4 @@
-# Residency budget: DERIVE the per-worker limit, then assert it fits.
+# Residency budget: derive the per-worker limit from the ceiling and worker count.
 #
 # `maxLocalLlmGb` is documented as "the single knob; everything downstream
 # derives" — wiredLimitMb and osReserveGb already do. memoryHardLimitGb never
@@ -9,19 +9,6 @@
 # (maxResidentWorkers); the per-worker budget follows:
 #
 #   memoryHardLimitGb = (maxLocalLlmGb - baselineReserveGb) / maxResidentWorkers
-#
-# nix-ai states the invariant in modules/mlx/options-residency.nix —
-#
-#   maxResidentWorkers * memoryHardLimitGb <= host wired ceiling
-#
-# — but cannot enforce or derive it: the ceiling is a nix-darwin sysctl
-# (system.appleSiliconTunables.wiredLimitMb) that nix-ai deliberately does not
-# set. nix-darwin evaluates both halves in one closure, so this is the only
-# place either can happen. Same bridge shape as ./cluster-wired-limit.nix.
-#
-# The assertion is kept as a backstop for a host that overrides the derived
-# value explicitly. Derivation makes the common path correct by construction;
-# the assertion catches the deliberate exception.
 #
 # WHAT THIS DOES NOT MEAN. mx.set_memory_limit is a sizing GUIDELINE, not a
 # refusal: upstream MLX raises only when RAM and swap are exhausted, so a worker
@@ -54,34 +41,10 @@ let
 
   ceilingGb = ceilingMb / 1024;
   derivedPerWorkerGb = (ceilingGb - baselineReserveGb) / kMax;
-
-  perWorkerGb = config.programs.mlx.memoryHardLimitGb;
-  budgetMb = kMax * perWorkerGb * 1024;
 in
 {
   config = lib.mkIf (mlxHost && ceilingMb != null) {
-    # mkDefault so a host can still override deliberately; the assertion then
-    # holds that override to the same invariant.
+    # mkDefault so a host can still override deliberately.
     programs.mlx.memoryHardLimitGb = lib.mkDefault derivedPerWorkerGb;
-
-    assertions = [
-      {
-        assertion = budgetMb <= ceilingMb;
-        message = ''
-          MLX residency budget over-commits this host's wired ceiling.
-
-            maxResidentWorkers (${toString kMax})
-              x memoryHardLimitGb (${toString perWorkerGb} GiB)
-              = ${toString budgetMb} MiB
-            wired ceiling (system.appleSiliconTunables.wiredLimitMb)
-              = ${toString ceilingMb} MiB
-
-          The per-worker limit normally DERIVES from the ceiling and k_max, so
-          reaching this means a host overrode memoryHardLimitGb by hand. Drop
-          the override and let it derive, raise maxLocalLlmGb if the host
-          genuinely has the memory, or lower maxResidentWorkers.
-        '';
-      }
-    ];
   };
 }

@@ -161,7 +161,7 @@ repos:
       # Use: pre-commit run --hook-stage manual update-flake-inputs
       - id: update-flake-inputs
         name: Update flake inputs (nixpkgs, nix-ai, nix-home, direct deps)
-        entry: nix flake update nixpkgs nix-ai nix-home jacobpevans-cc-plugins ai-assistant-instructions claude-code-plugins pal-mcp-server
+        entry: nix flake update nixpkgs nix-ai nix-home jacobpevans-cc-plugins ai-llm-prompts claude-code-plugins pal-mcp-server
         language: system
         stages: [manual]
         pass_filenames: false

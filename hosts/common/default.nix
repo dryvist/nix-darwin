@@ -39,16 +39,6 @@ in
   services = {
     # SSH/Remote Login — macOS Remote Login via launchd (Settings > General > Sharing).
     openssh.enable = true;
-
-    # Both hosts are cluster-mode nodes, so both announce their own maintenance
-    # window while a rank is live and close it at teardown. Enabled here rather
-    # than per host for the same reason clusterLinkPrep is: the pair is
-    # symmetric, and a window that only one side of a cluster opens is worse
-    # than none.
-    clusterMaintenanceWindow = {
-      enable = true;
-      projectId = 54;
-    };
   };
 
   # Screen Sharing (VNC) — off by default (network attack surface with no
@@ -161,13 +151,12 @@ in
     # Both hosts are cluster-mode nodes: keep every RDMA-capable Thunderbolt
     # port out of bridge0 and converge the role link address onto whichever
     # port the cable is in. Read from hostConfig.mlx.clusterMode.role (the same
-    # field nix-ai's programs.mlx.clusterMode.role is spliced from — see
-    # hosts/common/cluster-quiesce.nix's identical `hostConfig.mlx.clusterMode.role
-    # or null` read) rather than re-deriving from isServer: they coincided only
+    # field nix-ai's programs.mlx.clusterMode.role is spliced from) rather
+    # than re-deriving from isServer: they coincided only
     # by accident of machine class, and deriving role here from a DIFFERENT
     # source than the one nix-ai's rank env reads let this pin the Thunderbolt
     # static IPs to the wrong Mac the moment anyone changed just one of the two.
-    # Attribute-existence gate (repo convention, matches cluster-quiesce.nix):
+    # Attribute-existence gate (repo convention):
     # non-inference hosts have no `mlx` at all, so a bare `hostConfig.mlx.…`
     # read would crash eval on them.
     clusterLinkPrep = lib.mkIf (hostConfig ? mlx && hostConfig.mlx ? clusterMode) {
@@ -189,9 +178,8 @@ in
       #
       # The MacBook worker is a workstation: WindowServer and the rest of the
       # GUI working set must stay unwirable even while a shard is loaded, which
-      # is the exact starvation the 2026-07-12 panic hit (INC-17076). cluster-
-      # quiesce quits the GUI and boots out agents at link-up, but the ceiling
-      # itself is the last-resort guard, so it is sized below the standalone
+      # is the exact starvation the 2026-07-12 panic hit (INC-17076). The
+      # ceiling is the last-resort guard, so it is sized below the standalone
       # value rather than equal to it.
       clusterWiredLimitMb =
         if hostConfig.isServer then config.system.appleSiliconTunables.wiredLimitMb else 90000;

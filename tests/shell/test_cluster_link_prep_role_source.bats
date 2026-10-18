@@ -6,8 +6,7 @@
 # inscrutable network fault, not a config error.
 #
 # ponytail: structural assertion over the source, not a full darwinConfigurations
-# eval — the fastest thing that actually catches a re-coupling regression. See
-# test_cluster_quiesce.bats for the same pattern in this repo.
+# eval — the fastest thing that actually catches a re-coupling regression.
 
 SOURCE_UNDER_TEST="$BATS_TEST_DIRNAME/../../hosts/common/default.nix"
 

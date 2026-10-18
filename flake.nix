@@ -30,10 +30,6 @@
       url = "github:dryvist/claude-code-plugins?ref=v6";
       flake = false;
     };
-    ai-assistant-instructions = {
-      url = "github:dryvist/ai-assistant-instructions?ref=v1";
-      flake = false;
-    };
     ai-llm-prompts = {
       url = "github:dryvist/ai-llm-prompts?ref=v1";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -66,7 +62,6 @@
       inputs = {
         nixpkgs.follows = "nixpkgs";
         home-manager.follows = "home-manager";
-        ai-assistant-instructions.follows = "ai-assistant-instructions";
         ai-llm-prompts.follows = "ai-llm-prompts";
         claude-code-plugins.follows = "claude-code-plugins";
         jacobpevans-cc-plugins.follows = "jacobpevans-cc-plugins";

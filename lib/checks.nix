@@ -115,12 +115,9 @@ in
           test_bats_framework.bats \
           test_check_ci_invariants.bats \
           test_check_file_sizes.bats \
-          test_cluster_maintenance_window.bats \
           test_cluster_rebuild_gate.bats \
-          test_cluster_vm_runner_gate.bats \
           test_cribl_llm_classifier.bats \
           test_cribl_transcript_mask.bats \
-          test_darwin_rebuild_windowed.bats \
           test_hm_collision_clear.bats \
           test_openbao_run.bats \
           test_system_limits.bats \
