@@ -58,7 +58,7 @@
     # 24 marketplace inputs + nix-devenv dev-tooling into our lock).
     nix-ai = {
       # git-flow default is develop; pin main so we track releases, not it.
-      url = "github:dryvist/nix-ai?ref=v7";
+      url = "github:dryvist/nix-ai?ref=v8";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         home-manager.follows = "home-manager";

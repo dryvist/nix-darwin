@@ -42,20 +42,32 @@
     # prevent, and the shape that let mac-studio admit 4 while claiming 1.
     # This host wants the base value, so it says nothing and inherits it.
 
-    # Clustered mode: this Mac is rank 1 (worker) of the two-Mac JACCL cluster
-    # when the Thunderbolt cable is in. Standalone config above is untouched.
+    # Clustered mode: this Mac is rank 0, coordinator, and HTTP endpoint. It
+    # drives the Mac Studio worker over SSH when the Thunderbolt cable is in.
     clusterMode = {
-      # Clustered ranks run under their own wired ceiling, applied by
-      # clusterLinkPrep.clusterWiredLimitMb before any shard loads and
-      # restored to the standalone value at link-down. The REAP-50 build
-      # halves the per-rank shard. Background: Zammad AI/LLM Serving #17126.
-      # RE-ENABLED 2026-08-07 together with the coordinator
-      # (lib/hosts/mac-studio.nix), which carries the full root-cause
-      # rationale for the 2026-08-05 disable and this re-enable. The pair is
-      # enabled and disabled as a unit — a half-enabled pair reads as
-      # "clustered" while no cluster can ever form.
       enable = true;
-      role = "worker";
+      role = "coordinator";
+      peerSsh = "jevans@jevans-ms";
+      quiesce = {
+        apps = [
+          "com.tinyspeck.slackmacgap"
+          "com.apple.Safari"
+          "com.apple.MobileSMS"
+          "com.apple.iCal"
+          "com.apple.reminders"
+          "com.apple.podcasts"
+          "com.apple.clock"
+          "com.granola.app"
+          "dev.kdrag0n.MacVirt"
+          "com.microsoft.teams2"
+        ];
+        launchdLabels = [
+          "com.screenpipe.agent"
+          "com.microsoft.teams2.agent"
+          "dev.dryvist.meeting-transcriber"
+          "dev.litellm-local"
+        ];
+      };
       # Catalog-selected cluster model, identical on both ranks.
       # shardMemoryMb (the memory-headroom rank-start precondition) is set once
       # for both ranks in hosts/common/cluster-wired-limit.nix, from a measured

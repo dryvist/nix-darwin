@@ -165,23 +165,19 @@ in
       # Clustered wired ceilings, applied around rank start/stop by the manual
       # cluster lifecycle commands (standalone value restored at detach).
       # Raised 2026-07-19 per user decision: the old 90000/80000 caps were low enough to force swap
-      # user decision: the old 90000/80000 caps were low enough to force swap
       # thrash under the per-rank shard, and swap saturation kills the whole
       # cluster just as surely as a wired-out WindowServer — so an ultra-low
       # cap bought nothing. Headroom over conservatism; the operative guard
       # against thrash is now the detach exit-3 stale-swap gate + reboot-first
       # doctrine (INC-17075), not a tiny wired ceiling.
-      # The headless coordinator derives the clustered ceiling from the host's
-      # standalone wired ceiling (102400 MiB = 100 GiB, maxLocalLlmGb = 100) — it
-      # has no GUI working set to protect, so the same reserve that bounds
-      # standalone serving is ample in clustered mode too. The GLM-4.7-REAP-50
-      # per-rank shard (~49 GB + KV + buffer ~65 GB) leaves ~35 GB slack.
+      # The Mac Studio is server class, so it derives the clustered ceiling
+      # from its standalone wired ceiling (102400 MiB = 100 GiB,
+      # maxLocalLlmGb = 100). The GLM-4.7-REAP-50 per-rank shard (~49 GB + KV
+      # + buffer ~65 GB) leaves ~35 GB slack.
       #
-      # The MacBook worker is a workstation: WindowServer and the rest of the
-      # GUI working set must stay unwirable even while a shard is loaded, which
-      # is the exact starvation the 2026-07-12 panic hit (INC-17076). The
-      # ceiling is the last-resort guard, so it is sized below the standalone
-      # value rather than equal to it.
+      # The MacBook Pro is workstation class: WindowServer and the GUI working
+      # set must stay unwirable while a shard is loaded. Its cluster ceiling is
+      # therefore 90000 MiB, below the standalone value.
       clusterWiredLimitMb =
         if hostConfig.isServer then config.system.appleSiliconTunables.wiredLimitMb else 90000;
     };
