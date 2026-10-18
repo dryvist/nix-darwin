@@ -5,7 +5,7 @@
 #   a stale pin never blocks a commit or a merge; a first-party bump is a deliberate PR.
 # SCOPE: Depth-1 only — checks direct inputs from .nodes.root.inputs, not transitive deps
 # REPORT THRESHOLDS:
-#   - Critical packages (nixpkgs, home-manager, ai-assistant-instructions): >30 days = STALE
+#   - Critical packages (nixpkgs, home-manager, ai-llm-prompts): >30 days = STALE
 #   - All direct inputs: >90 days = STALE
 # EXEMPTIONS: Packages in EXEMPT_PACKAGES array skip age checks
 #
@@ -40,7 +40,7 @@ ROOT_NIXPKGS_NODE=$(jq -r '.nodes.root.inputs.nixpkgs // "nixpkgs"' "$FLAKE_LOCK
 CRITICAL_PACKAGES=(
   "$ROOT_NIXPKGS_NODE"
   "home-manager"
-  "ai-assistant-instructions"
+  "ai-llm-prompts"
 )
 
 # Exempt packages (archived repos, intentional pins)

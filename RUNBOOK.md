@@ -777,7 +777,7 @@ sudo darwin-rebuild switch --flake ~/.config/nix
 ## AI CLI Permissions
 
 AI CLI permissions (Claude, Gemini, Copilot) are now managed upstream, not in this repo.
-The permission rules live in the `ai-assistant-instructions` flake input and are composed
+The permission rules live in nix-claude-code (`data/permissions`) and are composed
 into Claude settings by nix-ai. The permission modules that used to exist here
 (`claude-permissions-allow.nix` and friends) no longer live in nix-darwin, so there is
 nothing to edit locally.
@@ -785,13 +785,12 @@ nothing to edit locally.
 ### Add a Permission Permanently
 
 1. Edit the appropriate JSON file in the
-   [ai-assistant-instructions](https://github.com/dryvist/ai-assistant-instructions)
-   repository.
+   [nix-claude-code](https://github.com/dryvist/nix-claude-code) repository (`data/permissions`).
 2. Add the command to the correct category (`allow`, `ask`, or `deny`).
 3. Pull the change into this repo's lockfile:
 
    ```bash
-   nix flake update ai-assistant-instructions
+   nix flake update nix-ai
    ```
 
 4. Rebuild to apply: `sudo darwin-rebuild switch --flake .`
