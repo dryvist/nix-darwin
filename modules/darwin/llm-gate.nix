@@ -15,15 +15,13 @@ let
   cfg = config.programs.llm-gate;
   userConfig = import ../../lib/user-config.nix;
 
-  # caddy-dns/route53 pinned with the FOD hash for this caddy 2.11.4 +
-  # plugin v1.6.2 pair. The hash also depends on the Go toolchain that
-  # resolves the module graph, so a nixpkgs bump can move it with neither
-  # version changing; re-pin from the "got" value after a real build.
+  # The caddy-dns/route53 plugin version is pinned below. This fixed-output
+  # hash must be updated when the shared Go toolchain changes.
   caddyPkg =
     if cfg.tlsMode == "route53" then
       pkgs.caddy.withPlugins {
         plugins = [ "github.com/caddy-dns/route53@v1.6.2" ];
-        hash = "sha256-Vzp4Y9mARJrAHZ1C3x6+5zTSGiYY1l3FxIPkqK1RI30=";
+        hash = "sha256-tDFYgWalHKeN/TGqI3o4FBAnWb0GDo4oNEiwZ3yhZPM=";
       }
     else
       pkgs.caddy;
