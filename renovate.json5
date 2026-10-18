@@ -44,7 +44,6 @@
     {
       "matchFileNames": [
         "hosts/common/cluster-wired-limit.nix",
-        "hosts/common/cluster-quiesce.nix",
         "modules/darwin/cluster-link-prep.nix"
       ],
       "enabled": false

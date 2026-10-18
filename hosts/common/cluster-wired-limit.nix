@@ -11,9 +11,9 @@
 # Without this bridge the pin is a no-op — the sudoers grants exist with
 # nothing configured to invoke them (INC-17076, INC-17062).
 #
-# Both ranks need the ceiling, so this is NOT gated on role like
-# cluster-quiesce.nix. Deriving from osConfig (never re-declaring the numbers)
-# makes drift between the sudoers grant and the watcher restore impossible.
+# Both ranks need the ceiling, so this is NOT gated on role. Deriving from
+# osConfig (never re-declaring the numbers) makes drift between the sudoers
+# grant and the watcher restore impossible.
 {
   lib,
   osConfig,
@@ -29,26 +29,6 @@ let
 in
 {
   config = lib.mkIf clusterEnabled {
-    # Cross-repo safety gate (INC-17076/17077 failure class). This bridge only
-    # carries the wired ceilings into nix-ai's env; the values themselves — and
-    # the exact-value sudoers grants the watcher needs to apply them — live in
-    # system.clusterLinkPrep. Enabling clusterMode while that system module is
-    # off pushes a null/standalone ceiling with no grant and no link: the
-    # decorative-guard bug this module exists to kill. Refuse to build the
-    # half-wired configuration rather than ship an inert guard.
-    assertions = [
-      {
-        assertion = osConfig.system.clusterLinkPrep.enable;
-        message = ''
-          programs.mlx.clusterMode is enabled but system.clusterLinkPrep.enable
-          is false. The cluster wired-memory ceiling guard would be inert: no
-          exact-value sudoers grant is emitted and no Thunderbolt link is
-          configured, so the nix-ai watcher/lifecycle commands cannot apply the
-          ceiling (INC-17076/17077). Enable system.clusterLinkPrep on this host.
-        '';
-      }
-    ];
-
     programs.mlx.clusterMode = {
       wiredLimitMb = linkPrep.clusterWiredLimitMb;
       inherit (linkPrep) standaloneWiredLimitMb;

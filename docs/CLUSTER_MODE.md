@@ -38,7 +38,6 @@ Physical/Recovery-mode steps: [TB5-RDMA-CLUSTER.md](TB5-RDMA-CLUSTER.md).
 | `programs.mlx.clusterMode` (ranks, link watcher, lifecycle commands, prefetch, log rotation) | nix-ai `modules/mlx/` |
 | Host roles (coordinator = server, worker = workstation) | `lib/hosts/*.nix` (`clusterMode.role`) |
 | Static link config (bridge off, role IPv4) + wired-ceiling grants | `modules/darwin/cluster-link-prep.nix` (`system.clusterLinkPrep`) |
-| Worker quiesce/restore (GUI quit + agent allowlist sweep) | `hosts/common/cluster-quiesce.nix` + `scripts/cluster-{quiesce,restore}.sh` |
 | Gated cluster endpoint (`:11440`, same bearer token) | `modules/darwin/llm-gate.nix` `clusterUpstreamPort` / `clusterPort` |
 | Router: cluster brain in the large phase + solo fallback | ansible-proxmox-apps `roles/llm_router` |
 | Log shipping (`in_cluster_logs`, gate `cluster-access.json`) | `hosts/common/cribl.nix` |
