@@ -381,11 +381,11 @@
     "claude-code-plugins_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1792183965,
-        "narHash": "sha256-Sff6BShdKJejR1mn6SaIampCiErct+qmjs653OEWPlQ=",
+        "lastModified": 1792278889,
+        "narHash": "sha256-6srs0iDoLqNtQRubYLdklTpuhQN/575NDfN+o/Yov6w=",
         "owner": "anthropics",
         "repo": "claude-code",
-        "rev": "c017428c8c27e604840435048d5bce6a9a22c040",
+        "rev": "dd6bee38458cc3e6dc5f2b16eca1f0f364619ad8",
         "type": "github"
       },
       "original": {
@@ -1032,11 +1032,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791938526,
-        "narHash": "sha256-yNYK2pdk3bCtJrpblrNYA6hZKdybWUeyTtx74+OEJFo=",
+        "lastModified": 1792274446,
+        "narHash": "sha256-AM1HmBeDnB2B3dSiXuCYeu7Me+lHNpz/P39lVxGJBuQ=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "32904dfe1cf86039f3c8c9f41f94e1cfd76dbb34",
+        "rev": "ab3823b4b24c0c3ca984c1f3ee577fd6d667424c",
         "type": "github"
       },
       "original": {
@@ -1049,11 +1049,11 @@
     "homelab-contracts": {
       "flake": false,
       "locked": {
-        "lastModified": 1792244424,
-        "narHash": "sha256-wJe5sSQKYNw/VdqJHq09qbGzEKSYmuIK2u/hyP/WuB8=",
+        "lastModified": 1792279760,
+        "narHash": "sha256-Me8RoZhEDbhbK4NO+8CHv2gNVl3LneS6nInoJxB5arU=",
         "owner": "dryvist",
         "repo": "homelab-contracts",
-        "rev": "c17a5b4eceeca6f050e9df610e15da7c0a8695e0",
+        "rev": "21b9c178666b721f6653b4142db8d2879bb5ca7f",
         "type": "github"
       },
       "original": {
