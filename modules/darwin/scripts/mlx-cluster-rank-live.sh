@@ -1,12 +1,9 @@
 # shellcheck shell=bash
 # Is a local MLX cluster rank live RIGHT NOW?
 #
-# The single definition of "this host is clustered" for every consumer on the
-# machine. It exists as one command rather than one copied conditional because
-# the consumers disagree in consequence — one refuses a system activation, one
-# opens and closes a maintenance window — and two detections that can drift
-# apart would eventually block a rebuild over a window that was never opened,
-# or leave a window open over a host that is free.
+# The single definition of "this host is clustered" for the rebuild gate. It
+# exists as one command so duplicated detections cannot drift apart and block a
+# rebuild over stale state.
 #
 # LIVE STATE ONLY. Deliberately no marker file, no cached verdict, no "we were
 # clustered at 04:12" stamp. A marker that outlives the rank is a latch, and a
