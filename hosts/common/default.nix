@@ -162,8 +162,9 @@ in
     clusterLinkPrep = lib.mkIf (hostConfig ? mlx && hostConfig.mlx ? clusterMode) {
       enable = true;
       role = hostConfig.mlx.clusterMode.role;
-      # Clustered wired ceilings, applied around rank start/stop by the cluster
-      # watcher (standalone value restored at link-down). Raised 2026-07-19 per
+      # Clustered wired ceilings, applied around rank start/stop by the manual
+      # cluster lifecycle commands (standalone value restored at detach).
+      # Raised 2026-07-19 per user decision: the old 90000/80000 caps were low enough to force swap
       # user decision: the old 90000/80000 caps were low enough to force swap
       # thrash under the per-rank shard, and swap saturation kills the whole
       # cluster just as surely as a wired-out WindowServer — so an ultra-low

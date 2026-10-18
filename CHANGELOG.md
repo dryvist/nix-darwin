@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.13.3](https://github.com/dryvist/nix-darwin/compare/v3.13.2...v3.13.3) (2026-10-18)
+
+
+### Bug Fixes
+
+* **deps:** drop the stale ai-assistant-instructions lock node ([#2917](https://github.com/dryvist/nix-darwin/issues/2917)) ([f9b251e](https://github.com/dryvist/nix-darwin/commit/f9b251e8547322f4bf8b42ae16355e0dd1067b1e))
+
 ## [3.13.2](https://github.com/dryvist/nix-darwin/compare/v3.13.1...v3.13.2) (2026-10-18)
 
 

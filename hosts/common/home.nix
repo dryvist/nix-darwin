@@ -54,7 +54,7 @@ in
     # split out for the byte cap; merges into programs.zsh.
     ./zsh-macos.nix
     # Feeds the system-level clusterLinkPrep wired ceilings into nix-ai's
-    # programs.mlx.clusterMode so the watcher/lifecycle env carries them.
+    # programs.mlx.clusterMode so the manual lifecycle commands receive them.
     ./cluster-wired-limit.nix
     # Catalog, preload, concurrency and registry projected from the role map.
     ./role-map.nix

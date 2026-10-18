@@ -22,16 +22,10 @@
 # — content-independent. Re-signing after a rebuild keeps the identity, so ONE
 # Local Network grant holds for good.
 #
-# WHAT IT COST WITHOUT THIS
+# SIGNING PURPOSE
 #
-# The Studio's cluster launchd agents were denied Local Network. macOS surfaces
-# that as `No route to host`, never as a permission error, and the watcher's
-# already-down branch was silent — so the cluster sat unable to form for 65
-# minutes while `launchctl print` reported runs=115, last exit code 0. It only
-# ever worked hand-held from ssh, because an ssh session inherits
-# sshd-session's grant. Four of the five nix `bash` store paths on that host
-# were granted and the one the scripts actually named was not; all five render
-# as plain "bash" in System Settings, so the UI cannot tell them apart.
+# A stable signing identity lets the operator grant Local Network access to the
+# cluster executables once and retain it across rebuilds.
 #
 # ONE-TIME OPERATOR SETUP (per host)
 #

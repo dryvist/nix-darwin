@@ -47,8 +47,8 @@ in
     # Clustered mode: this Mac is rank 0 (coordinator) of the two-Mac JACCL
     # brain when the Thunderbolt cable is in — it binds the cluster endpoint on
     # loopback :11440, gated by llm-gate (hosts/mac-studio/default.nix). The
-    # link watcher quiesces normal serving at link-up and re-warms the preload
-    # list on unplug.
+    # Manual cluster-join quiesces normal serving before ranks start. During
+    # cluster-detach, configured agents are restored.
     clusterMode = {
       # Clustering is the operating goal for this pair: one TB5 cable turns
       # both Macs into a single inference cluster neither can match alone.

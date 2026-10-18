@@ -1,63 +1,56 @@
-# Cluster mode — two-Mac Thunderbolt 5 distributed brain
+# MLX cluster: manual join and detach
 
-One TB5 cable turns the two M4 Max / 128 GB Macs into a single inference
-cluster serving a frontier-class model neither machine can hold alone. The
-model budget while plugged in is the **aggregate of both wired ceilings
-(2 × 102400 MB ≈ 200 GB)** — never one host's 100 GB. Plugging in is the
-entire ceremony; unplugging reverses everything unattended.
+A direct Thunderbolt 5 cable connects the coordinator and worker for distributed
+MLX inference. Use the operator commands below to form and tear down the
+cluster. Both hosts must have matching `nix-ai` and `nix-darwin` revisions,
+`mlx` and `mlx-lm` versions, and macOS build.
 
-> **Every cluster rule lives in ONE page:** nix-ai
-> [`docs/runbooks/cluster-link-truths.md`](https://github.com/dryvist/nix-ai/blob/develop/docs/runbooks/cluster-link-truths.md)
-> — plugged-in-means-clustered (self-correcting, lease-gated), the
-> generation-parity hard gate, the aggregate budget, the observation traps,
-> and what the automation enforces for each. Bring-up / safe-unplug procedure:
-> nix-ai
-> [`docs/runbooks/cluster-lifecycle.md`](https://github.com/dryvist/nix-ai/blob/develop/docs/runbooks/cluster-lifecycle.md).
-> This page holds only what is nix-darwin-specific. The former plug-session
-> checklists and lesson prose here are superseded by those pages; history is
-> in git.
+## Before joining
 
-Status: `programs.mlx.clusterMode.enable = true` on both hosts, re-enabled
-2026-08-07 after closing the 2026-08-05 disable's root causes:
+- RDMA must be enabled on both hosts. See [TB5-RDMA-CLUSTER.md](TB5-RDMA-CLUSTER.md)
+  for the physical setup and Recovery-mode procedure.
+- `system.clusterLinkPrep` disables the Thunderbolt Bridge service, removes
+  Thunderbolt ports from the bridge, brings the ports up, and configures the
+  role link address on the carrier-active port.
+- The macOS Application Firewall (ALF) allows the cluster's signed Python
+  interpreter.
+  The PF rules exempt the Thunderbolt RDMA network while retaining the inbound
+  filtering policy for other traffic.
+- Each host needs the durable MLX code-signing identity in its login keychain.
+  The setup procedure is in `hosts/common/mlx-cluster-signing.nix`.
+- Cluster-mode wired ceilings are 102400 MB on the coordinator and 90000 MB on
+  the worker, as set in `hosts/common/default.nix`.
 
-| Root cause | Status |
-| --- | --- |
-| Standdown tight-loop (peer-absent retries reloading the resident) | Fixed — nix-ai halts on peer-absent standdown |
-| PD-debt exhaustion | Fixed — nix-ai#1478 (merged, self-reboot); preflight check implemented in nix-ai PR #1556 (tracking #1442) |
-| Warmup-slot starvation | Fixed — repair-attempt caps in nix-ai cluster resilience |
-| bridge0 re-enslaves TB ports on reboot | Fix in flight — dryvist/nix-darwin#1768 / PR #2073; manual un-enslave needed until it lands |
-| TCC store-path grants for interpreter/signing identity | Fixed — `hosts/common/mlx-cluster-signing.nix`, `appleInterpreter` |
+## Join
 
-RDMA is enabled on both Macs; the link runs at 80 Gb/s both directions.
-Physical/Recovery-mode steps: [TB5-RDMA-CLUSTER.md](TB5-RDMA-CLUSTER.md).
+1. Connect the Thunderbolt cable.
+2. On the coordinator, run `cluster-join`.
+3. The coordinator first drives the worker's join over SSH using
+   `programs.mlx.clusterMode.peerSsh`, then performs its own join. Each host
+   checks, in order:
+   - The kernel-held RDMA protection-domain count leaves the configured reserve
+     free, and no rank is alive.
+   - Thunderbolt link preparation is ready.
+   - The cluster-mode wired ceiling is applied.
+   - Configured applications and launchd agents are quiesced using
+     `clusterMode.quiesce.apps` and `clusterMode.quiesce.launchdLabels`.
+   - Enough memory is available for the rank.
+   - The peer handshake confirms matching `nix-ai`, `nix-darwin`, `mlx`,
+     `mlx-lm`, and macOS build versions.
+   - Launchd starts both ranks in alignment and confirms cluster formation.
 
-## Component map (all IaC)
+Every gate logs `PASS` or `REFUSE` with a reason to
+`~/Library/Logs/mlx-cluster/cluster-lifecycle.log`. Exit status 3 means reboot
+that host before retrying.
 
-| Piece | Where |
-| --- | --- |
-| `programs.mlx.clusterMode` (ranks, link watcher, lifecycle commands, prefetch, log rotation) | nix-ai `modules/mlx/` |
-| Host roles (coordinator = server, worker = workstation) | `lib/hosts/*.nix` (`clusterMode.role`) |
-| Static link config (bridge off, role IPv4) + wired-ceiling grants | `modules/darwin/cluster-link-prep.nix` (`system.clusterLinkPrep`) |
-| Gated cluster endpoint (`:11440`, same bearer token) | `modules/darwin/llm-gate.nix` `clusterUpstreamPort` / `clusterPort` |
-| Router: cluster brain in the large phase + solo fallback | ansible-proxmox-apps `roles/llm_router` |
-| Log shipping (`in_cluster_logs`, gate `cluster-access.json`) | `hosts/common/cribl.nix` |
+## Detach
 
-## Model and ceilings (read values from config, never from docs)
+On the coordinator, run `cluster-detach`. It performs the coordinator's detach,
+then drives the worker's detach. Each host restores its standalone wired
+ceiling and re-bootstraps the configured agents. It writes link-state `down`
+last.
 
-Production cluster model: `GLM-4.7-REAP-50-mxfp4` (98.2 GB, ~49 GB/rank) —
-the expert-pruned build halves the per-rank shard so it fits each host's
-ceiling with KV headroom. The full `GLM-4.7-4bit` (198 GB) fits the
-**aggregate** budget but needs the per-host shard revalidated before use.
+## Rebuild gate
 
-`clusterWiredLimitMb` derives from the host's own standalone ceiling
-(`config.system.appleSiliconTunables.wiredLimitMb`, 102400 on both), so the
-ceiling does not change at link-up/-down and `set_wired_limit` is a no-op
-here. Per-host ceilings are single-host safety guards; cluster capacity is
-their sum. The retired 90000/80000 differential caps must not be cited.
-
-## Observability
-
-`in_cluster_logs` ships rank/watcher/prefetch logs; the gate's
-`cluster-access.json` rides the existing gate input (both → index=llm).
-Saved-search ideas and the acceptance rule (a real completion, never a
-`/v1/models` 200) are in the canonical truths page.
+`darwin-rebuild` refuses to activate while a cluster rank is live on that host.
+Run `cluster-detach` before rebuilding.
