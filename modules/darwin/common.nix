@@ -28,7 +28,6 @@ in
     ./cluster-link-prep.nix
     ./cluster-rebuild-gate.nix
     ./cluster-maintenance-window.nix
-    ./cluster-vm-runner-gate.nix
     ./finder.nix
     ./homebrew.nix
     ./app-updates.nix

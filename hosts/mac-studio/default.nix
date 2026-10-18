@@ -214,8 +214,7 @@ in
     # ========================================================================
     # Defaults (4 vCPU, 8 GB, Tahoe base image, labels tart and nix-darwin) live
     # in modules/darwin/apps/macos-vm-runner.nix. Two VMs, the Apple SLA maximum
-    # per host. Inert until the App ID file and App private key are placed; the
-    # cluster VM-runner gate boots the daemon out while a rank is live.
+    # per host. Inert until the App ID file and App private key are placed.
     macos-vm-runner = {
       enable = true;
       runnerCount = 2;
