@@ -1,8 +1,8 @@
 # MLX cluster: manual join and detach
 
-A direct Thunderbolt 5 cable connects the coordinator and worker for distributed
-MLX inference. Use the operator commands below to form and tear down the
-cluster. Both hosts must have matching `nix-ai` and `nix-darwin` revisions,
+A direct Thunderbolt 5 cable connects the MacBook Pro coordinator and Mac Studio
+worker for distributed MLX inference. Use the operator commands below to form
+and tear down the cluster. Both hosts must have matching `nix-ai` and `nix-darwin` revisions,
 `mlx` and `mlx-lm` versions, and macOS build.
 
 ## Before joining
@@ -18,13 +18,13 @@ cluster. Both hosts must have matching `nix-ai` and `nix-darwin` revisions,
   filtering policy for other traffic.
 - Each host needs the durable MLX code-signing identity in its login keychain.
   The setup procedure is in `hosts/common/mlx-cluster-signing.nix`.
-- Cluster-mode wired ceilings are 102400 MB on the coordinator and 90000 MB on
-  the worker, as set in `hosts/common/default.nix`.
+- Cluster-mode wired ceilings are 90000 MB on the MacBook Pro coordinator and
+  102400 MB on the Mac Studio worker, as set in `hosts/common/default.nix`.
 
 ## Join
 
 1. Connect the Thunderbolt cable.
-2. On the coordinator, run `cluster-join`.
+2. On the MacBook Pro, run `cluster-join`.
 3. The coordinator first drives the worker's join over SSH using
    `programs.mlx.clusterMode.peerSsh`, then performs its own join. Each host
    checks, in order:

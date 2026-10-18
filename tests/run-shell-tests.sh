@@ -17,5 +17,15 @@ if ! command -v bats &>/dev/null; then
   exit 1
 fi
 
-bats "$TEST_DIR/shell/$TEST_PATTERN" || EXIT_CODE=$?
+TEST_FILES=()
+for test_file in "$TEST_DIR"/shell/$TEST_PATTERN; do
+  [[ -f "$test_file" ]] && TEST_FILES+=("$test_file")
+done
+
+if ((${#TEST_FILES[@]} == 0)); then
+  echo "Error: no BATS tests match pattern: $TEST_PATTERN" >&2
+  exit 1
+fi
+
+bats "${TEST_FILES[@]}" || EXIT_CODE=$?
 exit "${EXIT_CODE:-0}"

@@ -16,6 +16,7 @@
 # grant and the detach restore impossible.
 {
   lib,
+  pkgs,
   osConfig,
   hostConfig,
   ...
@@ -25,6 +26,52 @@ let
   # `mlx` at all, and a host may declare `mlx` without `clusterMode`.
   clusterEnabled =
     hostConfig ? mlx && hostConfig.mlx ? clusterMode && (hostConfig.mlx.clusterMode.enable or false);
+  workerQuiesceLabels = hostConfig.mlx.clusterMode.quiesce.launchdLabels or [ ];
+  workerQuiesce =
+    clusterEnabled && hostConfig.mlx.clusterMode.role == "worker" && workerQuiesceLabels != [ ];
+  # nix-ai's declarative app/launchd quiesce list is consumed by the
+  # coordinator. Workers provide a shell hook instead; record the same labels
+  # in the shared state file so cluster teardown restores them.
+  workerQuiescePkg = pkgs.writeShellApplication {
+    name = "mlx-cluster-worker-quiesce";
+    runtimeInputs = with pkgs; [
+      coreutils
+      gnugrep
+    ];
+    runtimeEnv.CLUSTER_WORKER_QUIESCE_LABELS = lib.concatStringsSep "\n" workerQuiesceLabels;
+    text = ''
+      state_dir="''${CLUSTER_STATE_DIR:-$HOME/Library/Application Support/mlx-cluster}"
+      launchctl_bin="''${CLUSTER_LAUNCHCTL_BIN:-/bin/launchctl}"
+      grep_bin="''${CLUSTER_GREP_BIN:-/usr/bin/grep}"
+      grace="''${CLUSTER_QUIESCE_GRACE_SECS:-30}"
+      uid="$(id -u)"
+      agents_file="$state_dir/quiesced-agents"
+      mkdir -p "$state_dir"
+      touch "$agents_file"
+      readarray -t labels <<< "''${CLUSTER_WORKER_QUIESCE_LABELS:-}"
+      for label in "''${labels[@]}"; do
+        [ -n "$label" ] || continue
+        if ! "$grep_bin" -Fqx "$label" "$agents_file"; then
+          printf '%s\n' "$label" >> "$agents_file"
+        fi
+        rc=0
+        "$launchctl_bin" bootout "gui/$uid/$label" >/dev/null 2>&1 || rc=$?
+        echo "cluster-join: quiesce launchd $label rc=$rc"
+        deadline=$(( $(date +%s) + grace ))
+        while "$launchctl_bin" print "gui/$uid/$label" >/dev/null 2>&1; do
+          [ "$(date +%s)" -lt "$deadline" ] || break
+          sleep 1
+        done
+      done
+    '';
+  };
+  workerQuiesceCommand = lib.getExe workerQuiescePkg;
+  # The worker hook records configured labels for cluster-teardown's bootstrap
+  # pass; the hook itself has no further restore work.
+  workerQuiesceSettings = lib.optionalAttrs workerQuiesce {
+    quiesceCommand = lib.mkDefault workerQuiesceCommand;
+    restoreCommand = lib.mkDefault ":";
+  };
   linkPrep = osConfig.system.clusterLinkPrep;
 in
 {
@@ -104,6 +151,7 @@ in
         "--prompt-cache-size"
         "0"
       ];
-    };
+    }
+    // workerQuiesceSettings;
   };
 }
