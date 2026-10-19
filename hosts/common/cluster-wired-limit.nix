@@ -51,7 +51,6 @@ let
       readarray -t labels <<< "''${CLUSTER_WORKER_QUIESCE_LABELS:-}"
       for label in "''${labels[@]}"; do
         [ -n "$label" ] || continue
-        # A label not loaded on this host has nothing to stop, and recording it would fail the restore.
         if ! "$launchctl_bin" print "gui/$uid/$label" >/dev/null 2>&1; then
           echo "cluster-join: quiesce launchd $label not loaded; skipped"
           continue
