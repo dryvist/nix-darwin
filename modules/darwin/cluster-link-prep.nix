@@ -34,6 +34,7 @@
 
 let
   cfg = config.system.clusterLinkPrep;
+  peerRole = if cfg.role == "coordinator" then "worker" else "coordinator";
   userConfig = import ../../lib/user-config.nix;
   tunables = config.system.appleSiliconTunables;
   prepPkg = pkgs.writeShellApplication {
@@ -162,7 +163,10 @@ in
         "-c"
         "/bin/wait4path /nix/store && exec ${lib.getExe prepPkg}"
       ];
-      EnvironmentVariables.CLUSTER_LINK_IP = cfg.linkIps.${cfg.role};
+      EnvironmentVariables = {
+        CLUSTER_LINK_IP = cfg.linkIps.${cfg.role};
+        CLUSTER_PEER_LINK_IP = cfg.linkIps.${peerRole};
+      };
       RunAtLoad = true;
       KeepAlive = false;
       StandardOutPath = "/var/log/cluster-link-prep.log";
@@ -172,9 +176,9 @@ in
     # postActivation (root, rebuild): idempotent one-shot link config;
     # never allowed to fail activation.
     system.activationScripts.postActivation.text = lib.mkAfter ''
-      CLUSTER_LINK_IP=${
-        lib.escapeShellArg cfg.linkIps.${cfg.role}
-      } ${lib.getExe prepPkg} || echo "cluster-link-prep: non-fatal failure (see log above)"
+      CLUSTER_LINK_IP=${lib.escapeShellArg cfg.linkIps.${cfg.role}} \
+      CLUSTER_PEER_LINK_IP=${lib.escapeShellArg cfg.linkIps.${peerRole}} \
+      ${lib.getExe prepPkg} || echo "cluster-link-prep: non-fatal failure (see log above)"
       # The JACCL rendezvous listener needs an explicit application-firewall
       # allowance (uv CPython is ad-hoc-signed) — see scripts/cluster-alf-allow.sh.
       CLUSTER_USER_HOME="${userConfig.user.homeDir}" ${lib.getExe alfAllowPkg} || echo "cluster-alf-allow: non-fatal failure (see log above)"
