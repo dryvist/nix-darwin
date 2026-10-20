@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.0.2](https://github.com/dryvist/nix-darwin/compare/v4.0.1...v4.0.2) (2026-10-20)
+
+
+### Bug Fixes
+
+* **cluster:** skip unloaded worker quiesce labels ([#2929](https://github.com/dryvist/nix-darwin/issues/2929)) ([fceb0b1](https://github.com/dryvist/nix-darwin/commit/fceb0b13b745b6bdd2d1a1ded1eda438cf828834))
+* **offbox-sync:** pin plain SFTP host-key algorithms ([#2937](https://github.com/dryvist/nix-darwin/issues/2937)) ([3aba0ed](https://github.com/dryvist/nix-darwin/commit/3aba0ed7232c3796ca81fabfda64dd9f12871dff))
+
 ## [4.0.1](https://github.com/dryvist/nix-darwin/compare/v4.0.0...v4.0.1) (2026-10-18)
 
 
