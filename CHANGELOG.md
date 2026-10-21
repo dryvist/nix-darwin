@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.1.0](https://github.com/dryvist/nix-darwin/compare/v4.0.2...v4.1.0) (2026-10-21)
+
+
+### Features
+
+* rotate local LiteLLM logs ([#2941](https://github.com/dryvist/nix-darwin/issues/2941)) ([7a85d1a](https://github.com/dryvist/nix-darwin/commit/7a85d1aac6c39afb17740e15051305d457d43851))
+
 ## [4.0.2](https://github.com/dryvist/nix-darwin/compare/v4.0.1...v4.0.2) (2026-10-20)
 
 
