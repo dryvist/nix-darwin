@@ -47,6 +47,7 @@ in
       type = lib.types.listOf lib.types.str;
       default = [
         "mlx-model-server"
+        "litellm-local"
         "mlx-cluster"
         "fabric"
       ];
