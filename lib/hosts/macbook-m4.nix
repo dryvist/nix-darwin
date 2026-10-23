@@ -62,7 +62,6 @@
           "com.microsoft.teams2"
         ];
         launchdLabels = [
-          "com.screenpipe.agent"
           "com.microsoft.teams2.agent"
           "dev.dryvist.meeting-transcriber"
           "dev.litellm-local"
