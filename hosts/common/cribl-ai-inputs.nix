@@ -47,7 +47,32 @@ let
         recurse: true
         tailOnly: true
         sendToRoutes: false
+        breakerRulesets:
+          - AI CLI JSONL
         metadata:
+          - name: enduser_id
+            value: "'${user}'"
+        connections:
+          - pipeline: claude_sessions
+            output: cribl_claude
+      in_claude_history_${user}:
+        type: file
+        disabled: false
+        mode: manual
+        interval: 30
+        path: ${homeDir}/.claude
+        filenames:
+          - "history.jsonl"
+        recurse: false
+        tailOnly: false
+        sendToRoutes: false
+        breakerRulesets:
+          - AI CLI JSONL
+        metadata:
+          - name: sourcetype
+            value: "'claude:cli:history'"
+          - name: index
+            value: "'claude'"
           - name: enduser_id
             value: "'${user}'"
         connections:
@@ -146,7 +171,7 @@ let
         filenames:
           - "*history.jsonl"
         recurse: false
-        tailOnly: true
+        tailOnly: false
         sendToRoutes: false
         breakerRulesets:
           - AI CLI JSONL
