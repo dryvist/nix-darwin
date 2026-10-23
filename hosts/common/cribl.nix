@@ -123,6 +123,19 @@ in
               connections:
                 - pipeline: llm_logs
                   output: cribl_stream
+            in_screenpipe_pipe_runs:
+              type: file
+              disabled: false
+              mode: manual
+              interval: 10
+              path: ${userConfig.user.homeDir}/.screenpipe/pipes/
+              filenames:
+                - "*/logs/*.json"
+              tailOnly: false
+              sendToRoutes: false
+              connections:
+                - pipeline: screenpipe_pipe_runs
+                  output: cribl_stream
             # Clustered-mode logs (rank and lifecycle commands, both hosts).
             # Same proven path and pipeline as in_llm_logs above; the "*/"
             # lead on every pattern is the #1623 lesson.
@@ -579,6 +592,7 @@ in
         '';
       }
       // import ./cribl-pipelines.nix { inherit codexPack geminiPack; }
+      // import ./cribl-screenpipe-pipeline.nix
       // import ./cribl-transcript-mask.nix;
       # Claude Code transcripts ship via the native in_claude_logs input ->
       # cribl_claude (:10311) above; the cc-edge-claude-code pack is not

@@ -5,6 +5,8 @@ MANAGER_LOG_PATTERN='^(\[(DEBUG|INFO|WARN|ERROR)\] |time=[^ ]+ level=(DEBUG|INFO
 # cribl.nix for the repo file-size gate. The assertion below is
 # unchanged; only the path follows the code that moved.
 CRIBL_CONFIG="$BATS_TEST_DIRNAME/../../hosts/common/cribl-pipelines.nix"
+CRIBL_INPUTS="$BATS_TEST_DIRNAME/../../hosts/common/cribl.nix"
+CRIBL_SCREENPIPE_PIPELINE="$BATS_TEST_DIRNAME/../../hosts/common/cribl-screenpipe-pipeline.nix"
 
 # Mirrors the pipeline eval: __inputId is checked FIRST (cluster logs share
 # the llm_logs pipeline with the model-server logs but are a third, unrelated
@@ -63,4 +65,13 @@ classify() {
     [ "$status" -eq 0 ]
     [ "$output" = "mlx:cluster" ]
   done
+}
+
+@test "Screenpipe per-run JSON files use a searchable event sourcetype" {
+  run grep -F 'path: ${userConfig.user.homeDir}/.screenpipe/pipes/' "$CRIBL_INPUTS"
+  [ "$status" -eq 0 ]
+  run grep -F '"*/logs/*.json"' "$CRIBL_INPUTS"
+  [ "$status" -eq 0 ]
+  run grep -F "'screenpipe:pipe_run'" "$CRIBL_SCREENPIPE_PIPELINE"
+  [ "$status" -eq 0 ]
 }
