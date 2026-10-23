@@ -201,6 +201,7 @@
   # QuickConnect are the proven path (llm_logs/firewall_logs above).
   "pipelines/codex_sessions/conf.yml" =
     builtins.readFile "${codexPack}/default/pipelines/codex_sessions/conf.yml";
+  "pipelines/claude_sessions/conf.yml" = builtins.readFile ./cribl-claude-sessions.conf.yml;
   "pipelines/codex_history/conf.yml" =
     builtins.readFile "${codexPack}/default/pipelines/codex_history/conf.yml";
   "pipelines/llm_normalize/conf.yml" =
