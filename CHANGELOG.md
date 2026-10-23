@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.2.0](https://github.com/dryvist/nix-darwin/compare/v4.1.0...v4.2.0) (2026-10-23)
+
+
+### Features
+
+* **darwin:** install developer CLI tools from nixpkgs ([#2944](https://github.com/dryvist/nix-darwin/issues/2944)) ([6598e79](https://github.com/dryvist/nix-darwin/commit/6598e7920fa6496fac02ac761fdebb4c79edc203))
+* normalize Claude Code agent session log fields ([#2948](https://github.com/dryvist/nix-darwin/issues/2948)) ([7a68be0](https://github.com/dryvist/nix-darwin/commit/7a68be05629f19e62ce7c8f4feb07fe82e17f8ad))
+
 ## [4.1.0](https://github.com/dryvist/nix-darwin/compare/v4.0.2...v4.1.0) (2026-10-21)
 
 
