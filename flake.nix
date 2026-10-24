@@ -115,7 +115,12 @@
     # GitOps daemon; host-specific remotes stay in the private wrapper.
     comin = {
       url = "github:nlewo/comin";
-      inputs.nixpkgs.follows = "nixpkgs";
+      # comin's formatter and compat shims aren't needed to consume its module.
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        treefmt-nix.follows = "";
+        flake-compat.follows = "";
+      };
     };
 
     # brew-src is intentionally NOT overridden: nix-homebrew pins the Homebrew
