@@ -87,7 +87,7 @@
 
     # Cross-platform home-manager modules (git, zsh, vscode, monitoring, shells)
     nix-home = {
-      url = "github:dryvist/nix-home?ref=v1";
+      url = "github:dryvist/nix-home?ref=v1.57.2";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
     };
