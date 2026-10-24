@@ -25,6 +25,7 @@ let
   server = lib.recursiveUpdate default {
     homebrew.ai = {
       claudeCode = true;
+      codex = true;
       goose = true;
     };
   };
