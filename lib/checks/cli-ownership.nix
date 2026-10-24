@@ -1,8 +1,10 @@
 # One owner per AI CLI, asserted on the platform that owns the risk.
 #
-# Claude Code remains Homebrew-owned on darwin. Codex moved to nix-home's
-# nixpkgs package; hosts/common/home.nix sets that same package on
-# `programs.codex` so nix-ai's launcher targets its installed binary.
+# Claude Code and Codex are installed by Homebrew on darwin — declared in
+# nix-ai's lib/homebrew.nix and upgraded by the weekly `brew upgrade` agent.
+# The nix-ai modules therefore set `package = null` on darwin, so Nix does not
+# build a second, shadowed copy. That dual-install is exactly what this
+# arrangement replaced: a cask won PATH while Nix built a binary that never ran.
 #
 # nix-ai cannot assert this itself. Its regression suite is scoped to
 # x86_64-linux, so it only ever evaluates the Linux side of that conditional.
@@ -17,18 +19,22 @@
 { pkgs, configs }:
 let
   inherit (pkgs.lib)
+    attrNames
     concatStringsSep
     mapAttrsToList
     filter
     flatten
     ;
 
-  # pname is the reliable discriminator. `name` carries the version, and a
-  # substring match on "claude-code" also hits claude-code-plugins and the
-  # nix-claude-code source tree, neither of which is the binary.
-  brewOwned = [
-    "claude-code"
-  ];
+  # pname -> the Homebrew cask that owns it. pname is the reliable
+  # discriminator. `name` carries the version, and a substring match on
+  # "claude-code" also hits claude-code-plugins and the nix-claude-code source
+  # tree, neither of which is the binary.
+  brewCasks = {
+    claude-code = "claude-code@latest";
+    codex = "codex";
+  };
+  brewOwned = attrNames brewCasks;
 
   offendersFor =
     hostName: cfg:
@@ -45,6 +51,18 @@ let
   # Generic over every host and every home-manager user on purpose: a new host
   # must not be able to reintroduce the dual-install by not being listed here.
   offenders = flatten (mapAttrsToList offendersFor configs);
+
+  # The other half of one owner: with Nix skipping the binary, the cask must be
+  # declared, or the launcher execs a path nothing installs.
+  missingCasksFor =
+    hostName: cfg:
+    let
+      declared = map (c: c.name or c) (cfg.config.homebrew.casks or [ ]);
+    in
+    map (c: "${hostName}: ${c}") (
+      filter (c: !(builtins.elem c declared)) (builtins.attrValues brewCasks)
+    );
+  missingCasks = flatten (mapAttrsToList missingCasksFor configs);
 in
 assert
   offenders == [ ]
@@ -54,9 +72,22 @@ assert
 
     ${concatStringsSep "\n" offenders}
 
-    Fix the Homebrew package declaration rather than removing this check.
+    Fix the `pkgs.stdenv.hostPlatform.isDarwin` conditional in nix-ai
+    (modules/claude-config.nix, modules/codex/default.nix) rather than
+    removing this check.
+  '';
+assert
+  missingCasks == [ ]
+  || throw ''
+    AI CLI owner missing: these hosts do not declare the Homebrew cask that owns
+    the binary, so nothing installs it:
+
+    ${concatStringsSep "\n" missingCasks}
+
+    Enable it in lib/host-profiles.nix (`homebrew.ai`) rather than removing
+    this check.
   '';
 pkgs.runCommand "check-cli-ownership" { } ''
-  echo "no brew-owned AI CLI is installed by Nix on any darwin host"
+  echo "every brew-owned AI CLI is cask-declared and not installed by Nix on any darwin host"
   touch $out
 ''

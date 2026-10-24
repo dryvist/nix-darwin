@@ -162,7 +162,6 @@ Source: nix-home (`modules/home-manager/darwin/default.nix` via flake input)
 
 | Package | Description |
 | --- | --- |
-| codex | OpenAI Codex CLI |
 | langgraph-cli | LangGraph CLI |
 
 ---
@@ -195,6 +194,7 @@ logging to `~/Library/Logs/brew-upgrade.log`. `darwin-rebuild` does not upgrade 
 | claudebar | yes | Claude Code menu bar utility |
 | neat | yes | Neat device management app |
 | claude-code@latest | no | Anthropic Claude Code CLI |
+| codex | no | OpenAI Codex CLI (nix-ai's agent launcher execs it) |
 | claude | yes | Anthropic Claude desktop app (workstation capability) |
 | codex-app | yes | OpenAI Codex desktop app (workstation capability; separate from the CLI) |
 | antigravity | yes | Google Antigravity 2.0 standalone agent command center (workstation capability) |
