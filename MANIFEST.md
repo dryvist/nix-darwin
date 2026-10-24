@@ -79,7 +79,6 @@ Source: nix-home (`home.packages` via flake input)
 
 | Package | Description |
 | --- | --- |
-| git-flow-next | Modern git-flow workflow tool (custom buildGoModule, gittower/git-flow-next v1.0.0) |
 | git-bug | Distributed bug tracker embedded in git (`git bug` command) |
 
 ### Pre-commit and Linters
