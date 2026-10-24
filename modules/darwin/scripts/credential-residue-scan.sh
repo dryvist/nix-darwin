@@ -73,9 +73,9 @@ scan_one() { # $1 = directory; echoes one line per finding
 # stopped matching. Prove the scanner still sees a known-bad file before
 # trusting a clean result -- the control needs its own control.
 selftest() {
-  local tmp rc
+  local tmp rc pem_start='-----BEGIN RSA ' pem_type='PRIVATE KEY-----'
   tmp=$(mktemp -d) || return 1
-  printf -- '-----BEGIN RSA PRIVATE KEY-----\nnotarealkey\n' > "$tmp/fixture.pem"
+  printf -- '%s%s\nnotarealkey\n' "$pem_start" "$pem_type" > "$tmp/fixture.pem"
   rc=0
   scan_one "$tmp" | grep -q '^FINDING' || rc=1
   rm -rf "$tmp"
