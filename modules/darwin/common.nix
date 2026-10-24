@@ -126,9 +126,14 @@ in
     # ========================================================================
     sox # Audio recording, conversion, and effects (Sound eXchange)
     portaudio # Cross-platform audio I/O library
+
+    # ========================================================================
+    # Other libraries
+    # ========================================================================
+    simdutf # SIMD UTF-8 validation library
   ];
-  # GUI apps: SwiftBar via home-manager copyApps (hosts/macbook-m4/home.nix);
-  # Raycast / Bitwarden / Ghostty / etc. are Homebrew casks (see homebrew.nix).
+  # Workstation GUI apps are declared in hosts/macbook-m4/home.nix; remaining casks
+  # are in modules/darwin/homebrew.nix.
 
   # --- Homebrew Configuration ---
   # See ./homebrew.nix for casks, brews, and masApps
