@@ -553,11 +553,11 @@
     "dotgithub": {
       "flake": false,
       "locked": {
-        "lastModified": 1792815484,
-        "narHash": "sha256-tKvWV+OWHRi+f/hnespejEiWM2DE+rUvT35gCmQYRnw=",
+        "lastModified": 1792817442,
+        "narHash": "sha256-VXM3EeeB/NTqr7pEzfq17wc2kk/qElUGdU4A/BUrNHU=",
         "owner": "JacobPEvans",
         "repo": ".github",
-        "rev": "7d9af73cfe837a82b31471c73f6222e742b90a07",
+        "rev": "e4aa8578f9fd915799856275e6030f852977f0e5",
         "type": "github"
       },
       "original": {
@@ -997,11 +997,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792438572,
-        "narHash": "sha256-5mQQOcggBRBXB7NlzUxO0dbvQN4euJOISjNybrtfxPk=",
+        "lastModified": 1792818383,
+        "narHash": "sha256-199i7ubVSXTMl+0AAlL7cVCXSjcI+jWByMcimYjeMX0=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "24f8f8e786f87d6a818e1746cb2389bf922afdab",
+        "rev": "24f2190587513b9c2f73db112a17844ae912d965",
         "type": "github"
       },
       "original": {
@@ -1346,11 +1346,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1792463000,
-        "narHash": "sha256-MDzVQLmb8KrongS5Z21UdP173R3DxpXBUBN3GLDSGfM=",
+        "lastModified": 1792710415,
+        "narHash": "sha256-VAcnRiCllDj5STVtfTOILe75mEvk4QuMriNkWH1cw6U=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "526a50be73b0e3a6304cf795a200e5f2990a82e2",
+        "rev": "c7973541e79b6b0b7f0c6e24d09efe81292f7fee",
         "type": "github"
       },
       "original": {
