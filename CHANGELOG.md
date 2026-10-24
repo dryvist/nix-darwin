@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.4.0](https://github.com/dryvist/nix-darwin/compare/v4.3.3...v4.4.0) (2026-10-24)
+
+
+### Features
+
+* **darwin:** add the comin GitOps module ([#2974](https://github.com/dryvist/nix-darwin/issues/2974)) ([245a853](https://github.com/dryvist/nix-darwin/commit/245a8538c48fcb42ef83b1384c82668411294277))
+
 ## [4.3.3](https://github.com/dryvist/nix-darwin/compare/v4.3.2...v4.3.3) (2026-10-24)
 
 
