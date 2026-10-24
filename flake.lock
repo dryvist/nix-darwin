@@ -1609,7 +1609,7 @@
       },
       "original": {
         "owner": "dryvist",
-        "ref": "v1.57.2",
+        "ref": "v1",
         "repo": "nix-home",
         "type": "github"
       }
