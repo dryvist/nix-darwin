@@ -13,6 +13,7 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "socket-vmnet";
+  # renovate: datasource=github-releases depName=lima-vm/socket_vmnet
   version = "1.2.2";
 
   src = fetchFromGitHub {
