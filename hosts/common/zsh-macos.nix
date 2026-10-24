@@ -31,6 +31,17 @@ in
 
     # macOS-specific shell init (appended after cross-platform initContent from nix-home)
     initContent = lib.mkAfter ''
+      ${lib.optionalString hostConfig.homebrew.enableWorkstationApps ''
+        # Keep Nix-managed tools ahead of Homebrew's login-shell path.
+        typeset -U path PATH
+        path=(
+          /etc/profiles/per-user/${userConfig.user.name}/bin
+          /run/current-system/sw/bin
+          /nix/var/nix/profiles/default/bin
+          $path
+        )
+      ''}
+
       # --- Keychain helper (persists for runtime token switching) ---
 
       _get_keychain_secret() {

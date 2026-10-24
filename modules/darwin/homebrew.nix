@@ -28,6 +28,12 @@ let
     # Mac App Store CLI for homebrew.masApps.
     "mas"
 
+    # Versioned runtime remains available alongside the Nix-managed Node.js.
+    "node@22"
+
+    # Retained standalone Homebrew library.
+    "simdutf"
+
     # Apple Silicon speech recognition.
     "whisperkit-cli"
   ];
@@ -78,6 +84,14 @@ let
       name = "granola";
       greedy = true;
     } # AI-powered meeting notes
+    {
+      name = "claudebar";
+      greedy = true;
+    } # Claude Code menu bar utility
+    {
+      name = "neat";
+      greedy = true;
+    } # Neat device management app
 
     # --- API Development ---
     {

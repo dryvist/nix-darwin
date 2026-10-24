@@ -34,7 +34,7 @@ let
   # Workstations add graphical applications to the shared CLI baseline.
   workstation = lib.recursiveUpdate server {
     homebrew = {
-      cleanup = "none";
+      cleanup = "uninstall";
       enableWorkstationApps = true;
       ai = {
         antigravityDesktop = true;

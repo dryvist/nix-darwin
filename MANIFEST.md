@@ -155,36 +155,42 @@ Source: `modules/darwin/homebrew.nix`
 | Package | Description |
 | --- | --- |
 | container | Apple container CLI/runtime for Linux containers on Apple Silicon |
-| block-goose-cli | Block's Goose AI agent (shared CLI capability from nix-ai) |
-| qwen-code | Alibaba Qwen Code agent (shared CLI capability from nix-ai) |
+| langgraph-cli | LangGraph CLI (shared CLI capability from nix-ai) |
+| mas | Mac App Store CLI |
+| node@22 | Versioned Node.js 22 runtime |
+| simdutf | SIMD UTF-8 validation library |
 | whisperkit-cli | Swift native on-device speech recognition (Apple Silicon) |
 
 ### Casks
 
-All casks use `greedy = true` so that `brew upgrade --greedy` always installs the latest version rather than deferring to built-in auto-updaters.
-That upgrade runs unattended every Thursday at 04:20 local time via the `brew-upgrade` LaunchAgent in the same module,
+The weekly `brew-upgrade` LaunchAgent invokes `brew upgrade --greedy` every Thursday at 04:20 local time,
 logging to `~/Library/Logs/brew-upgrade.log`. `darwin-rebuild` does not upgrade Homebrew packages
 (`onActivation.upgrade = false`), and the agent does not upgrade Homebrew itself — the `brew` binary comes from the
 `brew-src` flake input via `nix-homebrew`, so its version advances when the flake lock is refreshed and the host rebuilds.
 
 | Package | greedy | Description |
 | --- | --- | --- |
+| ghostty | yes | Terminal emulator — stable bundle for TCC permissions |
 | raycast | yes | Productivity launcher (moved from nixpkgs — version lag) |
 | obsidian | yes | Knowledge base / note-taking |
 | bitwarden | yes | Password manager desktop app (moved from nixpkgs — EOL electron_39) |
 | wispr-flow | yes | AI-powered voice dictation |
+| granola | yes | AI-powered meeting notes |
+| claudebar | yes | Claude Code menu bar utility |
+| neat | yes | Neat device management app |
+| claude-code@latest | no | Anthropic Claude Code CLI |
 | claude | yes | Anthropic Claude desktop app (workstation capability) |
-| claude-code@latest | yes | Anthropic Claude Code CLI (shared CLI cask on every host) |
 | chatgpt | yes | OpenAI ChatGPT desktop app (moved from nixpkgs — version lag + no self-update) |
 | codex-app | yes | OpenAI Codex desktop app (workstation capability; separate from the CLI) |
-| codex | yes | OpenAI Codex CLI (shared CLI cask on every host) |
-| antigravity-cli | yes | Google Antigravity CLI (`agy`; shared CLI cask on every host) |
+| codex | no | OpenAI Codex CLI |
 | antigravity | yes | Google Antigravity 2.0 standalone agent command center (workstation capability) |
 | antigravity-ide | yes | Google Antigravity IDE (workstation capability) |
 | postman | yes | API development environment (moved from nixpkgs — version lag caused schema mismatch) |
 | orbstack | yes | Container/Linux VM runtime — cask for TCC permission stability |
 | microsoft-teams | yes | Teams desktop app (not available on Mac App Store) |
 | firefox | yes | Mozilla Firefox browser — cask for TCC permission stability |
+| libreoffice | yes | Office suite and `soffice` conversion tools |
+| openwebstart | yes | Java Web Start replacement for iDRAC virtual-console files |
 
 ### Mac App Store
 
