@@ -19,19 +19,22 @@
 { pkgs, configs }:
 let
   inherit (pkgs.lib)
+    attrNames
     concatStringsSep
     mapAttrsToList
     filter
     flatten
     ;
 
-  # pname is the reliable discriminator. `name` carries the version, and a
-  # substring match on "claude-code" also hits claude-code-plugins and the
-  # nix-claude-code source tree, neither of which is the binary.
-  brewOwned = [
-    "claude-code"
-    "codex"
-  ];
+  # pname -> the Homebrew cask that owns it. pname is the reliable
+  # discriminator. `name` carries the version, and a substring match on
+  # "claude-code" also hits claude-code-plugins and the nix-claude-code source
+  # tree, neither of which is the binary.
+  brewCasks = {
+    claude-code = "claude-code@latest";
+    codex = "codex";
+  };
+  brewOwned = attrNames brewCasks;
 
   offendersFor =
     hostName: cfg:
@@ -48,6 +51,18 @@ let
   # Generic over every host and every home-manager user on purpose: a new host
   # must not be able to reintroduce the dual-install by not being listed here.
   offenders = flatten (mapAttrsToList offendersFor configs);
+
+  # The other half of one owner: with Nix skipping the binary, the cask must be
+  # declared, or the launcher execs a path nothing installs.
+  missingCasksFor =
+    hostName: cfg:
+    let
+      declared = map (c: c.name or c) (cfg.config.homebrew.casks or [ ]);
+    in
+    map (c: "${hostName}: ${c}") (
+      filter (c: !(builtins.elem c declared)) (builtins.attrValues brewCasks)
+    );
+  missingCasks = flatten (mapAttrsToList missingCasksFor configs);
 in
 assert
   offenders == [ ]
@@ -61,7 +76,18 @@ assert
     (modules/claude-config.nix, modules/codex/default.nix) rather than
     removing this check.
   '';
+assert
+  missingCasks == [ ]
+  || throw ''
+    AI CLI owner missing: these hosts do not declare the Homebrew cask that owns
+    the binary, so nothing installs it:
+
+    ${concatStringsSep "\n" missingCasks}
+
+    Enable it in lib/host-profiles.nix (`homebrew.ai`) rather than removing
+    this check.
+  '';
 pkgs.runCommand "check-cli-ownership" { } ''
-  echo "no brew-owned AI CLI is installed by Nix on any darwin host"
+  echo "every brew-owned AI CLI is cask-declared and not installed by Nix on any darwin host"
   touch $out
 ''

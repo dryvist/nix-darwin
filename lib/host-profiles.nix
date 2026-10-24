@@ -27,19 +27,17 @@ let
       claudeCode = true;
       codex = true;
       goose = true;
-      langgraphCli = true;
     };
   };
 
   # Workstations add graphical applications to the shared CLI baseline.
   workstation = lib.recursiveUpdate server {
     homebrew = {
-      cleanup = "none";
+      cleanup = "uninstall";
       enableWorkstationApps = true;
       ai = {
         antigravityDesktop = true;
         antigravityIde = true;
-        chatgptDesktop = true;
         claudeDesktop = true;
         codexDesktop = true;
       };

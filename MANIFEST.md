@@ -57,6 +57,14 @@ Source: `modules/darwin/common.nix`
 | --- | --- |
 | mas | Mac App Store CLI |
 
+### Libraries
+
+Source: `modules/darwin/common.nix`
+
+| Package | Description |
+| --- | --- |
+| simdutf | SIMD UTF-8 validation library |
+
 ## Cross-Platform Packages
 
 Source: nix-home (`home.packages` via flake input)
@@ -134,15 +142,27 @@ copies them to `~/Applications/Home Manager Apps/` at TCC-stable paths.
 
 | Package | Description |
 | --- | --- |
+| chatgpt | OpenAI ChatGPT desktop app |
 | code-cursor | Cursor AI IDE (VS Code fork) |
 | discord | Voice/video chat (copyApps for TCC camera/mic stability) |
+| firefox | Mozilla Firefox browser |
 | ffmpeg | Audio/video recording, conversion, streaming |
 | ghostty-bin | Terminal emulator |
+| obsidian | Knowledge base / note-taking |
 | rapidapi | Full-featured HTTP client |
+| raycast | Productivity launcher |
 | swiftbar | Menu bar customization |
 
 Note: OrbStack installed via Homebrew cask (`greedy = true`) in `modules/darwin/homebrew.nix` for TCC permission stability.
 The `programs.orbstack` module (`modules/darwin/apps/orbstack.nix`) still manages the APFS data volume via launchd.
+
+## Darwin User CLI Packages
+
+Source: nix-home (`modules/home-manager/darwin/default.nix` via flake input)
+
+| Package | Description |
+| --- | --- |
+| langgraph-cli | LangGraph CLI |
 
 ---
 
@@ -155,36 +175,35 @@ Source: `modules/darwin/homebrew.nix`
 | Package | Description |
 | --- | --- |
 | container | Apple container CLI/runtime for Linux containers on Apple Silicon |
-| block-goose-cli | Block's Goose AI agent (shared CLI capability from nix-ai) |
-| qwen-code | Alibaba Qwen Code agent (shared CLI capability from nix-ai) |
+| node@22 | Versioned Node.js 22 runtime |
 | whisperkit-cli | Swift native on-device speech recognition (Apple Silicon) |
 
 ### Casks
 
-All casks use `greedy = true` so that `brew upgrade --greedy` always installs the latest version rather than deferring to built-in auto-updaters.
-That upgrade runs unattended every Thursday at 04:20 local time via the `brew-upgrade` LaunchAgent in the same module,
+The weekly `brew-upgrade` LaunchAgent invokes `brew upgrade --greedy` every Thursday at 04:20 local time,
 logging to `~/Library/Logs/brew-upgrade.log`. `darwin-rebuild` does not upgrade Homebrew packages
 (`onActivation.upgrade = false`), and the agent does not upgrade Homebrew itself — the `brew` binary comes from the
 `brew-src` flake input via `nix-homebrew`, so its version advances when the flake lock is refreshed and the host rebuilds.
 
 | Package | greedy | Description |
 | --- | --- | --- |
-| raycast | yes | Productivity launcher (moved from nixpkgs — version lag) |
-| obsidian | yes | Knowledge base / note-taking |
+| ghostty | yes | Terminal emulator — stable bundle for TCC permissions |
 | bitwarden | yes | Password manager desktop app (moved from nixpkgs — EOL electron_39) |
 | wispr-flow | yes | AI-powered voice dictation |
+| granola | yes | AI-powered meeting notes |
+| claudebar | yes | Claude Code menu bar utility |
+| neat | yes | Neat device management app |
+| claude-code@latest | no | Anthropic Claude Code CLI |
+| codex | no | OpenAI Codex CLI (nix-ai's agent launcher execs it) |
 | claude | yes | Anthropic Claude desktop app (workstation capability) |
-| claude-code@latest | yes | Anthropic Claude Code CLI (shared CLI cask on every host) |
-| chatgpt | yes | OpenAI ChatGPT desktop app (moved from nixpkgs — version lag + no self-update) |
 | codex-app | yes | OpenAI Codex desktop app (workstation capability; separate from the CLI) |
-| codex | yes | OpenAI Codex CLI (shared CLI cask on every host) |
-| antigravity-cli | yes | Google Antigravity CLI (`agy`; shared CLI cask on every host) |
 | antigravity | yes | Google Antigravity 2.0 standalone agent command center (workstation capability) |
 | antigravity-ide | yes | Google Antigravity IDE (workstation capability) |
 | postman | yes | API development environment (moved from nixpkgs — version lag caused schema mismatch) |
 | orbstack | yes | Container/Linux VM runtime — cask for TCC permission stability |
 | microsoft-teams | yes | Teams desktop app (not available on Mac App Store) |
-| firefox | yes | Mozilla Firefox browser — cask for TCC permission stability |
+| libreoffice | yes | Office suite and `soffice` conversion tools |
+| openwebstart | yes | Java Web Start replacement for iDRAC virtual-console files |
 
 ### Mac App Store
 

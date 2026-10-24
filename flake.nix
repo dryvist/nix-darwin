@@ -99,7 +99,7 @@
     };
 
     jpe-ai-voice = {
-      url = "github:JacobPEvans/jpe-ai-voice?ref=v1.0.0";
+      url = "github:JacobPEvans/jpe-ai-voice?ref=v1.0.2";
       flake = true;
     };
 
@@ -117,6 +117,16 @@
     # master commit desynchronizes the two and breaks every `brew` invocation.
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
 
+    # Renovate tracks these pinned tap sources through the flake lock.
+    anomalyco-tap = {
+      url = "github:anomalyco/homebrew-tap";
+      flake = false;
+    };
+    anthropics-tap = {
+      url = "github:anthropics/homebrew-tap";
+      flake = false;
+    };
+
   };
 
   outputs =
@@ -133,6 +143,8 @@
       determinate,
       sops-nix,
       nix-homebrew,
+      anomalyco-tap,
+      anthropics-tap,
       dotgithub,
       ...
     }:
@@ -201,6 +213,8 @@
               homelab-contracts
               hostConfig
               nix-homebrew
+              anomalyco-tap
+              anthropics-tap
               ;
           };
           modules = [

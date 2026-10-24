@@ -25,8 +25,8 @@ let
   aiHomebrew = nix-ai.lib.homebrewFor homebrew.ai;
 
   workstationBrews = [
-    # Mac App Store CLI for homebrew.masApps.
-    "mas"
+    # Versioned runtime remains available alongside the Nix-managed Node.js.
+    "node@22"
 
     # Apple Silicon speech recognition.
     "whisperkit-cli"
@@ -55,16 +55,6 @@ let
     } # Terminal emulator — needs Full Disk Access + App Management + Local Network
 
     # --- Productivity / Communication ---
-    # nixpkgs trails upstream releases past the 2-week threshold; greedy cask
-    # keeps /Applications current (Homebrew cask versions are not pin-able here).
-    {
-      name = "raycast";
-      greedy = true;
-    } # Productivity launcher (replaces Spotlight)
-    {
-      name = "obsidian";
-      greedy = true;
-    } # Knowledge base / note-taking
     # nixpkgs Bitwarden is blocked by an insecure Electron dependency.
     {
       name = "bitwarden";
@@ -78,6 +68,14 @@ let
       name = "granola";
       greedy = true;
     } # AI-powered meeting notes
+    {
+      name = "claudebar";
+      greedy = true;
+    } # Claude Code menu bar utility
+    {
+      name = "neat";
+      greedy = true;
+    } # Neat device management app
 
     # --- API Development ---
     {
@@ -97,13 +95,6 @@ let
       name = "microsoft-teams";
       greedy = true;
     }
-    # --- Browsers ---
-    # Stable application path preserves TCC grants.
-    {
-      name = "firefox";
-      greedy = true;
-    }
-
     # Provides soffice for document conversion on Apple Silicon.
     {
       name = "libreoffice";

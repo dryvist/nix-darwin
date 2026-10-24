@@ -1,5 +1,39 @@
 # Changelog
 
+## [4.3.3](https://github.com/dryvist/nix-darwin/compare/v4.3.2...v4.3.3) (2026-10-24)
+
+
+### Bug Fixes
+
+* pin jpe-ai-voice to v1.0.2 ([#2967](https://github.com/dryvist/nix-darwin/issues/2967)) ([d232efb](https://github.com/dryvist/nix-darwin/commit/d232efb96d3382e82992989a8e6d85ded63237ca))
+
+## [4.3.2](https://github.com/dryvist/nix-darwin/compare/v4.3.1...v4.3.2) (2026-10-24)
+
+
+### Bug Fixes
+
+* **codex:** restore the Homebrew Codex cask on darwin ([#2965](https://github.com/dryvist/nix-darwin/issues/2965)) ([1470fe6](https://github.com/dryvist/nix-darwin/commit/1470fe6f584f6520832f95b855714c405ec093b2))
+
+## [4.3.1](https://github.com/dryvist/nix-darwin/compare/v4.3.0...v4.3.1) (2026-10-24)
+
+
+### Bug Fixes
+
+* **codex:** point the agent launcher at the nixpkgs Codex CLI ([#2961](https://github.com/dryvist/nix-darwin/issues/2961)) ([b311624](https://github.com/dryvist/nix-darwin/commit/b3116247ab6d891d0100ca5832775148462c6488))
+
+## [4.3.0](https://github.com/dryvist/nix-darwin/compare/v4.2.0...v4.3.0) (2026-10-24)
+
+
+### Features
+
+* **darwin:** run the macmon Prometheus exporter ([#2951](https://github.com/dryvist/nix-darwin/issues/2951)) ([59e830f](https://github.com/dryvist/nix-darwin/commit/59e830f89d16d8c787b290cb728891c869ce193a))
+* install the jpe-ai-voice writing guide and Vale style ([#2950](https://github.com/dryvist/nix-darwin/issues/2950)) ([c217de3](https://github.com/dryvist/nix-darwin/commit/c217de398e8d1880d9abeed60b5eeec459c0ee83))
+
+
+### Bug Fixes
+
+* **homebrew:** declare workstation package set ([#2954](https://github.com/dryvist/nix-darwin/issues/2954)) ([400b91b](https://github.com/dryvist/nix-darwin/commit/400b91b539045b18e8211fc3d0a843d207661ded))
+
 ## [4.2.0](https://github.com/dryvist/nix-darwin/compare/v4.1.0...v4.2.0) (2026-10-23)
 
 
