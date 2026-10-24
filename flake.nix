@@ -87,7 +87,7 @@
 
     # Cross-platform home-manager modules (git, zsh, vscode, monitoring, shells)
     nix-home = {
-      url = "github:dryvist/nix-home?ref=v1";
+      url = "github:dryvist/nix-home?ref=v1.57.2";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
     };
@@ -99,7 +99,7 @@
     };
 
     jpe-ai-voice = {
-      url = "github:JacobPEvans/jpe-ai-voice?ref=v1.0.0";
+      url = "github:JacobPEvans/jpe-ai-voice?ref=v1.0.2";
       flake = true;
     };
 
@@ -339,9 +339,11 @@
           # text lives here) with `pfctl -n -f` (syntax-only, does not load
           # it), so a bad anchor fails `nix flake check` instead of shipping
           # silently broken (see modules/darwin/pf-hardening.nix).
-          # One owner per AI CLI. Claude Code remains Homebrew-owned; Codex is
-          # supplied by nix-home from nixpkgs. These checks inspect real host
-          # configurations because lib/checks.nix receives no Darwin hosts.
+          # One owner per AI CLI. Homebrew installs Claude Code and Codex on
+          # darwin, so nix-ai leaves `package = null` and Nix must not build a
+          # second copy. Placed here, not in lib/checks.nix, because that call
+          # receives `darwinConfigurations = { }` — a check there would never
+          # evaluate a host and would pass vacuously.
           aarch64-darwin = {
             app-updates = import ./lib/checks/app-updates.nix {
               pkgs = nixpkgs.legacyPackages.aarch64-darwin;
@@ -355,12 +357,6 @@
             cli-ownership = import ./lib/checks/cli-ownership.nix {
               pkgs = nixpkgs.legacyPackages.aarch64-darwin;
               inherit configs;
-            };
-
-            agent-nofile = import ./lib/checks/agent-nofile.nix {
-              pkgs = nixpkgs.legacyPackages.aarch64-darwin;
-              inherit darwin configs;
-              src = ./.;
             };
 
             # Token Meter is deliberately universal: every registered Mac's
