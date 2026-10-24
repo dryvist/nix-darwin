@@ -39,6 +39,22 @@
         "type": "github"
       }
     },
+    "anomalyco-tap": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1792762289,
+        "narHash": "sha256-zytq1XIIbQakwpaUeFEyXKcFbUSkBWiPhcU4bH26bz0=",
+        "owner": "anomalyco",
+        "repo": "homebrew-tap",
+        "rev": "829902d45835c4501b5da4df091511c386c52661",
+        "type": "github"
+      },
+      "original": {
+        "owner": "anomalyco",
+        "repo": "homebrew-tap",
+        "type": "github"
+      }
+    },
     "anthropic-agent-skills": {
       "flake": false,
       "locked": {
@@ -52,6 +68,22 @@
       "original": {
         "owner": "anthropics",
         "repo": "skills",
+        "type": "github"
+      }
+    },
+    "anthropics-tap": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1792801346,
+        "narHash": "sha256-pvp3Vt/dXrT/4f3aJktQXCadWCLn25OsiWt7NhKjG1I=",
+        "owner": "anthropics",
+        "repo": "homebrew-tap",
+        "rev": "90ba7e3067ff5b97fab8dbe57048e794dd86dd42",
+        "type": "github"
+      },
+      "original": {
+        "owner": "anthropics",
+        "repo": "homebrew-tap",
         "type": "github"
       }
     },
@@ -553,11 +585,11 @@
     "dotgithub": {
       "flake": false,
       "locked": {
-        "lastModified": 1792817442,
-        "narHash": "sha256-VXM3EeeB/NTqr7pEzfq17wc2kk/qElUGdU4A/BUrNHU=",
+        "lastModified": 1792823496,
+        "narHash": "sha256-Rfum5E0qITccB8BHKPDXgLYsyzTBzvK4ZL1JpWWZRYM=",
         "owner": "JacobPEvans",
         "repo": ".github",
-        "rev": "e4aa8578f9fd915799856275e6030f852977f0e5",
+        "rev": "5ad431c84dabc4d7faebf23a54630bf6efb3cd5b",
         "type": "github"
       },
       "original": {
@@ -1568,11 +1600,11 @@
         "tofu-github": "tofu-github"
       },
       "locked": {
-        "lastModified": 1792819243,
-        "narHash": "sha256-IjDFauhdx9fMoKWJxH73FvdvZVwcb4y8z5iN5lfA5FA=",
+        "lastModified": 1792715830,
+        "narHash": "sha256-KxLiwyQ/qulbRJ3yMTYH2oanAr98ykZcsVo3oRvt5BI=",
         "owner": "dryvist",
         "repo": "nix-home",
-        "rev": "0115786614ad9de6e82d44ab305144c31e9c0d82",
+        "rev": "df3da845c764b602a77b3f6aa6eb6352a0a4e9c3",
         "type": "github"
       },
       "original": {
@@ -1816,6 +1848,8 @@
     "root": {
       "inputs": {
         "ai-llm-prompts": "ai-llm-prompts",
+        "anomalyco-tap": "anomalyco-tap",
+        "anthropics-tap": "anthropics-tap",
         "claude-code-plugins": "claude-code-plugins_2",
         "darwin": "darwin",
         "determinate": "determinate",
@@ -1831,9 +1865,7 @@
         "nix-openwhispr": "nix-openwhispr",
         "nixpkgs": "nixpkgs_4",
         "sops-nix": "sops-nix",
-        "systems": "systems_4",
-        "anomalyco-tap": "anomalyco-tap",
-        "anthropics-tap": "anthropics-tap"
+        "systems": "systems_4"
       }
     },
     "sops-nix": {
@@ -2118,38 +2150,6 @@
       "original": {
         "owner": "nicobailon",
         "repo": "visual-explainer",
-        "type": "github"
-      }
-    },
-    "anomalyco-tap": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1792762289,
-        "narHash": "sha256-zytq1XIIbQakwpaUeFEyXKcFbUSkBWiPhcU4bH26bz0=",
-        "owner": "anomalyco",
-        "repo": "homebrew-tap",
-        "rev": "829902d45835c4501b5da4df091511c386c52661",
-        "type": "github"
-      },
-      "original": {
-        "owner": "anomalyco",
-        "repo": "homebrew-tap",
-        "type": "github"
-      }
-    },
-    "anthropics-tap": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1792801346,
-        "narHash": "sha256-pvp3Vt/dXrT/4f3aJktQXCadWCLn25OsiWt7NhKjG1I=",
-        "owner": "anthropics",
-        "repo": "homebrew-tap",
-        "rev": "90ba7e3067ff5b97fab8dbe57048e794dd86dd42",
-        "type": "github"
-      },
-      "original": {
-        "owner": "anthropics",
-        "repo": "homebrew-tap",
         "type": "github"
       }
     }
