@@ -112,6 +112,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # GitOps daemon; host-specific remotes stay in the private wrapper.
+    comin = {
+      url = "github:nlewo/comin";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # brew-src is intentionally NOT overridden: nix-homebrew pins the Homebrew
     # release tag its own bin/brew wrapper was generated from. Pointing it at a
     # master commit desynchronizes the two and breaks every `brew` invocation.
@@ -142,6 +148,7 @@
       nix-home,
       determinate,
       sops-nix,
+      comin,
       nix-homebrew,
       anomalyco-tap,
       anthropics-tap,
@@ -232,6 +239,9 @@
 
             # Legacy SOPS bridge while remaining consumers move to OpenBao.
             sops-nix.darwinModules.sops
+
+            # GitOps daemon; private host config supplies the deployment remote.
+            comin.darwinModules.comin
 
             # Python package overlay from nix-home (replaces local overlays/python-packages.nix)
             { nixpkgs.overlays = [ nix-home.overlays.default ]; }
