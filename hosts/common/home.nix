@@ -109,6 +109,9 @@ in
   };
 
   programs = {
+    # nix-home owns the Codex CLI from nixpkgs; nix-ai's launcher must exec that package.
+    codex.package = pkgs.codex;
+
     jpe-ai-voice.enable = true;
 
     # Coding-agent usage metrics. The transcripts carry the 5m-vs-1h cache
