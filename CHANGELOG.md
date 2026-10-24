@@ -1,5 +1,18 @@
 # Changelog
 
+## [4.3.0](https://github.com/dryvist/nix-darwin/compare/v4.2.0...v4.3.0) (2026-10-24)
+
+
+### Features
+
+* **darwin:** run the macmon Prometheus exporter ([#2951](https://github.com/dryvist/nix-darwin/issues/2951)) ([59e830f](https://github.com/dryvist/nix-darwin/commit/59e830f89d16d8c787b290cb728891c869ce193a))
+* install the jpe-ai-voice writing guide and Vale style ([#2950](https://github.com/dryvist/nix-darwin/issues/2950)) ([c217de3](https://github.com/dryvist/nix-darwin/commit/c217de398e8d1880d9abeed60b5eeec459c0ee83))
+
+
+### Bug Fixes
+
+* **homebrew:** declare workstation package set ([#2954](https://github.com/dryvist/nix-darwin/issues/2954)) ([400b91b](https://github.com/dryvist/nix-darwin/commit/400b91b539045b18e8211fc3d0a843d207661ded))
+
 ## [4.2.0](https://github.com/dryvist/nix-darwin/compare/v4.1.0...v4.2.0) (2026-10-23)
 
 
