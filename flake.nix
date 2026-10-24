@@ -98,6 +98,11 @@
       inputs.home-manager.follows = "home-manager";
     };
 
+    jpe-ai-voice = {
+      url = "github:JacobPEvans/jpe-ai-voice?ref=v1.0.0";
+      flake = true;
+    };
+
     # Official Determinate Nix module; automated updates are tracked by Renovate.
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
 
@@ -112,10 +117,20 @@
     # master commit desynchronizes the two and breaks every `brew` invocation.
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
 
+    # Renovate tracks these pinned tap sources through the flake lock.
+    anomalyco-tap = {
+      url = "github:anomalyco/homebrew-tap";
+      flake = false;
+    };
+    anthropics-tap = {
+      url = "github:anthropics/homebrew-tap";
+      flake = false;
+    };
+
   };
 
   outputs =
-    {
+    inputs@{
       self,
       nixpkgs,
       darwin,
@@ -128,6 +143,8 @@
       determinate,
       sops-nix,
       nix-homebrew,
+      anomalyco-tap,
+      anthropics-tap,
       dotgithub,
       ...
     }:
@@ -196,6 +213,8 @@
               homelab-contracts
               hostConfig
               nix-homebrew
+              anomalyco-tap
+              anthropics-tap
               ;
           };
           modules = [
@@ -246,6 +265,7 @@
                   ./modules/home-manager/launchd-trampolines.nix
                   nix-ai.homeManagerModules.default
                   nix-home.homeManagerModules.default
+                  inputs.jpe-ai-voice.homeManagerModules.default
                 ]
                 ++ lib.optionals (label == "macbook-m4") [
                   nix-ai-open-harness.homeManagerModules.default

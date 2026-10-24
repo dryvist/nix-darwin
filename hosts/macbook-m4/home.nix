@@ -98,17 +98,19 @@
 
     # AI IDEs & Tools (nixpkgs - stable TCC paths via copyApps)
     code-cursor # Cursor AI IDE (VS Code fork)
-    # chatgpt: moved to homebrew.nix cask (greedy). nixpkgs lags OpenAI's
-    # weekly releases by months and a store app cannot self-update; the
-    # greedy cask mirrors the `claude` desktop pattern and stays current.
+    chatgpt # OpenAI ChatGPT desktop app
 
     # Communication
     discord # Voice/video chat - copyApps gives TCC-stable path for camera/mic permissions
     # zoom-us # DISABLED - no longer using Zoom
 
     # Productivity / menu bar
-    # raycast: moved to homebrew.nix cask (greedy) — nixpkgs lags upstream.
+    obsidian # Knowledge base / note-taking
+    raycast # Productivity launcher
     swiftbar # Menu bar customization
+
+    # Browsers
+    firefox # Mozilla Firefox browser
 
     # CLI / Media tools (non-GUI, no .app bundle)
     ffmpeg # Complete solution to record, convert and stream audio and video

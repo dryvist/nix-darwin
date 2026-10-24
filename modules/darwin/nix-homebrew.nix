@@ -9,7 +9,14 @@
 # Kept in its own module (not flake.nix or homebrew.nix) to stay under the
 # per-file size cap. `nix-homebrew` arrives via specialArgs (see flake.nix).
 
-{ nix-homebrew, ... }:
+{
+  lib,
+  nix-homebrew,
+  hostConfig,
+  anomalyco-tap,
+  anthropics-tap,
+  ...
+}:
 
 let
   # Plain file import (not a module arg), matching modules/darwin/sops.nix —
@@ -21,15 +28,18 @@ in
 
   nix-homebrew = {
     enable = true;
+    taps = lib.optionalAttrs hostConfig.homebrew.enableWorkstationApps {
+      "anomalyco/tap" = anomalyco-tap;
+      "anthropics/tap" = anthropics-tap;
+    };
     # Apple Silicon only — no Intel (Rosetta) prefix needed.
     enableRosetta = false;
     # User that owns /opt/homebrew (same across every host).
     user = userConfig.user.name;
     # Adopt an existing manual install (macbook-m4) instead of failing.
     autoMigrate = true;
-    # Keep taps mutable: nix-darwin's `homebrew.taps` and per-agent nix-ai taps
-    # are applied via `brew tap` at activation. Setting this false would make the
-    # taps dir immutable and break them.
-    mutableTaps = true;
+    # Custom workstation taps are pinned flake inputs, so activation can keep
+    # the tap directory immutable.
+    mutableTaps = false;
   };
 }

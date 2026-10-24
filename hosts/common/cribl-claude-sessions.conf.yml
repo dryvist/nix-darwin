@@ -1,0 +1,51 @@
+output: default
+streamtags: []
+groups: {}
+asyncFuncTimeout: 1000
+description: >-
+  Claude Code session pipeline. Stamps the session source and index, then
+  maps user and assistant text onto OpenTelemetry-AI message and llm fields.
+functions:
+  - id: eval
+    filter: "true"
+    disabled: false
+    conf:
+      add:
+        - name: sourcetype
+          value: "'claude:cli:session'"
+        - name: index
+          value: "'claude'"
+        - name: session_id
+          value: sessionId
+        - name: cwd
+          value: cwd
+        - name: timestamp
+          value: timestamp
+        - name: "'message.role'"
+          value: >-
+            type === 'user' || type === 'assistant' ? type
+              : message && message.role
+        - name: "'message.content'"
+          value: >-
+            message && typeof message.content === 'string' ? message.content
+              : message && Array.isArray(message.content)
+                ? message.content
+                    .filter(part => part.type === 'text' && typeof part.text === 'string')
+                    .map(part => part.text)
+                    .join('')
+                : undefined
+  - id: eval
+    filter: "type === 'user' || type === 'assistant'"
+    disabled: false
+    conf:
+      add:
+        - name: "'llm.prompt'"
+          value: >-
+            type === 'user' && __e['message.content']
+              ? __e['message.content']
+              : undefined
+        - name: "'llm.completion'"
+          value: >-
+            type === 'assistant' && __e['message.content']
+              ? __e['message.content']
+              : undefined

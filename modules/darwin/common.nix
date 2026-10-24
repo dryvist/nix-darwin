@@ -20,6 +20,7 @@ in
     ./apps
     ./dock
     ./launchd-trampolines.nix
+    ./macmon-exporter.nix
   ]
   ++ (if builtins.pathExists ./local.nix then [ ./local.nix ] else [ ])
   ++ [
@@ -67,6 +68,7 @@ in
   nixpkgs.overlays = [
     (import ../../overlays/direnv-darwin-fix.nix) # TEMPORARY: NixOS/nix#6065
     (import ../../overlays/python-darwin-test-fixes.nix) # TEMPORARY: pgvector + accelerate
+    (import ../../overlays/macmon-serve.nix) # TEMPORARY: macmon serve needs >= 0.9.0
   ];
 
   # --- User Configuration ---
@@ -124,9 +126,14 @@ in
     # ========================================================================
     sox # Audio recording, conversion, and effects (Sound eXchange)
     portaudio # Cross-platform audio I/O library
+
+    # ========================================================================
+    # Other libraries
+    # ========================================================================
+    simdutf # SIMD UTF-8 validation library
   ];
-  # GUI apps: SwiftBar via home-manager copyApps (hosts/macbook-m4/home.nix);
-  # Raycast / Bitwarden / Ghostty / etc. are Homebrew casks (see homebrew.nix).
+  # Workstation GUI apps are declared in hosts/macbook-m4/home.nix; remaining casks
+  # are in modules/darwin/homebrew.nix.
 
   # --- Homebrew Configuration ---
   # See ./homebrew.nix for casks, brews, and masApps
