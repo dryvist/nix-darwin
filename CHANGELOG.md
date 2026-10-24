@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.3.1](https://github.com/dryvist/nix-darwin/compare/v4.3.0...v4.3.1) (2026-10-24)
+
+
+### Bug Fixes
+
+* **codex:** point the agent launcher at the nixpkgs Codex CLI ([#2961](https://github.com/dryvist/nix-darwin/issues/2961)) ([b311624](https://github.com/dryvist/nix-darwin/commit/b3116247ab6d891d0100ca5832775148462c6488))
+
 ## [4.3.0](https://github.com/dryvist/nix-darwin/compare/v4.2.0...v4.3.0) (2026-10-24)
 
 
