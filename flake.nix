@@ -98,6 +98,11 @@
       inputs.home-manager.follows = "home-manager";
     };
 
+    jpe-ai-voice = {
+      url = "github:JacobPEvans/jpe-ai-voice";
+      flake = true;
+    };
+
     # Official Determinate Nix module; automated updates are tracked by Renovate.
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
 
@@ -115,7 +120,7 @@
   };
 
   outputs =
-    {
+    inputs@{
       self,
       nixpkgs,
       darwin,
@@ -246,6 +251,7 @@
                   ./modules/home-manager/launchd-trampolines.nix
                   nix-ai.homeManagerModules.default
                   nix-home.homeManagerModules.default
+                  inputs.jpe-ai-voice.homeManagerModules.default
                 ]
                 ++ lib.optionals (label == "macbook-m4") [
                   nix-ai-open-harness.homeManagerModules.default
