@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.4.1](https://github.com/dryvist/nix-darwin/compare/v4.4.0...v4.4.1) (2026-10-24)
+
+
+### Bug Fixes
+
+* **comin:** drop comin's formatter and flake-compat inputs ([#2977](https://github.com/dryvist/nix-darwin/issues/2977)) ([815bad5](https://github.com/dryvist/nix-darwin/commit/815bad546ea0bfaf88f26678a612d0a34cf96645))
+
 ## [4.4.0](https://github.com/dryvist/nix-darwin/compare/v4.3.3...v4.4.0) (2026-10-24)
 
 
