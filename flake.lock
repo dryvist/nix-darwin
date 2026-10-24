@@ -1069,11 +1069,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792338902,
-        "narHash": "sha256-vw5kZX833XFfW9wb8kScw7fNK5If5xx+CZGW3pGvjPA=",
+        "lastModified": 1792811453,
+        "narHash": "sha256-PPPvyo0vn5uoaupFEPll4dpHgmtNCw8dBaUMOZBrnTM=",
         "owner": "dryvist",
         "repo": "homelab-contracts",
-        "rev": "ba20d1784f8101d7bc67c080d62d006002ecc498",
+        "rev": "dc4182d54f7ecadec5de61dd9dbeae60bb27e9f8",
         "type": "github"
       },
       "original": {
@@ -1600,16 +1600,16 @@
         "tofu-github": "tofu-github"
       },
       "locked": {
-        "lastModified": 1792819243,
-        "narHash": "sha256-IjDFauhdx9fMoKWJxH73FvdvZVwcb4y8z5iN5lfA5FA=",
+        "lastModified": 1792847061,
+        "narHash": "sha256-v0DC63MRPYOG5OO59vkNZfmaCgZO31j2qWhS4UvLD64=",
         "owner": "dryvist",
         "repo": "nix-home",
-        "rev": "0115786614ad9de6e82d44ab305144c31e9c0d82",
+        "rev": "979a8c5a7c7f1662389d03f232c386b31845904d",
         "type": "github"
       },
       "original": {
         "owner": "dryvist",
-        "ref": "v1",
+        "ref": "v1.57.2",
         "repo": "nix-home",
         "type": "github"
       }
@@ -1720,11 +1720,11 @@
     },
     "nixpkgs-unstable_2": {
       "locked": {
-        "lastModified": 1792116957,
-        "narHash": "sha256-EjZqHKObBfIOeHZnMRVV87HB3pPq/WBkmRJWyFxmZu8=",
+        "lastModified": 1792506237,
+        "narHash": "sha256-Q/8KLB6jNfpaUN1HAedE/u/Et9feE/zYSsutBLKrCFk=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "f20cd90e28fe0403873f473b29e42662cd86e8c4",
+        "rev": "5adc50831c259f87faeb09ddf930d43597197473",
         "type": "github"
       },
       "original": {
