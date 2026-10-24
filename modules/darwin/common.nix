@@ -20,6 +20,7 @@ in
     ./apps
     ./dock
     ./launchd-trampolines.nix
+    ./macmon-exporter.nix
   ]
   ++ (if builtins.pathExists ./local.nix then [ ./local.nix ] else [ ])
   ++ [
@@ -67,6 +68,7 @@ in
   nixpkgs.overlays = [
     (import ../../overlays/direnv-darwin-fix.nix) # TEMPORARY: NixOS/nix#6065
     (import ../../overlays/python-darwin-test-fixes.nix) # TEMPORARY: pgvector + accelerate
+    (import ../../overlays/macmon-serve.nix) # TEMPORARY: macmon serve needs >= 0.9.0
   ];
 
   # --- User Configuration ---
