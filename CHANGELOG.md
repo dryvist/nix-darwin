@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.3.2](https://github.com/dryvist/nix-darwin/compare/v4.3.1...v4.3.2) (2026-10-24)
+
+
+### Bug Fixes
+
+* **codex:** restore the Homebrew Codex cask on darwin ([#2965](https://github.com/dryvist/nix-darwin/issues/2965)) ([1470fe6](https://github.com/dryvist/nix-darwin/commit/1470fe6f584f6520832f95b855714c405ec093b2))
+
 ## [4.3.1](https://github.com/dryvist/nix-darwin/compare/v4.3.0...v4.3.1) (2026-10-24)
 
 
