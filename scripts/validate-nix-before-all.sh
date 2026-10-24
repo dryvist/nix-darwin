@@ -28,6 +28,9 @@ EXCLUSIONS=(
   "container:Homebrew tracks Apple container releases ahead of nixpkgs; use current upstream runtime"
   "orbstack:Cask preferred over nixpkgs for TCC permission stability (nixpkgs symlink changes on rebuild, forcing TCC re-grant)"
   "postman:Nixpkgs version lags significantly behind upstream, causing Squirrel/ShipIt schema mismatch errors"
+  "ghostty:nixpkgs marks ghostty unavailable on aarch64-darwin; the Homebrew cask provides its native macOS app"
+  "libreoffice:nixpkgs marks libreoffice unavailable on aarch64-darwin; the Homebrew cask provides the macOS app"
+  "neat:nixpkgs neat is a Haskell template engine, not the Neat device management app"
 )
 
 # Read the EVALUATED config, never the Nix source text.

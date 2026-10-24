@@ -1568,11 +1568,11 @@
         "tofu-github": "tofu-github"
       },
       "locked": {
-        "lastModified": 1792715830,
-        "narHash": "sha256-KxLiwyQ/qulbRJ3yMTYH2oanAr98ykZcsVo3oRvt5BI=",
+        "lastModified": 1792819243,
+        "narHash": "sha256-IjDFauhdx9fMoKWJxH73FvdvZVwcb4y8z5iN5lfA5FA=",
         "owner": "dryvist",
         "repo": "nix-home",
-        "rev": "df3da845c764b602a77b3f6aa6eb6352a0a4e9c3",
+        "rev": "0115786614ad9de6e82d44ab305144c31e9c0d82",
         "type": "github"
       },
       "original": {

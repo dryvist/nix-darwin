@@ -25,9 +25,7 @@ let
   server = lib.recursiveUpdate default {
     homebrew.ai = {
       claudeCode = true;
-      codex = true;
       goose = true;
-      langgraphCli = true;
     };
   };
 
@@ -39,7 +37,6 @@ let
       ai = {
         antigravityDesktop = true;
         antigravityIde = true;
-        chatgptDesktop = true;
         claudeDesktop = true;
         codexDesktop = true;
       };
