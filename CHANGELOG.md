@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.6.0](https://github.com/dryvist/nix-darwin/compare/v4.5.0...v4.6.0) (2026-10-25)
+
+
+### Features
+
+* **darwin:** add opt-in comin and a cluster-guarded nightly batch job ([#2986](https://github.com/dryvist/nix-darwin/issues/2986)) ([46b55f0](https://github.com/dryvist/nix-darwin/commit/46b55f090bbf9c72dfeedcb848f009506e153af1))
+
+
+### Bug Fixes
+
+* **cluster:** refuse activation while the cluster link is up and armed ([#2984](https://github.com/dryvist/nix-darwin/issues/2984)) ([e00a529](https://github.com/dryvist/nix-darwin/commit/e00a5297fcc3becb2f60ff3dc4a6155c0c42ff5c))
+
 ## [4.5.0](https://github.com/dryvist/nix-darwin/compare/v4.4.1...v4.5.0) (2026-10-25)
 
 
