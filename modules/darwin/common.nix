@@ -28,6 +28,8 @@ in
     ./file-extensions.nix
     ./cluster-link-prep.nix
     ./cluster-rebuild-gate.nix
+    ./comin.nix
+    ./mac-schedule.nix
     ./finder.nix
     ./homebrew.nix
     ./app-updates.nix
