@@ -15,11 +15,15 @@
 # child.
 #
 # Usage:
-#   openbao-run [--domain local-llm] \
+#   openbao-run [--optional] [--domain local-llm] \
 #     [--env-file <0600-path>] \
 #     [--secret [<mount>:]ENV_NAME=<kv-path>#<field>] \
 #     [--secrets [<mount>:]<kv-path>] \
 #     -- <command> [args...]
+#
+# --optional warns and execs the command without requested secrets if secret-zero,
+# login, or any read fails. It clears every requested or already-read secret so
+# the child never starts with a partial credential set.
 #
 # --secret injects ONE field under a chosen name. --secrets injects EVERY key
 # at a KV v2 document under its own key name — the shape needed to replace a
@@ -27,10 +31,12 @@
 # mixed; they are applied strictly left to right, so a later flag overrides an
 # earlier one and documents layer (base first, overrides last).
 #
-# Authentication: with --domain, this domain's AppRole is REQUIRED and its
-# absence is fatal — unattended agents must never silently fall through to
-# something ambient. Without --domain, an already-valid BAO_TOKEN/VAULT_TOKEN
-# in the environment is used, which is the interactive workstation path.
+# Authentication: with --domain, this domain's AppRole is REQUIRED by default
+# and its absence is fatal — unattended agents must never silently fall through
+# to something ambient. --optional instead warns and starts without requested
+# secrets when secret-zero or OpenBao is unavailable. Without --domain, an
+# already-valid BAO_TOKEN/VAULT_TOKEN in the environment is used, which is the
+# interactive workstation path.
 #
 # Login backoff (per-domain, per-AppRole circuit breaker): a refused login is never
 # retried before its backoff window ends, however often the wrapper is started.
@@ -72,13 +78,119 @@ die() {
   exit 1
 }
 
+is_credential_name() {
+  case "$1" in
+    OPENBAO_APPROLE_*|*_VAULT_ROLE_ID|*_VAULT_SECRET_ID|BAO_TOKEN|VAULT_TOKEN) return 0 ;;
+  esac
+  return 1
+}
+
+scrub_credentials() {
+  unset token ambient_token
+  # `export -p`, not `compgen -e`: the packaged non-interactive bash has no
+  # compgen builtin, and a missing builtin would silently scrub nothing. Both
+  # output forms are read: `declare -x NAME` and, in POSIX mode, `export NAME`.
+  while IFS= read -r line; do
+    [[ "$line" =~ ^(declare\ -[a-zA-Z-]*|export)\ ([A-Za-z_][A-Za-z0-9_]*) ]] || continue
+    name="${BASH_REMATCH[2]}"
+    if is_credential_name "$name"; then unset "$name"; fi
+  done < <(export -p)
+
+  # Fail closed on what the child would actually inherit: a name bash cannot
+  # list or unset (not an identifier) still passes through exec.
+  while IFS= read -r -d '' entry; do
+    if is_credential_name "${entry%%=*}"; then
+      die "refusing to exec: credential variable ${entry%%=*} is still in the environment"
+    fi
+  done < <(env -0)
+}
+
+optional_targets() {
+  local output separator index entry kind mapping name
+  output=""
+  separator=""
+  index=0
+  while [ "$index" -lt "${#specs[@]}" ]; do
+    entry="${specs[$index]}"
+    kind="${entry%%	*}"
+    mapping="${entry#*	}"
+    mapping="${mapping//$'\n'/ }"
+    if [ "$kind" = "field" ]; then
+      name="${mapping%%=*}"
+      if [[ "$name" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+        output="${output}${separator}${name}"
+        separator=", "
+      fi
+    else
+      output="${output}${separator}keys from ${mapping}"
+      separator=", "
+    fi
+    index=$((index + 1))
+  done
+  [ -n "$output" ] || output="requested secret variables"
+  printf '%s' "$output"
+}
+
+optional_continue() {
+  local reason targets index entry kind mapping name
+  reason="${1//$'\n'/ }"
+  targets="$(optional_targets)"
+
+  # Optional reads are all-or-none. Clear explicit mappings even if they were
+  # already present in the caller, and clear document keys exported by reads
+  # that completed before this failure.
+  index=0
+  while [ "$index" -lt "${#specs[@]}" ]; do
+    entry="${specs[$index]}"
+    kind="${entry%%	*}"
+    if [ "$kind" = "field" ]; then
+      mapping="${entry#*	}"
+      name="${mapping%%=*}"
+      if [[ "$name" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+        unset "$name" 2>/dev/null || true
+        if printenv "$name" >/dev/null 2>&1; then
+          die "refusing to exec: requested secret variable $name is still in the environment"
+        fi
+      fi
+    fi
+    index=$((index + 1))
+  done
+  index=0
+  while [ "$index" -lt "${#exported_secret_names[@]}" ]; do
+    name="${exported_secret_names[$index]}"
+    unset "$name" 2>/dev/null || true
+    if printenv "$name" >/dev/null 2>&1; then
+      die "refusing to exec: requested secret variable $name is still in the environment"
+    fi
+    index=$((index + 1))
+  done
+  unset login_payload login_resp doc_json value
+  scrub_credentials
+  echo "$prefix WARN $reason; continuing without $targets" >&2
+  exec "${command_args[@]}"
+}
+
+fail_or_continue() {
+  local warning_reason error_message
+  warning_reason="$1"
+  error_message="$2"
+  if [ "$optional" -eq 1 ]; then optional_continue "$warning_reason"; fi
+  die "$error_message"
+}
+
 domain=""
 env_file=""
+optional=0
 # One ordered list so --secret and --secrets apply in the order given (later
 # wins). Each entry is "field\t<spec>" or "doc\t<spec>".
 declare -a specs=()
+declare -a exported_secret_names=()
 while [ "$#" -gt 0 ]; do
   case "$1" in
+    --optional)
+      optional=1
+      shift
+      ;;
     --domain)
       domain="${2:?--domain needs a value}"
       shift 2
@@ -105,13 +217,14 @@ done
 
 [ "${#specs[@]}" -gt 0 ] || die "no --secret or --secrets mappings given"
 [ "$#" -gt 0 ] || die "no command after -- to exec"
+declare -a command_args=("$@")
 
 # Secret-zero env file: sourced before resolution so unattended launchd agents
 # get their bootstrap (BAO_ADDR + AppRole creds) with no keychain and no
 # ambient session. Must be user-owned 0600 or 0400 — refuse anything looser,
 # since the file authenticates to OpenBao.
 if [ -n "$env_file" ]; then
-  [ -f "$env_file" ] || die "--env-file '$env_file' does not exist (seed it: BAO_ADDR + OPENBAO_APPROLE_<DOMAIN>_ROLE_ID/_SECRET_ID)"
+  [ -f "$env_file" ] || fail_or_continue "secret-zero env file unavailable" "--env-file '$env_file' does not exist (seed it: BAO_ADDR + OPENBAO_APPROLE_<DOMAIN>_ROLE_ID/_SECRET_ID)"
   perms="$(/usr/bin/stat -f '%Lp' "$env_file")"
   [ "$perms" = "600" ] || [ "$perms" = "400" ] || die "--env-file '$env_file' must be mode 0600 or 0400 (is $perms)"
   set -a
@@ -132,7 +245,7 @@ src="environment"
 # OpenBao address: honor either the OpenBao-native or the legacy Vault name.
 addr="$(resolve BAO_ADDR)"
 [ -n "$addr" ] || addr="$(resolve VAULT_ADDR)"
-[ -n "$addr" ] || die "BAO_ADDR not in $src"
+[ -n "$addr" ] || fail_or_continue "BAO_ADDR unavailable" "BAO_ADDR not in $src"
 
 # This domain's AppRole role_id/secret_id, named
 # OPENBAO_APPROLE_<DOMAIN>_ROLE_ID/_SECRET_ID (the names the scheduled rotator
@@ -161,14 +274,14 @@ if [ -n "$domain" ]; then
   # A domain names an AppRole, so its absence is FATAL rather than a fall
   # through to whatever token happens to be ambient — an unattended agent that
   # silently borrowed an interactive credential would be worse than a failure.
-  [ -n "$role_id" ] || die "neither OPENBAO_APPROLE_${domain_upper}_ROLE_ID nor ${domain_upper}_VAULT_ROLE_ID in $src"
-  [ -n "$secret_id" ] || die "${env_prefix}${cred_suffix}_SECRET_ID not in $src"
+  [ -n "$role_id" ] || fail_or_continue "AppRole role ID unavailable" "neither OPENBAO_APPROLE_${domain_upper}_ROLE_ID nor ${domain_upper}_VAULT_ROLE_ID in $src"
+  [ -n "$secret_id" ] || fail_or_continue "AppRole secret ID unavailable" "${env_prefix}${cred_suffix}_SECRET_ID not in $src"
 else
   # Interactive workstation path: no AppRole named, so use the token the
   # caller already holds from a native login.
   ambient_token="$(resolve BAO_TOKEN)"
   [ -n "$ambient_token" ] || ambient_token="$(resolve VAULT_TOKEN)"
-  [ -n "$ambient_token" ] || die "no --domain given and no BAO_TOKEN/VAULT_TOKEN in $src — authenticate to OpenBao first"
+  [ -n "$ambient_token" ] || fail_or_continue "OpenBao token unavailable" "no --domain given and no BAO_TOKEN/VAULT_TOKEN in $src — authenticate to OpenBao first"
 fi
 
 # ALL OpenBao HTTP goes through /usr/bin/curl — the APPLE PLATFORM binary,
@@ -228,12 +341,21 @@ record_refusal() { # $1 HTTP status
   [ "$doublings" -le 4 ] || doublings=4
   delay=$((60 << doublings))
   [ "$delay" -le 900 ] || delay=900
-  if ! { mkdir -p "$state_dir" && chmod 0700 "$state_dir" \
+  if [ "$optional" -eq 1 ]; then
+    if ! { mkdir -p "$state_dir" && chmod 0700 "$state_dir" \
+      && (umask 077 && printf '%s %s\n' "$refusals" "$(($(date +%s) + delay))" > "$state_file"); } 2>/dev/null; then
+      :
+    fi
+  elif ! { mkdir -p "$state_dir" && chmod 0700 "$state_dir" \
     && (umask 077 && printf '%s %s\n' "$refusals" "$(($(date +%s) + delay))" > "$state_file"); }; then
     echo "$prefix WARN could not record the login backoff in $state_file" >&2
   fi
-  echo "$prefix login refused (HTTP $1) for domain '$domain': refusal $refusals, no login for the next $delay seconds" >&2
+  if [ "$optional" -eq 0 ]; then
+    echo "$prefix login refused (HTTP $1) for domain '$domain': refusal $refusals, no login for the next $delay seconds" >&2
+  fi
 }
+
+login_circuit_reset=0
 
 if [ -n "$login_payload" ]; then
   state_dir="${XDG_STATE_HOME:-${HOME:?HOME is not set}/.local/state}/openbao-run"
@@ -247,14 +369,20 @@ if [ -n "$login_payload" ]; then
     read -r saved_refusals saved_next < "$state_file" || true
     case "$saved_refusals:$saved_next" in
       *[!0-9:]* | :* | *:)
-        echo "$prefix login backoff state for domain '$domain' is unreadable ($state_file); ignoring it" >&2
+        if [ "$optional" -eq 0 ]; then
+          echo "$prefix login backoff state for domain '$domain' is unreadable ($state_file); ignoring it" >&2
+        fi
         ;;
       *)
         refusals=$((10#$saved_refusals))
         remaining=$((10#$saved_next - $(date +%s)))
         if [ "$remaining" -gt 0 ]; then
-          echo "$prefix circuit open for domain '$domain': no login for $remaining more seconds" >&2
-          exit 75
+          if [ "$optional" -eq 1 ]; then
+            optional_continue "circuit open"
+          else
+            echo "$prefix circuit open for domain '$domain': no login for $remaining more seconds" >&2
+            exit 75
+          fi
         fi
         ;;
     esac
@@ -263,20 +391,39 @@ if [ -n "$login_payload" ]; then
   # -f makes an HTTP error status exit 22; -w still appends the status, which is
   # how a refusal (credential rejected) is told apart from a network fault.
   login_rc=0
-  login_resp="$(printf '%s' "$login_payload" \
-    | "$curl_bin" -sSf --max-time 30 -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
-        --data-binary @- "$addr/v1/auth/approle/login")" || login_rc=$?
+  if [ "$optional" -eq 1 ]; then
+    login_resp="$(printf '%s' "$login_payload" \
+      | "$curl_bin" -sSf --max-time 30 -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
+          --data-binary @- "$addr/v1/auth/approle/login" 2>/dev/null)" || login_rc=$?
+  else
+    login_resp="$(printf '%s' "$login_payload" \
+      | "$curl_bin" -sSf --max-time 30 -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
+          --data-binary @- "$addr/v1/auth/approle/login")" || login_rc=$?
+  fi
   login_code="${login_resp: -3}"
-  if [ "$login_rc" -eq 0 ] && token="$(printf '%s' "${login_resp%???}" | jq -re '.auth.client_token')"; then
+  login_succeeded=0
+  if [ "$login_rc" -eq 0 ]; then
+    if [ "$optional" -eq 1 ]; then
+      token="$(printf '%s' "${login_resp%???}" | jq -re '.auth.client_token' 2>/dev/null)" && login_succeeded=1
+    elif token="$(printf '%s' "${login_resp%???}" | jq -re '.auth.client_token')"; then
+      login_succeeded=1
+    fi
+  fi
+  if [ "$login_succeeded" -eq 1 ]; then
     if [ -e "$state_file" ]; then
       rm -f "$state_file"
-      echo "$prefix circuit reset for domain '$domain': login succeeded" >&2
+      if [ "$optional" -eq 1 ]; then
+        login_circuit_reset=1
+      else
+        echo "$prefix circuit reset for domain '$domain': login succeeded" >&2
+      fi
     fi
   else
     case "$login_code" in
       400 | 401 | 403) record_refusal "$login_code" ;;
-      *) login_diagnosis ;;
+      *) [ "$optional" -eq 1 ] || login_diagnosis ;;
     esac
+    if [ "$optional" -eq 1 ]; then optional_continue "AppRole login failed"; fi
     die "AppRole login failed for domain '$domain' at $addr"
   fi
   unset login_resp
@@ -292,9 +439,15 @@ default_mount="${OPENBAO_KV_MOUNT:-secret}"
 # printing it, so no secret ever reaches a command substitution's pipe buffer.
 doc_json=""
 read_doc() { # $1 mount, $2 path
-  doc_json="$("$curl_bin" -sSf --max-time 30 -H @<(printf 'X-Vault-Token: %s\n' "$token") \
-    "$addr/v1/$1/data/$2")" \
-    || die "read failed: $1/$2 (path missing, or the credential lacks read on it?)"
+  if [ "$optional" -eq 1 ]; then
+    doc_json="$("$curl_bin" -sSf --max-time 30 -H @<(printf 'X-Vault-Token: %s\n' "$token") \
+      "$addr/v1/$1/data/$2" 2>/dev/null)" \
+      || optional_continue "read failed: $1/$2"
+  else
+    doc_json="$("$curl_bin" -sSf --max-time 30 -H @<(printf 'X-Vault-Token: %s\n' "$token") \
+      "$addr/v1/$1/data/$2")" \
+      || die "read failed: $1/$2 (path missing, or the credential lacks read on it?)"
+  fi
 }
 
 # Apply each mapping in the order given, so a later flag overrides an earlier
@@ -312,9 +465,19 @@ for spec in "${specs[@]}"; do
     kv_path="${BASH_REMATCH[4]}"
     field="${BASH_REMATCH[5]}"
     read_doc "$mount" "$kv_path"
-    value="$(printf '%s' "$doc_json" | jq -re --arg f "$field" '.data.data[$f]')" \
-      || die "read failed: $mount/$kv_path field '$field' (field missing at that path?)"
-    export "$env_name=$value"
+    if [ "$optional" -eq 1 ]; then
+      value="$(printf '%s' "$doc_json" | jq -re --arg f "$field" '.data.data[$f]' 2>/dev/null)" \
+        || optional_continue "field missing: $mount/$kv_path#$field"
+    else
+      value="$(printf '%s' "$doc_json" | jq -re --arg f "$field" '.data.data[$f]')" \
+        || die "read failed: $mount/$kv_path field '$field' (field missing at that path?)"
+    fi
+    exported_secret_names+=("$env_name")
+    if [ "$optional" -eq 1 ]; then
+      export "$env_name=$value" 2>/dev/null || optional_continue "could not export $env_name"
+    else
+      export "$env_name=$value"
+    fi
   else
     if [[ ! "$spec" =~ ^(([A-Za-z0-9_-]+):)?([^#]+)$ ]]; then
       die "bad --secrets spec '$spec' (want [mount:]path)"
@@ -325,47 +488,57 @@ for spec in "${specs[@]}"; do
     # A document that exports nothing is the failure this wrapper exists to
     # make loud: exiting 0 with an unset environment looks like success to the
     # child, which then fails somewhere far less obvious.
-    [ "$(printf '%s' "$doc_json" | jq -r '.data.data | length')" -gt 0 ] \
-      || die "no keys at $mount/$kv_path — nothing to export"
+    if [ "$optional" -eq 1 ]; then
+      doc_length="$(printf '%s' "$doc_json" | jq -r '.data.data | length' 2>/dev/null)" \
+        || optional_continue "invalid document: $mount/$kv_path"
+      case "$doc_length" in
+        '' | *[!0-9]*) optional_continue "invalid document: $mount/$kv_path" ;;
+      esac
+      [ "$doc_length" -gt 0 ] || optional_continue "no keys at $mount/$kv_path"
+    else
+      [ "$(printf '%s' "$doc_json" | jq -r '.data.data | length')" -gt 0 ] \
+        || die "no keys at $mount/$kv_path — nothing to export"
+    fi
     # Keys become variable names, so anything that is not an identifier is
     # rejected here rather than smuggled into the export below.
-    bad_keys="$(printf '%s' "$doc_json" \
-      | jq -r '.data.data | keys[] | select(test("^[A-Za-z_][A-Za-z0-9_]*$") | not)' \
-      | tr '\n' ' ')"
-    [ -z "${bad_keys// /}" ] \
-      || die "key(s) at $mount/$kv_path are not valid environment variable names: ${bad_keys% }"
+    if [ "$optional" -eq 1 ]; then
+      bad_keys="$(printf '%s' "$doc_json" \
+        | jq -r '.data.data | keys[] | select(test("^[A-Za-z_][A-Za-z0-9_]*$") | not)' 2>/dev/null \
+        | tr '\n' ' ')" || optional_continue "invalid document: $mount/$kv_path"
+      [ -z "${bad_keys// /}" ] || optional_continue "invalid keys at $mount/$kv_path"
+    else
+      bad_keys="$(printf '%s' "$doc_json" \
+        | jq -r '.data.data | keys[] | select(test("^[A-Za-z_][A-Za-z0-9_]*$") | not)' \
+        | tr '\n' ' ')"
+      [ -z "${bad_keys// /}" ] \
+        || die "key(s) at $mount/$kv_path are not valid environment variable names: ${bad_keys% }"
+    fi
     # One eval of jq's @sh-quoted output: injection-safe, and values containing
     # newlines survive intact where a line-by-line read would split them.
-    eval "$(printf '%s' "$doc_json" \
-      | jq -r '.data.data | to_entries[] | "export \(.key)=\(.value | tostring | @sh)"')"
+    if [ "$optional" -eq 1 ]; then
+      while IFS= read -r name; do
+        exported_secret_names+=("$name")
+      done < <(printf '%s' "$doc_json" | jq -r '.data.data | keys[]' 2>/dev/null)
+      eval "$(printf '%s' "$doc_json" \
+        | jq -r '.data.data | to_entries[] | "export \(.key)=\(.value | tostring | @sh)"' 2>/dev/null)" 2>/dev/null \
+        || optional_continue "could not export keys at $mount/$kv_path"
+    else
+      eval "$(printf '%s' "$doc_json" \
+        | jq -r '.data.data | to_entries[] | "export \(.key)=\(.value | tostring | @sh)"')"
+      while IFS= read -r name; do
+        exported_secret_names+=("$name")
+      done < <(printf '%s' "$doc_json" | jq -r '.data.data | keys[]')
+    fi
   fi
 done
 unset doc_json
 
+if [ "$login_circuit_reset" -eq 1 ]; then
+  echo "$prefix circuit reset for domain '$domain': login succeeded" >&2
+fi
+
 # The login token, any ambient token, and every AppRole bootstrap cred die
 # with this shell; only the exported secret values reach the exec'd child.
-unset token ambient_token
-# `export -p`, not `compgen -e`: the packaged non-interactive bash has no
-# compgen builtin, and a missing builtin would silently scrub nothing. Both
-# output forms are read: `declare -x NAME` and, in POSIX mode, `export NAME`.
-is_credential_name() {
-  case "$1" in
-    OPENBAO_APPROLE_*|*_VAULT_ROLE_ID|*_VAULT_SECRET_ID|BAO_TOKEN|VAULT_TOKEN) return 0 ;;
-  esac
-  return 1
-}
-while IFS= read -r line; do
-  [[ "$line" =~ ^(declare\ -[a-zA-Z-]*|export)\ ([A-Za-z_][A-Za-z0-9_]*) ]] || continue
-  name="${BASH_REMATCH[2]}"
-  if is_credential_name "$name"; then unset "$name"; fi
-done < <(export -p)
-
-# Fail closed on what the child would actually inherit: a name bash cannot
-# list or unset (not an identifier) still passes through exec.
-while IFS= read -r -d '' entry; do
-  if is_credential_name "${entry%%=*}"; then
-    die "refusing to exec: credential variable ${entry%%=*} is still in the environment"
-  fi
-done < <(env -0)
+scrub_credentials
 
 exec "$@"
