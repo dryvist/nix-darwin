@@ -574,3 +574,87 @@ expire_window() {
   [ "$status" -eq 0 ]
   [ ! -e "$XDG_STATE_HOME" ]
 }
+
+@test "--optional with a successful read exports the value" {
+  seed_doc secret app/base '{"key":"gateway-value"}'
+  run_bao --domain demo --secret GATEWAY_KEY=app/base#key --optional -- sh -c 'echo "$GATEWAY_KEY"'
+  [ "$status" -eq 0 ]
+  [ "$output" = "gateway-value" ]
+  [ -z "$stderr" ]
+}
+
+@test "--optional login refusal runs the child, emits one warning, and preserves its exit code" {
+  LOGIN_STATUS=403 run_bao --optional --domain demo --secret GATEWAY_KEY=app/base#key -- sh -c 'test -z "${GATEWAY_KEY+x}" && exit 37'
+  [ "$status" -eq 37 ]
+  [ "$stderr" = "[openbao-run] WARN AppRole login failed; continuing without GATEWAY_KEY" ]
+}
+
+@test "--optional with a network login error runs the child with one warning" {
+  LOGIN_CURL_EXIT=7 run_bao --domain demo --optional --secret GATEWAY_KEY=app/base#key -- sh -c 'echo ran'
+  [ "$status" -eq 0 ]
+  [ "$output" = "ran" ]
+  [ "$stderr" = "[openbao-run] WARN AppRole login failed; continuing without GATEWAY_KEY" ]
+  [ "$(wc -l < "$CALLS" | tr -d ' ')" -eq 1 ]
+}
+
+@test "--optional with an open circuit runs the child without sending a request" {
+  login_as 403
+  : > "$CALLS"
+  run_bao --domain demo --secrets app/base --optional -- sh -c 'echo ran'
+  [ "$status" -eq 0 ]
+  [ "$output" = "ran" ]
+  [ ! -s "$CALLS" ]
+  [ "$stderr" = "[openbao-run] WARN circuit open; continuing without keys from app/base" ]
+}
+
+@test "--optional with a missing field runs the child without the requested variable" {
+  seed_doc secret app/base '{"present":"value"}'
+  BAO_TOKEN=t run_bao --optional --secret GATEWAY_KEY=app/base#missing -- sh -c 'test -z "${GATEWAY_KEY+x}" && echo ran'
+  [ "$status" -eq 0 ]
+  [ "$output" = "ran" ]
+  [ "$stderr" = "[openbao-run] WARN field missing: secret/app/base#missing; continuing without GATEWAY_KEY" ]
+}
+
+@test "--optional with a missing path runs the child with one warning" {
+  BAO_TOKEN=t run_bao --optional --secret GATEWAY_KEY=app/missing#key -- sh -c 'echo ran'
+  [ "$status" -eq 0 ]
+  [ "$output" = "ran" ]
+  [ "$stderr" = "[openbao-run] WARN read failed: secret/app/missing; continuing without GATEWAY_KEY" ]
+}
+
+@test "--optional with no BAO_ADDR runs without making a request" {
+  unset BAO_ADDR VAULT_ADDR
+  run_bao --domain demo --secret GATEWAY_KEY=app/base#key --optional -- sh -c 'echo ran'
+  [ "$status" -eq 0 ]
+  [ "$output" = "ran" ]
+  [ ! -s "$CALLS" ]
+  [ "$stderr" = "[openbao-run] WARN BAO_ADDR unavailable; continuing without GATEWAY_KEY" ]
+}
+
+@test "--optional with missing AppRole credentials runs without a request" {
+  unset DEMO_VAULT_ROLE_ID DEMO_VAULT_SECRET_ID
+  BAO_TOKEN=t run_bao --domain demo --optional --secret GATEWAY_KEY=app/base#key -- sh -c 'echo ran'
+  [ "$status" -eq 0 ]
+  [ "$output" = "ran" ]
+  [ ! -s "$CALLS" ]
+  [ "$stderr" = "[openbao-run] WARN AppRole role ID unavailable; continuing without GATEWAY_KEY" ]
+}
+
+@test "credentials are scrubbed when --optional degrades before login" {
+  unset BAO_ADDR VAULT_ADDR
+  OPENBAO_APPROLE_DEMO_ROLE_ID=stub-role OPENBAO_APPROLE_DEMO_SECRET_ID=stub-secret \
+    run_bao --domain demo --optional --secret GATEWAY_KEY=app/base#key -- \
+      sh -c 'env | grep -c -E "^(OPENBAO_APPROLE_|[A-Z0-9_]+_VAULT_(ROLE|SECRET)_ID=|BAO_TOKEN=|VAULT_TOKEN=)" || true'
+  [ "$status" -eq 0 ]
+  [ "$output" = "0" ]
+  [ "$stderr" = "[openbao-run] WARN BAO_ADDR unavailable; continuing without GATEWAY_KEY" ]
+}
+
+@test "--optional clears all values after a later read fails" {
+  seed_doc secret app/base '{"ALPHA":"one"}'
+  BAO_TOKEN=t run_bao --optional --secrets app/base --secret GATEWAY_KEY=app/base#missing -- \
+    sh -c 'printf "%s/%s\n" "${ALPHA-unset}" "${GATEWAY_KEY-unset}"'
+  [ "$status" -eq 0 ]
+  [ "$output" = "unset/unset" ]
+  [ "$stderr" = "[openbao-run] WARN field missing: secret/app/base#missing; continuing without keys from app/base, GATEWAY_KEY" ]
+}
