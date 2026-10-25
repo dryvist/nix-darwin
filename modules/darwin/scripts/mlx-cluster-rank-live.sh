@@ -1,9 +1,10 @@
 # shellcheck shell=bash
 # Is a local MLX cluster rank live RIGHT NOW?
 #
-# The single definition of "this host is clustered" for the rebuild gate. It
-# exists as one command so duplicated detections cannot drift apart and block a
-# rebuild over stale state.
+# The rank-liveness half of the rebuild gate's "this host is clustered" test.
+# The gate also reads the cluster link state (see ./cluster-rebuild-gate.sh). It
+# exists as one command so duplicated rank detections cannot drift apart and
+# block a rebuild over stale state.
 #
 # LIVE STATE ONLY. Deliberately no marker file, no cached verdict, no "we were
 # clustered at 04:12" stamp. A marker that outlives the rank is a latch, and a

@@ -49,6 +49,11 @@ STUB
   export MLX_CLUSTER_LAUNCHCTL_BIN="$STUB_DIR/launchctl"
   export MLX_CLUSTER_GUI_UID=501
 
+  # The gate reads cluster state under the primary user's home. An empty home is
+  # a host whose cluster link was never brought up.
+  export CLUSTER_USER_HOME="$BATS_TEST_TMPDIR/home"
+  mkdir -p "$CLUSTER_USER_HOME"
+
   # The gate invokes the detector as one executable path, exactly as the module
   # wires it, so the seam under test is the real one.
   write_stub "$STUB_DIR/rank-live" << STUB
@@ -63,6 +68,17 @@ rank_live() {
 
 gate() {
   run bash -euo pipefail "$SCRIPTS/cluster-rebuild-gate.sh"
+}
+
+# Writes the link state the gate reads. $1 is the link-state value. $2, when
+# given, is the peer-state.json body; without it, peer-state.json is absent.
+cluster_state() {
+  local dir="$CLUSTER_USER_HOME/Library/Application Support/mlx-cluster"
+  mkdir -p "$dir"
+  printf '%s\n' "$1" > "$dir/link-state"
+  if [ "$#" -ge 2 ]; then
+    printf '%s\n' "$2" > "$dir/peer-state.json"
+  fi
 }
 
 # The two properties below live in how the activation script is ASSEMBLED, not
@@ -147,4 +163,84 @@ gate() {
   [ "$status" -eq 0 ]
   [[ "$output" == *"ALLOWING"* ]]
   [[ "$output" == *"UNDETERMINED"* ]]
+}
+
+@test "gate REFUSES when link-state is up and peer-state reports armed, with no rank live" {
+  cluster_state up '{"armed": true, "wired_ok": true, "halted_cause": null}'
+  LAUNCHCTL_MODE=stopped gate
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"REFUSING"* ]]
+  [[ "$output" == *"armed"* ]]
+}
+
+@test "gate ALLOWS when link-state is up but peer-state reports not armed" {
+  cluster_state up '{"armed": false, "wired_ok": true, "halted_cause": null}'
+  LAUNCHCTL_MODE=stopped gate
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"ALLOWING"* ]]
+}
+
+@test "gate ALLOWS when link-state is down, even with peer-state armed" {
+  cluster_state down '{"armed": true}'
+  LAUNCHCTL_MODE=stopped gate
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"ALLOWING"* ]]
+}
+
+@test "gate ALLOWS when link-state is absent, even with peer-state armed" {
+  local dir="$CLUSTER_USER_HOME/Library/Application Support/mlx-cluster"
+  mkdir -p "$dir"
+  printf '%s\n' '{"armed": true}' > "$dir/peer-state.json"
+  LAUNCHCTL_MODE=stopped gate
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"ALLOWING"* ]]
+}
+
+@test "gate REFUSES when link-state is up and peer-state.json is unreadable" {
+  cluster_state up
+  LAUNCHCTL_MODE=stopped gate
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"REFUSING"* ]]
+  [[ "$output" == *"cannot be read"* ]]
+}
+
+@test "gate REFUSES when link-state is up and peer-state.json is not valid JSON" {
+  cluster_state up '{"armed": tr'
+  LAUNCHCTL_MODE=stopped gate
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"not a JSON object"* ]]
+}
+
+@test "gate REFUSES when link-state is up and armed is a string, not a boolean" {
+  cluster_state up '{"armed": "true"}'
+  LAUNCHCTL_MODE=stopped gate
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"true or false"* ]]
+}
+
+@test "gate REFUSES when peer-state.json holds more than one armed key" {
+  cluster_state up '{"armed": false, "nested": {"armed": true}}'
+  LAUNCHCTL_MODE=stopped gate
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"exactly one armed key"* ]]
+}
+
+@test "gate REFUSES when link-state holds an unrecognised value" {
+  cluster_state sideways
+  LAUNCHCTL_MODE=stopped gate
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"unrecognised"* ]]
+}
+
+@test "gate REFUSES when the primary user home is not a directory" {
+  CLUSTER_USER_HOME="$BATS_TEST_TMPDIR/no-such-home" LAUNCHCTL_MODE=stopped gate
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"REFUSING"* ]]
+}
+
+@test "gate aborts when no home is injected, rather than reading HOME" {
+  unset CLUSTER_USER_HOME
+  LAUNCHCTL_MODE=stopped gate
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"CLUSTER_USER_HOME not set"* ]]
 }

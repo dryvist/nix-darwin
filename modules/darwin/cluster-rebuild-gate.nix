@@ -1,10 +1,12 @@
-# Cluster rebuild gate — no system activation while a local rank is live.
+# Cluster rebuild gate — no system activation while this host is clustered.
 #
 # `darwin-rebuild switch` and a direct `/nix/var/nix/profiles/system/activate`
-# both refuse on a host whose cluster rank is running. Detection is live
-# launchd state on every call (see ./scripts/mlx-cluster-rank-live.sh); nothing
-# is cached and no marker is written, because a marker outliving the rank would
-# be a latch that blocks every future rebuild until a human clears it.
+# both refuse on a host whose cluster rank is running, or whose cluster link is
+# up and armed. Detection is live state on every call: launchd for the rank (see
+# ./scripts/mlx-cluster-rank-live.sh) and the link-state and peer-state files for
+# the link (see ./scripts/cluster-rebuild-gate.sh). Nothing is cached and no
+# marker is written, because a marker outliving the rank would be a latch that
+# blocks every future rebuild until a human clears it.
 #
 # The block window opens at RANK ACTIVATION — the moment the rank agent reports
 # running, which is before the pair has finished rendezvousing and long before
@@ -13,6 +15,9 @@
 # failed re-formation, and a rank that is starting is exactly as expensive to
 # interrupt as one that is serving. Confirming the two hosts agree on a
 # generation is the cluster health gate's job and is not repeated here.
+#
+# The link condition covers the case where no rank runs: while link-state reads
+# `up` and the peer reports armed, the gate refuses.
 #
 # KNOWN SEMANTICS — the profile moves before activation runs. `darwin-rebuild
 # switch` does `nix-env -p /nix/var/nix/profiles/system --set` and only THEN
@@ -35,6 +40,8 @@
 }:
 
 let
+  userConfig = import ../../lib/user-config.nix;
+
   rankLivePkg = pkgs.writeShellApplication {
     name = "mlx-cluster-rank-live";
     text = builtins.readFile ./scripts/mlx-cluster-rank-live.sh;
@@ -43,6 +50,9 @@ let
   gatePkg = pkgs.writeShellApplication {
     name = "cluster-rebuild-gate";
     runtimeEnv.MLX_CLUSTER_RANK_LIVE_BIN = lib.getExe rankLivePkg;
+    # Cluster state lives under the primary user's home, the same value
+    # cluster-link-prep passes to its root-side helper.
+    runtimeEnv.CLUSTER_USER_HOME = userConfig.user.homeDir;
     text = builtins.readFile ./scripts/cluster-rebuild-gate.sh;
   };
 

@@ -52,5 +52,6 @@ last.
 
 ## Rebuild gate
 
-`darwin-rebuild` refuses to activate while a cluster rank is live on that host.
+`darwin-rebuild` refuses to activate while a cluster rank is live on that host, or while
+`link-state` reads `up` and `peer-state.json` reports `"armed": true`.
 Run `cluster-detach` before rebuilding.
