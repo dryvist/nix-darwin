@@ -11,7 +11,9 @@
 # OpenBao HTTP rides /usr/bin/curl — the Apple PLATFORM binary, exempt from
 # macOS Local Network privacy, which silently EHOSTUNREACHes non-platform
 # binaries (e.g. a nix-store bao CLI) in GUI-session launchd contexts. jq
-# (no network) comes from runtimeInputs for response parsing.
+# (no network) comes from runtimeInputs for response parsing. Callers may use
+# `--optional` to warn and exec without requested secrets when secret-zero,
+# login, or a secret read fails.
 {
   lib,
   config,
