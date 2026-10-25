@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.5.0](https://github.com/dryvist/nix-darwin/compare/v4.4.1...v4.5.0) (2026-10-25)
+
+
+### Features
+
+* **openbao-run:** add --optional to launch without secrets when OpenBao is unavailable ([#2981](https://github.com/dryvist/nix-darwin/issues/2981)) ([288dd12](https://github.com/dryvist/nix-darwin/commit/288dd12558e7c87fa5a6cf0b5c27d21b22a74729))
+
 ## [4.4.1](https://github.com/dryvist/nix-darwin/compare/v4.4.0...v4.4.1) (2026-10-24)
 
 
