@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.7.0](https://github.com/dryvist/nix-darwin/compare/v4.6.0...v4.7.0) (2026-10-26)
+
+
+### Features
+
+* **offbox-sync:** add per-job remote and SFTP target ([#2990](https://github.com/dryvist/nix-darwin/issues/2990)) ([61963df](https://github.com/dryvist/nix-darwin/commit/61963dff06f9e738f871a0c578d4b80a1b83bbf0))
+* **pf:** allow configured TCP services and firewall apps ([#2988](https://github.com/dryvist/nix-darwin/issues/2988)) ([275ab6d](https://github.com/dryvist/nix-darwin/commit/275ab6d6c4303a72f566987a4384098b4046b31e))
+
 ## [4.6.0](https://github.com/dryvist/nix-darwin/compare/v4.5.0...v4.6.0) (2026-10-25)
 
 

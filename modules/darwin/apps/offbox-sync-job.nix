@@ -60,5 +60,53 @@ lib.types.submodule {
         span for the source. Null inherits the global value.
       '';
     };
+    remote = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      example = "sftp";
+      description = ''
+        Per-job override of programs.offboxSync.remote. Null inherits the
+        global remote. "sftp" sends this job over SFTP: to the global target
+        when `sftp` is null, or to the target named in `sftp` otherwise. Any
+        other value names an rclone remote, as the global option does.
+      '';
+    };
+    sftp = lib.mkOption {
+      type = lib.types.nullOr (
+        lib.types.submodule {
+          options = {
+            host = lib.mkOption {
+              type = lib.types.str;
+              description = "SFTP host, resolved by DNS.";
+            };
+            user = lib.mkOption {
+              type = lib.types.str;
+              description = "SFTP login user.";
+            };
+            keyFile = lib.mkOption {
+              type = lib.types.str;
+              description = "Absolute path to an unencrypted private key for `user`.";
+            };
+            knownHosts = lib.mkOption {
+              type = lib.types.str;
+              description = "Absolute path to a known_hosts file that names `host`. Host-key checking stays on.";
+            };
+            root = lib.mkOption {
+              type = lib.types.str;
+              example = "Backups/offbox";
+              description = "Directory on the host that `dest` is placed under. A relative path starts at the login user's home.";
+            };
+          };
+        }
+      );
+      default = null;
+      description = ''
+        A job's own SFTP target. Its host, user, key and root reach rclone as
+        literal values, so they are written into the generated script in the
+        Nix store. Anything that must stay out of the store belongs on the
+        global target, which reads it from OpenBao. The job's effective remote
+        must be "sftp".
+      '';
+    };
   };
 }
