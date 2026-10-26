@@ -20,6 +20,7 @@
 
 let
   cfg = config.security.pf;
+  allowedApps = config.networking.applicationFirewall.allowedApps;
   anchorPath = "/etc/pf.anchors/nix-hardening";
 
   anchorText = ''
@@ -37,6 +38,10 @@ let
       net:
       "pass in quick from ${net} to ${net} keep state\npass out quick from ${net} to ${net} keep state\n"
     ) cfg.exemptNetworks}
+    ${lib.concatMapStrings (
+      service:
+      "pass in quick proto tcp from { ${lib.concatStringsSep ", " service.sources} } to any port ${toString service.port} flags S/SA keep state\n"
+    ) cfg.allowedTcpServices}
     block in all
     pass out all keep state
     pass in quick proto tcp from { ${lib.concatStringsSep ", " cfg.allowedSshSources} } to any port 22 flags S/SA keep state (max-src-conn 10)
@@ -60,6 +65,31 @@ let
 in
 {
   options.security.pf = {
+    allowedTcpServices = lib.mkOption {
+      type = lib.types.listOf (
+        lib.types.submodule {
+          options = {
+            sources = lib.mkOption {
+              type = lib.types.addCheck (lib.types.listOf (lib.types.strMatching ".+")) (sources: sources != [ ]);
+              description = "Non-empty list of PF source tokens permitted to reach this TCP port.";
+            };
+
+            port = lib.mkOption {
+              type = lib.types.ints.between 1 65535;
+              description = "TCP destination port permitted from the listed sources.";
+            };
+          };
+        }
+      );
+      default = [ ];
+      description = ''
+        Additional inbound TCP services allowed by the pf anchor. Each entry
+        must provide one or more source tokens and a destination port. Rules
+        are emitted before the default inbound block; no services are allowed
+        by default.
+      '';
+    };
+
     allowedSshSources = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       # ponytail: single broad RFC1918 default, narrow per-fleet CIDR if a
@@ -106,6 +136,16 @@ in
     };
   };
 
+  options.networking.applicationFirewall.allowedApps = lib.mkOption {
+    type = lib.types.listOf (lib.types.strMatching "${builtins.storeDir}/.+");
+    default = [ ];
+    description = ''
+      Nix store executable paths to add to the application firewall and
+      unblock during activation. Consumers must supply stable executable
+      paths; the list is empty by default.
+    '';
+  };
+
   config = {
     environment.etc."pf.anchors/nix-hardening".text = anchorText;
 
@@ -118,5 +158,14 @@ in
         StandardErrorPath = "/var/log/pf-hardening.log";
       };
     };
+
+    system.activationScripts.postActivation.text = lib.mkIf (allowedApps != [ ]) (
+      lib.mkAfter (
+        lib.concatMapStrings (path: ''
+          /usr/libexec/ApplicationFirewall/socketfilterfw --add ${lib.escapeShellArg path}
+          /usr/libexec/ApplicationFirewall/socketfilterfw --unblockapp ${lib.escapeShellArg path}
+        '') allowedApps
+      )
+    );
   };
 }
