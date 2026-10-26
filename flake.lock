@@ -1140,16 +1140,16 @@
     },
     "jpe-ai-voice": {
       "locked": {
-        "lastModified": 1793053572,
-        "narHash": "sha256-S4qQnN57rBt9A//tFg+idkg7lhtJGUqnoE45ccaQ5Yg=",
+        "lastModified": 1793053732,
+        "narHash": "sha256-CTmQWms4C+jwo7BecX473BWceGIfqXjXMfkKQ5BdQyM=",
         "owner": "JacobPEvans",
         "repo": "jpe-ai-voice",
-        "rev": "a1ed4d80dea065e588ebcceed50adea633ce8dc1",
+        "rev": "824c247b2ba651f07befd8c732588481ed576929",
         "type": "github"
       },
       "original": {
         "owner": "JacobPEvans",
-        "ref": "v1.0.9",
+        "ref": "v1.0.10",
         "repo": "jpe-ai-voice",
         "type": "github"
       }
