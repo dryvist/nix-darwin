@@ -71,6 +71,13 @@ in
     description = "The built mlx-cluster-rank-live derivation, for other modules that must ask the same question the gate asks.";
   };
 
+  options.system.clusterRebuildGate.gatePkg = lib.mkOption {
+    type = lib.types.package;
+    default = gatePkg;
+    readOnly = true;
+    description = "The built cluster-rebuild-gate derivation for other modules to reuse.";
+  };
+
   config = lib.mkIf config.system.clusterLinkPrep.enable {
     # mkOrder 50 runs ahead of mkBefore (500). Several modules here already
     # use mkBefore for preActivation and their relative order is merge order,
