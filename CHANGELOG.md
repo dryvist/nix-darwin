@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.8.0](https://github.com/dryvist/nix-darwin/compare/v4.7.0...v4.8.0) (2026-10-26)
+
+
+### Features
+
+* pin jpe-ai-voice to v1.0.8 ([#2993](https://github.com/dryvist/nix-darwin/issues/2993)) ([2e58ef9](https://github.com/dryvist/nix-darwin/commit/2e58ef9e87400ad964941d9a7743697af6d37c80))
+
 ## [4.7.0](https://github.com/dryvist/nix-darwin/compare/v4.6.0...v4.7.0) (2026-10-26)
 
 
