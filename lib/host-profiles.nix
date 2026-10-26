@@ -33,7 +33,9 @@ let
   # Workstations add graphical applications to the shared CLI baseline.
   workstation = lib.recursiveUpdate server {
     homebrew = {
-      cleanup = "uninstall";
+      # `check` aborts activation and lists every installed cask or formula this
+      # configuration does not declare; it never deletes one.
+      cleanup = "check";
       enableWorkstationApps = true;
       ai = {
         antigravityDesktop = true;
