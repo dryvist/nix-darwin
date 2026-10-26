@@ -109,6 +109,9 @@ let
         "--checkers ${toString cfg.checkers}"
         "--stats-one-line"
         "--stats 1m"
+        # Finder rewrites .DS_Store in place. It is filesystem metadata, not
+        # data, and a rewritten copy would fail --immutable on every run.
+        "--exclude .DS_Store"
       ]
       ++ backendArgs
       ++ lib.optional job.immutable "--immutable"
