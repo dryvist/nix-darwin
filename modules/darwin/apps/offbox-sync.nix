@@ -56,35 +56,29 @@ let
   # plaintext never leaves this machine.
   isSftp = cfg.remote == "sftp";
 
-  backendArgs = lib.optionals isSftp [
-    "--sftp-host \"\${OFFBOX_HOST}\""
-    "--sftp-user \"\${OFFBOX_USER}\""
-    "--sftp-key-file \"\${OFFBOX_KEY_FILE}\""
-    # rclone needs @cert-authority for certificates, while this file pins plain keys.
-    "--sftp-host-key-algorithms \"ssh-ed25519 ecdsa-sha2-nistp256 rsa-sha2-512 rsa-sha2-256\""
-    # Host-key validation stays ON. rclone silently disables it unless a
-    # known_hosts file is named, which would make a MITM on this path
-    # invisible; the estate's standing rule is that host-key checking is
-    # never traded for convenience.
-    "--sftp-known-hosts-file \"\${OFFBOX_KNOWN_HOSTS}\""
-    "--sftp-concurrency ${toString cfg.transfers}"
-  ];
+  # A job's remote: its own when set, otherwise the global one.
+  jobRemote = job: if job.remote != null then job.remote else cfg.remote;
 
-  # ":sftp:" is an on-the-fly remote; a named remote from the target document is
-  # "<name>:". Both take the same ${OFFBOX_ROOT}/<dest> suffix.
-  destPrefix = if isSftp then ":sftp:" else "${cfg.remote}:";
+  sftpArgs = import ./offbox-sync-sftp.nix { inherit (cfg) transfers; };
+
+  globalSftpArgs = sftpArgs {
+    host = "\"\${OFFBOX_HOST}\"";
+    user = "\"\${OFFBOX_USER}\"";
+    keyFile = "\"\${OFFBOX_KEY_FILE}\"";
+    knownHosts = "\"\${OFFBOX_KNOWN_HOSTS}\"";
+  };
 
   launcher = pkgs.writeText "offbox-sync-launch" ''
     exec /bin/bash ${lib.getExe config.programs.openbao-run.package} --domain ${cfg.domain} --secrets ${cfg.secretsPath} -- ${runner}
   '';
 
-  # Variables the runner requires before it will do anything. The backend-
-  # specific ones are only demanded when that backend is selected — an unset
-  # variable is a FAILURE either way (see the module header), never a skip.
+  # Variables the runner requires before it will do anything. An unset one is a
+  # FAILURE, never a skip (see the module header).
+  needsEnvSftp = isSftp || lib.any (job: job.sftp == null && jobRemote job == "sftp") cfg.jobs;
   requiredVars = [
     "OFFBOX_ROOT"
   ]
-  ++ lib.optionals isSftp [
+  ++ lib.optionals needsEnvSftp [
     "OFFBOX_HOST"
     "OFFBOX_USER"
     "OFFBOX_KEY_FILE"
@@ -93,24 +87,45 @@ let
 
   mkJobArgs =
     job:
+    let
+      remote = jobRemote job;
+      target =
+        if job.sftp != null then
+          lib.escapeShellArg ":sftp:${job.sftp.root}/${job.dest}"
+        else
+          # NOT escapeShellArg: that single-quotes the string, and the shell does
+          # not expand ${...} inside single quotes. The destination reached rclone
+          # as the literal ":sftp:${OFFBOX_ROOT}/data", which fails at connect
+          # time with a confusing "couldn't connect SSH" rather than an obvious
+          # quoting error. Double quotes expand and still protect whitespace;
+          # job.dest is a module option, not user input.
+          "\"${if remote == "sftp" then ":sftp:" else "${remote}:"}\${OFFBOX_ROOT}/${job.dest}\"";
+      backend =
+        if job.sftp != null then
+          sftpArgs {
+            host = lib.escapeShellArg job.sftp.host;
+            user = lib.escapeShellArg job.sftp.user;
+            keyFile = lib.escapeShellArg job.sftp.keyFile;
+            knownHosts = lib.escapeShellArg job.sftp.knownHosts;
+          }
+        else
+          lib.optionals (remote == "sftp") globalSftpArgs;
+    in
     lib.concatStringsSep " " (
       [
         "copy"
         (lib.escapeShellArg job.source)
-        # NOT escapeShellArg: that single-quotes the string, and the shell does
-        # not expand ${...} inside single quotes. The destination reached rclone
-        # as the literal ":sftp:${OFFBOX_ROOT}/data", which fails at connect
-        # time with a confusing "couldn't connect SSH" rather than an obvious
-        # quoting error. Double quotes expand and still protect whitespace;
-        # job.dest is a module option, not user input.
-        "\"${destPrefix}\${OFFBOX_ROOT}/${job.dest}\""
+        target
         "--min-age ${if job.minAge != null then job.minAge else cfg.minAge}"
         "--transfers ${toString cfg.transfers}"
         "--checkers ${toString cfg.checkers}"
         "--stats-one-line"
         "--stats 1m"
+        # Finder rewrites .DS_Store in place. It is filesystem metadata, not
+        # data, and a rewritten copy would fail --immutable on every run.
+        "--exclude .DS_Store"
       ]
-      ++ backendArgs
+      ++ backend
       ++ lib.optional job.immutable "--immutable"
       ++ lib.optional (job.maxAge != null) "--max-age ${job.maxAge} --no-traverse"
       # --suffix, not --backup-dir. --backup-dir moves the superseded remote
@@ -261,6 +276,11 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    assertions = map (job: {
+      assertion = job.sftp == null || jobRemote job == "sftp";
+      message = "programs.offboxSync: job ${job.name} sets sftp, so its remote must be sftp.";
+    }) cfg.jobs;
+
     # The job fetches its target from OpenBao via openbao-run; launchPrefix
     # supplies only the rotating AppRole secret-zero. No hand-placed file.
     programs.openbao-run.enable = true;
