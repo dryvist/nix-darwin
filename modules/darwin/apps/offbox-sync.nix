@@ -59,29 +59,7 @@ let
   # A job's remote: its own when set, otherwise the global one.
   jobRemote = job: if job.remote != null then job.remote else cfg.remote;
 
-  # SFTP backend flags for the given host, user, key and known_hosts values. The
-  # global target passes OpenBao-sourced variables; a job with its own `sftp`
-  # passes the literal values it names.
-  sftpArgs =
-    {
-      host,
-      user,
-      keyFile,
-      knownHosts,
-    }:
-    [
-      "--sftp-host ${host}"
-      "--sftp-user ${user}"
-      "--sftp-key-file ${keyFile}"
-      # rclone needs @cert-authority for certificates, while this file pins plain keys.
-      "--sftp-host-key-algorithms \"ssh-ed25519 ecdsa-sha2-nistp256 rsa-sha2-512 rsa-sha2-256\""
-      # Host-key validation stays ON. rclone silently disables it unless a
-      # known_hosts file is named, which would make a MITM on this path
-      # invisible; the estate's standing rule is that host-key checking is
-      # never traded for convenience.
-      "--sftp-known-hosts-file ${knownHosts}"
-      "--sftp-concurrency ${toString cfg.transfers}"
-    ];
+  sftpArgs = import ./offbox-sync-sftp.nix { inherit (cfg) transfers; };
 
   globalSftpArgs = sftpArgs {
     host = "\"\${OFFBOX_HOST}\"";
@@ -94,10 +72,8 @@ let
     exec /bin/bash ${lib.getExe config.programs.openbao-run.package} --domain ${cfg.domain} --secrets ${cfg.secretsPath} -- ${runner}
   '';
 
-  # Variables the runner requires before it will do anything. The SFTP ones are
-  # demanded when the global target is SFTP or a job uses it without naming its
-  # own target — an unset variable is a FAILURE either way (see the module
-  # header), never a skip.
+  # Variables the runner requires before it will do anything. An unset one is a
+  # FAILURE, never a skip (see the module header).
   needsEnvSftp = isSftp || lib.any (job: job.sftp == null && jobRemote job == "sftp") cfg.jobs;
   requiredVars = [
     "OFFBOX_ROOT"
@@ -113,11 +89,8 @@ let
     job:
     let
       remote = jobRemote job;
-      # A job's own SFTP root when it names a target, otherwise the global
-      # target's ${OFFBOX_ROOT}.
       target =
         if job.sftp != null then
-          # Literal path: single quotes are safe, nothing in it expands.
           lib.escapeShellArg ":sftp:${job.sftp.root}/${job.dest}"
         else
           # NOT escapeShellArg: that single-quotes the string, and the shell does
