@@ -99,7 +99,7 @@
     };
 
     jpe-ai-voice = {
-      url = "github:JacobPEvans/jpe-ai-voice?ref=v1.0.8";
+      url = "github:JacobPEvans/jpe-ai-voice?ref=v1.0.10";
       flake = true;
     };
 
