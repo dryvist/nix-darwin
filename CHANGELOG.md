@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.10.0](https://github.com/dryvist/nix-darwin/compare/v4.9.2...v4.10.0) (2026-10-27)
+
+
+### Features
+
+* **darwin:** restore the cluster maintenance-window reconciler ([#3015](https://github.com/dryvist/nix-darwin/issues/3015)) ([edb4071](https://github.com/dryvist/nix-darwin/commit/edb4071a056a859031afb10150dc2d490168db32))
+
 ## [4.9.2](https://github.com/dryvist/nix-darwin/compare/v4.9.1...v4.9.2) (2026-10-27)
 
 
