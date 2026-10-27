@@ -117,16 +117,16 @@ in
       #
       # Standalone-mode LLM budget — the single knob; everything downstream
       # derives (see modules/darwin/apple-silicon-tunables.nix):
-      #   maxLocalLlmGb 100 GiB  ->  wiredLimitMb 102400 MiB (100 * 1024)
-      #                          ->  osReserveGb 28 GiB unwired desktop headroom
-      # L1 wired ceiling is exact: 102400 * 1024^2 = 100 GiB (107.37 GB decimal).
+      #   maxLocalLlmGb 64 GiB  ->  wiredLimitMb 65536 MiB (64 * 1024)
+      #                         ->  osReserveGb 64 GiB unwired desktop headroom
+      # L1 wired ceiling is exact: 65536 * 1024^2 = 64 GiB (68.72 GB decimal).
       # Memory safety is now layered in absolute bytes, furthest-from-OS first:
-      # per-model serving budget < L2 in-process cap (mlx-lm mx.set_memory_limit
-      # = 99 GiB, just under this ceiling) < L1 wired ceiling < RAM, with the
-      # 28 GiB reserve keeping WindowServer + desktop out of swap.
+      # per-model serving budget < L2 in-process cap (programs.mlx.memoryHardLimitGb,
+      # 30 GiB per worker, see lib/hosts/macbook-m4.nix) < L1 wired ceiling < RAM,
+      # with the 64 GiB reserve keeping WindowServer + desktop out of swap.
       # Interactive box, LLM-first.
       # https://docs.jacobpevans.com/d/hosts/ai/apple-silicon-memory-model/
-      maxLocalLlmGb = 100;
+      maxLocalLlmGb = 64;
       # Set explicitly rather than relying on the module default: a list option
       # drops its default once any config value is set, so the generic excludes
       # must be a config def here for a private host layer to append to via merge.
