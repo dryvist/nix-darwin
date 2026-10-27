@@ -49,6 +49,7 @@ in
     ./system-ui.nix
     ./activation-error-tracking.nix
     ./hm-activation-assert.nix # Fail the rebuild when home-manager did not apply
+    ./dock-apps-present.nix # Warn when a declared Dock app path is missing
     ./llm-gate.nix
     ./nix-storage.nix
     ./apple-silicon-tunables.nix
