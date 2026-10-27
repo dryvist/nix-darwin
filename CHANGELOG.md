@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.10.1](https://github.com/dryvist/nix-darwin/compare/v4.10.0...v4.10.1) (2026-10-27)
+
+
+### Bug Fixes
+
+* **mbp:** cap resident memory, 9B prompt cache, and wired ceiling ([#3020](https://github.com/dryvist/nix-darwin/issues/3020)) ([3283fba](https://github.com/dryvist/nix-darwin/commit/3283fbaa51f813e268ab7af0f392ac719b3e16b6))
+
 ## [4.10.0](https://github.com/dryvist/nix-darwin/compare/v4.9.2...v4.10.0) (2026-10-27)
 
 
