@@ -138,7 +138,7 @@
             - name: crash_time_in_band
               value: "/^(?:\\{[^\\n]{0,119}\"timestamp\":\"|Date\\/Time:)/.test(_raw)"
   '';
-  # Host performance sampling (powermetrics, wired memory) -> index
+  # Host performance sampling (powermetrics, wired memory, ws-monitor) -> index
   # mac_perf, kept out of the os event index so a sampling cadence change
   # cannot move event-telemetry volume. Same visible-sentinel rule as
   # os_events above.
@@ -152,7 +152,7 @@
             - name: index
               value: "'mac_perf'"
             - name: sourcetype
-              value: "String(__inputId).includes('powermetrics') ? 'macos:perf:powermetrics' : String(__inputId).includes('wired_memory') ? 'macos:perf:wired_memory' : 'macos:unmatched'"
+              value: "String(__inputId).includes('ws_monitor_captures') ? 'ws-monitor:spindump' : String(__inputId).includes('ws_monitor') ? 'ws-monitor' : String(__inputId).includes('powermetrics') ? 'macos:perf:powermetrics' : String(__inputId).includes('wired_memory') ? 'macos:perf:wired_memory' : 'macos:unmatched'"
   '';
   "pipelines/firewall_logs/conf.yml" = ''
     output: default
@@ -273,5 +273,21 @@
           eventBreakerRegex: /^(?=(?:\{[^\n]{0,119}"timestamp":"|Date\/Time:|Use spindump))/m
           name: crashreport
       tags: macos,crashreport
+    # Each spindump summary file is one event, with a 1 MiB safety ceiling.
+    WS Monitor Captures:
+      lib: custom
+      description: One spindump capture per event up to the maximum event size
+      rules:
+        - condition: "true"
+          type: regex
+          timestampAnchorRegex: /^/
+          timestamp:
+            type: current
+          timestampTimezone: local
+          maxEventBytes: 1048576
+          disabled: false
+          eventBreakerRegex: /$^/
+          name: spindump
+      tags: macos,ws-monitor
   '';
 }

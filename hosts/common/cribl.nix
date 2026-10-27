@@ -224,26 +224,39 @@ in
               # without a window containing a real GPU reset. Do not assume
               # GPU resets are handled.
               #
-              # KNOWN GAP: "Metal" and "SkyLight" are deliberately absent --
-              # ~26% more volume for streams sampled as routine chatter, while
-              # the compositor starvation that mattered surfaced through
-              # DumpPanic and "userspace watchdog timeout", both present and
-              # both of which caught the real event.
-              # WindowServer freeze & responsiveness anomalies: "synchronize timed out",
-              # and WindowServer "failed to act" or "Clearing datagram buffer" (replacing
-              # bespoke ws-monitor.sh LaunchDaemon polling with native streaming).
+              # KNOWN GAP: "Metal" remains absent -- ~26% more volume for
+              # streams sampled as routine chatter. SkyLight is included only
+              # for the narrow hang/watchdog terms below.
+              # WindowServer/SkyLight freeze & responsiveness anomalies:
+              # "synchronize timed out" and WindowServer "failed to act" or
+              # "Clearing datagram buffer" (replacing
+              # broad log-store scans with a lightweight stall loop).
               # sudo authentication: each PAM module's verdict, the Touch ID
               # (LocalAuthentication) result, and the password fallback; plus
               # kernel library-validation rejections of third-party PAM
               # modules. Measured over 2 h: 2,031 events, 1,968 of them
               # library-validation rejections.
-              predicate: '(process == "kernel" AND (eventMessage CONTAINS[c] "jetsam" OR eventMessage CONTAINS[c] "memorystatus" OR eventMessage CONTAINS[c] "low swap" OR eventMessage CONTAINS[c] "panic" OR eventMessage CONTAINS[c] "IOGPU" OR eventMessage CONTAINS[c] "AGX" OR eventMessage CONTAINS[c] "thermal")) OR eventMessage CONTAINS[c] "memory pressure" OR process == "DumpPanic" OR process == "ReportCrash" OR process == "thermalmonitord" OR subsystem == "com.apple.thermalmonitord" OR eventMessage CONTAINS[c] "userspace watchdog timeout" OR eventMessage CONTAINS[c] "GPU restart" OR eventMessage CONTAINS[c] "gpu hang" OR eventMessage CONTAINS[c] "synchronize timed out" OR (process == "WindowServer" AND (eventMessage CONTAINS[c] "failed to act" OR eventMessage CONTAINS[c] "Clearing datagram buffer")) OR (process == "sudo" AND (eventMessage CONTAINS "pam_sm_authenticate" OR eventMessage CONTAINS "evaluatePolicy on" OR eventMessage CONTAINS "Authorization result" OR eventMessage CONTAINS "Error obtaining the authtok")) OR (process == "kernel" AND eventMessage CONTAINS "Library Validation failed")'
+              predicate: >-
+                (process == "kernel" AND (eventMessage CONTAINS[c] "jetsam" OR eventMessage CONTAINS[c] "memorystatus" OR eventMessage CONTAINS[c] "low swap" OR eventMessage CONTAINS[c] "panic" OR eventMessage CONTAINS[c] "IOGPU" OR eventMessage CONTAINS[c] "AGX" OR eventMessage CONTAINS[c] "thermal")) OR
+                eventMessage CONTAINS[c] "memory pressure" OR process == "DumpPanic" OR process == "ReportCrash" OR
+                process == "thermalmonitord" OR subsystem == "com.apple.thermalmonitord" OR
+                eventMessage CONTAINS[c] "userspace watchdog timeout" OR eventMessage CONTAINS[c] "GPU restart" OR
+                eventMessage CONTAINS[c] "gpu hang" OR eventMessage CONTAINS[c] "synchronize timed out" OR
+                (process == "WindowServer" AND (eventMessage CONTAINS[c] "failed to act" OR eventMessage CONTAINS[c] "Clearing datagram buffer")) OR
+                (process == "sudo" AND (eventMessage CONTAINS "pam_sm_authenticate" OR eventMessage CONTAINS "evaluatePolicy on" OR eventMessage CONTAINS "Authorization result" OR eventMessage CONTAINS "Error obtaining the authtok")) OR
+                (process == "kernel" AND eventMessage CONTAINS "Library Validation failed") OR
+                ((process == "WindowServer" OR process == "SkyLight") AND (eventMessage CONTAINS[c] "synchronize timed out" OR eventMessage CONTAINS[c] "failed to act" OR eventMessage CONTAINS[c] "hang" OR eventMessage CONTAINS[c] "watchdog")) OR
+                process == "watchdogd" OR
+                (process == "runningboardd" AND (eventMessage CONTAINS[c] "timed out" OR eventMessage CONTAINS[c] "timeout")) OR
+                process == "spindump" OR process == "hangtracerd" OR
+                (process == "kernel" AND eventMessage CONTAINS[c] "apfs" AND (eventMessage CONTAINS[c] "slow" OR eventMessage CONTAINS[c] "stall" OR eventMessage CONTAINS[c] "timeout" OR eventMessage CONTAINS[c] "took")) OR
+                (process == "tccd" AND (eventMessage CONTAINS[c] "timed out" OR eventMessage CONTAINS[c] "timeout"))
               sendToRoutes: false
               connections:
                 - pipeline: os_events
                   output: cribl_stream
-            # powermetrics: the only path to per-process energy + CPU/GPU/ANE
-            # power. Exec, 300s (expensive sampler). One JSON doc per sample.
+            # powermetrics: the only path to CPU/GPU/ANE power. Exec, 300s
+            # (expensive sampler). One JSON doc per sample.
             # Performance sampling, not event telemetry -> index=mac_perf.
             #
             # The `-replace timestamp -string ""` hop is load-bearing:
@@ -253,11 +266,13 @@ in
             # `-replace` and not `-remove`: -remove hard-fails with "No value
             # to remove at key path timestamp" whenever the key is absent,
             # while -replace creates it and cannot fail.
+            # Untested pending root verification: --show-process-energy is
+            # omitted; its abort cause is unconfirmed.
             in_macos_powermetrics:
               type: exec
               disabled: false
               interval: 300
-              command: "powermetrics --samplers tasks,battery,cpu_power,gpu_power,ane_power,thermal --show-process-energy -f plist -n 1 -i 5000 | /usr/bin/plutil -replace timestamp -string \"\" -o - - | /usr/bin/plutil -convert json -o - -"
+              command: "powermetrics --samplers tasks,battery,cpu_power,gpu_power,ane_power,thermal -f plist -n 1 -i 5000 | /usr/bin/plutil -replace timestamp -string \"\" -o - - | /usr/bin/plutil -convert json -o - -"
               sendToRoutes: false
               connections:
                 - pipeline: mac_perf
@@ -276,6 +291,38 @@ in
               interval: 60
               command: "/bin/bash -c 'wp=$(/usr/bin/vm_stat | /usr/bin/awk \"/Pages wired down/{gsub(/[^0-9]/,\\\"\\\",\\$4);print \\$4}\"); pgsz=$(/usr/sbin/sysctl -n hw.pagesize); cm=$(/usr/sbin/sysctl -n iogpu.wired_limit_mb); rk=$(/bin/ps -A -o rss= | /usr/bin/awk \"{s+=\\$1} END{print s+0}\"); /usr/bin/awk -v wp=\"$wp\" -v pgsz=\"$pgsz\" -v cm=\"$cm\" -v rk=\"$rk\" \"BEGIN{wb=wp*pgsz; cb=cm*1024*1024; printf \\\"{\\\\\\\"wired_bytes\\\\\\\":%d,\\\\\\\"wired_ceiling_mb\\\\\\\":%d,\\\\\\\"wired_ceiling_bytes\\\\\\\":%d,\\\\\\\"wired_ratio\\\\\\\":%.4f,\\\\\\\"resident_bytes\\\\\\\":%d}\\\\n\\\", wb, cm, cb, wb/cb, rk*1024}\"'"
               sendToRoutes: false
+              connections:
+                - pipeline: mac_perf
+                  output: cribl_stream
+            # Loop timing and resource samples from the lightweight stall
+            # monitor. The capture source sends one spindump summary per file.
+            in_ws_monitor:
+              type: file
+              disabled: false
+              mode: manual
+              interval: 15
+              path: /var/log/ws-monitor/
+              filenames:
+                - "*/ws-monitor.jsonl"
+              recurse: false
+              tailOnly: true
+              sendToRoutes: false
+              connections:
+                - pipeline: mac_perf
+                  output: cribl_stream
+            in_ws_monitor_captures:
+              type: file
+              disabled: false
+              mode: manual
+              interval: 15
+              path: /var/log/ws-monitor/captures/
+              filenames:
+                - "*/*.summary.txt"
+              recurse: false
+              tailOnly: false
+              sendToRoutes: false
+              breakerRulesets:
+                - WS Monitor Captures
               connections:
                 - pipeline: mac_perf
                   output: cribl_stream
@@ -409,8 +456,10 @@ in
               type: file
               disabled: false
               mode: manual
-              interval: 10
+              interval: 30
               path: ${userConfig.user.homeDir}/Library/Application Support/Code/logs/
+              maxAgeDur: 3d
+              checkFileModTime: true
               # GitLens.log is excluded on timestamp grounds, not volume. Its
               # lines carry two stamps in different zones: GitLens' own in
               # local time, plus a bracketed UTC one belonging to the wrapped
