@@ -1,5 +1,22 @@
 # Changelog
 
+## [4.9.0](https://github.com/dryvist/nix-darwin/compare/v4.8.0...v4.9.0) (2026-10-27)
+
+
+### Features
+
+* **darwin:** report missing Dock apps after activation ([#3002](https://github.com/dryvist/nix-darwin/issues/3002)) ([b51ca7d](https://github.com/dryvist/nix-darwin/commit/b51ca7d9fe8b31b2d4e85e7d55892b19cca35cd6))
+* pin jpe-ai-voice to its v1 tag ([#2999](https://github.com/dryvist/nix-darwin/issues/2999)) ([ff30955](https://github.com/dryvist/nix-darwin/commit/ff30955613e30a3c938cdc71f11c885c0947dffe))
+* pin jpe-ai-voice to v1.0.10 ([#2995](https://github.com/dryvist/nix-darwin/issues/2995)) ([eb266c8](https://github.com/dryvist/nix-darwin/commit/eb266c8d997b7673731a8ad075fdf210069b1875))
+* pin jpe-ai-voice to v1.0.11 ([#2996](https://github.com/dryvist/nix-darwin/issues/2996)) ([530cbdc](https://github.com/dryvist/nix-darwin/commit/530cbdc1ac26ca5badfd2d5ea570f4d23ca2255e))
+* pin jpe-ai-voice to v2.0.0 ([#2997](https://github.com/dryvist/nix-darwin/issues/2997)) ([9283a86](https://github.com/dryvist/nix-darwin/commit/9283a86937dd13ac3b3d90e817c80f27ca3099ff))
+
+
+### Bug Fixes
+
+* **dock:** tie each Dock entry to the provider that installs it ([#3001](https://github.com/dryvist/nix-darwin/issues/3001)) ([b1f0b12](https://github.com/dryvist/nix-darwin/commit/b1f0b12766947cc85ceac934cc19c4d0c57deee1))
+* **home:** put the Obsidian CLI on the session PATH ([#3003](https://github.com/dryvist/nix-darwin/issues/3003)) ([48c395d](https://github.com/dryvist/nix-darwin/commit/48c395d6d0f6aac90fd996a881c57d8943b76a84))
+
 ## [4.8.0](https://github.com/dryvist/nix-darwin/compare/v4.7.0...v4.8.0) (2026-10-26)
 
 
