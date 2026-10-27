@@ -657,6 +657,12 @@ persistent-others = [
 ];
 ```
 
+### Check Dock Apps After a Rebuild
+
+A warn-only post-activation step (`modules/darwin/dock-apps-present.nix`) tests every
+path in `system.defaults.dock.persistent-apps`. It logs `[ERROR] dock app missing: <path>`
+for each path that does not exist, then `[INFO] dock apps present: N/M`. It never fails the rebuild.
+
 ### Dock Settings Reference
 
 All dock behavior settings are in `modules/darwin/dock/default.nix`:
