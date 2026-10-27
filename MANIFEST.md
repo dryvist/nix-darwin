@@ -202,7 +202,6 @@ installed cask or formula not declared in the Nix configuration; it removes noth
 | codex-app | yes | OpenAI Codex desktop app (workstation capability; separate from the CLI) |
 | antigravity | yes | Google Antigravity 2.0 standalone agent command center (workstation capability) |
 | antigravity-ide | yes | Google Antigravity IDE (workstation capability) |
-| brave-browser | yes | Brave web browser |
 | postman | yes | API development environment (moved from nixpkgs — version lag caused schema mismatch) |
 | orbstack | yes | Container/Linux VM runtime — cask for TCC permission stability |
 | microsoft-teams | yes | Teams desktop app (not available on Mac App Store) |
