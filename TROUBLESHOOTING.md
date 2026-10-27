@@ -344,8 +344,8 @@ ls -la ~/.claude/plugins/marketplaces/
 **Problem**: Camera, microphone, screen recording, or App Management permissions revoked after `darwin-rebuild switch`.
 
 **Cause**: macOS TCC (Transparency, Consent, Control) tracks permissions by full file path.
-Every Nix rebuild changes the `/nix/store/...` path, causing macOS to treat apps as "new"
-and revoke permissions.
+Apps launched directly from `/nix/store` get a new path after rebuilds, so macOS can treat
+them as "new" and revoke permissions.
 
 **Solution Architecture**:
 
@@ -385,9 +385,8 @@ ls -la /Applications/Ghostty.app
 # home-manager copyApps targets (stable across rebuilds)
 ls -la ~/Applications/Home\ Manager\ Apps/
 
-# Check system apps (these do NOT get stable TCC)
-ls -la /Applications/Nix\ Apps/
-# Apps here change paths on rebuild - don't grant TCC to these
+# Check macOS system apps
+ls -la /System/Applications/
 ```
 
 ### Why This Works
@@ -417,6 +416,27 @@ macOS updates can sometimes reset TCC. Re-grant permissions to:
 
 - `/Applications/Ghostty.app`
 - `/bin/zsh`
+
+### Dock tile shows a question mark
+
+**Meaning**: The path configured for the Dock tile does not exist.
+
+**Common causes**:
+
+- The app's provider moved and its Dock path was not updated.
+- The app was removed by hand.
+- A cask or Mac App Store install failed.
+
+**Diagnosis**: The Dock provider assertion reports an evaluation error when a provider is undeclared or its path does not match the install location.
+
+**Fix**: Declare the provider on the host or correct the Dock entry to match the provider's install path.
+
+### Activation aborts listing undeclared Homebrew packages
+
+Workstation Homebrew cleanup uses `check` mode: activation aborts and lists
+every installed cask or formula not declared in the Nix configuration, and removes nothing.
+
+**Fix**: Declare the package in the Nix configuration or uninstall it with Homebrew.
 
 ### GPG "unsafe ownership" Warning
 

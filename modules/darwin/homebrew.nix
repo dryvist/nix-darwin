@@ -25,6 +25,9 @@ let
   aiHomebrew = nix-ai.lib.homebrewFor homebrew.ai;
 
   workstationBrews = [
+    # Mac App Store CLI for homebrew.masApps.
+    "mas"
+
     # Versioned runtime remains available alongside the Nix-managed Node.js.
     "node@22"
 
@@ -55,6 +58,10 @@ let
     } # Terminal emulator — needs Full Disk Access + App Management + Local Network
 
     # --- Productivity / Communication ---
+    {
+      name = "slack";
+      greedy = true;
+    } # Team chat — vendor-signed Electron app, kept current by the cask
     # nixpkgs Bitwarden is blocked by an insecure Electron dependency.
     {
       name = "bitwarden";
@@ -76,6 +83,12 @@ let
       name = "neat";
       greedy = true;
     } # Neat device management app
+
+    # --- Browsers ---
+    {
+      name = "brave-browser";
+      greedy = true;
+    } # Secondary browser
 
     # --- API Development ---
     {

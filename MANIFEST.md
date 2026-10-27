@@ -132,12 +132,12 @@ the Cursor D2 extension's live preview; other hosts still use `nix run nixpkgs#d
 
 ---
 
-## GUI Applications - User Level
+## Workstation GUI applications
 
 Source: `hosts/macbook-m4/home.nix`
 
-All workstation GUI apps are user-level via home-manager `copyApps`, which
-copies them to `~/Applications/Home Manager Apps/` at TCC-stable paths.
+Workstation GUI apps are Homebrew casks and Mac App Store apps under
+`/Applications/`, plus Home Manager copies under `~/Applications/Home Manager Apps/`.
 
 | Package | Description |
 | --- | --- |
@@ -174,6 +174,7 @@ Source: `modules/darwin/homebrew.nix`
 | Package | Description |
 | --- | --- |
 | container | Apple container CLI/runtime for Linux containers on Apple Silicon |
+| mas | Mac App Store command-line utility for managing App Store apps |
 | node@22 | Versioned Node.js 22 runtime |
 | whisperkit-cli | Swift native on-device speech recognition (Apple Silicon) |
 
@@ -183,9 +184,12 @@ The weekly `brew-upgrade` LaunchAgent invokes `brew upgrade --greedy` every Thur
 logging to `~/Library/Logs/brew-upgrade.log`. `darwin-rebuild` does not upgrade Homebrew packages
 (`onActivation.upgrade = false`), and the agent does not upgrade Homebrew itself — the `brew` binary comes from the
 `brew-src` flake input via `nix-homebrew`, so its version advances when the flake lock is refreshed and the host rebuilds.
+Workstation Homebrew cleanup uses `check`: activation aborts and lists every
+installed cask or formula not declared in the Nix configuration; it removes nothing.
 
 | Package | greedy | Description |
 | --- | --- | --- |
+| slack | yes | Team chat desktop app |
 | ghostty | yes | Terminal emulator — stable bundle for TCC permissions |
 | bitwarden | yes | Password manager desktop app (moved from nixpkgs — EOL electron_39) |
 | wispr-flow | yes | AI-powered voice dictation |
@@ -198,6 +202,7 @@ logging to `~/Library/Logs/brew-upgrade.log`. `darwin-rebuild` does not upgrade 
 | codex-app | yes | OpenAI Codex desktop app (workstation capability; separate from the CLI) |
 | antigravity | yes | Google Antigravity 2.0 standalone agent command center (workstation capability) |
 | antigravity-ide | yes | Google Antigravity IDE (workstation capability) |
+| brave-browser | yes | Brave web browser |
 | postman | yes | API development environment (moved from nixpkgs — version lag caused schema mismatch) |
 | orbstack | yes | Container/Linux VM runtime — cask for TCC permission stability |
 | microsoft-teams | yes | Teams desktop app (not available on Mac App Store) |
