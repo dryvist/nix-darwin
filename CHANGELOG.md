@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.9.2](https://github.com/dryvist/nix-darwin/compare/v4.9.1...v4.9.2) (2026-10-27)
+
+
+### Bug Fixes
+
+* **homebrew:** declare Yubico Authenticator in masApps ([#3012](https://github.com/dryvist/nix-darwin/issues/3012)) ([0b15c5f](https://github.com/dryvist/nix-darwin/commit/0b15c5f1d57d9fe34d6350a8d1dccc066fca9eb2))
+
 ## [4.9.1](https://github.com/dryvist/nix-darwin/compare/v4.9.0...v4.9.1) (2026-10-27)
 
 

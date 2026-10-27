@@ -125,6 +125,7 @@ let
     "Microsoft Excel" = 462058435;
     "Microsoft PowerPoint" = 462062816;
     "Microsoft Outlook" = 985367838;
+    "Yubico Authenticator" = 1497506650;
     # OneDrive (823766827) is intentionally NOT managed via masApps: its
     # first-time install needs an admin-password TTY, unavailable during a
     # non-interactive `darwin-rebuild switch` ("sudo: a terminal is

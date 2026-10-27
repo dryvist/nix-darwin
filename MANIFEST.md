@@ -218,6 +218,7 @@ installed cask or formula not declared in the Nix configuration; it removes noth
 | Microsoft Excel | 462058435 |
 | Microsoft PowerPoint | 462062816 |
 | Microsoft Outlook | 985367838 |
+| Yubico Authenticator | 1497506650 |
 | OneDrive | 823766827 |
 
 ---
