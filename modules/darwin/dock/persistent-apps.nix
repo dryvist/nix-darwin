@@ -77,7 +77,9 @@ let
   ]
   ++ lib.optionals enableWorkstationApps [
     # Secondary Browser
-    (app "/Applications/Brave Browser.app" { cask = "brave-browser"; })
+    (app "/Applications/Brave Browser.app" {
+      manual = "vendor download; not installed by this configuration";
+    })
 
     # Knowledge Base & Notes
     (app "${hmApps}/Obsidian.app" { nixpkgs = "obsidian"; })

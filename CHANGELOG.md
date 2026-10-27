@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.9.1](https://github.com/dryvist/nix-darwin/compare/v4.9.0...v4.9.1) (2026-10-27)
+
+
+### Bug Fixes
+
+* **homebrew:** record the Brave Browser Dock entry as manual ([#3009](https://github.com/dryvist/nix-darwin/issues/3009)) ([1866e66](https://github.com/dryvist/nix-darwin/commit/1866e665285693c4f8ddf7955e822805d99c310d))
+
 ## [4.9.0](https://github.com/dryvist/nix-darwin/compare/v4.8.0...v4.9.0) (2026-10-27)
 
 
