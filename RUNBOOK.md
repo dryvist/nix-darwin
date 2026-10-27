@@ -613,38 +613,41 @@ sudo /nix/var/nix/profiles/system-1-link/activate
 
 1. **Edit** `modules/darwin/dock/persistent-apps.nix`
 
-2. **Reorder apps** in the `persistent-apps` list (order = left to right)
+2. **Reorder apps** in the `apps` list (order = left to right)
 
 3. **Commit and rebuild**
 
 ### Add an App to the Dock
 
-1. **Find the app path**:
+1. **Declare the provider first** in the configuration that installs the app:
 
-   ```bash
-   # System apps
-   ls /System/Applications/
+   - Homebrew cask: add it to `workstationCasks` in `modules/darwin/homebrew.nix`;
+     it installs under `/Applications/`.
+   - Mac App Store app: add it to `workstationMasApps` in
+     `modules/darwin/homebrew.nix`; it installs under `/Applications/`.
+   - Nixpkgs app: add its package to `home.packages` in
+     `hosts/macbook-m4/home.nix`; Home Manager copies it under
+     `~/Applications/Home Manager Apps/`.
+   - macOS system app: use `{ system = true; }`. For an app installed outside
+     this configuration, use `{ manual = "<reason>"; }`.
 
-   # Nix-managed apps
-   ls "/Applications/Nix Apps/"
-
-   # Manual installs
-   ls /Applications/
-
-   # User apps
-   ls ~/Applications/
-   ```
-
-2. **Add to** `modules/darwin/dock/persistent-apps.nix`:
+2. **Add a provider-backed entry** to `modules/darwin/dock/persistent-apps.nix`.
+   Use the provider's exact install path:
 
    ```nix
-   persistent-apps = [
-     # ... existing apps ...
-     "/Applications/NewApp.app"
-   ];
+   (app "/Applications/Slack.app" { cask = "slack"; })
+   (app "${hmApps}/Obsidian.app" { nixpkgs = "obsidian"; })
    ```
 
-3. **Commit and rebuild**
+   Each entry must name exactly one provider, and its path must match that
+   provider's install location.
+
+3. **Validate** the provider contract and evaluate the target host toplevel:
+
+   ```bash
+   nix build .#checks.aarch64-darwin.dock-providers
+   nix eval .#darwinConfigurations.$(hostname).system.drvPath
+   ```
 
 ### Add Items to Right Side of Dock (After Separator)
 
