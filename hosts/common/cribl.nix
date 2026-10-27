@@ -628,6 +628,7 @@ in
         '';
       }
       // import ./cribl-pipelines.nix { inherit codexPack geminiPack; }
+      // import ./cribl-breakers.nix
       // import ./cribl-transcript-mask.nix;
       # Claude Code transcripts ship via the native in_claude_logs input ->
       # cribl_claude (:10311) above; the cc-edge-claude-code pack is not
