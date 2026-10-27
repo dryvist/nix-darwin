@@ -374,6 +374,11 @@
               inherit configs;
             };
 
+            dock-providers = import ./lib/checks/dock-providers.nix {
+              pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+              inherit configs;
+            };
+
             # Token Meter is deliberately universal: every registered Mac's
             # primary user opts in to the service and native menu-bar companion.
             # The check evaluates real host configs, where Home Manager option
