@@ -84,6 +84,12 @@ let
       greedy = true;
     } # Neat device management app
 
+    # --- Browsers ---
+    {
+      name = "brave-browser";
+      greedy = true;
+    } # Secondary browser
+
     # --- API Development ---
     {
       name = "postman";
