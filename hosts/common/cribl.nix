@@ -191,8 +191,7 @@ in
             # `-replace` and not `-remove`: -remove hard-fails with "No value
             # to remove at key path timestamp" whenever the key is absent,
             # while -replace creates it and cannot fail.
-            # Untested pending root verification: --show-process-energy is
-            # omitted; its abort cause is unconfirmed.
+            # The per-process energy option (--show-process-energy) is not passed.
             in_macos_powermetrics:
               type: exec
               disabled: false
