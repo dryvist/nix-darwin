@@ -116,6 +116,7 @@ in
           test_check_ci_invariants.bats \
           test_check_file_sizes.bats \
           test_cluster_rebuild_gate.bats \
+          test_cluster_maintenance_window.bats \
           test_cribl_llm_classifier.bats \
           test_cribl_transcript_mask.bats \
           test_dock_apps_present.bats \
