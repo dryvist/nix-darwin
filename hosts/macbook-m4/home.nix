@@ -64,6 +64,12 @@
     ai-stack-drift-check.enable = lib.mkForce false;
   };
 
+  # The Obsidian CLI is the app's own executable; the nixpkgs copy lives under
+  # Home Manager Apps, and sessionPath reaches non-interactive shells too.
+  home.sessionPath = [
+    "${userConfig.user.homeDir}/Applications/Home Manager Apps/Obsidian.app/Contents/MacOS"
+  ];
+
   # ==========================================================================
   # TCC-Sensitive GUI Applications (using copyApps for stable paths)
   # ==========================================================================
