@@ -23,7 +23,8 @@
   };
 
   # Local official MLX inference server sizing. The prompt cache stays at the
-  # shared 8 GiB resilience cap.
+  # shared 8 GiB resilience cap, except the qwen3.5-9B resident (see
+  # modelFlagOverrides below).
   mlx = {
     # Catalog selection, preload, per-model concurrency and the resident-worker
     # count derive from the role map (hosts/common/role-map.nix).
@@ -34,6 +35,15 @@
     # MLX retained free-buffer pool. The host wired-memory ceiling is the
     # Metal guardrail; this limits reclaimable framework buffers below it.
     bufferCacheLimitGb = 8;
+
+    # Per-worker L2 memory limit for each static resident (both residents use
+    # this value): two workers at 30 GiB fit the 64 GiB wired ceiling less its
+    # 4 GiB baseline.
+    memoryHardLimitGb = 30;
+
+    # Prompt-cache budget for the qwen3.5-9B resident, overriding the value
+    # derived from its full context window.
+    modelFlagOverrides."mlx-community/Qwen3.5-9B-OptiQ-4bit".cacheMemoryMb = 4096;
 
     # proxy.concurrencyLimit is deliberately NOT set here. nix-ai's module
     # already defaults it to 1 (modules/mlx/options-proxy.nix), so restating it
