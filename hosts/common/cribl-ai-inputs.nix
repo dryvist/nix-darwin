@@ -40,8 +40,10 @@ let
         type: file
         disabled: false
         mode: manual
-        interval: 10
+        interval: 30
         path: ${homeDir}/.claude/projects/
+        maxAgeDur: 3d
+        checkFileModTime: true
         filenames:
           - "*.jsonl"
         recurse: true
@@ -61,6 +63,8 @@ let
         mode: manual
         interval: 30
         path: ${homeDir}/.claude
+        maxAgeDur: 3d
+        checkFileModTime: true
         filenames:
           - "history.jsonl"
         recurse: false
@@ -83,6 +87,8 @@ let
         mode: manual
         interval: 30
         path: ${homeDir}/.codex/sessions
+        maxAgeDur: 3d
+        checkFileModTime: true
         filenames:
           - "*/rollout-*.jsonl"
         recurse: true
@@ -104,6 +110,8 @@ let
         mode: manual
         interval: 30
         path: ${homeDir}/.codex
+        maxAgeDur: 3d
+        checkFileModTime: true
         filenames:
           - "*/history.jsonl"
         recurse: false
@@ -125,6 +133,8 @@ let
         mode: manual
         interval: 30
         path: ${homeDir}/.gemini/tmp
+        maxAgeDur: 3d
+        checkFileModTime: true
         filenames:
           - "*session-*.json"
           - "*session-*.jsonl"
@@ -147,6 +157,8 @@ let
         mode: manual
         interval: 60
         path: ${homeDir}/.gemini/antigravity-cli/brain
+        maxAgeDur: 3d
+        checkFileModTime: true
         filenames:
           - "*/transcript_full.jsonl"
         recurse: true
@@ -168,6 +180,8 @@ let
         mode: manual
         interval: 30
         path: ${homeDir}/.gemini/antigravity-cli
+        maxAgeDur: 3d
+        checkFileModTime: true
         filenames:
           - "*history.jsonl"
         recurse: false

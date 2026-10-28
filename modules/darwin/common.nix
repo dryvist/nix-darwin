@@ -53,6 +53,7 @@ in
     ./dock-apps-present.nix # Warn when a declared Dock app path is missing
     ./llm-gate.nix
     ./nix-storage.nix
+    ./ws-monitor.nix
     ./apple-silicon-tunables.nix
     ./system-limits.nix
     ./network-tuning.nix
@@ -201,14 +202,6 @@ in
 
         echo "✅ Activation complete → $systemConfig"
         echo "   Timestamp: $TIMESTAMPS"
-
-        # Retire bespoke ws-monitor LaunchDaemon (replaced by native Cribl Edge apple_unified_logs)
-        for stale in /Library/LaunchDaemons/*ws-monitor.plist; do
-          [ -f "$stale" ] || continue
-          /bin/launchctl bootout system "$stale" 2>/dev/null || true
-          /bin/rm -f "$stale"
-          echo "[ws-monitor] retired stale daemon plist: $stale"
-        done
 
         # ====================================================================
         # Post-Activation Comprehensive Diagnostics

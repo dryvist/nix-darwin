@@ -63,6 +63,7 @@ let
   # One full claude/codex/gemini/antigravity input set per managed OS user
   # (split out for the repo file-size gate — see ./cribl-ai-inputs.nix).
   aiCliInputsBlock = import ./cribl-ai-inputs.nix { inherit lib userConfig; };
+  macosMonitorInputsBlock = import ./cribl-macos-monitor-inputs.nix { inherit lib; };
 in
 {
   programs = {
@@ -178,72 +179,9 @@ in
             # cc-edge-the-mac-pack-io pack. Edge runs as root here, so
             # powermetrics/ioreg/DiagnosticReports reads succeed.
             #
-            # Unified Logging Subsystem, native Source.
-            #
-            # readMode is DELIBERATELY ABSENT. "lastEntry" is not a valid enum
-            # value (the validator accepts oldest|newest only), so Cribl
-            # rejected this whole input with CrudEntityInvalidError on every
-            # restart -- it had never once initialized. Do not re-add it; the
-            # default ("from last entry") is what was wanted anyway.
-            #
-            # The predicate is narrowed to the panic/thermal/jetsam path. The
-            # previous one matched bare "watchdog"/"thermal" from
-            # runningboardd/WallpaperAgent: 165,891 events over 3h (~1.33M/day),
-            # burying the DumpPanic line that mattered. This one measured 7,901
-            # over the same window (~63k/day, 21x less) and still catches it.
-            # Ship it WITH the readMode fix -- readMode alone floods.
-            in_macos_unified_logs:
-              type: apple_unified_logs
-              disabled: false
-              #
-              # "memory pressure" is deliberately OUTSIDE the kernel group.
-              # The kernel does not use that phrasing -- every real hit is
-              # userspace -- so scoping it to process == "kernel" made the
-              # clause unmatchable. Measured over a 5.4h window: 73 events
-              # unscoped, 0 kernel-scoped. Among the 73 is modelmanagerd
-              # "Critical Memory Pressure Event Loop", from a process directly
-              # implicated in memory exhaustion, which the scoped form
-              # dropped. Cost of unscoping is ~73 events per 5.4h, about
-              # 0.5%; the 21x narrowing survives.
-              #
-              # "low swap" stays kernel-scoped and matches nothing today.
-              # Whether that is quiet or malformed is UNKNOWN: that the kernel
-              # is the emitter of this phrasing is ASSUMED, NOT MEASURED, and
-              # the identical assumption was just found wrong one clause over
-              # -- "memory pressure" measured 73 unscoped against 0
-              # kernel-scoped. It costs nothing today precisely because it
-              # matches nothing today, so a mis-scoping would surface only
-              # during swap exhaustion, which is the worst moment to find out.
-              # Swap exhaustion has not occurred on this host, so there is
-              # no window that tests it. The check is one measurement in a
-              # window where swap actually filled; nobody has had one yet.
-              #
-              # UNVERIFIED, do not read as coverage: "GPU restart" and
-              # "gpu hang" have never matched and there is no evidence macOS
-              # emits either string. Rare and invented are indistinguishable
-              # without a window containing a real GPU reset. Do not assume
-              # GPU resets are handled.
-              #
-              # KNOWN GAP: "Metal" and "SkyLight" are deliberately absent --
-              # ~26% more volume for streams sampled as routine chatter, while
-              # the compositor starvation that mattered surfaced through
-              # DumpPanic and "userspace watchdog timeout", both present and
-              # both of which caught the real event.
-              # WindowServer freeze & responsiveness anomalies: "synchronize timed out",
-              # and WindowServer "failed to act" or "Clearing datagram buffer" (replacing
-              # bespoke ws-monitor.sh LaunchDaemon polling with native streaming).
-              # sudo authentication: each PAM module's verdict, the Touch ID
-              # (LocalAuthentication) result, and the password fallback; plus
-              # kernel library-validation rejections of third-party PAM
-              # modules. Measured over 2 h: 2,031 events, 1,968 of them
-              # library-validation rejections.
-              predicate: '(process == "kernel" AND (eventMessage CONTAINS[c] "jetsam" OR eventMessage CONTAINS[c] "memorystatus" OR eventMessage CONTAINS[c] "low swap" OR eventMessage CONTAINS[c] "panic" OR eventMessage CONTAINS[c] "IOGPU" OR eventMessage CONTAINS[c] "AGX" OR eventMessage CONTAINS[c] "thermal")) OR eventMessage CONTAINS[c] "memory pressure" OR process == "DumpPanic" OR process == "ReportCrash" OR process == "thermalmonitord" OR subsystem == "com.apple.thermalmonitord" OR eventMessage CONTAINS[c] "userspace watchdog timeout" OR eventMessage CONTAINS[c] "GPU restart" OR eventMessage CONTAINS[c] "gpu hang" OR eventMessage CONTAINS[c] "synchronize timed out" OR (process == "WindowServer" AND (eventMessage CONTAINS[c] "failed to act" OR eventMessage CONTAINS[c] "Clearing datagram buffer")) OR (process == "sudo" AND (eventMessage CONTAINS "pam_sm_authenticate" OR eventMessage CONTAINS "evaluatePolicy on" OR eventMessage CONTAINS "Authorization result" OR eventMessage CONTAINS "Error obtaining the authtok")) OR (process == "kernel" AND eventMessage CONTAINS "Library Validation failed")'
-              sendToRoutes: false
-              connections:
-                - pipeline: os_events
-                  output: cribl_stream
-            # powermetrics: the only path to per-process energy + CPU/GPU/ANE
-            # power. Exec, 300s (expensive sampler). One JSON doc per sample.
+            ${macosMonitorInputsBlock.unifiedLogs}
+            # powermetrics: the only path to CPU/GPU/ANE power. Exec, 300s
+            # (expensive sampler). One JSON doc per sample.
             # Performance sampling, not event telemetry -> index=mac_perf.
             #
             # The `-replace timestamp -string ""` hop is load-bearing:
@@ -253,11 +191,12 @@ in
             # `-replace` and not `-remove`: -remove hard-fails with "No value
             # to remove at key path timestamp" whenever the key is absent,
             # while -replace creates it and cannot fail.
+            # The per-process energy option (--show-process-energy) is not passed.
             in_macos_powermetrics:
               type: exec
               disabled: false
               interval: 300
-              command: "powermetrics --samplers tasks,battery,cpu_power,gpu_power,ane_power,thermal --show-process-energy -f plist -n 1 -i 5000 | /usr/bin/plutil -replace timestamp -string \"\" -o - - | /usr/bin/plutil -convert json -o - -"
+              command: "powermetrics --samplers tasks,battery,cpu_power,gpu_power,ane_power,thermal -f plist -n 1 -i 5000 | /usr/bin/plutil -replace timestamp -string \"\" -o - - | /usr/bin/plutil -convert json -o - -"
               sendToRoutes: false
               connections:
                 - pipeline: mac_perf
@@ -279,6 +218,8 @@ in
               connections:
                 - pipeline: mac_perf
                   output: cribl_stream
+            ${macosMonitorInputsBlock.wsMonitor}
+            ${macosMonitorInputsBlock.wsMonitorCaptures}
             # Thermal/perf pressure levels (pmset -g therm) — not in the native
             # System Metrics Source on macOS. Exec, 60s.
             in_macos_thermal:
@@ -409,8 +350,10 @@ in
               type: file
               disabled: false
               mode: manual
-              interval: 10
+              interval: 30
               path: ${userConfig.user.homeDir}/Library/Application Support/Code/logs/
+              maxAgeDur: 3d
+              checkFileModTime: true
               # GitLens.log is excluded on timestamp grounds, not volume. Its
               # lines carry two stamps in different zones: GitLens' own in
               # local time, plus a bracketed UTC one belonging to the wrapped
@@ -579,6 +522,7 @@ in
         '';
       }
       // import ./cribl-pipelines.nix { inherit codexPack geminiPack; }
+      // import ./cribl-breakers.nix
       // import ./cribl-transcript-mask.nix;
       # Claude Code transcripts ship via the native in_claude_logs input ->
       # cribl_claude (:10311) above; the cc-edge-claude-code pack is not
