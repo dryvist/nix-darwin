@@ -35,7 +35,7 @@ rep() { printf "%${2}s" "" | tr ' ' "$1"; }
 }
 
 @test "every credential shape is masked" {
-  local p="ghs" q="ghp" b="hvs" d="dp" x="xoxb" s="sk" a="AKIA" e="eyJ"
+  local p="ghs" q="ghp" b="hvs" d="dp" x="xoxb" s="sk" a="AKIA" e="eyJ" k="RSA"
   local samples=(
     "${p}_1234567_${e}$(rep a 20).${e}$(rep b 20).$(rep c 20)"
     "${q}_$(rep A 36)"
@@ -46,7 +46,7 @@ rep() { printf "%${2}s" "" | tr ' ' "$1"; }
     "${x}-123456789012-$(rep H 20)"
     "${s}-ant-api03-$(rep I 30)"
     "${a}$(rep J 16)"
-    "-----BEGIN RSA PRIVATE KEY-----\\nMII$(rep K 40)\\n-----END RSA PRIVATE KEY-----"
+    "-----BEGIN ${k} PRIVATE KEY-----\\nMII$(rep K 40)\\n-----END ${k} PRIVATE KEY-----"
   )
   local t out
   for t in "${samples[@]}"; do
