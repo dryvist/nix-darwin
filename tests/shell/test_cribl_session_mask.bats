@@ -55,7 +55,7 @@ rep() { printf "%${2}s" "" | tr ' ' "$1"; }
   done
 }
 
-@test "ordinary transcript text is left alone" {
+@test "ordinary session text is left alone" {
   local t
   for t in \
     "process.environment_variables_are_long_here" \
