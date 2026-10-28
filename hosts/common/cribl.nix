@@ -20,22 +20,12 @@ let
     builtins.readFile "${homelab-contracts}/ansible/roles/cribl_edge/files/cribl.json"
   );
 
-  # AI-CLI transcript packs, hoisted so the same derivation both deploys as a
-  # pack (provenance/UI) AND supplies its pipeline confs verbatim to the
-  # worker-level pipelines below — the released .crbl stays the single source,
-  # nothing is copy-pasted.
-  codexPack = pkgs.fetchzip {
-    url = "https://github.com/dryvist/cc-edge-codex-io/releases/download/v0.1.1/cc-edge-codex-io-v0.1.1.crbl";
-    extension = "tar.gz";
-    hash = "sha256-EgPHvubxZ+ey1alAtPXIueInzMpMB5gdt8E8aGkUlF0=";
-    stripRoot = false;
-  };
-  geminiPack = pkgs.fetchzip {
-    url = "https://github.com/JacobPEvans-personal/cc-edge-gemini-antigravity-io/releases/download/v0.4.1/cc-edge-gemini-antigravity-io-v0.4.1.crbl";
-    extension = "tar.gz";
-    hash = "sha256-VzRPBode10yLdDqmcaOhwWnTpUVmF10OwVkXZtyjGJ4=";
-    stripRoot = false;
-  };
+  # Released pack pins (./cribl-packs.nix). Pipelines, breakers and exec command
+  # text are read from these derivations, so the released .crbl stays the single
+  # source and nothing is copied into this file.
+  packPins = import ./cribl-packs.nix { inherit pkgs; };
+  codexPack = packPins.cc-edge-codex-io;
+  geminiPack = packPins.cc-edge-gemini-antigravity-io;
   mlxModels = config.home-manager.users.${userConfig.user.name}.services.aiStack.models or { };
   judgeModel = mlxModels.judge or null;
   judgeEnabled = judgeModel != null;
@@ -534,16 +524,7 @@ in
       # the Edge process in modules/darwin/apps/cribl-edge.nix), normalizes to
       # OTel-AI llm.* fields, stamps index/sourcetype, and routes to the
       # default output.
-      packs = lib.filterAttrs (name: _: builtins.elem name criblCatalog.packs.edge_macos) {
-        cc-edge-the-mac-pack-io = pkgs.fetchzip {
-          url = "https://github.com/dryvist/cc-edge-the-mac-pack-io/releases/download/v0.5.0/cc-edge-the-mac-pack-io-v0.5.0.crbl"; # renovate: cc-edge-the-mac-pack-io
-          extension = "tar.gz";
-          hash = "sha256-s7K7G+ieqrUA87480ksjHDerhb3paJvSYbTX3h6mO0s=";
-          stripRoot = false;
-        };
-        cc-edge-codex-io = codexPack;
-        cc-edge-gemini-antigravity-io = geminiPack;
-      };
+      packs = lib.filterAttrs (name: _: builtins.elem name criblCatalog.packs.edge_macos) packPins;
     };
 
   };
