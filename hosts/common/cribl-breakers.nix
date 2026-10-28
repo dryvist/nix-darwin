@@ -1,12 +1,12 @@
 {
-  # Transcript JSONL lines regularly exceed the stock 51200-byte
+  # Session-log JSONL lines regularly exceed the stock 51200-byte
   # maxEventBytes (codex rollouts observed >110 KB), which silently
   # splits one JSON line into unparseable fragments. Dedicated newline
-  # breaker with a 1 MiB ceiling, attached to the transcript file inputs.
+  # breaker with a 1 MiB ceiling, attached to the session-log file inputs.
   "breakers.yml" = ''
     AI CLI JSONL:
       lib: custom
-      description: Newline-delimited AI-CLI transcript JSON; single lines can far exceed the 51200-byte default maxEventBytes (codex lines >1 MiB observed)
+      description: Newline-delimited AI-CLI session-log JSON; single lines can far exceed the 51200-byte default maxEventBytes (codex lines >1 MiB observed)
       rules:
         - condition: "true"
           type: regex
