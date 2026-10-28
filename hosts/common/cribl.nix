@@ -56,6 +56,17 @@ let
   packBreakersYml = lib.concatMapStringsSep "\n" (
     pack: builtins.readFile "${pack}/default/breakers.yml"
   ) (lib.filter (pack: builtins.pathExists "${pack}/default/breakers.yml") workerPacks);
+
+  # Exec command text lives in the power/thermal pack. Each file holds the decoded
+  # command; JSON encoding gives a YAML double-quoted scalar that decodes to the
+  # same bytes, since the commands contain quotes and backslashes.
+  powerThermalPack = packPins.cc-edge-macos-power-thermal-io;
+  powermetricsCommand = builtins.toJSON (
+    builtins.readFile "${powerThermalPack}/default/exec/macos-powermetrics.cmd"
+  );
+  wiredMemoryCommand = builtins.toJSON (
+    builtins.readFile "${powerThermalPack}/default/exec/macos-wired-memory.cmd"
+  );
   mlxModels = config.home-manager.users.${userConfig.user.name}.services.aiStack.models or { };
   judgeModel = mlxModels.judge or null;
   judgeEnabled = judgeModel != null;
@@ -215,7 +226,7 @@ in
               type: exec
               disabled: false
               interval: 300
-              command: "powermetrics --samplers tasks,battery,cpu_power,gpu_power,ane_power,thermal -f plist -n 1 -i 5000 | /usr/bin/plutil -replace timestamp -string \"\" -o - - | /usr/bin/plutil -convert json -o - -"
+              command: ${powermetricsCommand}
               sendToRoutes: false
               connections:
                 - pipeline: macos_powermetrics
@@ -223,8 +234,8 @@ in
             # Wired memory + the GPU wired ceiling (iogpu.wired_limit_mb):
             # system_metrics exposes memory_percent only, neither of these. At
             # wired has been observed at 91.3 GiB against a 100 GiB ceiling,
-            # which is the signal that predicts exhaustion. Command taken VERBATIM from
-            # cc-edge-the-mac-pack-io (stock binaries chained, no script file);
+            # which is the signal that predicts exhaustion. The command text is read
+            # from the pinned pack (stock binaries chained, no script file);
             # it also emits wired_ceiling_bytes on top of the four headline
             # fields. Named in_* to match this instance's inputs -- the pack
             # calls it macos-wired-memory.
@@ -232,7 +243,7 @@ in
               type: exec
               disabled: false
               interval: 60
-              command: "/bin/bash -c 'wp=$(/usr/bin/vm_stat | /usr/bin/awk \"/Pages wired down/{gsub(/[^0-9]/,\\\"\\\",\\$4);print \\$4}\"); pgsz=$(/usr/sbin/sysctl -n hw.pagesize); cm=$(/usr/sbin/sysctl -n iogpu.wired_limit_mb); rk=$(/bin/ps -A -o rss= | /usr/bin/awk \"{s+=\\$1} END{print s+0}\"); /usr/bin/awk -v wp=\"$wp\" -v pgsz=\"$pgsz\" -v cm=\"$cm\" -v rk=\"$rk\" \"BEGIN{wb=wp*pgsz; cb=cm*1024*1024; printf \\\"{\\\\\\\"wired_bytes\\\\\\\":%d,\\\\\\\"wired_ceiling_mb\\\\\\\":%d,\\\\\\\"wired_ceiling_bytes\\\\\\\":%d,\\\\\\\"wired_ratio\\\\\\\":%.4f,\\\\\\\"resident_bytes\\\\\\\":%d}\\\\n\\\", wb, cm, cb, wb/cb, rk*1024}\"'"
+              command: ${wiredMemoryCommand}
               sendToRoutes: false
               connections:
                 - pipeline: macos_wired_memory
