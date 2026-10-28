@@ -76,8 +76,9 @@ let
       # launchd and loginwindow clauses are narrow by design: launchd is limited to
       # exit, throttle and crash phrases, all kept by the unified-log pack's drop
       # filter; loginwindow to timeout and hang phrases. Volume not measured.
+      # eslogger's own events are excluded here; in_macos_eslogger collects them.
       predicate: >-
-        (process == "kernel" AND (eventMessage CONTAINS[c] "jetsam" OR eventMessage CONTAINS[c] "memorystatus" OR eventMessage CONTAINS[c] "low swap" OR eventMessage CONTAINS[c] "panic" OR eventMessage CONTAINS[c] "IOGPU" OR eventMessage CONTAINS[c] "AGX" OR eventMessage CONTAINS[c] "thermal")) OR
+        process != "eslogger" AND ((process == "kernel" AND (eventMessage CONTAINS[c] "jetsam" OR eventMessage CONTAINS[c] "memorystatus" OR eventMessage CONTAINS[c] "low swap" OR eventMessage CONTAINS[c] "panic" OR eventMessage CONTAINS[c] "IOGPU" OR eventMessage CONTAINS[c] "AGX" OR eventMessage CONTAINS[c] "thermal")) OR
         eventMessage CONTAINS[c] "memory pressure" OR process == "DumpPanic" OR process == "ReportCrash" OR
         process == "thermalmonitord" OR subsystem == "com.apple.thermalmonitord" OR
         eventMessage CONTAINS[c] "userspace watchdog timeout" OR eventMessage CONTAINS[c] "GPU restart" OR
@@ -92,7 +93,7 @@ let
         (process == "kernel" AND eventMessage CONTAINS[c] "apfs" AND (eventMessage CONTAINS[c] "slow" OR eventMessage CONTAINS[c] "stall" OR eventMessage CONTAINS[c] "timeout" OR eventMessage CONTAINS[c] "took")) OR
         (process == "tccd" AND (eventMessage CONTAINS[c] "timed out" OR eventMessage CONTAINS[c] "timeout")) OR
         (process == "launchd" AND (eventMessage CONTAINS[c] "exited due to" OR eventMessage CONTAINS[c] "did not exit" OR eventMessage CONTAINS[c] "throttl" OR eventMessage CONTAINS[c] "crash")) OR
-        (process == "loginwindow" AND (eventMessage CONTAINS[c] "timed out" OR eventMessage CONTAINS[c] "timeout" OR eventMessage CONTAINS[c] "hang" OR eventMessage CONTAINS[c] "watchdog"))
+        (process == "loginwindow" AND (eventMessage CONTAINS[c] "timed out" OR eventMessage CONTAINS[c] "timeout" OR eventMessage CONTAINS[c] "hang" OR eventMessage CONTAINS[c] "watchdog")))
       sendToRoutes: false
       connections:
         - pipeline: macos_unified_logs
@@ -154,10 +155,24 @@ let
         - pipeline: macos_ws_monitor_errors
           output: cribl_stream
   '';
+
+  # eslogger's own output (modules/darwin/eslogger.nix). The subsystem and
+  # category are the defaults `eslogger --help` names for --oslog.
+  esloggerRaw = ''
+    in_macos_eslogger:
+      type: apple_unified_logs
+      disabled: false
+      predicate: 'process == "eslogger" AND subsystem == "com.apple.eslogger" AND category == "events"'
+      sendToRoutes: false
+      connections:
+        - pipeline: macos_process_lifecycle
+          output: cribl_stream
+  '';
 in
 {
   unifiedLogs = indentInputFragment unifiedLogsRaw;
   wsMonitor = indentInputFragment wsMonitorRaw;
   wsMonitorCaptures = indentInputFragment wsMonitorCapturesRaw;
   wsMonitorErrors = indentInputFragment wsMonitorErrorsRaw;
+  eslogger = indentInputFragment esloggerRaw;
 }
