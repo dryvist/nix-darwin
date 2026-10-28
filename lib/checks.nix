@@ -17,6 +17,9 @@ let
     (import ../hosts/common/hm-collision-clear.nix {
       lib.hm.dag.entryBefore = _: text: text;
     }).home.activation.clearStrayLinkTargets;
+
+  # Released pack pins: the shell tests read the pipeline confs they ship.
+  criblPacks = import ../hosts/common/cribl-packs.nix { inherit pkgs; };
 in
 {
   # Check Nix formatting with nixfmt
@@ -108,6 +111,8 @@ in
           yq-go
         ];
         HM_COLLISION_CLEAR_SWEEP = hmCollisionClearSweep;
+        CRIBL_LLM_LOGS_CONF = "${criblPacks.cc-edge-mlx-serving-io}/default/pipelines/llm_logs/conf.yml";
+        CRIBL_TRANSCRIPT_MASK_CONF = "${criblPacks.cc-edge-ai-transcript-shared-io}/default/pipelines/transcript_mask/conf.yml";
       }
       ''
         cd ${src}
