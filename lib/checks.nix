@@ -112,7 +112,7 @@ in
         ];
         HM_COLLISION_CLEAR_SWEEP = hmCollisionClearSweep;
         CRIBL_LLM_LOGS_CONF = "${criblPacks.cc-edge-mlx-serving-io}/default/pipelines/llm_logs/conf.yml";
-        CRIBL_TRANSCRIPT_MASK_CONF = "${criblPacks.cc-edge-ai-transcript-shared-io}/default/pipelines/transcript_mask/conf.yml";
+        CRIBL_SESSION_MASK_CONF = "${criblPacks.cc-edge-ai-transcript-shared-io}/default/pipelines/transcript_mask/conf.yml";
       }
       ''
         cd ${src}
@@ -123,7 +123,7 @@ in
           test_cluster_rebuild_gate.bats \
           test_cluster_maintenance_window.bats \
           test_cribl_llm_classifier.bats \
-          test_cribl_transcript_mask.bats \
+          test_cribl_session_mask.bats \
           test_dock_apps_present.bats \
           test_hm_collision_clear.bats \
           test_openbao_run.bats \

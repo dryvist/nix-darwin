@@ -10,7 +10,7 @@
 # Sample credentials are assembled at runtime from fragments so no
 # credential-shaped literal sits in this file for a secret scanner to flag.
 
-MASK_CONF="${CRIBL_TRANSCRIPT_MASK_CONF:?}"
+MASK_CONF="${CRIBL_SESSION_MASK_CONF:?}"
 
 rules() {
   yq -r '.functions[0].conf.rules[] | .matchRegex + "\t" + .replaceExpr' "$MASK_CONF"
