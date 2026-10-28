@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.11.0](https://github.com/dryvist/nix-darwin/compare/v4.10.1...v4.11.0) (2026-10-28)
+
+
+### Features
+
+* **monitoring:** add stall monitor with tailspin capture and Cribl shipping ([#3023](https://github.com/dryvist/nix-darwin/issues/3023)) ([be218d5](https://github.com/dryvist/nix-darwin/commit/be218d5f51946b7bfe0956af72e0d0b3b2ffc733))
+
 ## [4.10.1](https://github.com/dryvist/nix-darwin/compare/v4.10.0...v4.10.1) (2026-10-27)
 
 
