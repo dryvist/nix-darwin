@@ -54,6 +54,7 @@ in
     ./llm-gate.nix
     ./nix-storage.nix
     ./ws-monitor.nix
+    ./eslogger.nix
     ./apple-silicon-tunables.nix
     ./system-limits.nix
     ./network-tuning.nix

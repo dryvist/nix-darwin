@@ -16,11 +16,23 @@
       // error, same as any Nix fixed-output-hash bump; land it by copying
       // that hash in.
       "customType": "regex",
-      "managerFilePatterns": ["/hosts/common/cribl\\.nix$/"],
+      "managerFilePatterns": ["/hosts/common/cribl-packs\\.nix$/"],
       "matchStrings": [
         "/releases/download/v(?<currentValue>[^/]+)/cc-edge-the-mac-pack-io-v[^\"]+\\.crbl\"; # renovate: cc-edge-the-mac-pack-io"
       ],
       "depNameTemplate": "dryvist/cc-edge-the-mac-pack-io",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "loose"
+    },
+    {
+      // Tracks the released jpe-cribl Edge packs. The fetchzip hash is the
+      // unpacked-tree hash, so a version bump lands with the hash copied from
+      // the Nix build error, as for the pack above.
+      "customType": "regex",
+      "managerFilePatterns": ["/hosts/common/cribl-packs\\.nix$/"],
+      "matchStrings": [
+        "https://github\\.com/(?<depName>jpe-cribl/[^/]+)/releases/download/v(?<currentValue>[^/]+)/"
+      ],
       "datasourceTemplate": "github-releases",
       "versioningTemplate": "loose"
     },

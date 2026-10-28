@@ -1,10 +1,9 @@
 #!/usr/bin/env bats
 
 MANAGER_LOG_PATTERN='^(\[(DEBUG|INFO|WARN|ERROR)\] |time=[^ ]+ level=(DEBUG|INFO|WARN|ERROR) |[0-9]{4}[/][0-9]{2}[/][0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})'
-# The llm_logs pipeline lives in cribl-pipelines.nix, split out of
-# cribl.nix for the repo file-size gate. The assertion below is
-# unchanged; only the path follows the code that moved.
-CRIBL_CONFIG="$BATS_TEST_DIRNAME/../../hosts/common/cribl-pipelines.nix"
+# The llm_logs pipeline ships in the cc-edge-mlx-serving-io pack. The Nix check
+# passes the pinned conf in through CRIBL_LLM_LOGS_CONF (lib/checks.nix).
+CRIBL_CONFIG="${CRIBL_LLM_LOGS_CONF:?}"
 
 # Mirrors the pipeline eval: __inputId is checked FIRST (cluster logs share
 # the llm_logs pipeline with the model-server logs but are a third, unrelated
