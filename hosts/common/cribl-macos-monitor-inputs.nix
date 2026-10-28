@@ -90,7 +90,7 @@ let
         (process == "tccd" AND (eventMessage CONTAINS[c] "timed out" OR eventMessage CONTAINS[c] "timeout"))
       sendToRoutes: false
       connections:
-        - pipeline: os_events
+        - pipeline: macos_unified_logs
           output: cribl_stream
   '';
 

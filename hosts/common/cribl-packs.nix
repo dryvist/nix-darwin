@@ -68,4 +68,10 @@
     hash = "sha256-vFA884aCw3k4osT494vSsd87ykw95nt16195YTr8g4s=";
     stripRoot = false;
   };
+  cc-edge-macos-unified-logs-io = pkgs.fetchzip {
+    url = "https://github.com/jpe-cribl/cc-edge-macos-unified-logs-io/releases/download/v0.1.0/cc-edge-macos-unified-logs-io-0.1.0.crbl";
+    extension = "tar.gz";
+    hash = "sha256-b08dmz2s1c7Sz56RGb9Pj1LFlgHU6BOi5deLNaqk4jc=";
+    stripRoot = false;
+  };
 }

@@ -3,24 +3,11 @@
 # Split out of ./cribl.nix for the repo file-size gate; merged straight back
 # into `programs.cribl-edge.standalone.configFiles` there. The pipelines of the
 # released packs are installed by packPipelineFiles in ./cribl.nix; what remains
-# here is the unified-log pipeline and the AI-CLI pipelines.
+# here is the AI-CLI pipelines.
 
 { codexPack, geminiPack }:
 
 {
-  # Unified Logging Subsystem events -> index=os, sourcetype macos:unified_log.
-  "pipelines/os_events/conf.yml" = ''
-    output: default
-    functions:
-      - id: eval
-        filter: "true"
-        conf:
-          add:
-            - name: index
-              value: "'os'"
-            - name: sourcetype
-              value: "'macos:unified_log'"
-  '';
   # AI-CLI transcript pipelines, taken VERBATIM from the released pack
   # derivations (see the let block at the top) and installed as
   # worker-level pipelines. Why not run them inside the packs: on this

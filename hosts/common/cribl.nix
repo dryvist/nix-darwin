@@ -36,6 +36,7 @@ let
     "cc-edge-mlx-serving-io"
     "cc-edge-macos-process-telemetry-io"
     "cc-edge-macos-firewall-io"
+    "cc-edge-macos-unified-logs-io"
   ] packPins;
 
   # Every pipeline conf a pack ships, keyed as Edge's worker-level config tree
