@@ -70,17 +70,41 @@ let
   mlxModels = config.home-manager.users.${userConfig.user.name}.services.aiStack.models or { };
   judgeModel = mlxModels.judge or null;
   judgeEnabled = judgeModel != null;
-  judgeProcessSetYaml = lib.optionalString judgeEnabled (
+  judgeMetadataYaml = lib.optionalString judgeEnabled (
     builtins.concatStringsSep "\n" [
       "metadata:"
       "      - name: telemetry_role"
       "        value: \"'judge'\""
-      "    process:"
-      "      sets:"
-      "        - name: judge"
-      "          filter: \"cmdline.args.includes('${judgeModel}')\""
-      "          includeChildren: false"
     ]
+  );
+  # Per-process metrics: one process set per name, matched on the executable
+  # path (args[0]); name and exe_path filters match nothing on macOS. The "mds"
+  # filter also covers mds_stores.
+  processSetNames = [
+    "WindowServer"
+    "cribl"
+    "python"
+    "node"
+    "codex"
+    "claude"
+    "osascript"
+    "gpg-agent"
+    "socketfilterfw"
+    "runningboardd"
+    "mds"
+  ];
+  processSetLines = name: filter: [
+    "        - name: ${name}"
+    "          filter: \"${filter}\""
+    "          includeChildren: false"
+  ];
+  processSetsYaml = builtins.concatStringsSep "\n" (
+    [
+      "process:"
+      "      sets:"
+    ]
+    ++ lib.optionals judgeEnabled (processSetLines "judge" "cmdline.args.includes('${judgeModel}')")
+    ++ lib.concatMap (name: processSetLines name "args[0].includes('${name}')") processSetNames
   );
   workstationLoadConnectionYaml =
     lib.optionalString ((hostConfig.class or "server") == "workstation")
@@ -196,7 +220,8 @@ in
               type: system_metrics
               disabled: false
               pollingInterval: 10
-              ${judgeProcessSetYaml}
+              ${judgeMetadataYaml}
+              ${processSetsYaml}
               sendToRoutes: false
               connections:
                 - pipeline: llm_metrics
