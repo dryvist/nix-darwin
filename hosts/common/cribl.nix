@@ -26,6 +26,36 @@ let
   packPins = import ./cribl-packs.nix { inherit pkgs; };
   codexPack = packPins.cc-edge-codex-io;
   geminiPack = packPins.cc-edge-gemini-antigravity-io;
+
+  # Packs whose worker-level pipelines and breakers this file installs.
+  workerPacks = lib.attrVals [
+    "cc-edge-macos-diagnostic-reports-io"
+    "cc-edge-macos-power-thermal-io"
+    "cc-edge-macos-ws-monitor-io"
+    "cc-edge-ai-transcript-shared-io"
+    "cc-edge-mlx-serving-io"
+    "cc-edge-macos-process-telemetry-io"
+    "cc-edge-macos-firewall-io"
+  ] packPins;
+
+  # Every pipeline conf a pack ships, keyed as Edge's worker-level config tree
+  # expects. Edge resolves pipelines by id from this tree; a pack's own routes
+  # are not loaded on this node.
+  packPipelineFiles = lib.foldl' (
+    acc: pack:
+    acc
+    // lib.mapAttrs' (
+      id: _:
+      lib.nameValuePair "pipelines/${id}/conf.yml" (
+        builtins.readFile "${pack}/default/pipelines/${id}/conf.yml"
+      )
+    ) (lib.filterAttrs (_: type: type == "directory") (builtins.readDir "${pack}/default/pipelines"))
+  ) { } workerPacks;
+
+  # Breaker files are top-level YAML mappings, so the packs' files concatenate.
+  packBreakersYml = lib.concatMapStringsSep "\n" (
+    pack: builtins.readFile "${pack}/default/breakers.yml"
+  ) (lib.filter (pack: builtins.pathExists "${pack}/default/breakers.yml") workerPacks);
   mlxModels = config.home-manager.users.${userConfig.user.name}.services.aiStack.models or { };
   judgeModel = mlxModels.judge or null;
   judgeEnabled = judgeModel != null;
@@ -161,13 +191,12 @@ in
                 - pipeline: llm_metrics
                   output: cribl_stream
               ${workstationLoadConnectionYaml}
-            # Critical macOS logs + power/thermal telemetry -> index=os (event),
-            # sourcetype macos:* (the os_events pipeline derives sourcetype from
-            # __inputId). Native Sources where Edge 4.18 has them; the three exec
-            # sources below (powermetrics, pmset thermal, ioreg battery) have no
-            # native 4.18 equivalent. Commands taken verbatim from the
-            # cc-edge-the-mac-pack-io pack. Edge runs as root here, so
-            # powermetrics/ioreg/DiagnosticReports reads succeed.
+            # Critical macOS logs + power/thermal telemetry. Each input connects to
+            # the released pack pipeline that stamps its index and sourcetype.
+            # Native Sources where Edge 4.18 has them; the exec sources below
+            # (powermetrics, wired memory, pmset thermal) have no native 4.18
+            # equivalent. Edge runs as root here, so powermetrics and
+            # DiagnosticReports reads succeed.
             #
             ${macosMonitorInputsBlock.unifiedLogs}
             # powermetrics: the only path to CPU/GPU/ANE power. Exec, 300s
@@ -189,7 +218,7 @@ in
               command: "powermetrics --samplers tasks,battery,cpu_power,gpu_power,ane_power,thermal -f plist -n 1 -i 5000 | /usr/bin/plutil -replace timestamp -string \"\" -o - - | /usr/bin/plutil -convert json -o - -"
               sendToRoutes: false
               connections:
-                - pipeline: mac_perf
+                - pipeline: macos_powermetrics
                   output: cribl_stream
             # Wired memory + the GPU wired ceiling (iogpu.wired_limit_mb):
             # system_metrics exposes memory_percent only, neither of these. At
@@ -206,7 +235,7 @@ in
               command: "/bin/bash -c 'wp=$(/usr/bin/vm_stat | /usr/bin/awk \"/Pages wired down/{gsub(/[^0-9]/,\\\"\\\",\\$4);print \\$4}\"); pgsz=$(/usr/sbin/sysctl -n hw.pagesize); cm=$(/usr/sbin/sysctl -n iogpu.wired_limit_mb); rk=$(/bin/ps -A -o rss= | /usr/bin/awk \"{s+=\\$1} END{print s+0}\"); /usr/bin/awk -v wp=\"$wp\" -v pgsz=\"$pgsz\" -v cm=\"$cm\" -v rk=\"$rk\" \"BEGIN{wb=wp*pgsz; cb=cm*1024*1024; printf \\\"{\\\\\\\"wired_bytes\\\\\\\":%d,\\\\\\\"wired_ceiling_mb\\\\\\\":%d,\\\\\\\"wired_ceiling_bytes\\\\\\\":%d,\\\\\\\"wired_ratio\\\\\\\":%.4f,\\\\\\\"resident_bytes\\\\\\\":%d}\\\\n\\\", wb, cm, cb, wb/cb, rk*1024}\"'"
               sendToRoutes: false
               connections:
-                - pipeline: mac_perf
+                - pipeline: macos_wired_memory
                   output: cribl_stream
             ${macosMonitorInputsBlock.wsMonitor}
             ${macosMonitorInputsBlock.wsMonitorCaptures}
@@ -219,7 +248,7 @@ in
               command: "pmset -g therm"
               sendToRoutes: false
               connections:
-                - pipeline: os_events
+                - pipeline: macos_thermal
                   output: cribl_stream
             # ponytail: standalone battery-health exec (pmset+ioreg) dropped —
             # its deeply-nested quoting is fragile and a mis-escape fails the
@@ -269,7 +298,7 @@ in
               breakerRulesets:
                 - MacOS Crash Reports
               connections:
-                - pipeline: os_events
+                - pipeline: macos_crash_reports
                   output: cribl_stream
             in_macos_crashreports_user:
               type: file
@@ -293,7 +322,7 @@ in
               breakerRulesets:
                 - MacOS Crash Reports
               connections:
-                - pipeline: os_events
+                - pipeline: macos_crash_reports
                   output: cribl_stream
             # Per-AI-CLI session logs. Directories + rotation + the opt-in
             # capture wrappers come from programs.ai-cli-log-shipping
@@ -512,8 +541,10 @@ in
         '';
       }
       // import ./cribl-pipelines.nix { inherit codexPack geminiPack; }
-      // import ./cribl-breakers.nix
-      // import ./cribl-transcript-mask.nix;
+      // packPipelineFiles
+      // {
+        "breakers.yml" = packBreakersYml;
+      };
       # Claude Code transcripts ship via the native in_claude_logs input ->
       # cribl_claude (:10311) above; the cc-edge-claude-code pack is not
       # deployed by this module (its /home/$CLAUDE_USER path never matched

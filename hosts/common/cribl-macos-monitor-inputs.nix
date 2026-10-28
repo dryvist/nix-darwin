@@ -109,7 +109,7 @@ let
       tailOnly: true
       sendToRoutes: false
       connections:
-        - pipeline: mac_perf
+        - pipeline: macos_ws_monitor
           output: cribl_stream
   '';
 
@@ -128,7 +128,7 @@ let
       breakerRulesets:
         - WS Monitor Captures
       connections:
-        - pipeline: mac_perf
+        - pipeline: macos_ws_monitor_captures
           output: cribl_stream
   '';
 in
