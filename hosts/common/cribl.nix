@@ -250,6 +250,7 @@ in
                   output: cribl_stream
             ${macosMonitorInputsBlock.wsMonitor}
             ${macosMonitorInputsBlock.wsMonitorCaptures}
+            ${macosMonitorInputsBlock.wsMonitorErrors}
             # Thermal/perf pressure levels (pmset -g therm) — not in the native
             # System Metrics Source on macOS. Exec, 60s.
             in_macos_thermal:

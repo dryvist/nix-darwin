@@ -131,9 +131,28 @@ let
         - pipeline: macos_ws_monitor_captures
           output: cribl_stream
   '';
+
+  # The monitor's stderr (modules/darwin/ws-monitor.nix StandardErrorPath).
+  wsMonitorErrorsRaw = ''
+    in_ws_monitor_errors:
+      type: file
+      disabled: false
+      mode: manual
+      interval: 15
+      path: /var/log/ws-monitor/
+      filenames:
+        - "*/ws-monitor.err.log"
+      recurse: false
+      tailOnly: true
+      sendToRoutes: false
+      connections:
+        - pipeline: macos_ws_monitor_errors
+          output: cribl_stream
+  '';
 in
 {
   unifiedLogs = indentInputFragment unifiedLogsRaw;
   wsMonitor = indentInputFragment wsMonitorRaw;
   wsMonitorCaptures = indentInputFragment wsMonitorCapturesRaw;
+  wsMonitorErrors = indentInputFragment wsMonitorErrorsRaw;
 }
