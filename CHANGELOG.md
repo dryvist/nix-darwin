@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.12.0](https://github.com/dryvist/nix-darwin/compare/v4.11.1...v4.12.0) (2026-10-28)
+
+
+### Features
+
+* **cribl:** load Mac Edge pipelines from released packs and collect process lifecycle events ([#3029](https://github.com/dryvist/nix-darwin/issues/3029)) ([849412e](https://github.com/dryvist/nix-darwin/commit/849412e4caf6dab33bb6c0e3f6305c6b8392baa2))
+
 ## [4.11.1](https://github.com/dryvist/nix-darwin/compare/v4.11.0...v4.11.1) (2026-10-28)
 
 
