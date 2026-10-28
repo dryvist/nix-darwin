@@ -5,7 +5,7 @@
 # it directly, with no wrapper. --oslog writes each event to the unified log
 # (default subsystem com.apple.eslogger, category events). Nothing is written
 # to a file, so nothing is rotated. launchd discards stdout and stderr.
-{ ... }:
+_:
 
 {
   launchd.daemons.eslogger.serviceConfig = {
