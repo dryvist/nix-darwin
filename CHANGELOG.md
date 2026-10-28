@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.11.1](https://github.com/dryvist/nix-darwin/compare/v4.11.0...v4.11.1) (2026-10-28)
+
+
+### Bug Fixes
+
+* disable crash-report UI agent and sample live on stalls ([#3026](https://github.com/dryvist/nix-darwin/issues/3026)) ([93dd9f0](https://github.com/dryvist/nix-darwin/commit/93dd9f000399dcd44e24727329d9a83bd0492869))
+
 ## [4.11.0](https://github.com/dryvist/nix-darwin/compare/v4.10.1...v4.11.0) (2026-10-28)
 
 
