@@ -81,6 +81,7 @@ in
         "com.apple.universalaccessd" # No accessibility features enabled
         "com.apple.macos.studentd" # Classroom daemon, no MDM enrollment
         "com.apple.passd" # Apple Wallet not used
+        "com.apple.DiagnosticsReporter" # Crash-report submission UI; unused
       ];
 
       # System-domain services to disable
