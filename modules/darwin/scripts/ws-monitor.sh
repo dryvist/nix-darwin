@@ -1,5 +1,6 @@
 #!/bin/bash
-# Measure loop lateness and sample system state every 15 seconds.
+# Tick every 5 seconds to measure loop lateness. Emit a sample every 15
+# seconds, or immediately on a freeze, and capture a live spindump on a freeze.
 
 set -euo pipefail
 
@@ -115,8 +116,9 @@ prune_captures() {
   local index
   local stale_capture
 
+  # Raw captures end in the UTC stamp and Z; summaries end in .summary.txt.
   shopt -s nullglob
-  capture_files=( "$CAPTURE_DIR"/*.tailspin )
+  capture_files=( "$CAPTURE_DIR"/*Z.txt )
   shopt -u nullglob
 
   capture_count=${#capture_files[@]}
@@ -125,21 +127,19 @@ prune_captures() {
 
   for (( index = 0; index < stale_count; index++ )); do
     stale_capture=${capture_files[$index]}
-    /bin/rm -f "$stale_capture" "${stale_capture%.tailspin}.txt" "${stale_capture%.tailspin}.summary.txt"
+    /bin/rm -f "$stale_capture" "${stale_capture%.txt}.summary.txt"
   done
 }
 
-# tailspin keeps about 20 s of history, so this must run while the stall is
-# in progress. The summary (not the full spindump) is what Cribl ships.
+# One live system-wide sample, 5 s at 100 ms, taken while the stall is in
+# progress. The summary (not the full spindump) is what Cribl ships.
 capture_stall() {
   local capture_stamp="$1"
-  local tailspin_file="${CAPTURE_DIR}/${capture_stamp}.tailspin"
   local spindump_file="${CAPTURE_DIR}/${capture_stamp}.txt"
   local summary_file="${CAPTURE_DIR}/${capture_stamp}.summary.txt"
 
   (
-    /usr/bin/tailspin save -r ws-monitor-stall "$tailspin_file" || exit 1
-    /usr/sbin/spindump -i "$tailspin_file" -o "$spindump_file" || true
+    /usr/sbin/spindump -notarget 5 100 -o "$spindump_file" || true
     if [ -r "$spindump_file" ]; then
       {
         /usr/bin/head -n 80 "$spindump_file"

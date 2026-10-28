@@ -19,12 +19,10 @@ let
   };
 in
 {
-  # Prepare writable capture paths and enable persistent tailspin once per
-  # activation. Both operations are safe to repeat.
+  # Prepare writable capture paths once per activation. Safe to repeat.
   system.activationScripts.postActivation.text = lib.mkAfter ''
     /bin/mkdir -p "${logDir}" "${captureDir}"
     /bin/chmod 755 "${logDir}" "${captureDir}"
-    /usr/bin/tailspin enable
   '';
 
   # LaunchDaemons run as root, with scheduling and I/O priority kept low.
