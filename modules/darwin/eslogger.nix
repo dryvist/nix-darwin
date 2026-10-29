@@ -18,5 +18,7 @@ _:
     ];
     RunAtLoad = true;
     KeepAlive = true;
+    # Without Full Disk Access the client exits at once; throttle the retries.
+    ThrottleInterval = 300;
   };
 }
