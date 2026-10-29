@@ -57,9 +57,9 @@
     stripRoot = false;
   };
   cc-edge-macos-process-telemetry-io = pkgs.fetchzip {
-    url = "https://github.com/jpe-cribl/cc-edge-macos-process-telemetry-io/releases/download/v0.1.0/cc-edge-macos-process-telemetry-io-0.1.0.crbl";
+    url = "https://github.com/jpe-cribl/cc-edge-macos-process-telemetry-io/releases/download/v0.1.1/cc-edge-macos-process-telemetry-io-0.1.1.crbl";
     extension = "tar.gz";
-    hash = "sha256-1UBzCSxzv7qj0CBtOsb/8vJzqBIkPqht/xdtuWNtRKo=";
+    hash = "sha256-9Yc1FklTOW7W901RqAozoTpqdO5sqIRBbsgC7bhzNhk=";
     stripRoot = false;
   };
   cc-edge-macos-firewall-io = pkgs.fetchzip {
