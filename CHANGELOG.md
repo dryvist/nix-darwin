@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.12.4](https://github.com/dryvist/nix-darwin/compare/v4.12.3...v4.12.4) (2026-10-29)
+
+
+### Bug Fixes
+
+* **eslogger:** select only app and osascript process events ([#3044](https://github.com/dryvist/nix-darwin/issues/3044)) ([e19347a](https://github.com/dryvist/nix-darwin/commit/e19347a83b437fbaf3d8f579e829ae1d1b60da32))
+
 ## [4.12.3](https://github.com/dryvist/nix-darwin/compare/v4.12.2...v4.12.3) (2026-10-29)
 
 
