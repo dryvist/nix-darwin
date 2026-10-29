@@ -141,7 +141,6 @@ Workstation GUI apps are Homebrew casks and Mac App Store apps under
 
 | Package | Description |
 | --- | --- |
-| chatgpt | OpenAI ChatGPT desktop app |
 | code-cursor | Cursor AI IDE (VS Code fork) |
 | discord | Voice/video chat (copyApps for TCC camera/mic stability) |
 | firefox | Mozilla Firefox browser |
@@ -199,6 +198,7 @@ installed cask or formula not declared in the Nix configuration; it removes noth
 | claude-code@latest | no | Anthropic Claude Code CLI |
 | codex | no | OpenAI Codex CLI (nix-ai's agent launcher execs it) |
 | claude | yes | Anthropic Claude desktop app (workstation capability) |
+| chatgpt | yes | OpenAI ChatGPT desktop app (workstation capability) |
 | antigravity | yes | Google Antigravity 2.0 standalone agent command center (workstation capability) |
 | antigravity-ide | yes | Google Antigravity IDE (workstation capability) |
 | postman | yes | API development environment (moved from nixpkgs — version lag caused schema mismatch) |
