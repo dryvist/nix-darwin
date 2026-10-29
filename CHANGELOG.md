@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.12.2](https://github.com/dryvist/nix-darwin/compare/v4.12.1...v4.12.2) (2026-10-29)
+
+
+### Bug Fixes
+
+* **eslogger:** throttle daemon restarts ([#3035](https://github.com/dryvist/nix-darwin/issues/3035)) ([38e1a39](https://github.com/dryvist/nix-darwin/commit/38e1a397800d2f1d2fbca2bb45ead306b5d7adb0))
+* **eslogger:** throttle daemon restarts to one per five minutes ([38e1a39](https://github.com/dryvist/nix-darwin/commit/38e1a397800d2f1d2fbca2bb45ead306b5d7adb0))
+
 ## [4.12.1](https://github.com/dryvist/nix-darwin/compare/v4.12.0...v4.12.1) (2026-10-29)
 
 
