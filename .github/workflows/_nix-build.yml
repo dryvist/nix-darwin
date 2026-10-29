@@ -173,8 +173,13 @@ jobs:
         timeout-minutes: 20
         run: ./scripts/workflows/build-hm.sh result-hm
 
-      - name: Evaluate Host Systems
-        run: nix build .#checks.aarch64-darwin.system-eval .#checks.aarch64-darwin.app-updates .#checks.aarch64-darwin.dock-providers --no-link --print-build-logs
+      # Builds every checks.aarch64-darwin output of the flake, so a check added
+      # to flake.nix runs here without a second list to edit. The launchd check
+      # realises each host's launchd programs; the step timeout keeps a cold run
+      # inside the budget the partial cache save below needs.
+      - name: Run Flake Checks
+        timeout-minutes: 12
+        run: nix flake check --keep-going --print-build-logs
 
       # Only on failure: the action above already saves on a successful run,
       # and this keeps a partial store from an attempt that ran out of time.
