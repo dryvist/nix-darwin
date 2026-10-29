@@ -64,12 +64,6 @@
     ai-stack-drift-check.enable = lib.mkForce false;
   };
 
-  # The Obsidian CLI is the app's own executable; the nixpkgs copy lives under
-  # Home Manager Apps, and sessionPath reaches non-interactive shells too.
-  home.sessionPath = [
-    "${userConfig.user.homeDir}/Applications/Home Manager Apps/Obsidian.app/Contents/MacOS"
-  ];
-
   # ==========================================================================
   # TCC-Sensitive GUI Applications (using copyApps for stable paths)
   # ==========================================================================
@@ -111,7 +105,19 @@
     # zoom-us # DISABLED - no longer using Zoom
 
     # Productivity / menu bar
-    obsidian # Knowledge base / note-taking
+    # Knowledge base / note-taking. The profile carries the app bundle and
+    # `obsidian` as the socket CLI; the GUI executable is not reachable by name.
+    (runCommand "obsidian-${obsidian.version}"
+      {
+        pname = "obsidian";
+        inherit (obsidian) version;
+      }
+      ''
+        mkdir -p $out/bin
+        ln -s ${obsidian}/Applications $out/Applications
+        ln -s ${obsidian}/Applications/Obsidian.app/Contents/MacOS/obsidian-cli $out/bin/obsidian
+      ''
+    )
     raycast # Productivity launcher
     swiftbar # Menu bar customization
 
