@@ -1,5 +1,15 @@
 # Changelog
 
+## [4.12.3](https://github.com/dryvist/nix-darwin/compare/v4.12.2...v4.12.3) (2026-10-29)
+
+
+### Bug Fixes
+
+* **cribl:** pin the process telemetry pack to 0.1.1 ([#3041](https://github.com/dryvist/nix-darwin/issues/3041)) ([435b6a4](https://github.com/dryvist/nix-darwin/commit/435b6a4925ed905147d7876051efd88b9c3374f7))
+* **dock:** install ChatGPT from the Homebrew cask ([#3038](https://github.com/dryvist/nix-darwin/issues/3038)) ([1d259d1](https://github.com/dryvist/nix-darwin/commit/1d259d1164ab77c37449daeadae8b3ae1bbcabcc))
+* **obsidian:** expose only the Obsidian CLI as `obsidian` on PATH ([4f4f9f4](https://github.com/dryvist/nix-darwin/commit/4f4f9f4db518ae91d178410893e798bb5cceee3f))
+* **obsidian:** expose only the Obsidian CLI as obsidian on PATH ([#3037](https://github.com/dryvist/nix-darwin/issues/3037)) ([4f4f9f4](https://github.com/dryvist/nix-darwin/commit/4f4f9f4db518ae91d178410893e798bb5cceee3f))
+
 ## [4.12.2](https://github.com/dryvist/nix-darwin/compare/v4.12.1...v4.12.2) (2026-10-29)
 
 
