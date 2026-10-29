@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.12.1](https://github.com/dryvist/nix-darwin/compare/v4.12.0...v4.12.1) (2026-10-29)
+
+
+### Bug Fixes
+
+* **dock:** replace the discontinued Codex tile with ChatGPT ([#3032](https://github.com/dryvist/nix-darwin/issues/3032)) ([28a2f7f](https://github.com/dryvist/nix-darwin/commit/28a2f7f80e372e362453b6555a7997834a767f25))
+
 ## [4.12.0](https://github.com/dryvist/nix-darwin/compare/v4.11.1...v4.12.0) (2026-10-28)
 
 
