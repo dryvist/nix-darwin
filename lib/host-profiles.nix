@@ -40,6 +40,7 @@ let
       ai = {
         antigravityDesktop = true;
         antigravityIde = true;
+        chatgptDesktop = true;
         claudeDesktop = true;
       };
     };
