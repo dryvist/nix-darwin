@@ -147,7 +147,7 @@ Workstation GUI apps are Homebrew casks and Mac App Store apps under
 | firefox | Mozilla Firefox browser |
 | ffmpeg | Audio/video recording, conversion, streaming |
 | ghostty-bin | Terminal emulator |
-| obsidian | Knowledge base / note-taking |
+| obsidian | Knowledge base / note-taking (app bundle; the `obsidian` command is the socket CLI) |
 | rapidapi | Full-featured HTTP client |
 | raycast | Productivity launcher |
 | swiftbar | Menu bar customization |
