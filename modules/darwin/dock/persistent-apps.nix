@@ -109,7 +109,7 @@ let
     (app "${hmApps}/Visual Studio Code.app" { nixpkgs = "vscode"; })
   ]
   ++ [
-    # AI & API Tools (all hosts show the tiles; ChatGPT is workstation-managed)
+    # AI & API Tools (all hosts show the tiles; Claude and ChatGPT are workstation casks)
     (app "/Applications/ProxMan.app" {
       manual = "vendor download; no Homebrew cask or Mac App Store listing";
     })
@@ -119,8 +119,8 @@ let
     (app "${homeDir}/Applications/Gemini.app" {
       manual = "vendor download; the Homebrew gemini cask installs a different app bundle";
     })
-    (app "${hmApps}/ChatGPT.app" (onWorkstation {
-      nixpkgs = "chatgpt";
+    (app "/Applications/ChatGPT.app" (onWorkstation {
+      cask = "chatgpt";
     }))
   ]
   ++ lib.optionals enableWorkstationApps [

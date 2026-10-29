@@ -98,7 +98,6 @@
 
     # AI IDEs & Tools (nixpkgs - stable TCC paths via copyApps)
     code-cursor # Cursor AI IDE (VS Code fork)
-    chatgpt # OpenAI ChatGPT desktop app
 
     # Communication
     discord # Voice/video chat - copyApps gives TCC-stable path for camera/mic permissions
