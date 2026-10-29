@@ -41,7 +41,6 @@ let
         antigravityDesktop = true;
         antigravityIde = true;
         claudeDesktop = true;
-        codexDesktop = true;
       };
     };
   };
