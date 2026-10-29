@@ -199,7 +199,6 @@ installed cask or formula not declared in the Nix configuration; it removes noth
 | claude-code@latest | no | Anthropic Claude Code CLI |
 | codex | no | OpenAI Codex CLI (nix-ai's agent launcher execs it) |
 | claude | yes | Anthropic Claude desktop app (workstation capability) |
-| codex-app | yes | OpenAI Codex desktop app (workstation capability; separate from the CLI) |
 | antigravity | yes | Google Antigravity 2.0 standalone agent command center (workstation capability) |
 | antigravity-ide | yes | Google Antigravity IDE (workstation capability) |
 | postman | yes | API development environment (moved from nixpkgs — version lag caused schema mismatch) |
