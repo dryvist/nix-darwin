@@ -1,19 +1,19 @@
 #!/usr/bin/env bats
 #
 # The transcript_mask Mask rules, applied the way Cribl applies them: each
-# rule's regex in turn, every match replaced. The rules are read from the Nix
-# file itself, so the test cannot drift from what ships. Perl stands in for the
-# JavaScript engine; every construct these rules use (\b, character classes,
-# lazy [\s\S]*?) means the same in both.
+# rule's regex in turn, every match replaced. The rules are read from the
+# pinned pack's pipeline conf (lib/checks.nix passes it in), so the test cannot
+# drift from what ships. Perl stands in for the JavaScript engine; every
+# construct these rules use (\b, character classes, lazy [\s\S]*?) means the
+# same in both.
 #
 # Sample credentials are assembled at runtime from fragments so no
 # credential-shaped literal sits in this file for a secret scanner to flag.
 
-MASK_NIX="$BATS_TEST_DIRNAME/../../hosts/common/cribl-transcript-mask.nix"
+MASK_CONF="${CRIBL_SESSION_MASK_CONF:?}"
 
 rules() {
-  awk "/transcript_mask\/conf.yml\" = ''/{f=1;next} /^  '';/{f=0} f" "$MASK_NIX" \
-    | yq -r '.functions[0].conf.rules[] | .matchRegex + "\t" + .replaceExpr'
+  yq -r '.functions[0].conf.rules[] | .matchRegex + "\t" + .replaceExpr' "$MASK_CONF"
 }
 
 mask() {
@@ -28,14 +28,14 @@ mask() {
 
 rep() { printf "%${2}s" "" | tr ' ' "$1"; }
 
-@test "the rules parse out of the Nix file" {
+@test "the rules parse out of the pinned pack conf" {
   run rules
   [ "$status" -eq 0 ]
   [ "$(wc -l <<<"$output")" -ge 8 ]
 }
 
 @test "every credential shape is masked" {
-  local p="ghs" q="ghp" b="hvs" d="dp" x="xoxb" s="sk" a="AKIA" e="eyJ"
+  local p="ghs" q="ghp" b="hvs" d="dp" x="xoxb" s="sk" a="AKIA" e="eyJ" k="RSA"
   local samples=(
     "${p}_1234567_${e}$(rep a 20).${e}$(rep b 20).$(rep c 20)"
     "${q}_$(rep A 36)"
@@ -46,7 +46,7 @@ rep() { printf "%${2}s" "" | tr ' ' "$1"; }
     "${x}-123456789012-$(rep H 20)"
     "${s}-ant-api03-$(rep I 30)"
     "${a}$(rep J 16)"
-    "-----BEGIN RSA PRIVATE KEY-----\\nMII$(rep K 40)\\n-----END RSA PRIVATE KEY-----"
+    "-----BEGIN ${k} PRIVATE KEY-----\\nMII$(rep K 40)\\n-----END ${k} PRIVATE KEY-----"
   )
   local t out
   for t in "${samples[@]}"; do
@@ -55,7 +55,7 @@ rep() { printf "%${2}s" "" | tr ' ' "$1"; }
   done
 }
 
-@test "ordinary transcript text is left alone" {
+@test "ordinary session text is left alone" {
   local t
   for t in \
     "process.environment_variables_are_long_here" \
