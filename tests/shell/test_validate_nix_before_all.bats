@@ -23,9 +23,14 @@ setup() {
   # to exec and the empty-mode no-op looks like an evaluation failure.
   {
     echo "#!$(command -v bash)"
+    echo 'if [[ "$*" == *lib/homebrew-policy.nix* ]]; then if [[ "$NIX_STUB_MODE" == reviewed ]]; then echo '\''{"exceptions":{"brews":{"fixture":"reviewed"},"casks":{}}}'\''; else echo '\''{"exceptions":{"brews":{},"casks":{}}}'\''; fi; exit 0; fi'
     echo 'case "${NIX_STUB_MODE}" in'
     echo '  fail)  echo "error: attribute '"'"'homebrew'"'"' missing" >&2; exit 1 ;;'
     echo '  empty) echo "[]"; exit 0 ;;'
+    echo '  search_fail) if [[ "$1" == search ]]; then echo "search failed" >&2; exit 1; elif [[ "$*" == *homebrew.brews* ]]; then echo '\''[{"name":"fixture"}]'\''; else echo "[]"; fi; exit 0 ;;'
+    echo '  no_match) if [[ "$1" == search ]]; then echo "{}"; elif [[ "$*" == *homebrew.brews* ]]; then echo '\''[{"name":"fixture"}]'\''; else echo "[]"; fi; exit 0 ;;'
+    echo '  attr_match) if [[ "$1" == search ]]; then pattern=${!#}; path="legacyPackages.aarch64-darwin.group.fixture"; if [[ "$path" =~ $pattern || "different-name" =~ $pattern ]]; then echo '\''{"legacyPackages.aarch64-darwin.group.fixture":{"pname":"different-name"}}'\''; else echo "{}"; fi; elif [[ "$*" == *homebrew.brews* ]]; then echo '\''[{"name":"fixture"}]'\''; elif [[ "$*" == *homebrew.casks* ]]; then echo "[]"; else echo true; fi; exit 0 ;;'
+    echo '  match|reviewed|unsupported|metadata_fail) if [[ "$1" == search ]]; then [[ "$*" == *"--inputs-from . --system aarch64-darwin"* ]] || exit 9; echo '\''{"legacyPackages.aarch64-darwin.group.renamed":{"pname":"fixture"}}'\''; elif [[ "$*" == *homebrew.brews* ]]; then echo '\''[{"name":"fixture"}]'\''; elif [[ "$*" == *homebrew.casks* ]]; then echo "[]"; elif [[ "$NIX_STUB_MODE" == metadata_fail ]]; then exit 1; elif [[ "$NIX_STUB_MODE" == unsupported ]]; then echo false; else echo true; fi; exit 0 ;;'
     echo 'esac'
     echo 'echo "unexpected nix invocation: $*" >&2; exit 1'
   } > "$STUB_DIR/nix"
@@ -56,4 +61,52 @@ teardown() {
     bash "$SCRIPT_UNDER_TEST"
   [ "$status" -eq 0 ]
   [[ "$output" == *"No homebrew packages to validate"* ]]
+}
+
+@test "a failed pinned search aborts instead of reporting a clean run" {
+  run env PATH="$STUB_DIR:$PATH" NIX_STUB_MODE=search_fail DARWIN_HOST=testhost \
+    bash "$SCRIPT_UNDER_TEST"
+  [ "$status" -ne 0 ]
+  [[ $output == *"pinned nixpkgs search failed"* ]]
+}
+
+@test "a successful search with no matches is clean" {
+  run env PATH="$STUB_DIR:$PATH" NIX_STUB_MODE=no_match DARWIN_HOST=testhost \
+    bash "$SCRIPT_UNDER_TEST"
+  [ "$status" -eq 0 ]
+  [[ $output == *"not in nixpkgs"* ]]
+}
+
+@test "a nested renamed package with a matching pname fails the check" {
+  run env PATH="$STUB_DIR:$PATH" NIX_STUB_MODE=match DARWIN_HOST=testhost \
+    bash "$SCRIPT_UNDER_TEST"
+  [ "$status" -ne 0 ]
+  [[ $output == *"VIOLATION"* ]]
+}
+
+@test "a nested matching attribute with a different pname fails the check" {
+  run env PATH="$STUB_DIR:$PATH" NIX_STUB_MODE=attr_match DARWIN_HOST=testhost \
+    bash "$SCRIPT_UNDER_TEST"
+  [ "$status" -ne 0 ]
+  [[ $output == *"VIOLATION"* ]]
+}
+
+@test "an explicitly reviewed channel passes" {
+  run env PATH="$STUB_DIR:$PATH" NIX_STUB_MODE=reviewed DARWIN_HOST=testhost \
+    bash "$SCRIPT_UNDER_TEST"
+  [ "$status" -eq 0 ]
+  [[ $output == *"reviewed"* ]]
+}
+
+@test "an unsupported package is not treated as available" {
+  run env PATH="$STUB_DIR:$PATH" NIX_STUB_MODE=unsupported DARWIN_HOST=testhost \
+    bash "$SCRIPT_UNDER_TEST"
+  [ "$status" -eq 0 ]
+}
+
+@test "a metadata evaluation failure aborts" {
+  run env PATH="$STUB_DIR:$PATH" NIX_STUB_MODE=metadata_fail DARWIN_HOST=testhost \
+    bash "$SCRIPT_UNDER_TEST"
+  [ "$status" -ne 0 ]
+  [[ $output == *"could not evaluate metadata"* ]]
 }

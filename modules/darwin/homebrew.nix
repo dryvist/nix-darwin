@@ -25,9 +25,6 @@ let
   aiHomebrew = nix-ai.lib.homebrewFor homebrew.ai;
 
   workstationBrews = [
-    # Mac App Store CLI for homebrew.masApps.
-    "mas"
-
     # Versioned runtime remains available alongside the Nix-managed Node.js.
     "node@22"
 

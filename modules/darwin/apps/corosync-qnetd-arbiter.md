@@ -105,5 +105,5 @@ separate change in the Proxmox-side repo:
 
 [qnetd]: https://manpages.debian.org/corosync-qnetd
 [socket-vmnet-readme]: https://github.com/lima-vm/socket_vmnet/blob/master/README.md
-[qdevice-man]: https://www.systutorials.com/docs/linux/man/8-corosync-qdevice/
+[qdevice-man]: https://github.com/corosync/corosync-qdevice/blob/main/man/corosync-qdevice.8
 [suse-qdevice]: https://documentation.suse.com/sle-ha/15-SP5/html/SLE-HA-all/cha-ha-qdevice.html

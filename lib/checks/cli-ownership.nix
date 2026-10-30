@@ -30,10 +30,7 @@ let
   # discriminator. `name` carries the version, and a substring match on
   # "claude-code" also hits claude-code-plugins and the nix-claude-code source
   # tree, neither of which is the binary.
-  brewCasks = {
-    claude-code = "claude-code@latest";
-    codex = "codex";
-  };
+  brewCasks = (import ../homebrew-policy.nix).cliCasks;
   brewOwned = attrNames brewCasks;
 
   offendersFor =
