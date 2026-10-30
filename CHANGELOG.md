@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.14.0](https://github.com/dryvist/nix-darwin/compare/v4.13.0...v4.14.0) (2026-10-30)
+
+
+### Features
+
+* **herdr:** consume the released native agent stack ([#3053](https://github.com/dryvist/nix-darwin/issues/3053)) ([9631bed](https://github.com/dryvist/nix-darwin/commit/9631bed013a78c7e07d976aac0c639190b0835da))
+
 ## [4.13.0](https://github.com/dryvist/nix-darwin/compare/v4.12.5...v4.13.0) (2026-10-30)
 
 
