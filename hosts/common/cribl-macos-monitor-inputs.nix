@@ -74,8 +74,9 @@ let
       # modules. Measured over 2 h: 2,031 events, 1,968 of them
       # library-validation rejections.
       # launchd and loginwindow clauses are narrow by design: launchd is limited to
-      # exit, throttle and crash phrases, all kept by the unified-log pack's drop
-      # filter; loginwindow to timeout and hang phrases. Volume not measured.
+      # spawn, exit, throttle and crash phrases, all kept by the unified-log pack's
+      # drop filter (spawn plus exit lines measured ~1.4/s); loginwindow to timeout
+      # and hang phrases. Volume not measured.
       # eslogger's own events are excluded here; in_macos_eslogger collects them.
       predicate: >-
         process != "eslogger" AND ((process == "kernel" AND (eventMessage CONTAINS[c] "jetsam" OR eventMessage CONTAINS[c] "memorystatus" OR eventMessage CONTAINS[c] "low swap" OR eventMessage CONTAINS[c] "panic" OR eventMessage CONTAINS[c] "IOGPU" OR eventMessage CONTAINS[c] "AGX" OR eventMessage CONTAINS[c] "thermal")) OR
@@ -92,7 +93,7 @@ let
         process == "spindump" OR process == "hangtracerd" OR
         (process == "kernel" AND eventMessage CONTAINS[c] "apfs" AND (eventMessage CONTAINS[c] "slow" OR eventMessage CONTAINS[c] "stall" OR eventMessage CONTAINS[c] "timeout" OR eventMessage CONTAINS[c] "took")) OR
         (process == "tccd" AND (eventMessage CONTAINS[c] "timed out" OR eventMessage CONTAINS[c] "timeout")) OR
-        (process == "launchd" AND (eventMessage CONTAINS[c] "exited due to" OR eventMessage CONTAINS[c] "did not exit" OR eventMessage CONTAINS[c] "throttl" OR eventMessage CONTAINS[c] "crash")) OR
+        (process == "launchd" AND (eventMessage CONTAINS[c] "Successfully spawned" OR eventMessage CONTAINS[c] "spawn deferred" OR eventMessage CONTAINS[c] "internal event: EXITED" OR eventMessage CONTAINS[c] "ran for" OR eventMessage CONTAINS[c] "exited due to" OR eventMessage CONTAINS[c] "did not exit" OR eventMessage CONTAINS[c] "throttl" OR eventMessage CONTAINS[c] "crash")) OR
         (process == "loginwindow" AND (eventMessage CONTAINS[c] "timed out" OR eventMessage CONTAINS[c] "timeout" OR eventMessage CONTAINS[c] "hang" OR eventMessage CONTAINS[c] "watchdog")))
       sendToRoutes: false
       connections:

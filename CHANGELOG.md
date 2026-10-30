@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.12.5](https://github.com/dryvist/nix-darwin/compare/v4.12.4...v4.12.5) (2026-10-30)
+
+
+### Bug Fixes
+
+* **cribl:** collect launchd spawn and exit lines from the unified-log source ([#3047](https://github.com/dryvist/nix-darwin/issues/3047)) ([5b48ee6](https://github.com/dryvist/nix-darwin/commit/5b48ee69b49d4b098011641e2e779659a67842eb))
+
 ## [4.12.4](https://github.com/dryvist/nix-darwin/compare/v4.12.3...v4.12.4) (2026-10-29)
 
 
