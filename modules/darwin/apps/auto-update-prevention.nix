@@ -24,10 +24,24 @@
 # Note: Paw (RapidAPI) defaults-based prevention removed — app still installed via Nix,
 #   but runs in a macOS sandbox container so `defaults write` cannot reach its preferences domain.
 
-_:
+{ lib, hostConfig, ... }:
 
+let
+  inherit (hostConfig.homebrew) enableWorkstationApps;
+in
 {
-  system.defaults.CustomUserPreferences = {
-    # Add apps here as needed. See header example for the Sparkle pattern.
+  system.defaults.CustomUserPreferences = lib.mkIf enableWorkstationApps {
+    # Prevent GoogleUpdater / Keystone from automatically updating Google AI Edge Foresight
+    "com.google.Keystone" = {
+      updatePolicies = {
+        "com.google.aiedgeforesight" = {
+          UpdateDefault = 0;
+        };
+      };
+    };
+    "com.google.Keystone.Agent" = {
+      "Updatecom.google.aiedgeforesight" = 0;
+      "Updatecom.google.AIEdgeForesight" = 0;
+    };
   };
 }
