@@ -12,13 +12,9 @@ Thanks for considering contributing. It's just me here, so any help is genuinely
 
 That's it. I'm not picky—but Nix and pre-commit hooks are. They'll let you know if something's wrong. 😄
 
-## Organization-Wide Standards
+## Repository Standards
 
-For standards that apply across all JacobPEvans projects, see the
-[Organization Contributing Guide](https://github.com/JacobPEvans/.github/blob/main/docs/CONTRIBUTING.md),
-which covers:
-
-- **Commit Signing** – All commits must be GPG-signed. The org guide has setup instructions.
+- **Commit Signing** – All commits must be GPG-signed.
 - **PR Standards** – Use conventional commit format (`type(scope): description`) and apply type/priority/size labels.
 - **Issue Linking** – Connect related issues with "Closes #123" or "Related to #123" in PR descriptions.
 - **General Acceptance Criteria** – Improvements to documentation, bug fixes, and code maintainability are welcome.

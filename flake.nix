@@ -310,6 +310,12 @@
       # hmActivationPackage still requires Darwin (kept for macOS CI)
       lib = {
         agentNofile = import ./lib/agent-nofile.nix;
+        homebrewAvailable =
+          package:
+          lib.meta.availableOn nixpkgs.legacyPackages.aarch64-darwin.stdenv.hostPlatform package
+          && !(package.meta.broken or false);
+        homebrewPackageAvailability =
+          path: self.lib.homebrewAvailable (lib.getAttrFromPath path nixpkgs.legacyPackages.aarch64-darwin);
         ci = {
           inherit (nix-ai.lib.ci) claudeSettingsJson;
           hmActivationPackage =
@@ -373,6 +379,16 @@
               pkgs = nixpkgs.legacyPackages.aarch64-darwin;
               inherit configs;
             };
+
+            homebrew-availability =
+              assert self.lib.homebrewAvailable { meta.platforms = [ "aarch64-darwin" ]; };
+              assert
+                !(self.lib.homebrewAvailable {
+                  meta.platforms = [ "aarch64-darwin" ];
+                  meta.badPlatforms = [ "aarch64-darwin" ];
+                });
+              assert !(self.lib.homebrewAvailable { meta.broken = true; });
+              nixpkgs.legacyPackages.aarch64-darwin.runCommand "check-homebrew-availability" { } "touch $out";
 
             dock-providers = import ./lib/checks/dock-providers.nix {
               pkgs = nixpkgs.legacyPackages.aarch64-darwin;
