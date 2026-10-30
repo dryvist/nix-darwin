@@ -142,7 +142,7 @@ repos:
         name: Check nixpkgs before all others (hierarchy)
         entry: scripts/validate-nix-before-all.sh
         language: system
-        files: '^modules/darwin/homebrew\.nix$'
+        files: '^(modules/darwin/homebrew\.nix|lib/homebrew-policy\.nix|scripts/validate-nix-before-all\.sh|flake\.(nix|lock))$'
         types: [file]
         pass_filenames: false
 
