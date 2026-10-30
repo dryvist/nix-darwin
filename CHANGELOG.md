@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.13.0](https://github.com/dryvist/nix-darwin/compare/v4.12.5...v4.13.0) (2026-10-30)
+
+
+### Features
+
+* **dock:** add OpenWispr immediately after Wispr Flow ([#3050](https://github.com/dryvist/nix-darwin/issues/3050)) ([caeb191](https://github.com/dryvist/nix-darwin/commit/caeb1917f1acb8ffa583092efa108b3642c51830))
+
 ## [4.12.5](https://github.com/dryvist/nix-darwin/compare/v4.12.4...v4.12.5) (2026-10-30)
 
 
