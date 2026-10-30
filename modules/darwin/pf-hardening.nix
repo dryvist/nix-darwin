@@ -159,13 +159,14 @@ in
       };
     };
 
-    system.activationScripts.postActivation.text = lib.mkIf (allowedApps != [ ]) (
-      lib.mkAfter (
-        lib.concatMapStrings (path: ''
-          /usr/libexec/ApplicationFirewall/socketfilterfw --add ${lib.escapeShellArg path}
-          /usr/libexec/ApplicationFirewall/socketfilterfw --unblockapp ${lib.escapeShellArg path}
-        '') allowedApps
-      )
+    system.activationScripts.postActivation.text = lib.mkAfter (
+      ''
+        ${lib.getExe loadAnchor}
+      ''
+      + lib.concatMapStrings (path: ''
+        /usr/libexec/ApplicationFirewall/socketfilterfw --add ${lib.escapeShellArg path}
+        /usr/libexec/ApplicationFirewall/socketfilterfw --unblockapp ${lib.escapeShellArg path}
+      '') allowedApps
     );
   };
 }
