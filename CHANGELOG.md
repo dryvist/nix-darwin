@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.14.1](https://github.com/dryvist/nix-darwin/compare/v4.14.0...v4.14.1) (2026-10-30)
+
+
+### Bug Fixes
+
+* **pf:** load configured rules during system activation ([#3056](https://github.com/dryvist/nix-darwin/issues/3056)) ([2978aa9](https://github.com/dryvist/nix-darwin/commit/2978aa99cd1b749248b1bfbc48c3b033734edfad))
+
 ## [4.14.0](https://github.com/dryvist/nix-darwin/compare/v4.13.0...v4.14.0) (2026-10-30)
 
 
