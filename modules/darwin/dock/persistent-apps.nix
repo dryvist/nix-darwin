@@ -91,6 +91,9 @@ let
     }))
   ]
   ++ lib.optionals enableWorkstationApps [
+    # Voice Intelligence (workstation only)
+    (app "${hmApps}/OpenWhispr.app" { nixpkgs = "openwhispr"; })
+
     # Meeting Assistants (workstation only)
     (app "/Applications/Foresight.app" {
       manual = "vendor download; no Homebrew cask or Mac App Store listing";
