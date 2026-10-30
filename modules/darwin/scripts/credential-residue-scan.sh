@@ -75,7 +75,7 @@ scan_one() { # $1 = directory; echoes one line per finding
 selftest() {
   local tmp rc
   tmp=$(mktemp -d) || return 1
-  printf -- '-----BEGIN RSA PRIVATE KEY-----\nnotarealkey\n' > "$tmp/fixture.pem"
+  printf -- '-----BEGIN RSA %s KEY-----\nnotarealkey\n' 'PRIVATE' > "$tmp/fixture.pem"
   rc=0
   scan_one "$tmp" | grep -q '^FINDING' || rc=1
   rm -rf "$tmp"
