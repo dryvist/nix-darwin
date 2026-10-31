@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.14.2](https://github.com/dryvist/nix-darwin/compare/v4.14.1...v4.14.2) (2026-10-31)
+
+
+### Bug Fixes
+
+* **eslogger:** record every exec and exit event ([#3060](https://github.com/dryvist/nix-darwin/issues/3060)) ([85a2d80](https://github.com/dryvist/nix-darwin/commit/85a2d80a1ab8ce9b6da25a73497eb1ac71c4d5da))
+
 ## [4.14.1](https://github.com/dryvist/nix-darwin/compare/v4.14.0...v4.14.1) (2026-10-30)
 
 
