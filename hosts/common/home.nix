@@ -111,6 +111,10 @@ in
   programs = {
     jpe-ai-voice.enable = true;
 
+    # Claude Code starts every session in bypassPermissions, the same as
+    # launching it with --dangerously-skip-permissions.
+    claude.defaultMode = "bypassPermissions";
+
     # Coding-agent usage metrics. The transcripts carry the 5m-vs-1h cache
     # split, thinking tokens, and injected-context sizes that the OTEL exporter
     # does not emit, so this reads them directly and posts counters. Reached
