@@ -3,7 +3,7 @@
 # Split out of ./cribl.nix for the repo file-size gate; merged straight back
 # into `programs.cribl-edge.standalone.configFiles` there. The pipelines of the
 # released packs are installed by packPipelineFiles in ./cribl.nix; what remains
-# here is the AI-CLI pipelines.
+# here is the codex and gemini pipelines.
 
 { codexPack, geminiPack }:
 
@@ -19,7 +19,6 @@
   # QuickConnect are the proven path (the pack pipelines in ./cribl.nix).
   "pipelines/codex_sessions/conf.yml" =
     builtins.readFile "${codexPack}/default/pipelines/codex_sessions/conf.yml";
-  "pipelines/claude_sessions/conf.yml" = builtins.readFile ./cribl-claude-sessions.conf.yml;
   "pipelines/codex_history/conf.yml" =
     builtins.readFile "${codexPack}/default/pipelines/codex_history/conf.yml";
   "pipelines/llm_normalize/conf.yml" =

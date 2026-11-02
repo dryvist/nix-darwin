@@ -33,9 +33,9 @@
     stripRoot = false;
   };
   cc-edge-macos-power-thermal-io = pkgs.fetchzip {
-    url = "https://github.com/jpe-cribl/cc-edge-macos-power-thermal-io/releases/download/v0.1.0/cc-edge-macos-power-thermal-io-0.1.0.crbl";
+    url = "https://github.com/jpe-cribl/cc-edge-macos-power-thermal-io/releases/download/v0.2.0/cc-edge-macos-power-thermal-io-0.2.0.crbl";
     extension = "tar.gz";
-    hash = "sha256-ZIgvMBzU+wT5z8URfynSt0cJC+7jrd8HZwg7lwHsLSo=";
+    hash = "sha256-kj3EBCdIcjTmsNwuJpzOwzP0QpjGgVR0rf4BfCrORAk=";
     stripRoot = false;
   };
   cc-edge-macos-ws-monitor-io = pkgs.fetchzip {
@@ -45,9 +45,9 @@
     stripRoot = false;
   };
   cc-edge-ai-transcript-shared-io = pkgs.fetchzip {
-    url = "https://github.com/jpe-cribl/cc-edge-ai-transcript-shared-io/releases/download/v0.1.0/cc-edge-ai-transcript-shared-io-0.1.0.crbl";
+    url = "https://github.com/jpe-cribl/cc-edge-ai-transcript-shared-io/releases/download/v0.2.0/cc-edge-ai-transcript-shared-io-0.2.0.crbl";
     extension = "tar.gz";
-    hash = "sha256-SYKgftAnOgjUASrBvWzAaQApb3XLfFM6+JQOo4nz5k4=";
+    hash = "sha256-8wrO4b3/i01zKh5YfJzXMdhyri7pGM0geQjQiVSEvas=";
     stripRoot = false;
   };
   cc-edge-mlx-serving-io = pkgs.fetchzip {
