@@ -68,6 +68,9 @@ let
   wiredMemoryCommand = builtins.toJSON (
     builtins.readFile "${powerThermalPack}/default/exec/macos-wired-memory.cmd"
   );
+  thermalCommand = builtins.toJSON (
+    builtins.readFile "${powerThermalPack}/default/exec/macos-thermal.cmd"
+  );
   mlxModels = config.home-manager.users.${userConfig.user.name}.services.aiStack.models or { };
   judgeModel = mlxModels.judge or null;
   judgeEnabled = judgeModel != null;
@@ -284,7 +287,7 @@ in
               type: exec
               disabled: false
               interval: 60
-              command: "pmset -g therm"
+              command: ${thermalCommand}
               sendToRoutes: false
               connections:
                 - pipeline: macos_thermal

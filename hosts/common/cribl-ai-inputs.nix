@@ -73,14 +73,11 @@ let
         breakerRulesets:
           - AI CLI JSONL
         metadata:
-          - name: sourcetype
-            value: "'claude:cli:history'"
-          - name: index
-            value: "'claude'"
           - name: enduser_id
             value: "'${user}'"
         connections:
-          - output: cribl_claude
+          - pipeline: claude_history_stamp
+            output: cribl_claude
       in_codex_sessions_${user}:
         type: file
         disabled: false

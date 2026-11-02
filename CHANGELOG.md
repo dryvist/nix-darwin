@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.15.0](https://github.com/dryvist/nix-darwin/compare/v4.14.5...v4.15.0) (2026-11-02)
+
+
+### Features
+
+* **cribl:** take the Claude pipelines and the thermal command from the released packs ([#3076](https://github.com/dryvist/nix-darwin/issues/3076)) ([fcb146e](https://github.com/dryvist/nix-darwin/commit/fcb146eb26891a79527efcb5188e5d4b38c1354c))
+
 ## [4.14.5](https://github.com/dryvist/nix-darwin/compare/v4.14.4...v4.14.5) (2026-11-02)
 
 
