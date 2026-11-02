@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.17.0](https://github.com/dryvist/nix-darwin/compare/v4.16.1...v4.17.0) (2026-11-02)
+
+
+### Features
+
+* **ws-monitor:** save the tailspin ring on a FREEZE ([#3086](https://github.com/dryvist/nix-darwin/issues/3086)) ([e2f2977](https://github.com/dryvist/nix-darwin/commit/e2f297778cfa33eaf1998aea3ff9a627c0699206))
+
 ## [4.16.1](https://github.com/dryvist/nix-darwin/compare/v4.16.0...v4.16.1) (2026-11-02)
 
 
