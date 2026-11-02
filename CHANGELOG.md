@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.16.1](https://github.com/dryvist/nix-darwin/compare/v4.16.0...v4.16.1) (2026-11-02)
+
+
+### Bug Fixes
+
+* **darwin:** reduce background load on WindowServer ([#3083](https://github.com/dryvist/nix-darwin/issues/3083)) ([4ab1430](https://github.com/dryvist/nix-darwin/commit/4ab143004e54cbdf492c21da3c719df2fc4183c2))
+
 ## [4.16.0](https://github.com/dryvist/nix-darwin/compare/v4.15.0...v4.16.0) (2026-11-02)
 
 
