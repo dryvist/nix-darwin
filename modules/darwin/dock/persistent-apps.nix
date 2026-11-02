@@ -41,16 +41,6 @@ let
     system = true;
   };
 
-  # Server hosts keep the same tiles, but only workstations declare these
-  # providers, so on a server the app is recorded as installed outside this
-  # configuration.
-  onWorkstation =
-    via:
-    if enableWorkstationApps then
-      via
-    else
-      { manual = "this configuration installs it on workstation hosts only"; };
-
   hmApps = "${homeDir}/Applications/Home Manager Apps";
 
   # Uses native Nix conditional expressions (`lib.optionals`) driven by
@@ -83,50 +73,34 @@ let
 
     # Knowledge Base & Notes
     (app "${hmApps}/Obsidian.app" { nixpkgs = "obsidian"; })
-  ]
-  ++ [
-    # Voice Intelligence (all hosts show the tile)
-    (app "/Applications/Wispr Flow.app" (onWorkstation {
-      cask = "wispr-flow";
-    }))
-  ]
-  ++ lib.optionals enableWorkstationApps [
-    # Voice Intelligence (workstation only)
+
+    # Voice Intelligence
+    (app "/Applications/Wispr Flow.app" { cask = "wispr-flow"; })
     (app "${hmApps}/OpenWhispr.app" { nixpkgs = "openwhispr"; })
 
-    # Meeting Assistants (workstation only)
+    # Meeting Assistants
     (app "/Applications/Foresight.app" {
       manual = "vendor download; no Homebrew cask or Mac App Store listing";
     })
     (app "/Applications/Omi.app" { mas = 6502156163; })
     (app "/Applications/Granola.app" { cask = "granola"; })
-  ]
-  ++ [
-    # Terminal (all hosts show the tile)
-    (app "/Applications/Ghostty.app" (onWorkstation {
-      cask = "ghostty";
-    }))
-  ]
-  ++ lib.optionals enableWorkstationApps [
+
+    # Terminal
+    (app "/Applications/Ghostty.app" { cask = "ghostty"; })
+
     # Development & Editors
     (app "${hmApps}/Visual Studio Code.app" { nixpkgs = "vscode"; })
-  ]
-  ++ [
-    # AI & API Tools (all hosts show the tiles; Claude and ChatGPT are workstation casks)
+
+    # AI & API Tools
     (app "/Applications/ProxMan.app" {
       manual = "vendor download; no Homebrew cask or Mac App Store listing";
     })
-    (app "/Applications/Claude.app" (onWorkstation {
-      cask = "claude";
-    }))
+    (app "/Applications/Claude.app" { cask = "claude"; })
     (app "${homeDir}/Applications/Gemini.app" {
       manual = "vendor download; the Homebrew gemini cask installs a different app bundle";
     })
-    (app "/Applications/ChatGPT.app" (onWorkstation {
-      cask = "chatgpt";
-    }))
-  ]
-  ++ lib.optionals enableWorkstationApps [
+    (app "/Applications/ChatGPT.app" { cask = "chatgpt"; })
+
     # Remote Desktop (positioned at the very end of app icons)
     (app "/Applications/Windows App.app" { mas = 1295203466; })
   ];
