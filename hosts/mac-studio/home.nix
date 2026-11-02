@@ -7,7 +7,6 @@
 
 {
   lib,
-  userConfig,
   ...
 }:
 
@@ -15,7 +14,7 @@
   imports = [ ../common/home.nix ];
 
   services.aiStack = {
-    llmEndpointTokenFile = "${userConfig.user.homeDir}/.config/ai-stack/router-bearer";
+    llmEndpointBearerFromEnv = true;
   };
 
   # Server-room wall monitor: never let the screensaver engage. idleTime is a

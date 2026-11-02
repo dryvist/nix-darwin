@@ -173,6 +173,10 @@ in
           name = "medium";
           id = config.services.aiStack.models.default;
         }
+        {
+          name = config.services.aiStack.models.default;
+          id = config.services.aiStack.models.default;
+        }
       ];
       routerEntryModel = "medium";
     };

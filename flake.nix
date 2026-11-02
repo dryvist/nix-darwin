@@ -424,6 +424,12 @@
               inherit configs userConfig;
             };
 
+            llm-local-hosts = import ./lib/checks/llm-local-hosts.nix {
+              pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+              inherit configs hosts userConfig;
+              src = ./.;
+            };
+
             pf-anchor-syntax =
               let
                 darwinPkgs = nixpkgs.legacyPackages.aarch64-darwin;
