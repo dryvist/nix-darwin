@@ -122,23 +122,41 @@ prune_captures() {
   shopt -u nullglob
 
   capture_count=${#capture_files[@]}
-  (( capture_count > 20 )) || return 0
-  stale_count=$((capture_count - 20))
+  if (( capture_count > 20 )); then
+    stale_count=$((capture_count - 20))
+    for (( index = 0; index < stale_count; index++ )); do
+      stale_capture=${capture_files[$index]}
+      /bin/rm -f "$stale_capture" "${stale_capture%.txt}.summary.txt"
+    done
+  fi
 
-  for (( index = 0; index < stale_count; index++ )); do
-    stale_capture=${capture_files[$index]}
-    /bin/rm -f "$stale_capture" "${stale_capture%.txt}.summary.txt"
-  done
+  # Raw kernel trace rings are tens of MB each: keep only the newest few.
+  shopt -s nullglob
+  capture_files=( "$CAPTURE_DIR"/*Z.tailspin )
+  shopt -u nullglob
+
+  capture_count=${#capture_files[@]}
+  if (( capture_count > 6 )); then
+    stale_count=$((capture_count - 6))
+    for (( index = 0; index < stale_count; index++ )); do
+      /bin/rm -f "${capture_files[$index]}"
+    done
+  fi
 }
 
-# One live system-wide sample, 5 s at 100 ms, taken while the stall is in
-# progress. The summary (not the full spindump) is what Cribl ships.
+# Two captures: the kernel trace ring (tailspin), which still holds the stall
+# itself, then one live system-wide sample, 5 s at 100 ms, which shows only what
+# follows it. Read a ring offline with: spindump -i <stamp>.tailspin -o out.txt.
+# The summary (not the full spindump) is what Cribl ships.
 capture_stall() {
   local capture_stamp="$1"
+  local tailspin_file="${CAPTURE_DIR}/${capture_stamp}.tailspin"
   local spindump_file="${CAPTURE_DIR}/${capture_stamp}.txt"
   local summary_file="${CAPTURE_DIR}/${capture_stamp}.summary.txt"
 
   (
+    /usr/bin/tailspin save -o "$tailspin_file" || true
+    [ ! -e "$tailspin_file" ] || /bin/chmod 644 "$tailspin_file" || true
     /usr/sbin/spindump -notarget 5 100 -o "$spindump_file" || true
     if [ -r "$spindump_file" ]; then
       {
