@@ -8,12 +8,6 @@
 { pkgs }:
 
 {
-  cc-edge-the-mac-pack-io = pkgs.fetchzip {
-    url = "https://github.com/dryvist/cc-edge-the-mac-pack-io/releases/download/v0.5.0/cc-edge-the-mac-pack-io-v0.5.0.crbl"; # renovate: cc-edge-the-mac-pack-io
-    extension = "tar.gz";
-    hash = "sha256-s7K7G+ieqrUA87480ksjHDerhb3paJvSYbTX3h6mO0s=";
-    stripRoot = false;
-  };
   cc-edge-codex-io = pkgs.fetchzip {
     url = "https://github.com/dryvist/cc-edge-codex-io/releases/download/v0.1.1/cc-edge-codex-io-v0.1.1.crbl";
     extension = "tar.gz";
