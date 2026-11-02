@@ -25,15 +25,13 @@ in
     /bin/chmod 755 "${logDir}" "${captureDir}"
   '';
 
-  # LaunchDaemons run as root, with scheduling and I/O priority kept low.
+  # Runs as root at normal scheduling and I/O priority: a late tick must measure the machine,
+  # not this daemon's own throttling.
   launchd.daemons.ws-monitor.serviceConfig = {
     Label = label;
     ProgramArguments = launchdTrampolineArgs "ws-monitor" [ "${monitorScript}/bin/ws-monitor" ];
     RunAtLoad = true;
     KeepAlive = true;
-    Nice = 10;
-    LowPriorityIO = true;
-    ProcessType = "Background";
     StandardOutPath = "/dev/null";
     StandardErrorPath = "${logDir}/ws-monitor.err.log";
   };
