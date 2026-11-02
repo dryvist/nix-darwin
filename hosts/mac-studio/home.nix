@@ -7,16 +7,15 @@
 
 {
   lib,
-  userConfig,
   ...
 }:
 
 {
   imports = [ ../common/home.nix ];
 
-  services.aiStack = {
-    llmEndpointTokenFile = "${userConfig.user.homeDir}/.config/ai-stack/router-bearer";
-  };
+  # The local proxy's launch wrapper injects the router bearer as OPENAI_API_KEY;
+  # no token file is read.
+  services.aiStack.llmEndpointBearerFromEnv = true;
 
   # Server-room wall monitor: never let the screensaver engage. idleTime is a
   # ByHost preference (currentHostDefaults writes it via `defaults
