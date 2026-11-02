@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.17.1](https://github.com/dryvist/nix-darwin/compare/v4.17.0...v4.17.1) (2026-11-02)
+
+
+### Bug Fixes
+
+* **ai-stack:** take the Studio local proxy's router bearer from the environment ([#3089](https://github.com/dryvist/nix-darwin/issues/3089)) ([87e34aa](https://github.com/dryvist/nix-darwin/commit/87e34aa6791d196e5b6f0815f9cf180550dedc54))
+
 ## [4.17.0](https://github.com/dryvist/nix-darwin/compare/v4.16.1...v4.17.0) (2026-11-02)
 
 
