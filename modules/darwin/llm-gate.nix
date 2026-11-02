@@ -14,6 +14,7 @@
 let
   cfg = config.programs.llm-gate;
   userConfig = import ../../lib/user-config.nix;
+  openbaoLaunch = import ../../lib/openbao-launch.nix { inherit lib; };
 
   # The caddy-dns/route53 plugin version is pinned below. This fixed-output
   # hash must be updated when the shared Go toolchain changes.
@@ -240,26 +241,19 @@ in
       Label = "com.nix-darwin.llm-gate";
       # The named trampoline execs Apple /bin/bash, preserving its original image.
       ProgramArguments = launchdTrampolineArgs "llm-gate" (
-        [
-          "/bin/bash"
-          (lib.getExe config.programs.openbao-run.package)
-          "--domain"
-          "llm-gate"
-          "--env-file"
-          cfg.secretZeroEnvFile
-        ]
-        ++ lib.optionals (cfg.tlsMode == "route53") [
-          "--secret"
-          "secrets-external:AWS_ACME_ACCESS_KEY_ID=platform/acme#access_key_id"
-          "--secret"
-          "secrets-external:AWS_ACME_SECRET_ACCESS_KEY=platform/acme#secret_access_key"
-          "--secret"
-          "secrets-external:LLM_GATE_AWS_REGION=platform/acme#region"
-        ]
+        openbaoLaunch {
+          inherit (config.programs.openbao-run) package;
+          domain = "llm-gate";
+          envFile = cfg.secretZeroEnvFile;
+          secrets =
+            lib.optionals (cfg.tlsMode == "route53") [
+              "secrets-external:AWS_ACME_ACCESS_KEY_ID=platform/acme#access_key_id"
+              "secrets-external:AWS_ACME_SECRET_ACCESS_KEY=platform/acme#secret_access_key"
+              "secrets-external:LLM_GATE_AWS_REGION=platform/acme#region"
+            ]
+            ++ [ "LLM_LARGE_BEARER_TOKEN=ai/llm#LLM_LARGE_BEARER_TOKEN" ];
+        }
         ++ [
-          "--secret"
-          "LLM_LARGE_BEARER_TOKEN=ai/llm#LLM_LARGE_BEARER_TOKEN"
-          "--"
           (lib.getExe caddyPkg)
           "run"
           "--config"
