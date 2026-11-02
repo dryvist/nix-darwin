@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.14.4](https://github.com/dryvist/nix-darwin/compare/v4.14.3...v4.14.4) (2026-11-02)
+
+
+### Bug Fixes
+
+* **deps:** update nix-ai to v8.14.1 ([#3070](https://github.com/dryvist/nix-darwin/issues/3070)) ([7a09c9e](https://github.com/dryvist/nix-darwin/commit/7a09c9e9c5f3ddcadaa5c5bf3b7349c932ea4ecd))
+
 ## [4.14.3](https://github.com/dryvist/nix-darwin/compare/v4.14.2...v4.14.3) (2026-11-02)
 
 
