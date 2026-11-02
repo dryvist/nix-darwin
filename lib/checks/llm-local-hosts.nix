@@ -34,6 +34,11 @@ let
     path: lib.hasInfix staleClientUrl (builtins.readFile (src + "/${path}"))
   ) clientFiles;
 
+  # The env bearer needs a value source: a launch prefix, never the plist.
+  proxyEnvironment = studio.launchd.agents.litellm-local.config.EnvironmentVariables or { };
+  studioBearerHasSource =
+    studio.programs.litellmLocal.launchPrefix != [ ] && !(proxyEnvironment ? OPENAI_API_KEY);
+
   watch = studio.launchd.agents.litellm-fallback-watch.config or { };
   watchEnvironment = watch.EnvironmentVariables or { };
   watchHome = studio.home.homeDirectory;
@@ -52,6 +57,9 @@ assert
 assert
   usesRuntimeBearer studio
   || throw "mac-studio must use llmEndpointBearerFromEnv without a token file";
+assert
+  studioBearerHasSource
+  || throw "mac-studio litellm-local needs a non-empty launchPrefix and no OPENAI_API_KEY in its plist";
 assert !hasStaleClientUrl || throw "a Darwin client still hardcodes http://127.0.0.1:11434";
 assert
   monitorCoversLocalProxy

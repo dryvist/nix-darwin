@@ -7,14 +7,27 @@
 
 {
   lib,
+  osConfig,
   ...
 }:
 
+let
+  openbaoLaunch = import ../../lib/openbao-launch.nix { inherit lib; };
+in
 {
   imports = [ ../common/home.nix ];
 
   services.aiStack = {
     llmEndpointBearerFromEnv = true;
+  };
+
+  # The local proxy's router bearer comes from OpenBao at each start, through
+  # the llm-gate AppRole and its secret-zero (the same identity as the gate).
+  programs.litellmLocal.launchPrefix = openbaoLaunch {
+    inherit (osConfig.programs.openbao-run) package;
+    domain = "llm-gate";
+    envFile = osConfig.programs.llm-gate.secretZeroEnvFile;
+    secrets = [ "OPENAI_API_KEY=apps/litellm-local#litellm_local_llm_router_key" ];
   };
 
   # Server-room wall monitor: never let the screensaver engage. idleTime is a
