@@ -78,6 +78,8 @@ let
       # drop filter (spawn plus exit lines measured ~1.4/s); loginwindow to timeout
       # and hang phrases. Volume not measured.
       # eslogger's own events are excluded here; in_macos_eslogger collects them.
+      # Time Machine: every event in subsystem com.apple.TimeMachine, plus the
+      # timemachine-backup: lines the schedule guard writes through logger.
       predicate: >-
         process != "eslogger" AND ((process == "kernel" AND (eventMessage CONTAINS[c] "jetsam" OR eventMessage CONTAINS[c] "memorystatus" OR eventMessage CONTAINS[c] "low swap" OR eventMessage CONTAINS[c] "panic" OR eventMessage CONTAINS[c] "IOGPU" OR eventMessage CONTAINS[c] "AGX" OR eventMessage CONTAINS[c] "thermal")) OR
         eventMessage CONTAINS[c] "memory pressure" OR process == "DumpPanic" OR process == "ReportCrash" OR
@@ -94,7 +96,9 @@ let
         (process == "kernel" AND eventMessage CONTAINS[c] "apfs" AND (eventMessage CONTAINS[c] "slow" OR eventMessage CONTAINS[c] "stall" OR eventMessage CONTAINS[c] "timeout" OR eventMessage CONTAINS[c] "took")) OR
         (process == "tccd" AND (eventMessage CONTAINS[c] "timed out" OR eventMessage CONTAINS[c] "timeout")) OR
         (process == "launchd" AND (eventMessage CONTAINS[c] "Successfully spawned" OR eventMessage CONTAINS[c] "spawn deferred" OR eventMessage CONTAINS[c] "internal event: EXITED" OR eventMessage CONTAINS[c] "ran for" OR eventMessage CONTAINS[c] "exited due to" OR eventMessage CONTAINS[c] "did not exit" OR eventMessage CONTAINS[c] "throttl" OR eventMessage CONTAINS[c] "crash")) OR
-        (process == "loginwindow" AND (eventMessage CONTAINS[c] "timed out" OR eventMessage CONTAINS[c] "timeout" OR eventMessage CONTAINS[c] "hang" OR eventMessage CONTAINS[c] "watchdog")))
+        (process == "loginwindow" AND (eventMessage CONTAINS[c] "timed out" OR eventMessage CONTAINS[c] "timeout" OR eventMessage CONTAINS[c] "hang" OR eventMessage CONTAINS[c] "watchdog")) OR
+        subsystem == "com.apple.TimeMachine" OR
+        (process == "logger" AND eventMessage BEGINSWITH "timemachine-backup: "))
       sendToRoutes: false
       connections:
         - pipeline: macos_unified_logs
