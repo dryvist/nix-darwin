@@ -90,11 +90,11 @@
     "autoresearch": {
       "flake": false,
       "locked": {
-        "lastModified": 1786573603,
-        "narHash": "sha256-Hwxlit87HPoHLLDiX/Tz4L5ONvmDf5B71KhTePNLyhU=",
+        "lastModified": 1793454849,
+        "narHash": "sha256-DapoBvuMAVHm7M/6NT/J6zdWNKno55Ans9+cxFWeHj8=",
         "owner": "uditgoenka",
         "repo": "autoresearch",
-        "rev": "050e30dc4ba0974b03f2873111b9901ec3211390",
+        "rev": "7bddd056dfd0b0ded8360588d8101b1ecb5c0baa",
         "type": "github"
       },
       "original": {
@@ -1643,11 +1643,11 @@
     "nix-agent-sandbox-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1792369312,
-        "narHash": "sha256-2uyt82mZYR2lrY0OcGKMDDWoQUHrHSdslF/W3H0DwgU=",
+        "lastModified": 1793600697,
+        "narHash": "sha256-tyUuWrde5uAurd9vQh70CQae1w8c3oeaKoREYGs1wpA=",
         "owner": "dryvist",
         "repo": "nix-agent-sandbox",
-        "rev": "b55bbff3795b4481bef496b9e2cd8ff5013ae7d5",
+        "rev": "27c7f58062bd23fe86e3640b3aff896a59d77218",
         "type": "github"
       },
       "original": {
@@ -1731,11 +1731,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1793385113,
-        "narHash": "sha256-kTKTS6rcKTnfr376ImLZj9WXP+ZvBF7rABfbORozBnA=",
+        "lastModified": 1793605255,
+        "narHash": "sha256-YAkmpBEJRADpsHgyC5vO0eJlyRrE/Ale55ZTVIaYgyI=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "1fc36d839f8041a6adaf2edd22e4f54ad2342792",
+        "rev": "32dfbc18eb4a9629aba258e3a4c7f550e41f9f85",
         "type": "github"
       },
       "original": {
@@ -1868,11 +1868,11 @@
         "visual-explainer-marketplace": "visual-explainer-marketplace"
       },
       "locked": {
-        "lastModified": 1793364190,
-        "narHash": "sha256-dhIjFgLMhvEF1ownq0pz4IG3O9cwhGMUwe83SPx4P6s=",
+        "lastModified": 1793485488,
+        "narHash": "sha256-IccG+0W6IOJXGBKoVh0s0nmw0Ycvsey1bBy5zvFN5TU=",
         "owner": "dryvist",
         "repo": "nix-claude-code",
-        "rev": "49f53858dcc9df00116a9c2816eda9b40d294852",
+        "rev": "bc722d3bf2a9b41eb73a672b8d742910233068fa",
         "type": "github"
       },
       "original": {
