@@ -71,6 +71,12 @@ let
   thermalCommand = builtins.toJSON (
     builtins.readFile "${powerThermalPack}/default/exec/macos-thermal.cmd"
   );
+  macmonCommand = builtins.toJSON (
+    builtins.readFile "${powerThermalPack}/default/exec/macos-macmon.cmd"
+  );
+  batteryCommand = builtins.toJSON (
+    builtins.readFile "${powerThermalPack}/default/exec/macos-battery.cmd"
+  );
   mlxModels = config.home-manager.users.${userConfig.user.name}.services.aiStack.models or { };
   judgeModel = mlxModels.judge or null;
   judgeEnabled = judgeModel != null;
@@ -292,12 +298,25 @@ in
               connections:
                 - pipeline: macos_thermal
                   output: cribl_stream
-            # ponytail: standalone battery-health exec (pmset+ioreg) dropped —
-            # its deeply-nested quoting is fragile and a mis-escape fails the
-            # whole Edge config load; powermetrics' `battery` sampler above
-            # already carries the basics. Re-add by wiring the pack's verbatim
-            # command (not re-transcribing) if cycle-count/capacity detail is
-            # wanted.
+            # macmon and battery exec, 60s; command text is read from the pinned power/thermal pack.
+            in_macos_macmon:
+              type: exec
+              disabled: false
+              interval: 60
+              command: ${macmonCommand}
+              sendToRoutes: false
+              connections:
+                - pipeline: macos_macmon
+                  output: cribl_stream
+            in_macos_battery:
+              type: exec
+              disabled: false
+              interval: 60
+              command: ${batteryCommand}
+              sendToRoutes: false
+              connections:
+                - pipeline: macos_battery
+                  output: cribl_stream
             # Crash/panic reports. File Source (manual mode: path + "*/"-led glob,
             # per the #1623 lesson). System + user DiagnosticReports dirs.
             # tailOnly: true — only NEW reports after Edge start. false backfilled
