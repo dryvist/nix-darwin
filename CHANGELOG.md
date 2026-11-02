@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.14.3](https://github.com/dryvist/nix-darwin/compare/v4.14.2...v4.14.3) (2026-11-02)
+
+
+### Bug Fixes
+
+* **dock:** show the workstation-only tiles on workstations only ([#3067](https://github.com/dryvist/nix-darwin/issues/3067)) ([4858dd4](https://github.com/dryvist/nix-darwin/commit/4858dd4e245d932f930ffdeadcf92653a9c44be7))
+
 ## [4.14.2](https://github.com/dryvist/nix-darwin/compare/v4.14.1...v4.14.2) (2026-10-31)
 
 
