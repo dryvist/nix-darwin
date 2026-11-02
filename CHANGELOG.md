@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.16.0](https://github.com/dryvist/nix-darwin/compare/v4.15.0...v4.16.0) (2026-11-02)
+
+
+### Features
+
+* **cribl:** retire the Mac Edge pack pin, add macmon and battery exec, collect Time Machine logs ([#3080](https://github.com/dryvist/nix-darwin/issues/3080)) ([9d5b66f](https://github.com/dryvist/nix-darwin/commit/9d5b66f7c58726ea783e6d98344818a1d67ed612))
+
+
+### Bug Fixes
+
+* **deps:** update ai-llm-prompts lock to v1.49.0 ([#3077](https://github.com/dryvist/nix-darwin/issues/3077)) ([2b50d50](https://github.com/dryvist/nix-darwin/commit/2b50d5095701bcf098a5006c32dfb2e3182e598c))
+
 ## [4.15.0](https://github.com/dryvist/nix-darwin/compare/v4.14.5...v4.15.0) (2026-11-02)
 
 
