@@ -120,7 +120,7 @@ in
     # ========================================================================
     # Performance monitoring
     # ========================================================================
-    macmon # Apple Silicon CPU/GPU/power monitor, consumed by the Cribl Edge Mac pack
+    macmon # Apple Silicon CPU/GPU/power monitor, consumed by the Cribl Edge macOS exec inputs
 
     # ========================================================================
     # Network & process tools
