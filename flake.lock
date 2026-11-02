@@ -90,11 +90,11 @@
     "autoresearch": {
       "flake": false,
       "locked": {
-        "lastModified": 1793454849,
-        "narHash": "sha256-DapoBvuMAVHm7M/6NT/J6zdWNKno55Ans9+cxFWeHj8=",
+        "lastModified": 1786573603,
+        "narHash": "sha256-Hwxlit87HPoHLLDiX/Tz4L5ONvmDf5B71KhTePNLyhU=",
         "owner": "uditgoenka",
         "repo": "autoresearch",
-        "rev": "7bddd056dfd0b0ded8360588d8101b1ecb5c0baa",
+        "rev": "050e30dc4ba0974b03f2873111b9901ec3211390",
         "type": "github"
       },
       "original": {
