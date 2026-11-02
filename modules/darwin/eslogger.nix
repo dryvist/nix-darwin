@@ -5,8 +5,7 @@
 # it directly, with no wrapper. --oslog writes each event to the unified log
 # (default subsystem com.apple.eslogger, category events). Nothing is written
 # to a file, so nothing is rotated. launchd discards stdout and stderr.
-# No --select filter is set, so every exec and exit event is recorded with its
-# parent and responsible process.
+# --select limits events to the programs that register with WindowServer.
 _:
 
 {
@@ -14,6 +13,16 @@ _:
     Label = "dev.local.eslogger";
     ProgramArguments = [
       "/usr/bin/eslogger"
+      "--select"
+      "/usr/bin/osascript"
+      "--select"
+      "/usr/bin/open"
+      "--select"
+      "/Applications"
+      "--select"
+      "/System/Applications"
+      "--select"
+      "/System/Library/CoreServices"
       "exec"
       "exit"
       "--oslog"
