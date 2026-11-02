@@ -43,8 +43,13 @@ in
       extra-substituters = [ "https://devenv.cachix.org" ];
       extra-trusted-public-keys = [ "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=" ];
 
+      # Parallelism caps: evaluation and builds otherwise take every core
+      # (Determinate Nix defaults: eval-cores = 0, max-jobs = auto), which stalls the UI.
+      eval-cores = 4;
+      max-jobs = 2;
+      cores = 4;
+
       # -- Defaults left commented for awareness --
-      # max-jobs = "auto";           # Parallel build jobs (set by Determinate Nix)
       # keep-build-log = true;       # Retain build logs for debugging
       # keep-derivations = true;     # Keep .drv files (needed for nix log)
       # keep-outputs = true;         # Keep outputs reachable from installed packages
