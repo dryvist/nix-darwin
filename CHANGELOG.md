@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.17.3](https://github.com/dryvist/nix-darwin/compare/v4.17.2...v4.17.3) (2026-11-03)
+
+
+### Bug Fixes
+
+* **token-meter:** leave the service at its disabled default ([#3099](https://github.com/dryvist/nix-darwin/issues/3099)) ([a0d3035](https://github.com/dryvist/nix-darwin/commit/a0d30356754740985235ba0d3ea55b290c7b0098))
+
 ## [4.17.2](https://github.com/dryvist/nix-darwin/compare/v4.17.1...v4.17.2) (2026-11-03)
 
 
