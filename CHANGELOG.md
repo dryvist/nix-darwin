@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.17.2](https://github.com/dryvist/nix-darwin/compare/v4.17.1...v4.17.2) (2026-11-03)
+
+
+### Bug Fixes
+
+* **ws-monitor:** interactive priority and a larger tailspin ring ([#3092](https://github.com/dryvist/nix-darwin/issues/3092)) ([4429f51](https://github.com/dryvist/nix-darwin/commit/4429f513e2c0fa9b5ece6bda2d172d91d457a820))
+
 ## [4.17.1](https://github.com/dryvist/nix-darwin/compare/v4.17.0...v4.17.1) (2026-11-02)
 
 
