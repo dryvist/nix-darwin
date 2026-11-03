@@ -25,10 +25,11 @@ in
     /bin/chmod 755 "${logDir}" "${captureDir}"
   '';
 
-  # Runs as root at normal scheduling and I/O priority: a late tick must measure the machine,
-  # not this daemon's own throttling.
+  # Interactive: without it launchd runs the loop at utility QoS, which macOS throttles first
+  # under thermal pressure, so a late tick would measure this daemon instead of the machine.
   launchd.daemons.ws-monitor.serviceConfig = {
     Label = label;
+    ProcessType = "Interactive";
     ProgramArguments = launchdTrampolineArgs "ws-monitor" [ "${monitorScript}/bin/ws-monitor" ];
     RunAtLoad = true;
     KeepAlive = true;
