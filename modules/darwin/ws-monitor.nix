@@ -23,6 +23,8 @@ in
   system.activationScripts.postActivation.text = lib.mkAfter ''
     /bin/mkdir -p "${logDir}" "${captureDir}"
     /bin/chmod 755 "${logDir}" "${captureDir}"
+    # The default 100 MB ring holds about 4 s under load; stalls last 16-65 s.
+    /usr/bin/tailspin set buffer-size 1024 || true
   '';
 
   # Interactive: without it launchd runs the loop at utility QoS, which macOS throttles first
