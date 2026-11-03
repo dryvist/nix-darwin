@@ -23,12 +23,15 @@ in
   system.activationScripts.postActivation.text = lib.mkAfter ''
     /bin/mkdir -p "${logDir}" "${captureDir}"
     /bin/chmod 755 "${logDir}" "${captureDir}"
+    # The default 100 MB ring holds about 4 s under load; stalls last 16-65 s.
+    /usr/bin/tailspin set buffer-size 1024 || true
   '';
 
-  # Runs as root at normal scheduling and I/O priority: a late tick must measure the machine,
-  # not this daemon's own throttling.
+  # Interactive: without it launchd runs the loop at utility QoS, which macOS throttles first
+  # under thermal pressure, so a late tick would measure this daemon instead of the machine.
   launchd.daemons.ws-monitor.serviceConfig = {
     Label = label;
+    ProcessType = "Interactive";
     ProgramArguments = launchdTrampolineArgs "ws-monitor" [ "${monitorScript}/bin/ws-monitor" ];
     RunAtLoad = true;
     KeepAlive = true;
