@@ -41,10 +41,25 @@ let
 
   ceilingGb = ceilingMb / 1024;
   derivedPerWorkerGb = (ceilingGb - baselineReserveGb) / kMax;
+
+  # What the workers can claim at their RESOLVED limit. The derivation above
+  # fits by construction, but it is a mkDefault: a host override or a changed
+  # nix-ai default can still overcommit the ceiling.
+  perWorkerGb = config.programs.mlx.memoryHardLimitGb;
+  claimedMb = (perWorkerGb * kMax + baselineReserveGb) * 1024;
 in
 {
   config = lib.mkIf (mlxHost && ceilingMb != null) {
     # mkDefault so a host can still override deliberately.
     programs.mlx.memoryHardLimitGb = lib.mkDefault derivedPerWorkerGb;
+
+    # Every override must still fit: k_max workers at their limit plus the
+    # baseline stay under the wired ceiling.
+    assertions = [
+      {
+        assertion = claimedMb <= ceilingMb;
+        message = "programs.mlx: ${toString kMax} resident worker(s) at ${toString perWorkerGb} GiB plus the ${toString baselineReserveGb} GiB baseline exceed the ${toString ceilingMb} MiB wired ceiling (system.appleSiliconTunables.wiredLimitMb). Lower memoryHardLimitGb or maxResidentWorkers, or raise maxLocalLlmGb.";
+      }
+    ];
   };
 }
