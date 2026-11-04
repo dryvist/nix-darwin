@@ -1643,16 +1643,16 @@
     "nix-agent-sandbox-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1793629787,
-        "narHash": "sha256-mMao53PCsB9WifHJTA1Fj5q4UcscRqVST1/In+HsKJs=",
+        "lastModified": 1793815657,
+        "narHash": "sha256-zNrRCHyfvR+QNsapVV5bvT4Es2wnpgW4/4xfNGWPmYE=",
         "owner": "dryvist",
         "repo": "nix-agent-sandbox",
-        "rev": "6b5c5c7d8617c5d18065285b5d9588bbd2ca928f",
+        "rev": "e4a6a269c0762764893f68479f1a000c479015c5",
         "type": "github"
       },
       "original": {
         "owner": "dryvist",
-        "ref": "v1",
+        "ref": "v1.13.0",
         "repo": "nix-agent-sandbox",
         "type": "github"
       }
@@ -2020,11 +2020,11 @@
         "tofu-github": "tofu-github_2"
       },
       "locked": {
-        "lastModified": 1792847061,
-        "narHash": "sha256-v0DC63MRPYOG5OO59vkNZfmaCgZO31j2qWhS4UvLD64=",
+        "lastModified": 1793306968,
+        "narHash": "sha256-GXmcxKQjsBahZLelbzKLV/57TZZxF4Li+udonfC6jqU=",
         "owner": "dryvist",
         "repo": "nix-home",
-        "rev": "979a8c5a7c7f1662389d03f232c386b31845904d",
+        "rev": "3978ed9fb8da7ce83f5cdd9de637e94e3a94a9df",
         "type": "github"
       },
       "original": {
@@ -2604,11 +2604,11 @@
     },
     "systems_4": {
       "locked": {
-        "lastModified": 1791244623,
-        "narHash": "sha256-uuanbkFk8a313Zfrxdcz8Us/yQtaxNnKJtX8v0ZPpd8=",
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
         "owner": "nix-systems",
         "repo": "default",
-        "rev": "d36eeed142f88b5a636f2e3856a53c61654cf29b",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
         "type": "github"
       },
       "original": {
