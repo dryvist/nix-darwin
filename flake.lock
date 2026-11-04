@@ -2020,11 +2020,11 @@
         "tofu-github": "tofu-github_2"
       },
       "locked": {
-        "lastModified": 1793306968,
-        "narHash": "sha256-GXmcxKQjsBahZLelbzKLV/57TZZxF4Li+udonfC6jqU=",
+        "lastModified": 1793564501,
+        "narHash": "sha256-C/jVhzUjrf21wnA8rpWNTsPC7wUxeHMR+f2YY06Wngs=",
         "owner": "dryvist",
         "repo": "nix-home",
-        "rev": "3978ed9fb8da7ce83f5cdd9de637e94e3a94a9df",
+        "rev": "6ebbfaf25112985032ef0dff2d164b877cbbfb00",
         "type": "github"
       },
       "original": {
