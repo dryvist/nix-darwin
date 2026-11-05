@@ -357,6 +357,10 @@
                 inherit pkgs darwin;
                 src = ./.;
               };
+              residency-budget = import ./lib/checks/residency-budget.nix {
+                inherit pkgs;
+                src = ./.;
+              };
             };
 
           # pf anchor syntax check — Darwin-only (pfctl is a macOS system
