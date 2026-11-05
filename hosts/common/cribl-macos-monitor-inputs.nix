@@ -32,7 +32,7 @@ let
     in_macos_unified_logs:
       type: apple_unified_logs
       disabled: false
-      # One log show per minute: shorter polls overran their window under load.
+      # interval 60: measured fewer poll overruns than the default; poll windows stay a few seconds.
       interval: 60
       #
       # "memory pressure" is deliberately OUTSIDE the kernel group.
