@@ -196,6 +196,7 @@ while true; do
   now_tick=$(/bin/date '+%s')
   gap_s=$((now_tick - previous_tick))
   (( gap_s >= 0 )) || gap_s=0
+  last_tick=$previous_tick
   previous_tick=$now_tick
 
   io_pending_s=0
@@ -208,6 +209,11 @@ while true; do
   severity=normal
   if (( gap_s > 15 || io_pending_s > 8 )); then
     severity=FREEZE
+    # A gap that contains a system wake is sleep, not a stall.
+    wake_s=$(/usr/sbin/sysctl -n kern.waketime 2>/dev/null | /usr/bin/awk '{print $4+0}')
+    if (( ${wake_s:-0} > last_tick )); then
+      severity=SLEEP
+    fi
   fi
 
   # Capture first: later steps (event write) can block on the stall itself.
@@ -219,7 +225,7 @@ while true; do
   fi
 
   ticks_since_log=$((ticks_since_log + 1))
-  if (( ticks_since_log >= 3 )) || [ "$severity" = "FREEZE" ]; then
+  if (( ticks_since_log >= 3 )) || [ "$severity" != "normal" ]; then
     ts=$(/bin/date -u '+%Y-%m-%dT%H:%M:%SZ')
     emit_event "$ts" "$severity" "$gap_s" "$io_pending_s"
     ticks_since_log=0
