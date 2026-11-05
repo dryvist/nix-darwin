@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.18.1](https://github.com/dryvist/nix-darwin/compare/v4.18.0...v4.18.1) (2026-11-05)
+
+
+### Bug Fixes
+
+* **ws-monitor:** mark gaps that contain a system wake as SLEEP ([#3113](https://github.com/dryvist/nix-darwin/issues/3113)) ([e68132c](https://github.com/dryvist/nix-darwin/commit/e68132c52081d48ab8437ed5debde25be7a0084b))
+
 ## [4.18.0](https://github.com/dryvist/nix-darwin/compare/v4.17.3...v4.18.0) (2026-11-05)
 
 
