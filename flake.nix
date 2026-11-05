@@ -68,7 +68,7 @@
         homelab-contracts.follows = "homelab-contracts";
         # nix-ai declares this source at v1; the sandbox release moves here, one tag at a time.
         nix-agent-sandbox-src = {
-          url = "github:dryvist/nix-agent-sandbox?ref=v1.13.0";
+          url = "github:dryvist/nix-agent-sandbox?ref=v1.13.2";
           flake = false;
         };
       };
@@ -355,6 +355,10 @@
             // {
               agent-nofile = import ./lib/checks/agent-nofile.nix {
                 inherit pkgs darwin;
+                src = ./.;
+              };
+              residency-budget = import ./lib/checks/residency-budget.nix {
+                inherit pkgs;
                 src = ./.;
               };
             };
