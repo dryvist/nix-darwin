@@ -4,8 +4,8 @@
 # Change detection, Nix Validate, Markdown Lint and File Size all run inside
 # JacobPEvans/.github/.github/workflows/_ci-gate.yml@v1. Nix Validate gets its
 # own larger runner through `nix_validate_runner_label`; the doc checks stay on
-# the 2cpu runner. Repo-local jobs gate on the shared gate's exported change
-# detection — there is no second `changes` job here.
+# the 2cpu runner. Repo-local jobs gate on `changes` below, which applies the
+# same `nix` and `extra` filters, so they do not wait for the shared gate.
 #
 # What stays local, and why the shared gate cannot own it:
 #   nix-build              — the macOS system build, on this repo's own
@@ -97,6 +97,39 @@ jobs:
   # ==========================================================================
   # REPO-LOCAL CHECKS (reusable workflows the shared gate cannot host)
   # ==========================================================================
+  # Local change detection for the two checks below. The filters match the
+  # shared gate's `nix` and `extra` filters. Pushes to main diff against the
+  # previous main commit; pull requests diff against their base branch.
+  changes:
+    name: Changes
+    permissions:
+      contents: read
+      pull-requests: read
+    runs-on: ${{ github.event.pull_request.head.repo.full_name == github.repository && format('runs-on={0}/runner=2cpu-linux-x64', github.run_id) || 'ubuntu-latest' }}
+    timeout-minutes: 5
+    outputs:
+      nix: ${{ steps.filter.outputs.nix }}
+      extra: ${{ steps.filter.outputs.extra }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Detect changes
+        id: filter
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          base: ${{ github.ref }}
+          filters: |
+            nix:
+              - '**.nix'
+              - 'flake.lock'
+              - 'modules/**'
+              - 'hosts/**'
+              - 'scripts/**'
+            extra:
+              - '.claude/**'
+              - 'flake.lock'
+
   # Full-build placement: only a commit that has landed on main runs the
   # macOS build. Every PR, including promotion PRs and lockfile updates, uses
   # Nix Validate; ci-nix.yml also validates develop pushes.
@@ -119,8 +152,8 @@ jobs:
 
   claude-settings:
     name: Claude Settings
-    needs: shared-gate
-    if: needs.shared-gate.outputs.extra == 'true'
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.extra == 'true'
     uses: ./.github/workflows/_claude-settings.yml
 
   # Cross-repo mechanical check: lib/hosts/mac-studio.nix's serveConcurrency
@@ -128,8 +161,8 @@ jobs:
   # See _llm-concurrency-parity.yml header.
   llm-concurrency-parity:
     name: LLM Concurrency Parity
-    needs: shared-gate
-    if: needs.shared-gate.outputs.nix == 'true'
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.nix == 'true'
     uses: ./.github/workflows/_llm-concurrency-parity.yml
 
   flake-lock-fresh:
@@ -145,7 +178,7 @@ jobs:
   # ==========================================================================
   gate:
     name: Merge Gate
-    needs: [shared-gate, nix-build, claude-settings, llm-concurrency-parity, flake-lock-fresh]
+    needs: [shared-gate, changes, nix-build, claude-settings, llm-concurrency-parity, flake-lock-fresh]
     if: ${{ !cancelled() }}
     runs-on: ${{ github.event.pull_request.head.repo.full_name == github.repository && format('runs-on={0}/runner=2cpu-linux-x64', github.run_id) || 'ubuntu-latest' }}
     timeout-minutes: 5
