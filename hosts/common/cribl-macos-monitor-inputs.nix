@@ -32,6 +32,8 @@ let
     in_macos_unified_logs:
       type: apple_unified_logs
       disabled: false
+      # One log show per minute: shorter polls overran their window under load.
+      interval: 60
       #
       # "memory pressure" is deliberately OUTSIDE the kernel group.
       # The kernel does not use that phrasing -- every real hit is
@@ -167,6 +169,7 @@ let
     in_macos_eslogger:
       type: apple_unified_logs
       disabled: false
+      interval: 60
       predicate: 'process == "eslogger" AND subsystem == "com.apple.eslogger" AND category == "events"'
       sendToRoutes: false
       connections:
