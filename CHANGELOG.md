@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.18.2](https://github.com/dryvist/nix-darwin/compare/v4.18.1...v4.18.2) (2026-11-05)
+
+
+### Bug Fixes
+
+* **cribl:** poll the macOS unified-log inputs once a minute ([#3116](https://github.com/dryvist/nix-darwin/issues/3116)) ([a6cdb95](https://github.com/dryvist/nix-darwin/commit/a6cdb95d3521e938f17d9a1e10565669aaab9f40))
+
 ## [4.18.1](https://github.com/dryvist/nix-darwin/compare/v4.18.0...v4.18.1) (2026-11-05)
 
 
