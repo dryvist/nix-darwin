@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.19.1](https://github.com/dryvist/nix-darwin/compare/v4.19.0...v4.19.1) (2026-11-06)
+
+
+### Bug Fixes
+
+* **determinate:** pass the release tag to determinate-nixd upgrade ([#3130](https://github.com/dryvist/nix-darwin/issues/3130)) ([55c9e19](https://github.com/dryvist/nix-darwin/commit/55c9e199387dd2c03e5d4ddc4d83442a6a5d98db))
+
 ## [4.19.0](https://github.com/dryvist/nix-darwin/compare/v4.18.3...v4.19.0) (2026-11-06)
 
 
