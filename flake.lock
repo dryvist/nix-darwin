@@ -1351,6 +1351,38 @@
         "type": "github"
       }
     },
+    "homebrew-cask": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793369147,
+        "narHash": "sha256-5oLm5vbus75z5xs91H+JpaOoa9OxPea1XgpzETjI0nw=",
+        "owner": "Homebrew",
+        "repo": "homebrew-cask",
+        "rev": "125b317538fed0bb1afa4b304b5f51a79cda678a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Homebrew",
+        "repo": "homebrew-cask",
+        "type": "github"
+      }
+    },
+    "homebrew-core": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793368949,
+        "narHash": "sha256-Xa6V8MvFRhcz5T0gNidhDfGMnege/5pWDryF0L6m/WA=",
+        "owner": "Homebrew",
+        "repo": "homebrew-core",
+        "rev": "f64a546a6b2b5a75748e7c5f843f99ca25a2de1f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Homebrew",
+        "repo": "homebrew-core",
+        "type": "github"
+      }
+    },
     "homelab-contracts": {
       "flake": false,
       "locked": {
@@ -2461,6 +2493,8 @@
         "determinate": "determinate",
         "dotgithub": "dotgithub",
         "home-manager": "home-manager",
+        "homebrew-cask": "homebrew-cask",
+        "homebrew-core": "homebrew-core",
         "homelab-contracts": "homelab-contracts",
         "jacobpevans-cc-plugins": "jacobpevans-cc-plugins",
         "jpe-ai-voice": "jpe-ai-voice",

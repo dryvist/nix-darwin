@@ -142,6 +142,14 @@
       url = "github:anthropics/homebrew-tap";
       flake = false;
     };
+    homebrew-core = {
+      url = "github:Homebrew/homebrew-core";
+      flake = false;
+    };
+    homebrew-cask = {
+      url = "github:Homebrew/homebrew-cask";
+      flake = false;
+    };
 
   };
 
@@ -162,6 +170,8 @@
       nix-homebrew,
       anomalyco-tap,
       anthropics-tap,
+      homebrew-core,
+      homebrew-cask,
       dotgithub,
       ...
     }:
@@ -232,6 +242,8 @@
               nix-homebrew
               anomalyco-tap
               anthropics-tap
+              homebrew-core
+              homebrew-cask
               ;
           };
           modules = [
