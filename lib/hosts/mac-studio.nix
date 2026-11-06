@@ -30,6 +30,12 @@ in
     # only runtime posture. The OCR model unloads after 600 s idle.
     catalog.unlimited-ocr.tweaks.ttl = 600;
 
+    # The advisor is an on-demand swap model alongside the role-map residents.
+    models."mlx-community/gpt-oss-120b-MXFP4-Q8".ttl = 600;
+    modelConcurrencyLimits."mlx-community/gpt-oss-120b-MXFP4-Q8" = 1;
+    modelAdmissionLimits."mlx-community/gpt-oss-120b-MXFP4-Q8" = 1;
+    modelFlagOverrides."mlx-community/gpt-oss-120b-MXFP4-Q8".maxTokens = 8192;
+
     cacheMemoryMb = 8192;
     prefillBatchSize = 2048;
 

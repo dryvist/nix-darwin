@@ -112,11 +112,39 @@ let
       ) (lib.attrNames expectedWidths.${hostName})
   ) (lib.attrNames expectedWidths);
 
-  failures = lib.filter (m: m != "") (positive ++ negative ++ widthFailures ++ roleFailures);
+  studioModelId = "mlx-community/gpt-oss-120b-MXFP4-Q8";
+  studioConfigs = builtins.filter (
+    cfg: builtins.hasAttr studioModelId (primaryUser cfg).programs.mlx.models
+  ) (builtins.attrValues configs);
+  studioMlx =
+    if builtins.length studioConfigs == 1 then
+      (primaryUser (builtins.head studioConfigs)).programs.mlx
+    else
+      { };
+  studioFailures =
+    lib.optional (
+      builtins.length studioConfigs != 1
+    ) "the on-demand advisor must be configured on exactly one host"
+    ++ lib.optional (
+      (studioMlx.models.${studioModelId}.ttl or null) != 600
+    ) "the on-demand advisor must unload after its configured idle window"
+    ++ lib.optional (
+      (studioMlx.modelConcurrencyLimits.${studioModelId} or null) != 1
+    ) "the on-demand advisor worker must serve one request at a time"
+    ++ lib.optional (
+      (studioMlx.modelAdmissionLimits.${studioModelId} or null) != 1
+    ) "the on-demand advisor proxy must admit one request at a time"
+    ++ lib.optional (
+      (studioMlx.modelFlagOverrides.${studioModelId}.maxTokens or null) != 8192
+    ) "the on-demand advisor output limit must match its serving profile";
+
+  failures = lib.filter (m: m != "") (
+    positive ++ negative ++ widthFailures ++ roleFailures ++ studioFailures
+  );
 in
 assert
   failures == [ ] || throw "Role-map host check failed:\n${lib.concatStringsSep "\n" failures}";
 pkgs.runCommand "check-role-map-hosts" { } ''
-  echo "every declared role resolves on each host class; an empty model id fails the assertion"
+  echo "declared roles resolve and the on-demand advisor has single-request admission"
   touch $out
 ''
