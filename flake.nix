@@ -277,7 +277,8 @@
                   have=$(/usr/local/bin/determinate-nixd version 2>/dev/null | sed -n 's/^Determinate Nixd daemon version: //p')
                   if [ "$have" != "$want" ]; then
                     echo "determinate-nixd: $have -> $want"
-                    /usr/local/bin/determinate-nixd upgrade --version "$want" ||
+                    # The release bucket is keyed by tag (v3.24.0); a bare version 404s.
+                    /usr/local/bin/determinate-nixd upgrade --version "v$want" ||
                       echo "warning: determinate-nixd upgrade to $want failed" >&2
                   fi
                 '';
