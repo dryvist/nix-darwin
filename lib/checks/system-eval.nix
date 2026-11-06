@@ -11,4 +11,9 @@ let
     _: cfg: builtins.unsafeDiscardStringContext cfg.config.system.build.toplevel.drvPath
   ) configs;
 in
+assert configs != { };
+assert pkgs.lib.all (
+  cfg:
+  pkgs.lib.hasInfix "launchctl bootout system/org.nixos.darwin-auto-upgrade" cfg.config.system.activationScripts.postActivation.text
+) (builtins.attrValues configs);
 builtins.deepSeq drvPaths (pkgs.runCommand "check-system-eval" { } "touch $out")

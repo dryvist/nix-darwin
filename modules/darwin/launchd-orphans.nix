@@ -22,17 +22,33 @@ let
   home = userConfig.user.homeDir;
 in
 {
-  # postActivation + mkAfter: after nix-darwin's own launchd reconcile.
-  system.activationScripts.postActivation.text = lib.mkAfter ''
-    for plist in ${home}/Library/LaunchAgents/com.nix-darwin.*.plist; do
-      [ -f "$plist" ] || continue
-      name=$(basename "$plist")
-      if [ ! -e "${config.system.build.launchd}/user/Library/LaunchAgents/$name" ]; then
-        echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Removing orphaned user agent ''${name%.plist}"
-        /bin/launchctl bootout "gui/$(id -u ${user})/''${name%.plist}" 2>/dev/null || true
-        sudo --user=${user} -- rm -f "$plist" \
-          || echo "$(date '+%Y-%m-%d %H:%M:%S') [WARN] Could not remove $plist" >&2
+  # Removed in #1998; nix-darwin cannot clean plists absent from the previous generation.
+  # Run before the daemon bootstrap pass so it cannot reload the orphan.
+  system.activationScripts.postActivation.text = lib.mkMerge [
+    (lib.mkBefore ''
+      plist=/Library/LaunchDaemons/org.nixos.darwin-auto-upgrade.plist
+      if [ -e "$plist" ] || [ -L "$plist" ]; then
+        /bin/launchctl bootout system/org.nixos.darwin-auto-upgrade 2>/dev/null || true
+        if /bin/rm -f "$plist"; then
+          echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Removed orphaned auto-upgrade daemon"
+        else
+          echo "$(date '+%Y-%m-%d %H:%M:%S') [WARN] Could not remove orphaned auto-upgrade daemon" >&2
+        fi
       fi
-    done
-  '';
+    '')
+
+    # postActivation + mkAfter: after nix-darwin's own launchd reconcile.
+    (lib.mkAfter ''
+      for plist in ${home}/Library/LaunchAgents/com.nix-darwin.*.plist; do
+        [ -f "$plist" ] || continue
+        name=$(basename "$plist")
+        if [ ! -e "${config.system.build.launchd}/user/Library/LaunchAgents/$name" ]; then
+          echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Removing orphaned user agent ''${name%.plist}"
+          /bin/launchctl bootout "gui/$(id -u ${user})/''${name%.plist}" 2>/dev/null || true
+          sudo --user=${user} -- rm -f "$plist" \
+            || echo "$(date '+%Y-%m-%d %H:%M:%S') [WARN] Could not remove $plist" >&2
+        fi
+      done
+    '')
+  ];
 }
