@@ -15,6 +15,8 @@
   hostConfig,
   anomalyco-tap,
   anthropics-tap,
+  homebrew-core,
+  homebrew-cask,
   ...
 }:
 
@@ -28,7 +30,11 @@ in
 
   nix-homebrew = {
     enable = true;
-    taps = lib.optionalAttrs hostConfig.homebrew.enableWorkstationApps {
+    taps = {
+      "homebrew/homebrew-core" = homebrew-core;
+      "homebrew/homebrew-cask" = homebrew-cask;
+    }
+    // lib.optionalAttrs hostConfig.homebrew.enableWorkstationApps {
       "anomalyco/tap" = anomalyco-tap;
       "anthropics/tap" = anthropics-tap;
     };
@@ -38,8 +44,8 @@ in
     user = userConfig.user.name;
     # Adopt an existing manual install (macbook-m4) instead of failing.
     autoMigrate = true;
-    # Custom workstation taps are pinned flake inputs, so activation can keep
-    # the tap directory immutable.
+    # Every tap is a pinned flake input, so activation can keep the tap
+    # directory immutable.
     mutableTaps = false;
   };
 }

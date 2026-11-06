@@ -179,10 +179,10 @@ Source: `modules/darwin/homebrew.nix`
 
 ### Casks
 
-The weekly `brew-upgrade` LaunchAgent invokes `brew upgrade --greedy` every Thursday at 04:20 local time,
-logging to `~/Library/Logs/brew-upgrade.log`. `darwin-rebuild` does not upgrade Homebrew packages
-(`onActivation.upgrade = false`), and the agent does not upgrade Homebrew itself — the `brew` binary comes from the
-`brew-src` flake input via `nix-homebrew`, so its version advances when the flake lock is refreshed and the host rebuilds.
+Formulae and casks come from the `homebrew-core` and `homebrew-cask` flake inputs. Their revisions are advanced only
+by the soak updater after seven days; `darwin-rebuild` upgrades declared packages to those pinned revisions
+(`onActivation.upgrade = true`). The `brew` binary comes from the `brew-src` flake input via `nix-homebrew`, so its
+version advances when the flake lock is refreshed and the host rebuilds.
 Workstation Homebrew cleanup uses `check`: activation aborts and lists every
 installed cask or formula not declared in the Nix configuration; it removes nothing.
 
