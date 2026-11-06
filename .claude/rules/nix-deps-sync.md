@@ -11,23 +11,15 @@ Each dryvist input names a floating major tag: `github:dryvist/<repo>?ref=vN`.
 - Any repositories marked as private in GitHub are completely ignored
 - Private repos are not referenced in this rule or any sync processes
 
-## Enforcement
+## Who writes `flake.lock`
 
-### Pull requests (CI)
+- **Renovate** (`github>JacobPEvans/.github:renovate-nix`): one Saturday `lockFileMaintenance` PR that relocks
+  this repository's own inputs, plus tag bumps for inputs that name a release tag.
+- **`review-deps.yml`**: reviews lock-file diffs and enables auto-merge.
+- Shared roots in this repo's lock (`nixpkgs`, `nixpkgs-unstable`, `home-manager`, `darwin`) only feed CI. The
+  deployed hosts override them from the top-level flake's soaked pins, so a revision here never reaches a Mac.
 
-- **`deps-flake-lock.yml`** is the only writer of `flake.lock`. It opens its pull request on `chore/flake-lock`.
-- **Scheduled** (weekly): relocks every input except dryvist inputs.
-- **Release dispatch** (`update-flake-input`): relocks only the named dryvist input and classifies the bump
-  (patch, minor, major) from the release tags.
-- **Manual**: `gh workflow run deps-flake-lock.yml --repo dryvist/nix-darwin`.
-
-### Merge rules
-
-- **Dryvist patch bump**: auto-merges after the Merge Gate is green.
-- **Dryvist minor or major bump**: never auto-merges. A person merges it.
-- **`nixpkgs*` move**: never auto-merges. The pull request is labelled `needs-review`.
-
-### Manual (full rebuild)
+## Manual (full rebuild)
 
 ```bash
 /flake-rebuild
@@ -39,12 +31,12 @@ This command:
 3. Runs `nix flake update`
 4. Runs quality checks (fmt, statix, deadnix, flake check)
 5. Rebuilds system to validate all changes
-6. Creates a pull request. The merge rules above apply.
+6. Creates a pull request.
 
 ## Related Files
 
-- `.github/workflows/deps-flake-lock.yml` — Relock workflow: scheduled, release dispatch, and manual
-- `renovate.json5` — Renovate config. Renovate does not write `flake.lock`.
+- `renovate.json5` — Renovate config, including lock-file maintenance
+- `.github/workflows/review-deps.yml` — Lock-file diff review and auto-merge
 - `flake.nix` — Input declarations
-- `flake.lock` — Locked revisions (written only by `deps-flake-lock.yml`)
+- `flake.lock` — Locked revisions
 - `/flake-rebuild` command — Manual full update + rebuild trigger
