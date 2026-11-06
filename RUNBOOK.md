@@ -191,21 +191,21 @@ sudo darwin-rebuild switch --flake .
 ### Update Homebrew Packages
 
 **Important**: Homebrew formulae and casks are installed only from the flake-pinned
-`homebrew-core` and `homebrew-cask` taps. The soak updater advances those inputs
-only after the upstream revision is at least seven days old. Do not run `brew update`
+`homebrew-core` and `homebrew-cask` taps. Renovate lock-file maintenance advances
+those inputs. Do not run `brew update`
 or `brew upgrade`: `HOMEBREW_NO_INSTALL_FROM_API=1` prevents live API resolution.
 
 **How Homebrew packages stay current:**
 
 | Method | Trigger | What happens |
 | --- | --- | --- |
-| Soak updater | Approved flake-lock update | Advances the core and cask tap revisions only after the seven-day soak |
+| Renovate | Weekly lock-file maintenance PR | Advances the core and cask tap revisions |
 | darwin-rebuild | `sudo darwin-rebuild switch --flake .` | Upgrades declared packages to the already pinned tap revisions |
 
 **Our configuration** in `modules/darwin/homebrew.nix`:
 
 - `autoUpdate = false` keeps rebuilds from updating Homebrew's indexes.
-- `upgrade = true` applies the already soaked, pinned tap revisions during a rebuild.
+- `upgrade = true` applies the pinned tap revisions during a rebuild.
 - `HOMEBREW_NO_INSTALL_FROM_API=1` applies to activation and interactive shells.
 
 **Standard workflow** (recommended):
@@ -215,9 +215,8 @@ or `brew upgrade`: `HOMEBREW_NO_INSTALL_FROM_API=1` prevents live API resolution
 sudo darwin-rebuild switch --flake ~/.config/nix
 ```
 
-**Urgent exception**: do not bypass the soak with `brew update` or `brew upgrade`.
-Obtain an owner-approved update to the pinned tap inputs, then rebuild. Claude Code's
-`@latest` cask remains the documented owner-approved 0-day exception.
+**Urgent update**: do not use `brew update` or `brew upgrade`. Update the pinned tap
+inputs through a pull request, then rebuild.
 
 ### If Something Breaks After Update
 

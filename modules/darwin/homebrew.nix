@@ -1,5 +1,5 @@
 # Homebrew fallback for packages unavailable or unsuitable in nixpkgs.
-# Formulae and casks come from the soaked, flake-pinned core and cask taps.
+# Formulae and casks come from the flake-pinned core and cask taps.
 
 {
   lib,
@@ -135,7 +135,7 @@ in
       extraEnv.HOMEBREW_NO_INSTALL_FROM_API = "1";
       autoUpdate = false;
       inherit (homebrew) cleanup;
-      # Rebuild upgrades only to revisions pinned by the soaked core and cask taps.
+      # Rebuild upgrades only to revisions pinned by the core and cask taps.
       upgrade = true;
     };
     # AI-tool taps, formulae, and casks come from nix-ai through the injected

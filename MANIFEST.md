@@ -179,8 +179,8 @@ Source: `modules/darwin/homebrew.nix`
 
 ### Casks
 
-Formulae and casks come from the `homebrew-core` and `homebrew-cask` flake inputs. Their revisions are advanced only
-by the soak updater after seven days; `darwin-rebuild` upgrades declared packages to those pinned revisions
+Formulae and casks come from the `homebrew-core` and `homebrew-cask` flake inputs. Renovate lock-file maintenance
+advances their revisions; `darwin-rebuild` upgrades declared packages to those pinned revisions
 (`onActivation.upgrade = true`). The `brew` binary comes from the `brew-src` flake input via `nix-homebrew`, so its
 version advances when the flake lock is refreshed and the host rebuilds.
 Workstation Homebrew cleanup uses `check`: activation aborts and lists every

@@ -17,7 +17,7 @@ Each dryvist input names a floating major tag: `github:dryvist/<repo>?ref=vN`.
   this repository's own inputs, plus tag bumps for inputs that name a release tag.
 - **`review-deps.yml`**: reviews lock-file diffs and enables auto-merge.
 - Shared roots in this repo's lock (`nixpkgs`, `nixpkgs-unstable`, `home-manager`, `darwin`) only feed CI. The
-  deployed hosts override them from the top-level flake's soaked pins, so a revision here never reaches a Mac.
+  deployed hosts override them from the top-level flake's pins, so a revision here never reaches a Mac.
 
 ## Manual (full rebuild)
 
