@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.19.4](https://github.com/dryvist/nix-darwin/compare/v4.19.3...v4.19.4) (2026-11-06)
+
+
+### Bug Fixes
+
+* **homebrew:** declare pinned taps in the Brewfile ([#3140](https://github.com/dryvist/nix-darwin/issues/3140)) ([37a0396](https://github.com/dryvist/nix-darwin/commit/37a0396b3cc7684e93c3ce5d63a7f3e3a3eb0765))
+
 ## [4.19.3](https://github.com/dryvist/nix-darwin/compare/v4.19.2...v4.19.3) (2026-11-06)
 
 
