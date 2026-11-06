@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.19.5](https://github.com/dryvist/nix-darwin/compare/v4.19.4...v4.19.5) (2026-11-06)
+
+
+### Bug Fixes
+
+* **darwin:** remove the orphaned auto-upgrade daemon at activation ([#3144](https://github.com/dryvist/nix-darwin/issues/3144)) ([723f158](https://github.com/dryvist/nix-darwin/commit/723f1583fdb20095acee236a712d4cdaf4ebbcd8))
+
 ## [4.19.4](https://github.com/dryvist/nix-darwin/compare/v4.19.3...v4.19.4) (2026-11-06)
 
 
