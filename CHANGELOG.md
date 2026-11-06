@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.19.0](https://github.com/dryvist/nix-darwin/compare/v4.18.3...v4.19.0) (2026-11-06)
+
+
+### Features
+
+* **homebrew:** install from pinned core and cask taps ([#3124](https://github.com/dryvist/nix-darwin/issues/3124)) ([812f9c5](https://github.com/dryvist/nix-darwin/commit/812f9c5909dfda83821b059ad6e30d422964cbc4))
+
+
+### Bug Fixes
+
+* **flake:** share one nixpkgs-unstable root and pin the registry ([#3125](https://github.com/dryvist/nix-darwin/issues/3125)) ([e06f3ac](https://github.com/dryvist/nix-darwin/commit/e06f3ac1bbe250acf7f3749144b7b58c8932c221))
+
 ## [4.18.3](https://github.com/dryvist/nix-darwin/compare/v4.18.2...v4.18.3) (2026-11-06)
 
 
