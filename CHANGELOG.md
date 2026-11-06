@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.19.2](https://github.com/dryvist/nix-darwin/compare/v4.19.1...v4.19.2) (2026-11-06)
+
+
+### Bug Fixes
+
+* **homebrew:** require a pinned source for every tap ([#3132](https://github.com/dryvist/nix-darwin/issues/3132)) ([c687d9f](https://github.com/dryvist/nix-darwin/commit/c687d9ff606a442e62a15b2697e33b9b8d348910))
+
 ## [4.19.1](https://github.com/dryvist/nix-darwin/compare/v4.19.0...v4.19.1) (2026-11-06)
 
 
