@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.19.3](https://github.com/dryvist/nix-darwin/compare/v4.19.2...v4.19.3) (2026-11-06)
+
+
+### Bug Fixes
+
+* **homebrew:** list the pinned cask tap in the Brewfile ([#3137](https://github.com/dryvist/nix-darwin/issues/3137)) ([06e6926](https://github.com/dryvist/nix-darwin/commit/06e6926556ea790f39e85291b051f272c93582ab))
+
 ## [4.19.2](https://github.com/dryvist/nix-darwin/compare/v4.19.1...v4.19.2) (2026-11-06)
 
 
