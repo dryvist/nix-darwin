@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.18.3](https://github.com/dryvist/nix-darwin/compare/v4.18.2...v4.18.3) (2026-11-06)
+
+
+### Bug Fixes
+
+* **determinate:** converge the daemon to the locked release ([#3122](https://github.com/dryvist/nix-darwin/issues/3122)) ([dfbe6da](https://github.com/dryvist/nix-darwin/commit/dfbe6dad48ee4a148b2de4a0e6cdcc9ec918359a))
+
 ## [4.18.2](https://github.com/dryvist/nix-darwin/compare/v4.18.1...v4.18.2) (2026-11-05)
 
 

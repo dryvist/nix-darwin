@@ -190,23 +190,23 @@ sudo darwin-rebuild switch --flake .
 
 ### Update Homebrew Packages
 
-**Important**: Homebrew has NO native background auto-update mechanism. The "passive auto-update"
-is just a convenience feature that runs `brew update` if >5 minutes have passed when you invoke
-certain brew commands. There is no background daemon.
+**Important**: Homebrew formulae and casks are installed only from the flake-pinned
+`homebrew-core` and `homebrew-cask` taps. The soak updater advances those inputs
+only after the upstream revision is at least seven days old. Do not run `brew update`
+or `brew upgrade`: `HOMEBREW_NO_INSTALL_FROM_API=1` prevents live API resolution.
 
-**How homebrew packages stay current:**
+**How Homebrew packages stay current:**
 
-| Method | Trigger | What Happens |
+| Method | Trigger | What happens |
 | --- | --- | --- |
-| darwin-rebuild | `sudo darwin-rebuild switch --flake .` | Upgrades all packages (primary method) |
-| Manual update | `brew update && brew upgrade` | Immediate update when needed |
-| Passive auto-update | Running `brew install/upgrade/etc` | Index updated if >5 minutes stale |
+| Soak updater | Approved flake-lock update | Advances the core and cask tap revisions only after the seven-day soak |
+| darwin-rebuild | `sudo darwin-rebuild switch --flake .` | Upgrades declared packages to the already pinned tap revisions |
 
 **Our configuration** in `modules/darwin/homebrew.nix`:
 
-- `autoUpdate = false` → Keeps rebuilds fast (no 45MB index download on every rebuild)
-- `upgrade = true` → Packages upgraded to latest when darwin-rebuild runs
-- Passive auto-update is enabled (Homebrew's default behavior)
+- `autoUpdate = false` keeps rebuilds from updating Homebrew's indexes.
+- `upgrade = true` applies the already soaked, pinned tap revisions during a rebuild.
+- `HOMEBREW_NO_INSTALL_FROM_API=1` applies to activation and interactive shells.
 
 **Standard workflow** (recommended):
 
@@ -215,28 +215,9 @@ certain brew commands. There is no background daemon.
 sudo darwin-rebuild switch --flake ~/.config/nix
 ```
 
-**Emergency/immediate update** (when you need latest versions now):
-
-```bash
-# 1. Update Homebrew's package index
-brew update
-
-# 2. Upgrade all packages immediately
-brew upgrade
-
-# 3. Sync nix configuration (records the update)
-sudo darwin-rebuild switch --flake ~/.config/nix
-```
-
-**Why Renovate doesn't track homebrew packages:**
-
-Renovate cannot automatically update homebrew packages because:
-
-1. nix-darwin's `homebrew.brews/casks` contain only package names, not versions
-2. Homebrew lacks declarative version pinning within configuration files
-3. Renovate's homebrew manager only works with Ruby Formula files
-
-The `darwin-rebuild switch` workflow is the correct approach for keeping homebrew packages current.
+**Urgent exception**: do not bypass the soak with `brew update` or `brew upgrade`.
+Obtain an owner-approved update to the pinned tap inputs, then rebuild. Claude Code's
+`@latest` cask remains the documented owner-approved 0-day exception.
 
 ### If Something Breaks After Update
 

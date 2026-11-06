@@ -1,7 +1,8 @@
 # One owner per AI CLI, asserted on the platform that owns the risk.
 #
 # Claude Code and Codex are installed by Homebrew on darwin — declared in
-# nix-ai's lib/homebrew.nix and upgraded by the weekly `brew upgrade` agent.
+# nix-ai's lib/homebrew.nix and upgraded from the soaked, pinned Homebrew taps
+# during activation.
 # The nix-ai modules therefore set `package = null` on darwin, so Nix does not
 # build a second, shadowed copy. That dual-install is exactly what this
 # arrangement replaced: a cask won PATH while Nix built a binary that never ran.

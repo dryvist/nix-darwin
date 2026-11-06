@@ -8,6 +8,10 @@
     # channel branch reference itself has not changed.
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
 
+    # The one unstable pin for this tree. Every child that carries its own
+    # nixpkgs-unstable follows this, so the lock holds a single unstable node.
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+
     # Consolidated systems input for darwin-only configuration
     # All transitive dependencies should follow this to avoid duplicate systems entries
     systems.url = "github:nix-systems/default-darwin";
@@ -61,6 +65,7 @@
       url = "github:dryvist/nix-ai?ref=v8";
       inputs = {
         nixpkgs.follows = "nixpkgs";
+        nixpkgs-unstable.follows = "nixpkgs-unstable";
         home-manager.follows = "home-manager";
         ai-llm-prompts.follows = "ai-llm-prompts";
         claude-code-plugins.follows = "claude-code-plugins";
@@ -80,9 +85,8 @@
       url = "github:dryvist/nix-ai-open-harness?ref=v0";
       inputs = {
         # Its nix-ai-tools packages call nixpkgs-unstable functions absent
-        # from the stable release; share nix-home's unstable pin rather than
-        # adding another nixpkgs to the closure.
-        nixpkgs.follows = "nix-home/nixpkgs-unstable";
+        # from the stable release; share the unstable root.
+        nixpkgs.follows = "nixpkgs-unstable";
         home-manager.follows = "home-manager";
         # It grew its own nix-ai input; without this follow a relock drags a
         # second full nix-ai tree (~90 transitive inputs) into the lock.
@@ -93,8 +97,11 @@
     # Cross-platform home-manager modules (git, zsh, vscode, monitoring, shells)
     nix-home = {
       url = "github:dryvist/nix-home?ref=v1";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.home-manager.follows = "home-manager";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        nixpkgs-unstable.follows = "nixpkgs-unstable";
+        home-manager.follows = "home-manager";
+      };
     };
 
     nix-openwhispr = {
@@ -142,6 +149,14 @@
       url = "github:anthropics/homebrew-tap";
       flake = false;
     };
+    homebrew-core = {
+      url = "github:Homebrew/homebrew-core";
+      flake = false;
+    };
+    homebrew-cask = {
+      url = "github:Homebrew/homebrew-cask";
+      flake = false;
+    };
 
   };
 
@@ -162,6 +177,8 @@
       nix-homebrew,
       anomalyco-tap,
       anthropics-tap,
+      homebrew-core,
+      homebrew-cask,
       dotgithub,
       ...
     }:
@@ -232,6 +249,8 @@
               nix-homebrew
               anomalyco-tap
               anthropics-tap
+              homebrew-core
+              homebrew-cask
               ;
           };
           modules = [
@@ -246,6 +265,31 @@
 
             # Determinate Nix: official module for nix.conf, GC, and determinate-nixd config
             determinate.darwinModules.default
+
+            # The darwin module configures Determinate Nix but never installs it,
+            # so the daemon stays on whatever version was first installed. Converge
+            # it to the release the lock names; a failed upgrade warns, never aborts.
+            (
+              { pkgs, ... }:
+              {
+                system.activationScripts.postActivation.text = ''
+                  want=${determinate.packages.${pkgs.stdenv.hostPlatform.system}.default.version}
+                  have=$(/usr/local/bin/determinate-nixd version 2>/dev/null | sed -n 's/^Determinate Nixd daemon version: //p')
+                  if [ "$have" != "$want" ]; then
+                    echo "determinate-nixd: $have -> $want"
+                    /usr/local/bin/determinate-nixd upgrade --version "$want" ||
+                      echo "warning: determinate-nixd upgrade to $want failed" >&2
+                  fi
+                '';
+              }
+            )
+
+            # Ad-hoc `nix shell nixpkgs#x` and `<nixpkgs>` resolve to this
+            # flake's locked nixpkgs instead of the global registry's channel.
+            {
+              determinateNix.registry.nixpkgs.flake = nixpkgs;
+              environment.variables.NIX_PATH = "nixpkgs=${nixpkgs}";
+            }
 
             # Legacy SOPS bridge while remaining consumers move to OpenBao.
             sops-nix.darwinModules.sops

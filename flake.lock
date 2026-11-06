@@ -1351,6 +1351,38 @@
         "type": "github"
       }
     },
+    "homebrew-cask": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793369147,
+        "narHash": "sha256-5oLm5vbus75z5xs91H+JpaOoa9OxPea1XgpzETjI0nw=",
+        "owner": "Homebrew",
+        "repo": "homebrew-cask",
+        "rev": "125b317538fed0bb1afa4b304b5f51a79cda678a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Homebrew",
+        "repo": "homebrew-cask",
+        "type": "github"
+      }
+    },
+    "homebrew-core": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793368949,
+        "narHash": "sha256-Xa6V8MvFRhcz5T0gNidhDfGMnege/5pWDryF0L6m/WA=",
+        "owner": "Homebrew",
+        "repo": "homebrew-core",
+        "rev": "f64a546a6b2b5a75748e7c5f843f99ca25a2de1f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Homebrew",
+        "repo": "homebrew-core",
+        "type": "github"
+      }
+    },
     "homelab-contracts": {
       "flake": false,
       "locked": {
@@ -1724,7 +1756,9 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "nixpkgs-unstable": "nixpkgs-unstable_2",
+        "nixpkgs-unstable": [
+          "nixpkgs-unstable"
+        ],
         "ponytail": "ponytail",
         "token-meter-src": "token-meter-src",
         "vct-cribl-cli": "vct-cribl-cli",
@@ -1757,7 +1791,6 @@
         ],
         "nix-ai-tools": "nix-ai-tools",
         "nixpkgs": [
-          "nix-home",
           "nixpkgs-unstable"
         ]
       },
@@ -2015,7 +2048,9 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "nixpkgs-unstable": "nixpkgs-unstable_3",
+        "nixpkgs-unstable": [
+          "nixpkgs-unstable"
+        ],
         "orbstack-kubernetes": "orbstack-kubernetes",
         "tofu-github": "tofu-github_2"
       },
@@ -2245,27 +2280,11 @@
     },
     "nixpkgs-unstable_2": {
       "locked": {
-        "lastModified": 1792506237,
-        "narHash": "sha256-Q/8KLB6jNfpaUN1HAedE/u/Et9feE/zYSsutBLKrCFk=",
+        "lastModified": 1793225069,
+        "narHash": "sha256-sx1f99WGrDfJ83KKuQrqGPmot0rnDgmpLJDzpU2oHQQ=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "5adc50831c259f87faeb09ddf930d43597197473",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixpkgs-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs-unstable_3": {
-      "locked": {
-        "lastModified": 1792506237,
-        "narHash": "sha256-Q/8KLB6jNfpaUN1HAedE/u/Et9feE/zYSsutBLKrCFk=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "5adc50831c259f87faeb09ddf930d43597197473",
+        "rev": "e62746b0b472753ef019baceab6f1e2e52014980",
         "type": "github"
       },
       "original": {
@@ -2461,6 +2480,8 @@
         "determinate": "determinate",
         "dotgithub": "dotgithub",
         "home-manager": "home-manager",
+        "homebrew-cask": "homebrew-cask",
+        "homebrew-core": "homebrew-core",
         "homelab-contracts": "homelab-contracts",
         "jacobpevans-cc-plugins": "jacobpevans-cc-plugins",
         "jpe-ai-voice": "jpe-ai-voice",
@@ -2470,6 +2491,7 @@
         "nix-homebrew": "nix-homebrew",
         "nix-openwhispr": "nix-openwhispr",
         "nixpkgs": "nixpkgs_8",
+        "nixpkgs-unstable": "nixpkgs-unstable_2",
         "sops-nix": "sops-nix",
         "systems": "systems_5"
       }
