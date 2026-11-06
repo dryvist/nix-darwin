@@ -91,11 +91,8 @@ let
     }
 
     # --- Microsoft ---
-    # Teams desktop app.
-    {
-      name = "microsoft-teams";
-      greedy = true;
-    }
+    # Teams desktop app. Its .pkg upgrade needs root, so its own updater moves it.
+    "microsoft-teams"
     # Provides soffice for document conversion on Apple Silicon.
     {
       name = "libreoffice";
