@@ -69,6 +69,11 @@ in
     mutableTaps = false;
   };
 
+  # brew bundle cleanup aborts activation on any installed tap the Brewfile omits.
+  homebrew.taps = map (lib.replaceStrings [ "/homebrew-" ] [ "/" ]) (
+    builtins.attrNames config.nix-homebrew.taps
+  );
+
   # With immutable taps, a tap missing here is never installed and brew falls
   # back to a live clone, bypassing the lock. Fail the build instead.
   assertions = map (name: {
