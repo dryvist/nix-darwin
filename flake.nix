@@ -247,6 +247,24 @@
             # Determinate Nix: official module for nix.conf, GC, and determinate-nixd config
             determinate.darwinModules.default
 
+            # The darwin module configures Determinate Nix but never installs it,
+            # so the daemon stays on whatever version was first installed. Converge
+            # it to the release the lock names; a failed upgrade warns, never aborts.
+            (
+              { pkgs, ... }:
+              {
+                system.activationScripts.postActivation.text = ''
+                  want=${determinate.packages.${pkgs.stdenv.hostPlatform.system}.default.version}
+                  have=$(/usr/local/bin/determinate-nixd version 2>/dev/null | sed -n 's/^Determinate Nixd daemon version: //p')
+                  if [ "$have" != "$want" ]; then
+                    echo "determinate-nixd: $have -> $want"
+                    /usr/local/bin/determinate-nixd upgrade --version "$want" ||
+                      echo "warning: determinate-nixd upgrade to $want failed" >&2
+                  fi
+                '';
+              }
+            )
+
             # Legacy SOPS bridge while remaining consumers move to OpenBao.
             sops-nix.darwinModules.sops
 
