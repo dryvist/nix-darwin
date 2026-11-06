@@ -1,0 +1,232 @@
+--- a/src/app/main.rs
++++ b/src/app/main.rs
+@@ -279,19 +279,22 @@
+       let soc = Arc::new(sampler.get_soc_info().clone());
+       let shared: serve::SharedMetrics = Arc::new(RwLock::new(None));
+
++      let interval = args.interval.max(100);
++      // Allow two sampling intervals plus one second for scheduling delays.
++      let max_age = Duration::from_millis(u64::from(interval) * 2 + 1000);
+       let shared_http = Arc::clone(&shared);
+       let soc_http = Arc::clone(&soc);
+       let host = host.clone();
+       let port = *port;
+       thread::spawn(move || {
+-        if let Err(e) = serve::run(&host, port, shared_http, soc_http) {
++        if let Err(e) = serve::run(&host, port, shared_http, soc_http, max_age) {
+           eprintln!("server error: {e}");
+         }
+       });
+
+       loop {
+-        match sampler.get_metrics(args.interval.max(100)) {
+-          Ok(m) => *shared.write().unwrap() = Some(m),
++        match sampler.get_metrics(interval) {
++          Ok(m) => *shared.write().unwrap() = Some(serve::Sample::new(m)),
+           Err(e) => eprintln!("sampling error: {e}"),
+         }
+       }
+--- a/src/app/serve.rs
++++ b/src/app/serve.rs
+@@ -4,13 +4,36 @@
+ use std::net::{TcpListener, TcpStream};
+ use std::sync::{Arc, RwLock};
+ use std::thread;
++use std::time::{Duration, Instant};
+
+ use macmon::{Metrics, SocInfo};
+
+ use crate::metrics_to_json_value;
+
+-pub type SharedMetrics = Arc<RwLock<Option<Metrics>>>;
++pub struct Sample {
++  pub metrics: Metrics,
++  pub timestamp: chrono::DateTime<chrono::Utc>,
++  pub completed: Instant,
++}
+
++impl Sample {
++  pub fn new(metrics: Metrics) -> Self {
++    Self { metrics, timestamp: chrono::Utc::now(), completed: Instant::now() }
++  }
++
++  fn is_fresh(
++    &self,
++    now: Instant,
++    wall_now: chrono::DateTime<chrono::Utc>,
++    max_age: Duration,
++  ) -> bool {
++    now.saturating_duration_since(self.completed) <= max_age
++      && wall_now.signed_duration_since(self.timestamp).to_std().is_ok_and(|age| age <= max_age)
++  }
++}
++
++pub type SharedMetrics = Arc<RwLock<Option<Sample>>>;
++
+ fn escape_label_value(value: &str) -> String {
+   value.replace('\\', r"\\").replace('\n', r"\n").replace('"', r#"\""#)
+ }
+@@ -123,10 +146,10 @@
+   out
+ }
+
+-fn to_json(m: &Metrics, soc: &SocInfo) -> String {
++fn to_json(m: &Metrics, soc: &SocInfo, timestamp: chrono::DateTime<chrono::Utc>) -> String {
+   let mut doc = metrics_to_json_value(m).unwrap_or_default();
+   doc["soc"] = serde_json::to_value(soc).unwrap_or_default();
+-  doc["timestamp"] = serde_json::to_value(chrono::Utc::now().to_rfc3339()).unwrap_or_default();
++  doc["timestamp"] = serde_json::to_value(timestamp.to_rfc3339()).unwrap_or_default();
+   serde_json::to_string(&doc).unwrap_or_default()
+ }
+
+@@ -173,7 +196,7 @@
+     .replace('\'', "&apos;")
+ }
+
+-fn handle_conn(mut stream: TcpStream, shared: SharedMetrics, soc: Arc<SocInfo>) {
++fn handle_conn(mut stream: TcpStream, shared: SharedMetrics, soc: Arc<SocInfo>, max_age: Duration) {
+   let path = match read_path(&mut stream) {
+     Some(p) => p,
+     None => return,
+@@ -191,15 +214,21 @@
+     write_response(&mut stream, 503, "application/json", r#"{"error":"no data yet"}"#.to_string());
+     return;
+   };
++
++  if !m.is_fresh(Instant::now(), chrono::Utc::now(), max_age) {
++    drop(lock);
++    write_response(&mut stream, 503, "application/json", r#"{"error":"stale data"}"#.to_string());
++    return;
++  }
+
+   match path.as_str() {
+     "/json" => {
+-      let body = to_json(m, &soc);
++      let body = to_json(&m.metrics, &soc, m.timestamp);
+       drop(lock);
+       write_response(&mut stream, 200, "application/json", body);
+     }
+     "/metrics" => {
+-      let body = to_prometheus(m, &soc);
++      let body = to_prometheus(&m.metrics, &soc);
+       drop(lock);
+       write_response(&mut stream, 200, "text/plain; version=0.0.4; charset=utf-8", body);
+     }
+@@ -277,6 +306,7 @@
+   port: u16,
+   shared: SharedMetrics,
+   soc: Arc<SocInfo>,
++  max_age: Duration,
+ ) -> Result<(), Box<dyn std::error::Error>> {
+   let listener = TcpListener::bind((host, port))?;
+   eprintln!("macmon serving on http://{}", listener.local_addr()?);
+@@ -287,7 +317,7 @@
+     let Ok(stream) = stream else { continue };
+     let shared = Arc::clone(&shared);
+     let soc = Arc::clone(&soc);
+-    thread::spawn(move || handle_conn(stream, shared, soc));
++    thread::spawn(move || handle_conn(stream, shared, soc, max_age));
+   }
+
+   Ok(())
+@@ -297,7 +327,8 @@
+ mod tests {
+   use macmon::{CpuTierMetrics, Metrics, SocInfo};
+
+-  use super::{escape_label_value, escape_xml, serve_url, to_json, to_prometheus};
++  use super::{Sample, escape_label_value, escape_xml, serve_url, to_json, to_prometheus};
++  use std::time::{Duration, Instant};
+
+   #[test]
+   fn unavailable_temperature_has_no_prometheus_gauge() {
+@@ -372,10 +403,89 @@
+   #[test]
+   fn includes_usage_fields_in_json() {
+     let json: serde_json::Value =
+-      serde_json::from_str(&to_json(&Metrics::default(), &SocInfo::default())).unwrap();
++      serde_json::from_str(&to_json(&Metrics::default(), &SocInfo::default(), chrono::Utc::now()))
++        .unwrap();
+
+     for field in ["cpu_tiers", "cpu_usage_pct", "ecpu_usage", "pcpu_usage", "gpu_usage"] {
+       assert!(json.get(field).is_some(), "missing {field}");
+     }
++  }
++  #[test]
++  fn cache_freshness_and_sample_timestamp() {
++    let max_age = Duration::from_secs(3);
++    let now = Instant::now();
++    let mut cached: Option<Sample> = None;
++    assert!(cached.as_ref().filter(|s| s.is_fresh(now, chrono::Utc::now(), max_age)).is_none());
++
++    let mut sample = Sample::new(Metrics::default());
++    sample.completed = now;
++    let timestamp = sample.timestamp;
++    cached = Some(sample);
++    assert!(cached.as_ref().unwrap().is_fresh(now + max_age, timestamp, max_age));
++    assert!(!cached.as_ref().unwrap().is_fresh(
++      now + max_age + Duration::from_millis(1),
++      timestamp,
++      max_age
++    ));
++    let wall_slack = chrono::Duration::from_std(max_age).unwrap();
++    assert!(!cached.as_ref().unwrap().is_fresh(
++      now,
++      timestamp + wall_slack + chrono::Duration::milliseconds(1),
++      max_age
++    ));
++    assert!(!cached.as_ref().unwrap().is_fresh(
++      now,
++      timestamp - chrono::Duration::milliseconds(1),
++      max_age
++    ));
++    let json: serde_json::Value = serde_json::from_str(&to_json(
++      &cached.as_ref().unwrap().metrics,
++      &SocInfo::default(),
++      timestamp,
++    ))
++    .unwrap();
++    assert_eq!(json["timestamp"], timestamp.to_rfc3339());
++
++    cached = Some(Sample::new(Metrics::default()));
++    assert!(cached.as_ref().unwrap().is_fresh(Instant::now(), chrono::Utc::now(), max_age));
+   }
++
++  #[test]
++  fn http_rejects_missing_and_stale_samples_and_recovers() {
++    use std::io::{Read, Write};
++    use std::net::{TcpListener, TcpStream};
++    use std::sync::{Arc, RwLock};
++    use std::thread;
++
++    let shared = Arc::new(RwLock::new(None));
++    let max_age = Duration::from_secs(3);
++    let request = |path: &str| {
++      let listener = TcpListener::bind("127.0.0.1:0").unwrap();
++      let mut client = TcpStream::connect(listener.local_addr().unwrap()).unwrap();
++      let (server, _) = listener.accept().unwrap();
++      let cache = Arc::clone(&shared);
++      let handler = thread::spawn(move || {
++        super::handle_conn(server, cache, Arc::new(SocInfo::default()), max_age)
++      });
++      client.write_all(format!("GET {path}\r\n").as_bytes()).unwrap();
++      let mut response = String::new();
++      client.read_to_string(&mut response).unwrap();
++      handler.join().unwrap();
++      response
++    };
++    assert!(request("/json").starts_with("HTTP/1.1 503"));
++    let mut sample = Sample::new(Metrics::default());
++    sample.timestamp -= chrono::Duration::seconds(4); // Sleep advanced wall time, but not Instant.
++    *shared.write().unwrap() = Some(sample);
++    assert!(request("/json").starts_with("HTTP/1.1 503"));
++    assert!(request("/metrics").starts_with("HTTP/1.1 503"));
++    let sample = Sample::new(Metrics::default());
++    let timestamp = sample.timestamp.to_rfc3339();
++    *shared.write().unwrap() = Some(sample);
++    let response = request("/json");
++    assert!(response.starts_with("HTTP/1.1 200"));
++    assert!(response.contains(&timestamp));
++    assert!(request("/json").contains(&timestamp));
++    assert!(request("/metrics").starts_with("HTTP/1.1 200"));
++  }
+ }

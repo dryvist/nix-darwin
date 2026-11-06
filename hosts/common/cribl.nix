@@ -71,9 +71,8 @@ let
   thermalCommand = builtins.toJSON (
     builtins.readFile "${powerThermalPack}/default/exec/macos-thermal.cmd"
   );
-  macmonCommand = builtins.toJSON (
-    builtins.readFile "${powerThermalPack}/default/exec/macos-macmon.cmd"
-  );
+  # Reuse the host exporter sampler; the general pack supports standalone hosts.
+  macmonCommand = builtins.toJSON "/usr/bin/curl --disable --noproxy '*' --fail --silent --show-error --max-time 5 http://127.0.0.1:9090/json && /usr/bin/printf '\\n'";
   batteryCommand = builtins.toJSON (
     builtins.readFile "${powerThermalPack}/default/exec/macos-battery.cmd"
   );
@@ -298,7 +297,7 @@ in
               connections:
                 - pipeline: macos_thermal
                   output: cribl_stream
-            # macmon and battery exec, 60s; command text is read from the pinned power/thermal pack.
+            # macmon and battery exec, 60s.
             in_macos_macmon:
               type: exec
               disabled: false

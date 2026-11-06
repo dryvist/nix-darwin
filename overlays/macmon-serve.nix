@@ -4,12 +4,16 @@
 # still carries an older release without it. The homelab scrapes it for Mac
 # GPU busy %.
 #
-# REMOVE THIS OVERLAY when the pinned nixpkgs carries macmon >= 0.9.0.
+# The exporter and host Cribl input share a sample. Reject it after two sample
+# intervals plus one second of scheduling slack; JSON uses its completion time.
+# Check monotonic and wall time; sleep or a clock rollback expires samples.
+# A backward clock adjustment during sleep can mask elapsed wall time.
+# Keep until nixpkgs includes both serve and equivalent cache freshness behavior.
 
 final: prev:
 prev.lib.optionalAttrs prev.stdenv.isDarwin {
   macmon = prev.macmon.overrideAttrs (
-    finalAttrs: _: {
+    finalAttrs: previousAttrs: {
       # renovate: datasource=github-releases depName=vladkens/macmon
       version = "0.10.0";
       src = final.fetchFromGitHub {
@@ -22,6 +26,7 @@ prev.lib.optionalAttrs prev.stdenv.isDarwin {
         inherit (finalAttrs) src;
         hash = "sha256-hk3PCNLfUrOT+wT8ZLWd2KZWTYK7Kv8+2a1jBIO7Ti8=";
       };
+      patches = (previousAttrs.patches or [ ]) ++ [ ./macmon-cache-freshness.patch ];
       # The build sandbox cannot see launchd (pid 1), which this test samples.
       checkFlags = [ "--skip=procs::tests::samples_current_process" ];
     }
