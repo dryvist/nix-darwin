@@ -1756,7 +1756,9 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "nixpkgs-unstable": "nixpkgs-unstable_2",
+        "nixpkgs-unstable": [
+          "nixpkgs-unstable"
+        ],
         "ponytail": "ponytail",
         "token-meter-src": "token-meter-src",
         "vct-cribl-cli": "vct-cribl-cli",
@@ -1789,7 +1791,6 @@
         ],
         "nix-ai-tools": "nix-ai-tools",
         "nixpkgs": [
-          "nix-home",
           "nixpkgs-unstable"
         ]
       },
@@ -2047,7 +2048,9 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "nixpkgs-unstable": "nixpkgs-unstable_3",
+        "nixpkgs-unstable": [
+          "nixpkgs-unstable"
+        ],
         "orbstack-kubernetes": "orbstack-kubernetes",
         "tofu-github": "tofu-github_2"
       },
@@ -2277,27 +2280,11 @@
     },
     "nixpkgs-unstable_2": {
       "locked": {
-        "lastModified": 1792506237,
-        "narHash": "sha256-Q/8KLB6jNfpaUN1HAedE/u/Et9feE/zYSsutBLKrCFk=",
+        "lastModified": 1793225069,
+        "narHash": "sha256-sx1f99WGrDfJ83KKuQrqGPmot0rnDgmpLJDzpU2oHQQ=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "5adc50831c259f87faeb09ddf930d43597197473",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixpkgs-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs-unstable_3": {
-      "locked": {
-        "lastModified": 1792506237,
-        "narHash": "sha256-Q/8KLB6jNfpaUN1HAedE/u/Et9feE/zYSsutBLKrCFk=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "5adc50831c259f87faeb09ddf930d43597197473",
+        "rev": "e62746b0b472753ef019baceab6f1e2e52014980",
         "type": "github"
       },
       "original": {
@@ -2504,6 +2491,7 @@
         "nix-homebrew": "nix-homebrew",
         "nix-openwhispr": "nix-openwhispr",
         "nixpkgs": "nixpkgs_8",
+        "nixpkgs-unstable": "nixpkgs-unstable_2",
         "sops-nix": "sops-nix",
         "systems": "systems_5"
       }
