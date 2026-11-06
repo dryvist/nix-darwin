@@ -140,7 +140,8 @@ in
     };
     # AI-tool taps, formulae, and casks come from nix-ai through the injected
     # profile. Non-AI workstation packages remain local to nix-darwin.
-    inherit (aiHomebrew) taps;
+    # The pinned cask tap is listed so `brew bundle cleanup` keeps it; core is implicit.
+    taps = [ "homebrew/cask" ] ++ aiHomebrew.taps;
     brews =
       baseBrews ++ aiHomebrew.brews ++ lib.optionals homebrew.enableWorkstationApps workstationBrews;
     casks = aiHomebrew.casks ++ lib.optionals homebrew.enableWorkstationApps workstationCasks;
