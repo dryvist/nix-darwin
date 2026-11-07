@@ -9,9 +9,9 @@
 
 {
   cc-edge-codex-io = pkgs.fetchzip {
-    url = "https://github.com/jpe-cribl/cc-edge-codex-io/releases/download/v0.1.4/cc-edge-codex-io-v0.1.1.crbl";
+    url = "https://github.com/jpe-cribl/cc-edge-codex-io/releases/download/v0.1.4/cc-edge-codex-io-v0.1.4.crbl";
     extension = "tar.gz";
-    hash = "sha256-EgPHvubxZ+ey1alAtPXIueInzMpMB5gdt8E8aGkUlF0=";
+    hash = "sha256-6ntZGqRNdKLRxXq/zJc0s3kG7NGV/DLp8ga+oIyv0Sk=";
     stripRoot = false;
   };
   cc-edge-gemini-antigravity-io = pkgs.fetchzip {
