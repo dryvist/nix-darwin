@@ -1311,17 +1311,17 @@
     "herdr-remote-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1792779701,
-        "narHash": "sha256-ZDlc/pmZ1N+aBHzRy9RNNcbdNgJALSzDbHXN1/xM+wA=",
+        "lastModified": 1793645165,
+        "narHash": "sha256-tXkN15Y2wQUA9DXR6OeWorYZh67BkG3efiotWjfD908=",
         "owner": "dcolinmorgan",
         "repo": "herdr-remote",
-        "rev": "041e53ccc44f0a7cd4d022ef8296b79904237dc9",
+        "rev": "051f6e6d7b9ca22d0fc05f125a486546b907659c",
         "type": "github"
       },
       "original": {
         "owner": "dcolinmorgan",
         "repo": "herdr-remote",
-        "rev": "041e53ccc44f0a7cd4d022ef8296b79904237dc9",
+        "rev": "051f6e6d7b9ca22d0fc05f125a486546b907659c",
         "type": "github"
       }
     },
@@ -1781,11 +1781,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1794023272,
-        "narHash": "sha256-OTi/od3nQ19aqsVJ/Ncpu0d595Jgex8n6xpH+RqPVPs=",
+        "lastModified": 1794095049,
+        "narHash": "sha256-j46toQELkWsN8Ixtj4dHsgPJ0v9B0u/Pp2L+Kwj2owU=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "39628b5b7566754b1b19ff9c935ce73fa335f79a",
+        "rev": "f75b7dac6188a86a6b74e16a1c3fe7bfc145aa66",
         "type": "github"
       },
       "original": {
