@@ -22,6 +22,7 @@ in
     bitwarden = "The nixpkgs package has an insecure Electron dependency";
     orbstack = "The in-place app preserves macOS privacy grants";
     postman = "The selected vendor app avoids updater schema mismatches";
+    raycast = "The selected vendor app avoids updater schema mismatches";
     ghostty = "The nixpkgs package is unavailable on aarch64-darwin";
     libreoffice = "The nixpkgs package is unavailable on aarch64-darwin";
     neat = "The nixpkgs package is a different application";

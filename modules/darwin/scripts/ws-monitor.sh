@@ -161,6 +161,8 @@ capture_stall() {
     if [ -r "$spindump_file" ]; then
       {
         /usr/bin/head -n 80 "$spindump_file"
+        # Spindump orders processes by name, so the cap below can drop WindowServer.
+        /usr/bin/awk '/^Process:/ { keep = ($2 == "WindowServer") } keep' "$spindump_file" | /usr/bin/head -n 400
         /usr/bin/grep -E '^Process:|blocked by' "$spindump_file" | /usr/bin/head -n 600
       } > "$summary_file" || true
     fi
