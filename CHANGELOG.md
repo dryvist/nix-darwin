@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.19.6](https://github.com/dryvist/nix-darwin/compare/v4.19.5...v4.19.6) (2026-11-07)
+
+
+### Bug Fixes
+
+* **homebrew:** stop greedy upgrades of the Teams cask ([#3146](https://github.com/dryvist/nix-darwin/issues/3146)) ([29bc3fe](https://github.com/dryvist/nix-darwin/commit/29bc3fe8a2a4589e3e1952e59342e1ca86c16965))
+
 ## [4.19.5](https://github.com/dryvist/nix-darwin/compare/v4.19.4...v4.19.5) (2026-11-06)
 
 
