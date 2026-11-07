@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.19.9](https://github.com/dryvist/nix-darwin/compare/v4.19.8...v4.19.9) (2026-11-07)
+
+
+### Bug Fixes
+
+* **homebrew:** move raycast to greedy workstation cask ([#3161](https://github.com/dryvist/nix-darwin/issues/3161)) ([38cbc28](https://github.com/dryvist/nix-darwin/commit/38cbc2892be87d6d8388fae95c155958bb78a81f))
+
 ## [4.19.8](https://github.com/dryvist/nix-darwin/compare/v4.19.7...v4.19.8) (2026-11-07)
 
 
