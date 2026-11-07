@@ -9,7 +9,7 @@
 
 {
   cc-edge-codex-io = pkgs.fetchzip {
-    url = "https://github.com/jpe-cribl/cc-edge-codex-io/releases/download/v0.1.1/cc-edge-codex-io-v0.1.1.crbl";
+    url = "https://github.com/jpe-cribl/cc-edge-codex-io/releases/download/v0.1.4/cc-edge-codex-io-v0.1.1.crbl";
     extension = "tar.gz";
     hash = "sha256-EgPHvubxZ+ey1alAtPXIueInzMpMB5gdt8E8aGkUlF0=";
     stripRoot = false;
