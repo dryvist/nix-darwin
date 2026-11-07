@@ -148,7 +148,6 @@ Workstation GUI apps are Homebrew casks and Mac App Store apps under
 | ghostty-bin | Terminal emulator |
 | obsidian | Knowledge base / note-taking (app bundle; the `obsidian` command is the socket CLI) |
 | rapidapi | Full-featured HTTP client |
-| raycast | Productivity launcher |
 | swiftbar | Menu bar customization |
 
 Note: OrbStack installed via Homebrew cask (`greedy = true`) in `modules/darwin/homebrew.nix` for TCC permission stability.
@@ -188,6 +187,7 @@ installed cask or formula not declared in the Nix configuration; it removes noth
 
 | Package | greedy | Description |
 | --- | --- | --- |
+| raycast | yes | Productivity launcher (moved from nixpkgs — updater schema mismatch) |
 | slack | yes | Team chat desktop app |
 | ghostty | yes | Terminal emulator — stable bundle for TCC permissions |
 | bitwarden | yes | Password manager desktop app (moved from nixpkgs — EOL electron_39) |
