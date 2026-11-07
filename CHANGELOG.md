@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.19.7](https://github.com/dryvist/nix-darwin/compare/v4.19.6...v4.19.7) (2026-11-07)
+
+
+### Bug Fixes
+
+* **ci:** run the AI merge gate on the review runner ([#3157](https://github.com/dryvist/nix-darwin/issues/3157)) ([25551da](https://github.com/dryvist/nix-darwin/commit/25551da503a8300448987305891103200d4232e6))
+
 ## [4.19.6](https://github.com/dryvist/nix-darwin/compare/v4.19.5...v4.19.6) (2026-11-07)
 
 
