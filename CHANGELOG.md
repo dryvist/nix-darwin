@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.19.8](https://github.com/dryvist/nix-darwin/compare/v4.19.7...v4.19.8) (2026-11-07)
+
+
+### Bug Fixes
+
+* **ws-monitor:** ship WindowServer stacks and enable tailspin ([#3159](https://github.com/dryvist/nix-darwin/issues/3159)) ([99b812e](https://github.com/dryvist/nix-darwin/commit/99b812ee095788caedd39f8d01787c4e5eccdf91))
+
 ## [4.19.7](https://github.com/dryvist/nix-darwin/compare/v4.19.6...v4.19.7) (2026-11-07)
 
 
