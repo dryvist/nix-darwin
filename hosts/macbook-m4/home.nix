@@ -117,7 +117,6 @@
         ln -s ${obsidian}/Applications/Obsidian.app/Contents/MacOS/obsidian-cli $out/bin/obsidian
       ''
     )
-    raycast # Productivity launcher
     swiftbar # Menu bar customization
 
     # Browsers
