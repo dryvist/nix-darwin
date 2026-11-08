@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.20.0](https://github.com/dryvist/nix-darwin/compare/v4.19.9...v4.20.0) (2026-11-08)
+
+
+### Features
+
+* **macbook-m4:** start the session archive on Claude Code session end ([#3165](https://github.com/dryvist/nix-darwin/issues/3165)) ([ff43ebe](https://github.com/dryvist/nix-darwin/commit/ff43ebec4eef897585adaeb574e70b97a0c12eb1))
+
 ## [4.19.9](https://github.com/dryvist/nix-darwin/compare/v4.19.8...v4.19.9) (2026-11-07)
 
 
