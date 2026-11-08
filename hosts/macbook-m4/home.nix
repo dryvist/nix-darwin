@@ -44,16 +44,17 @@
       mimoCode.enable = false;
     };
 
-    # Daily push of AI session history to the per-vendor object buckets
-    # (nix-ai module) — the durable off-Mac copy. Runs as a launchd
-    # agent on purpose: agents carry no GUI responsible app, so macOS Local
-    # Network gating never applies to them, where the same push from a
-    # terminal-descended shell breaks whenever en0 wakes up on the storage
-    # subnet (probe-verified). Credentials are the ai-sessions-backup AppRole,
-    # injected per run; nothing is stored on this machine.
+    # Push of AI session history to the per-vendor object buckets (nix-ai
+    # module) — the durable off-Mac copy. A Claude Code session end starts it,
+    # at most once per interval. The hook runs under the terminal app, so
+    # macOS Local Network permission applies; a failed run is reported by the
+    # session-start archive check and the next session end after the interval
+    # retries. Credentials are the ai-sessions-backup AppRole, injected per
+    # run; nothing is stored on this machine.
     sessionArchive = {
       enable = true;
       endpoint = "https://s3.${userConfig.internalDomain}";
+      trigger = "session-end";
     };
 
   };
