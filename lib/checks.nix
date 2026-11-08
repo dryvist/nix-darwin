@@ -117,6 +117,7 @@ in
       ''
         cd ${src}
         for f in \
+          test_alf_allow_apps.bats \
           test_bats_framework.bats \
           test_check_ci_invariants.bats \
           test_check_file_sizes.bats \
