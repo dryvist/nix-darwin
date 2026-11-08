@@ -43,6 +43,7 @@ let
   };
   alfAllowPkg = pkgs.writeShellApplication {
     name = "cluster-alf-allow";
+    runtimeInputs = [ (import ./scripts/alf-allow-apps.nix { inherit pkgs; }) ];
     text = builtins.readFile ./scripts/cluster-alf-allow.sh;
   };
 in

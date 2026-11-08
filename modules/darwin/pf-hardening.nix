@@ -21,6 +21,7 @@
 let
   cfg = config.security.pf;
   allowedApps = config.networking.applicationFirewall.allowedApps;
+  alfAllowApps = import ./scripts/alf-allow-apps.nix { inherit pkgs; };
   anchorPath = "/etc/pf.anchors/nix-hardening";
 
   anchorText = ''
@@ -141,8 +142,10 @@ in
     default = [ ];
     description = ''
       Nix store executable paths to add to the application firewall and
-      unblock during activation. Consumers must supply stable executable
-      paths; the list is empty by default.
+      unblock during activation. Activation first removes other Nix store
+      entries with the same executable name (scripts/alf-allow-apps.sh).
+      Consumers must supply stable executable paths; the list is empty by
+      default.
     '';
   };
 
@@ -163,10 +166,9 @@ in
       ''
         ${lib.getExe loadAnchor}
       ''
-      + lib.concatMapStrings (path: ''
-        /usr/libexec/ApplicationFirewall/socketfilterfw --add ${lib.escapeShellArg path}
-        /usr/libexec/ApplicationFirewall/socketfilterfw --unblockapp ${lib.escapeShellArg path}
-      '') allowedApps
+      + lib.optionalString (allowedApps != [ ]) ''
+        ${lib.getExe alfAllowApps} ${lib.escapeShellArgs allowedApps} || echo "alf-allow-apps: non-fatal failure (see log above)"
+      ''
     );
   };
 }
