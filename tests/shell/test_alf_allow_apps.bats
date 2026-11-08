@@ -54,6 +54,31 @@ EOF
   [ "$(grep -c -- '--add' "$ALF_CALL_LOG")" -eq 3 ]
 }
 
+@test "a path outside the store removes nothing" {
+  run bash "$SCRIPT_UNDER_TEST" "$BATS_TEST_TMPDIR/uv/bin/caddy"
+
+  [ "$status" -eq 0 ]
+  ! grep -q -- '--remove' "$ALF_CALL_LOG"
+  grep -Fqx -- "--add $BATS_TEST_TMPDIR/uv/bin/caddy" "$ALF_CALL_LOG"
+}
+
+@test "cluster-alf-allow passes every uv interpreter to alf-allow-apps" {
+  mkdir -p "$BATS_TEST_TMPDIR/home/.local/share/uv/python/cpython-3.14-macos/bin"
+  for name in python3 python3.14; do
+    : >"$BATS_TEST_TMPDIR/home/.local/share/uv/python/cpython-3.14-macos/bin/$name"
+    chmod +x "$BATS_TEST_TMPDIR/home/.local/share/uv/python/cpython-3.14-macos/bin/$name"
+  done
+  printf '#!%s\nprintf "%%s\\n" "$@" >>"$ALF_CALL_LOG"\n' "$BASH" >"$BATS_TEST_TMPDIR/alf-allow-apps"
+  chmod +x "$BATS_TEST_TMPDIR/alf-allow-apps"
+
+  export CLUSTER_USER_HOME="$BATS_TEST_TMPDIR/home" ALF_ALLOW_APPS="$BATS_TEST_TMPDIR/alf-allow-apps"
+  run bash "$BATS_TEST_DIRNAME/../../modules/darwin/scripts/cluster-alf-allow.sh"
+
+  [ "$status" -eq 0 ]
+  [ "$(wc -l <"$ALF_CALL_LOG")" -eq 2 ]
+  grep -q '/bin/python3.14$' "$ALF_CALL_LOG"
+}
+
 @test "a failing firewall call does not stop the remaining apps" {
   printf '#!%s\nprintf "%%s\\n" "$*" >>"$ALF_CALL_LOG"\nexit 1\n' "$BASH" >"$ALF_SOCKETFILTERFW"
 

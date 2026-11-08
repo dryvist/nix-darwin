@@ -21,10 +21,7 @@
 let
   cfg = config.security.pf;
   allowedApps = config.networking.applicationFirewall.allowedApps;
-  alfAllowApps = pkgs.writeShellApplication {
-    name = "alf-allow-apps";
-    text = builtins.readFile ./scripts/alf-allow-apps.sh;
-  };
+  alfAllowApps = import ./scripts/alf-allow-apps.nix { inherit pkgs; };
   anchorPath = "/etc/pf.anchors/nix-hardening";
 
   anchorText = ''

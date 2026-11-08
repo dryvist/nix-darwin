@@ -3,15 +3,16 @@
 # The firewall keys an ad-hoc-signed binary by its signing identifier, which for
 # a linker-signed Nix build is the executable name. After a version bump the old
 # entry keeps that identifier while its store path is usually garbage-collected,
-# and `--add` of the new path does not replace it. So remove every Nix store
-# entry with the same executable name that is not one of the allowed paths, then
-# add and unblock the allowed paths. Every call is idempotent, so running this on
-# each activation is safe.
+# and `--add` of the new path does not replace it. So for each allowed Nix store
+# path, remove every other Nix store entry with the same executable name, then add
+# and unblock all allowed paths. Paths outside the store (uv CPython) are only
+# added and unblocked. Every call is idempotent, so running this on each
+# activation is safe.
 SFW=${ALF_SOCKETFILTERFW:-/usr/libexec/ApplicationFirewall/socketfilterfw}
 declare -A allowed=() names=()
 for app in "$@"; do
   allowed[$app]=1
-  names[${app##*/}]=1
+  if [[ $app == /nix/store/* ]]; then names[${app##*/}]=1; fi
 done
 while IFS= read -r line; do
   [[ $line =~ ^[0-9]+[[:space:]]*:[[:space:]]*(/nix/store/[^[:space:]]+) ]] || continue
