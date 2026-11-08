@@ -51,6 +51,13 @@ in
   security.sshCaPublicKey = "/etc/ssh/trusted-user-ca-keys.pem";
   security.sshCaPrincipals.${hostAdminUser} = [ "ai-agent" ];
 
+  # The Studio runs the hardening anchor enforcing (loaded as
+  # com.apple/nix-hardening, which the stock /etc/pf.conf evaluates), so its
+  # default-deny actually filters inbound traffic; the pf-anchor-syntax flake
+  # check below pins the enforced Studio anchor's service passes. Without
+  # this the anchor renders but nothing evaluates it.
+  security.pf.enforce = true;
+
   # Inbound services admitted through the pf anchor (pf-hardening.nix) before
   # its default-deny. Sources mirror the single broad RFC1918 default of
   # security.pf.allowedSshSources; the flake's pf-anchor-syntax check pins

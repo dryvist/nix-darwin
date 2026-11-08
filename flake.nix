@@ -490,7 +490,7 @@
                 grepCmd = "${darwinPkgs.gnugrep}/bin/grep";
                 orderChecks = builtins.concatStringsSep "\n" (
                   builtins.map (port: ''
-                    passLine=$(${grepCmd} -n 'pass in quick proto tcp from { 10.0.0.0/8 } to any port ${port} no state' ${studioAnchor}) || {
+                    passLine=$(${grepCmd} -n 'pass in quick proto tcp from { 10.0.0.0/8 } to any port ${port} keep state' ${studioAnchor}) || {
                       echo "rendered anchor does not pass ${port} from 10.0.0.0/8" >&2
                       exit 1
                     }
@@ -502,6 +502,7 @@
                   '') servingPorts
                 );
               in
+              assert studio.config.security.pf.enforce || throw "mac-studio must set security.pf.enforce = true: this check pins the enforced Studio anchor";
               darwinPkgs.runCommand "check-pf-anchor-syntax" { } ''
                 /sbin/pfctl -n -f ${darwinPkgs.writeText "nix-hardening-anchor.conf" (
                   anchorTextOf configs.${primaryHost.hostName}

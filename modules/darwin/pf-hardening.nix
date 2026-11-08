@@ -49,15 +49,16 @@ let
     pass in quick proto udp from any port 67 to any port 68
     pass in quick inet6 proto ipv6-icmp all icmp6-type { routeradv, neighbrsol, neighbradv } no state
     pass in quick proto udp from any to { 224.0.0.251, ff02::fb } port 5353
-    # Service passes are stateless (`no state`), like the exemptions above:
-    # `flags S/SA keep state` matches only a TCP SYN, so every packet of a
-    # flow established before enforcement began — a Prometheus keep-alive
-    # scrape, a streaming LLM client — falls through to the default-deny
-    # below and the flow is black-holed mid-stream. A stateless pass admits
-    # each packet of the service's flows on its own merits.
+    # Service passes are stateful but do NOT pin `flags S/SA`: the flags form
+    # creates state only from a TCP SYN, so packets of a flow already in
+    # flight when enforcement began — a reused Prometheus keep-alive
+    # connection, a streaming LLM client — match the rule yet create no
+    # state and fall through to the default-deny below, black-holing the
+    # flow mid-stream. Plain `keep state` creates state from any admitted
+    # packet, so those flows establish on their next segment.
     ${lib.concatMapStrings (
       service:
-      "pass in quick proto tcp from { ${lib.concatStringsSep ", " service.sources} } to any port ${toString service.port} no state\n"
+      "pass in quick proto tcp from { ${lib.concatStringsSep ", " service.sources} } to any port ${toString service.port} keep state\n"
     ) cfg.allowedTcpServices}
     block in all
     pass out all keep state
