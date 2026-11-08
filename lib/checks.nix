@@ -117,6 +117,7 @@ in
       ''
         cd ${src}
         for f in \
+          test_alf_allow_apps.bats \
           test_bats_framework.bats \
           test_check_ci_invariants.bats \
           test_check_file_sizes.bats \
@@ -127,6 +128,7 @@ in
           test_dock_apps_present.bats \
           test_hm_collision_clear.bats \
           test_openbao_run.bats \
+          test_pf_hardening_load.bats \
           test_system_limits.bats \
           test_validate_nix_before_all.bats \
           test_verify_symlinks.bats; do

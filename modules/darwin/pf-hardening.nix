@@ -6,6 +6,7 @@
 # daemon: default-deny inbound except established connections, ICMP echo,
 # SSH from an allow-listed CIDR set, and traffic on explicitly exempted
 # interfaces (loopback, plus anything named in security.pf.exemptInterfaces).
+# The anchor filters traffic only when security.pf.enforce is true.
 #
 # flake.nix's aarch64-darwin checks build environment.etc."pf.anchors/
 # nix-hardening".text straight from the real host config and run
@@ -21,6 +22,7 @@
 let
   cfg = config.security.pf;
   allowedApps = config.networking.applicationFirewall.allowedApps;
+  alfAllowApps = import ./scripts/alf-allow-apps.nix { inherit pkgs; };
   anchorPath = "/etc/pf.anchors/nix-hardening";
 
   anchorText = ''
@@ -32,12 +34,18 @@ let
     # rules instead, evaluated before the default-deny below. Estate rule:
     # cluster rendezvous traffic (exemptNetworks) must NEVER be touched by
     # this anchor — zero human/AI steps in cluster standup means this pf
-    # anchor is not allowed to be one of them.
-    ${lib.concatMapStrings (iface: "pass quick on ${iface} all\n") cfg.exemptInterfaces}
+    # anchor is not allowed to be one of them. Exemptions are stateless
+    # (`no state`): a stateful pass only matches a TCP SYN, so a connection
+    # opened before enforcement began would fall through to the block.
+    ${lib.concatMapStrings (iface: "pass quick on ${iface} all no state\n") cfg.exemptInterfaces}
     ${lib.concatMapStrings (
-      net:
-      "pass in quick from ${net} to ${net} keep state\npass out quick from ${net} to ${net} keep state\n"
+      net: "pass in quick from ${net} to ${net} no state\npass out quick from ${net} to ${net} no state\n"
     ) cfg.exemptNetworks}
+    # DHCP replies (a boot-time lease request is broadcast, so no state
+    # matches its reply), IPv6 router and neighbor discovery, and mDNS.
+    pass in quick proto udp from any port 67 to any port 68
+    pass in quick inet6 proto ipv6-icmp all icmp6-type { routeradv, neighbrsol, neighbradv } no state
+    pass in quick proto udp from any to { 224.0.0.251, ff02::fb } port 5353
     ${lib.concatMapStrings (
       service:
       "pass in quick proto tcp from { ${lib.concatStringsSep ", " service.sources} } to any port ${toString service.port} flags S/SA keep state\n"
@@ -48,23 +56,41 @@ let
     pass in quick inet proto icmp icmp-type echoreq keep state
   '';
 
+  # The stock /etc/pf.conf evaluates every com.apple/* anchor, so only the
+  # enforced name filters traffic; the other name is flushed on each load.
+  enforcedAnchor = "com.apple/nix-hardening";
+  inertAnchor = "nix-hardening";
+
+  # writeShellApplication sets -euo pipefail: a failed load aborts and launchd
+  # records a non-zero exit instead of silently leaving pf unloaded.
   loadAnchor = pkgs.writeShellApplication {
     name = "pf-hardening-load";
+    # tee comes from coreutils whatever PATH launchd or activation provides.
+    runtimeInputs = [ pkgs.coreutils ];
     text = ''
-      # writeShellApplication already sets -euo pipefail: a failure below
-      # (bad anchor syntax, pfctl missing) aborts and launchd records a
-      # non-zero exit instead of silently leaving pf unloaded.
-      if ! /sbin/pfctl -a nix-hardening -f ${anchorPath} 2>&1 | /usr/bin/tee >(/usr/bin/logger -t pf-hardening); then
-        /usr/bin/logger -t pf-hardening "FAILED to load ${anchorPath} - pf anchor NOT active"
-        exit 1
-      fi
-      /sbin/pfctl -e 2>&1 | /usr/bin/logger -t pf-hardening || true
-      /usr/bin/logger -t pf-hardening "anchor nix-hardening loaded and pf enabled"
-    '';
+      export PF_ANCHOR=${if cfg.enforce then enforcedAnchor else inertAnchor}
+      export PF_OTHER_ANCHOR=${if cfg.enforce then inertAnchor else enforcedAnchor}
+      export PF_ANCHOR_FILE=${anchorPath}
+    ''
+    + builtins.readFile ./scripts/pf-hardening-load.sh;
   };
 in
 {
   options.security.pf = {
+    enforce = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        Make the anchor filter inbound traffic. When true, activation loads it
+        as `com.apple/nix-hardening`, which the stock `/etc/pf.conf` evaluates
+        through `anchor "com.apple/*"`, so its default-deny drops every
+        inbound connection that no rule here allows. When false (the
+        default), it loads as `nix-hardening`, which nothing evaluates.
+        Activation flushes the other name, so turning this off and
+        re-activating removes enforcement.
+      '';
+    };
+
     allowedTcpServices = lib.mkOption {
       type = lib.types.listOf (
         lib.types.submodule {
@@ -106,7 +132,7 @@ in
       ];
       description = ''
         Interfaces fully exempt from the pf anchor's default-deny (`pass
-        quick on <iface> all`, evaluated first). Loopback plus bridge0 —
+        quick on <iface> all no state`, evaluated first). Loopback plus bridge0 —
         the Thunderbolt Bridge network-service device cluster-link-prep.nix
         keeps disabled/unenslaved for RDMA exclusivity, so this entry
         currently matches no live traffic, but stays declared for the
@@ -127,7 +153,7 @@ in
       description = ''
         CIDRs fully exempt from the pf anchor's default-deny, matched by
         address rather than interface (`pass in/out quick from <cidr> to
-        <cidr> keep state`, evaluated before the default-deny). Exists so
+        <cidr> no state`, evaluated before the default-deny). Exists so
         Thunderbolt RDMA cluster rendezvous traffic — which rides whichever
         physical enN port is cabled, never a fixed interface name — is
         never blocked: the estate rule forbids any human/AI step in
@@ -141,8 +167,10 @@ in
     default = [ ];
     description = ''
       Nix store executable paths to add to the application firewall and
-      unblock during activation. Consumers must supply stable executable
-      paths; the list is empty by default.
+      unblock during activation. Activation first removes other Nix store
+      entries with the same executable name (scripts/alf-allow-apps.sh).
+      Consumers must supply stable executable paths; the list is empty by
+      default.
     '';
   };
 
@@ -154,6 +182,10 @@ in
         Label = "com.nix-darwin.pf-hardening";
         ProgramArguments = [ (lib.getExe loadAnchor) ];
         RunAtLoad = true;
+        # A boot-time load can fail before DNS answers (sources may be host
+        # names); launchd reruns a failed load every 30 s until one succeeds.
+        KeepAlive.SuccessfulExit = false;
+        ThrottleInterval = 30;
         StandardOutPath = "/var/log/pf-hardening.log";
         StandardErrorPath = "/var/log/pf-hardening.log";
       };
@@ -161,12 +193,11 @@ in
 
     system.activationScripts.postActivation.text = lib.mkAfter (
       ''
-        ${lib.getExe loadAnchor}
+        ${lib.getExe loadAnchor} || echo "pf-hardening-load: non-fatal failure (see log above)"
       ''
-      + lib.concatMapStrings (path: ''
-        /usr/libexec/ApplicationFirewall/socketfilterfw --add ${lib.escapeShellArg path}
-        /usr/libexec/ApplicationFirewall/socketfilterfw --unblockapp ${lib.escapeShellArg path}
-      '') allowedApps
+      + lib.optionalString (allowedApps != [ ]) ''
+        ${lib.getExe alfAllowApps} ${lib.escapeShellArgs allowedApps} || echo "alf-allow-apps: non-fatal failure (see log above)"
+      ''
     );
   };
 }
