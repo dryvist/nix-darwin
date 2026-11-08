@@ -79,6 +79,16 @@ EOF
   grep -q '/bin/python3.14$' "$ALF_CALL_LOG"
 }
 
+@test "a failed removal is reported as not removed" {
+  printf '#!%s\n[ "$1" = --listapps ] && cat "$ALF_LISTAPPS"\n[ "$1" != --remove ]\n' "$BASH" >"$ALF_SOCKETFILTERFW"
+
+  run bash "$SCRIPT_UNDER_TEST" "$CURRENT"
+
+  [ "$status" -eq 0 ]
+  [[ $output == *"could not remove stale $STALE"* ]]
+  [[ $output != *"removed stale $STALE"* ]]
+}
+
 @test "a failing firewall call does not stop the remaining apps" {
   printf '#!%s\nprintf "%%s\\n" "$*" >>"$ALF_CALL_LOG"\nexit 1\n' "$BASH" >"$ALF_SOCKETFILTERFW"
 

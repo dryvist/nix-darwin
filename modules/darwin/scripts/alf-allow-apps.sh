@@ -19,8 +19,11 @@ while IFS= read -r line; do
   listed=${BASH_REMATCH[1]}
   [[ -n ${names[${listed##*/}]:-} && -z ${allowed[$listed]:-} ]] || continue
   # stdout is success noise; stderr stays visible in the activation log.
-  "$SFW" --remove "$listed" >/dev/null || true
-  echo "alf-allow-apps: removed stale $listed"
+  if "$SFW" --remove "$listed" >/dev/null; then
+    echo "alf-allow-apps: removed stale $listed"
+  else
+    echo "alf-allow-apps: could not remove stale $listed"
+  fi
 done < <("$SFW" --listapps || true)
 for app in "$@"; do
   "$SFW" --add "$app" >/dev/null || true
