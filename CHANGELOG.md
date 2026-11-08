@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.20.2](https://github.com/dryvist/nix-darwin/compare/v4.20.1...v4.20.2) (2026-11-08)
+
+
+### Bug Fixes
+
+* **pf-hardening:** replace stale firewall entries for allowed apps ([#3177](https://github.com/dryvist/nix-darwin/issues/3177)) ([2d27327](https://github.com/dryvist/nix-darwin/commit/2d27327c3dff345ef57d85b5372319ff8510731c))
+
 ## [4.20.1](https://github.com/dryvist/nix-darwin/compare/v4.20.0...v4.20.1) (2026-11-08)
 
 
