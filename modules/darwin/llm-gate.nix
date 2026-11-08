@@ -222,6 +222,9 @@ in
     # The gate fetches its secrets from OpenBao via openbao-run (no Doppler).
     programs.openbao-run.enable = true;
 
+    # The application firewall allows apps by path; every rebuild re-adds the current Caddy.
+    networking.applicationFirewall.allowedApps = [ (lib.getExe caddyPkg) ];
+
     # User-owned state dir (install -d as root during activation, owned by the
     # login user so the agent — and openbao-run/Caddy — can read/write it).
     system.activationScripts.postActivation.text = ''
