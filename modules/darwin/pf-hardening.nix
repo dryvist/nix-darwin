@@ -65,6 +65,8 @@ let
   # records a non-zero exit instead of silently leaving pf unloaded.
   loadAnchor = pkgs.writeShellApplication {
     name = "pf-hardening-load";
+    # tee comes from coreutils whatever PATH launchd or activation provides.
+    runtimeInputs = [ pkgs.coreutils ];
     text = ''
       export PF_ANCHOR=${if cfg.enforce then enforcedAnchor else inertAnchor}
       export PF_OTHER_ANCHOR=${if cfg.enforce then inertAnchor else enforcedAnchor}
