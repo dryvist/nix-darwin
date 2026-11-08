@@ -180,6 +180,10 @@ in
         Label = "com.nix-darwin.pf-hardening";
         ProgramArguments = [ (lib.getExe loadAnchor) ];
         RunAtLoad = true;
+        # A boot-time load can fail before DNS answers (sources may be host
+        # names); launchd reruns a failed load every 30 s until one succeeds.
+        KeepAlive.SuccessfulExit = false;
+        ThrottleInterval = 30;
         StandardOutPath = "/var/log/pf-hardening.log";
         StandardErrorPath = "/var/log/pf-hardening.log";
       };
@@ -187,7 +191,7 @@ in
 
     system.activationScripts.postActivation.text = lib.mkAfter (
       ''
-        ${lib.getExe loadAnchor}
+        ${lib.getExe loadAnchor} || echo "pf-hardening-load: non-fatal failure (see log above)"
       ''
       + lib.optionalString (allowedApps != [ ]) ''
         ${lib.getExe alfAllowApps} ${lib.escapeShellArgs allowedApps} || echo "alf-allow-apps: non-fatal failure (see log above)"
