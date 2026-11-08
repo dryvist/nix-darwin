@@ -132,7 +132,7 @@ in
       ];
       description = ''
         Interfaces fully exempt from the pf anchor's default-deny (`pass
-        quick on <iface> all`, evaluated first). Loopback plus bridge0 —
+        quick on <iface> all no state`, evaluated first). Loopback plus bridge0 —
         the Thunderbolt Bridge network-service device cluster-link-prep.nix
         keeps disabled/unenslaved for RDMA exclusivity, so this entry
         currently matches no live traffic, but stays declared for the
@@ -153,7 +153,7 @@ in
       description = ''
         CIDRs fully exempt from the pf anchor's default-deny, matched by
         address rather than interface (`pass in/out quick from <cidr> to
-        <cidr> keep state`, evaluated before the default-deny). Exists so
+        <cidr> no state`, evaluated before the default-deny). Exists so
         Thunderbolt RDMA cluster rendezvous traffic — which rides whichever
         physical enN port is cabled, never a fixed interface name — is
         never blocked: the estate rule forbids any human/AI step in
