@@ -1,12 +1,15 @@
 # Minimal pf inbound baseline on top of the application firewall.
 #
-# The ALF (networking.applicationFirewall) is per-application and stealth
-# mode is deliberately off (hosts/common/default.nix) so LAN services keep
-# answering. This adds a packet-filter anchor loaded at boot by a launchd
-# daemon: default-deny inbound except established connections, ICMP echo,
-# SSH from an allow-listed CIDR set, and traffic on explicitly exempted
-# interfaces (loopback, plus anything named in security.pf.exemptInterfaces).
-# The anchor filters traffic only when security.pf.enforce is true.
+# The ALF (networking.applicationFirewall) is per-application and sits in
+# series with this anchor: a packet this anchor passes is only delivered to a
+# binary the ALF also admits (networking.applicationFirewall.allowedApps).
+# Stealth mode is ON fleet-wide (hosts/common/networking.nix), so unsolicited
+# probes go unanswered; allowed apps keep answering. This adds a packet-filter
+# anchor loaded at boot by a launchd daemon: default-deny inbound except
+# explicitly allowed TCP services, ICMP echo, SSH from an allow-listed CIDR
+# set, and traffic on explicitly exempted interfaces (loopback, plus anything
+# named in security.pf.exemptInterfaces). The anchor filters traffic only
+# when security.pf.enforce is true.
 #
 # flake.nix's aarch64-darwin checks build environment.etc."pf.anchors/
 # nix-hardening".text straight from the real host config and run
@@ -34,9 +37,11 @@ let
     # rules instead, evaluated before the default-deny below. Estate rule:
     # cluster rendezvous traffic (exemptNetworks) must NEVER be touched by
     # this anchor — zero human/AI steps in cluster standup means this pf
-    # anchor is not allowed to be one of them. Exemptions are stateless
-    # (`no state`): a stateful pass only matches a TCP SYN, so a connection
-    # opened before enforcement began would fall through to the block.
+    # anchor is not allowed to be one of them. Exemptions stay stateless
+    # (`no state`): they are unconditional quick passes that already admit
+    # both directions, so per-flow state would only add table churn — unlike
+    # the service passes below, whose `keep state` is what admits mid-stream
+    # packets of flows opened before enforcement began.
     ${lib.concatMapStrings (iface: "pass quick on ${iface} all no state\n") cfg.exemptInterfaces}
     ${lib.concatMapStrings (
       net: "pass in quick from ${net} to ${net} no state\npass out quick from ${net} to ${net} no state\n"
@@ -46,9 +51,16 @@ let
     pass in quick proto udp from any port 67 to any port 68
     pass in quick inet6 proto ipv6-icmp all icmp6-type { routeradv, neighbrsol, neighbradv } no state
     pass in quick proto udp from any to { 224.0.0.251, ff02::fb } port 5353
+    # Service passes are stateful but do NOT pin `flags S/SA`: the flags form
+    # creates state only from a TCP SYN, so packets of a flow already in
+    # flight when enforcement began — a reused Prometheus keep-alive
+    # connection, a streaming LLM client — match the rule yet create no
+    # state and fall through to the default-deny below, black-holing the
+    # flow mid-stream. Plain `keep state` creates state from any admitted
+    # packet, so those flows establish on their next segment.
     ${lib.concatMapStrings (
       service:
-      "pass in quick proto tcp from { ${lib.concatStringsSep ", " service.sources} } to any port ${toString service.port} flags S/SA keep state\n"
+      "pass in quick proto tcp from { ${lib.concatStringsSep ", " service.sources} } to any port ${toString service.port} keep state\n"
     ) cfg.allowedTcpServices}
     block in all
     pass out all keep state

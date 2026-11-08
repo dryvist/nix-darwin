@@ -48,8 +48,38 @@ in
   };
   users.knownUsers = [ hostAdminUser ];
 
-  security.sshCaPublicKey = "/etc/ssh/trusted-user-ca-keys.pem";
-  security.sshCaPrincipals.${hostAdminUser} = [ "ai-agent" ];
+  security = {
+    sshCaPublicKey = "/etc/ssh/trusted-user-ca-keys.pem";
+    sshCaPrincipals.${hostAdminUser} = [ "ai-agent" ];
+
+    pf = {
+      # The Studio is the one host whose hardening anchor filters traffic:
+      # enforce=true is what the pf-anchor-syntax check pins.
+      enforce = true;
+
+      # Inbound services admitted before the anchor's default-deny. Sources
+      # reuse the option that already carries the estate's allowed source
+      # networks (security.pf.allowedSshSources), so no CIDR literal is
+      # restated; the check pins each pass before `block in all`.
+      allowedTcpServices = [
+        # macmon exporter scrape (port pinned in macmon-exporter.nix argv).
+        {
+          sources = config.security.pf.allowedSshSources;
+          port = 9090;
+        }
+        # llm-gate API site on the LAN bind address.
+        {
+          sources = config.security.pf.allowedSshSources;
+          port = config.programs.llm-gate.apiPort;
+        }
+        # llm-gate cluster-mode site (same mirrored-port convention).
+        {
+          sources = config.security.pf.allowedSshSources;
+          port = config.programs.llm-gate.clusterPort;
+        }
+      ];
+    };
+  };
 
   environment.etc."sudoers.d/host-admin".text = ''
     ${hostAdminUser} ALL=(ALL) NOPASSWD: ALL

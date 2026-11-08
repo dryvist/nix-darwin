@@ -472,11 +472,43 @@
             pf-anchor-syntax =
               let
                 darwinPkgs = nixpkgs.legacyPackages.aarch64-darwin;
-                anchorText = configs.${primaryHost.hostName}.config.environment.etc."pf.anchors/nix-hardening".text;
-                anchorFile = darwinPkgs.writeText "nix-hardening-anchor.conf" anchorText;
+                anchorTextOf = cfg: cfg.config.environment.etc."pf.anchors/nix-hardening".text;
+                # The Studio is the enforced host: its rendered anchor must
+                # pass every configured inbound TCP service before `block in
+                # all` — last-match-wins only helps what a rule already
+                # admitted. Ports and sources come straight from the host
+                # config (the same values the live rules render), so this
+                # check restates no CIDR or port literal.
+                studio = configs.${hosts.mac-studio.hostName};
+                studioServices = studio.config.security.pf.allowedTcpServices;
+                studioAnchor = darwinPkgs.writeText "mac-studio-nix-hardening-anchor.conf" (anchorTextOf studio);
+                grepCmd = "${darwinPkgs.gnugrep}/bin/grep";
+                orderChecks = builtins.concatStringsSep "\n" (
+                  builtins.map (service: ''
+                    passLine=$(${grepCmd} -n 'pass in quick proto tcp from { ${lib.concatStringsSep ", " service.sources} } to any port ${toString service.port} keep state' ${studioAnchor}) || {
+                      echo "rendered anchor does not pass port ${toString service.port} from its configured sources" >&2
+                      exit 1
+                    }
+                    blockLine=$(${grepCmd} -n '^block in all$' ${studioAnchor})
+                    [ "''${passLine%%:*}" -lt "''${blockLine%%:*}" ] || {
+                      echo "port ${toString service.port} pass is not before block in all" >&2
+                      exit 1
+                    }
+                  '') studioServices
+                );
               in
+              assert
+                studio.config.security.pf.enforce
+                || throw "mac-studio must set security.pf.enforce = true: this check pins the enforced Studio anchor";
+              assert
+                studioServices != [ ]
+                || throw "mac-studio must declare security.pf.allowedTcpServices: this check pins their ordering";
               darwinPkgs.runCommand "check-pf-anchor-syntax" { } ''
-                /sbin/pfctl -n -f ${anchorFile}
+                /sbin/pfctl -n -f ${
+                  darwinPkgs.writeText "nix-hardening-anchor.conf" (anchorTextOf configs.${primaryHost.hostName})
+                }
+                /sbin/pfctl -n -f ${studioAnchor}
+                ${orderChecks}
                 touch $out
               '';
           };
