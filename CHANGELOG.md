@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.20.1](https://github.com/dryvist/nix-darwin/compare/v4.20.0...v4.20.1) (2026-11-08)
+
+
+### Bug Fixes
+
+* **llm-gate:** keep the gate's Caddy in the application firewall allowlist ([#3173](https://github.com/dryvist/nix-darwin/issues/3173)) ([bb31550](https://github.com/dryvist/nix-darwin/commit/bb31550cd03c61e59770702a90d7248d9c4f9203))
+
 ## [4.20.0](https://github.com/dryvist/nix-darwin/compare/v4.19.9...v4.20.0) (2026-11-08)
 
 
