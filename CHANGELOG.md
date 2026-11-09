@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.22.1](https://github.com/dryvist/nix-darwin/compare/v4.22.0...v4.22.1) (2026-11-09)
+
+
+### Bug Fixes
+
+* **deps:** update nix-home to v1.61.3 ([#3208](https://github.com/dryvist/nix-darwin/issues/3208)) ([c81ad7c](https://github.com/dryvist/nix-darwin/commit/c81ad7ce291733ed95d3a748f571e846167ad826))
+
 ## [4.22.0](https://github.com/dryvist/nix-darwin/compare/v4.21.1...v4.22.0) (2026-11-09)
 
 
