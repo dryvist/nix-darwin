@@ -1,5 +1,18 @@
 # Changelog
 
+## [4.22.0](https://github.com/dryvist/nix-darwin/compare/v4.21.1...v4.22.0) (2026-11-09)
+
+
+### Features
+
+* **studio:** add memory-capped router lane ([b109d45](https://github.com/dryvist/nix-darwin/commit/b109d45e54dc036e3cd54242b7303d418da72d8d))
+* **studio:** add memory-capped router lane and per-model concurrency (modelConcurrency) ([#3202](https://github.com/dryvist/nix-darwin/issues/3202)) ([b109d45](https://github.com/dryvist/nix-darwin/commit/b109d45e54dc036e3cd54242b7303d418da72d8d))
+
+
+### Bug Fixes
+
+* **deps:** update nix-ai to v8.25.0 ([#3205](https://github.com/dryvist/nix-darwin/issues/3205)) ([91aa424](https://github.com/dryvist/nix-darwin/commit/91aa42404274198f18baa4bfb54d1d871c247b57))
+
 ## [4.21.1](https://github.com/dryvist/nix-darwin/compare/v4.21.0...v4.21.1) (2026-11-09)
 
 
