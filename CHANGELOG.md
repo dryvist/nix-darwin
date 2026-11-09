@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.23.0](https://github.com/dryvist/nix-darwin/compare/v4.22.1...v4.23.0) (2026-11-09)
+
+
+### Features
+
+* **mlx:** raise workstation resident prompt-cache budgets ([#3211](https://github.com/dryvist/nix-darwin/issues/3211)) ([929f93f](https://github.com/dryvist/nix-darwin/commit/929f93fec3308b3ad3d3a791a0d930721a5bdf2f))
+
 ## [4.22.1](https://github.com/dryvist/nix-darwin/compare/v4.22.0...v4.22.1) (2026-11-09)
 
 
