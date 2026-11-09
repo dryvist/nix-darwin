@@ -1,88 +1,46 @@
-# mac-studio residency budget
+# Mac Studio residency budget
 
-How `maxResidentWorkers` and `memoryHardLimitGb` are chosen for this host, and
-what the limit does and does not enforce. Split out of
-[mac-studio.md](./mac-studio.md) when that file reached the 12 KiB error limit
-(`.file-size.yml`, which recommends splitting rather than extending the
-ceiling) — this is one self-contained topic and reads better alone.
+The Studio keeps the Qwen and MiMo workers resident, with the API gate routed
+only to Qwen. Their per-model worker width and request admission are set in
+`lib/hosts/mac-studio.nix` and `hosts/mac-studio/home.nix`.
 
-## The budget (k_max = 2 since 2026-08-05)
+## Configured envelope
 
-The invariant, from nix-ai `modules/mlx/options-residency.nix`:
+The host keeps `maxLocalLlmGb = 100`, which derives a `102400 MiB` wired-memory
+ceiling on the 128 GB machine and leaves 28 GiB outside that ceiling. The
+residency budget permits two workers and sets `memoryHardLimitGb = 32` for each.
+The resulting sizing arithmetic is:
 
 ```text
-maxResidentWorkers * memoryHardLimitGb <= host wired ceiling
+2 workers × 32 GiB                       = 64 GiB
+64 GiB workers + 4 GiB non-MLX baseline = 68 GiB
+68 GiB + 24 GiB session allowance       = 92 GiB of 100 GiB wired budget
+92 GiB + 28 GiB OS/headroom             = 120 GiB of 128 GiB physical memory
 ```
 
-The ceiling here is 100 GiB (`appleSiliconTunables.maxLocalLlmGb = 100` →
-`wiredLimitMb = 102400`, in `hosts/mac-studio/default.nix`).
+This leaves 8 GiB of nominal margin in each total. The model worker runs one
+active sequence; the API gate and the local proxy admit at most two requests
+per model, allowing one active request and one waiting request. Qwen's planned
+131072-token stream uses about 8 GiB of KV; MiMo's planned 40960-token stream
+uses about 1.25 GiB. The derived prompt-cache limit can shrink when the
+per-worker budget is lowered.
 
-**At the previous k_max = 1**, the resident and the always-available 9B
-collapsed into one exclusive swapping group, so loading the 9B evicted the 35B —
-verified by measurement on 2026-08-05, not inferred. That was the memory bound
-working as designed, not a bug, and it is why the earlier "the 9B never evicts
-the resident" comment was wrong and had to be corrected (#2043).
+`memoryHardLimitGb` is a sizing guideline, not a hard refusal. MLX may shed
+buffer cache as it approaches the configured value and may still exceed it.
+The arithmetic is therefore a configuration target, not proof that open agent
+sessions stay safe under peak load. Measure memory pressure with sessions open
+and a full-context request before enabling router traffic.
 
-**At k_max = 2** the tiered topology returns: a persistent resident plus a
-non-exclusive small tier hold weights simultaneously. `memoryHardLimitGb` must
-drop in the same change or the product over-commits the ceiling — 2 workers at
-the old 99 GiB would permit 198 GiB against 100 GiB.
+## Model estimate arithmetic
 
-Chosen: `memoryHardLimitGb = 48`, so `2 × 48 = 96 GiB` against a 100 GiB ceiling.
+The read-only lane plan's component estimates do not add to its stated model
+envelopes: `13.7 + 8 + 16` is 37.7 GiB for Qwen, and `6.7 + 1.25 + 2` is 9.95
+GiB for MiMo. Recheck whether the RSS observations already include any cache or
+KV allocation before treating those components as independent. This host
+configuration uses the explicit 32 GiB per-worker sizing target and one active
+sequence per model; it does not claim that the plan's prompt-cache targets are
+fully resident.
 
-**The cushion is not 4 GiB.** 96 vs 100 ignores the non-MLX wired baseline,
-measured at ~3.4 GiB host-wide while one worker decodes. Strict worst case is
-`96 + 3.4 = 99.4 GiB`, so the honest cushion is **~0.6 GiB**. It still holds, and
-overshoot spills to pageable memory rather than failing, but do not read 4 GiB as
-spare capacity.
-
-Per-worker budget for the resident, using measurements rather than the catalog's
-declared `weightGb`:
-
-| quantity | value | source |
-| --- | --- | --- |
-| weights, live RSS mid-decode | 18.72 GiB | `ps` on the running worker |
-| weights, RSS recorded 2026-07-24 | 21.31 GiB | docs-starlight memory-ceilings |
-| prompt cache | **16 GiB** | live `--prompt-cache-bytes 17179869184` |
-| buffer cache (shedable) | up to 12 GiB | `bufferCacheLimitGb` default |
-
-So roughly `48 − 21.3 − 16 ≈ 10.7 GiB` is left for KV and scratch — not the ~28
-GiB an earlier draft of this file claimed. That draft also called 19.4 GB and
-5.2 GB "measured": they are **declared** catalog `weightGb` values
-(`catalog-data.nix`), they match neither disk (19.03 / 5.57 GiB) nor live RSS,
-and the unit they are expressed in is undocumented. Measure W; never take it
-from a spec sheet.
-
-Note the prompt cache is 16 GiB for the **resident**, not the host-wide 8 GiB:
-the resident class overrides `cacheMemoryMb = 16384` in the nix-ai catalog. The
-9B runs at the host default, 8 GiB.
-
-The worst constructible single-worker set therefore EXCEEDS 48 GiB. That is not
-a defect, because `memoryHardLimitGb` refuses nothing — see below.
-
-`suppressWiredLimit` defaults true (it avoids an IOGPUFamily kernel panic), which
-leaves weights pageable and makes this budget load-bearing: exceed the ceiling
-and the trade is a kernel panic for swap thrash. Do not raise `maxResidentWorkers`
-again without lowering `memoryHardLimitGb` to match.
-
-`memoryHardLimitGb` is applied by the `mlx_lm` launcher via `mx.set_memory_limit`.
-It is wired up on this host because `modelServerBackend` is `mlx-lm` — nix-ai
-`modules/mlx/assertions.nix` asserts that outright.
-
-**It is a sizing guideline, not an enforcement.** Upstream MLX raises only when
-RAM *and swap* are exhausted; crossing the limit sheds the free-buffer cache and
-otherwise proceeds. So a worker can transiently exceed 48 GiB with nothing
-refused, and `k_max × memoryHardLimitGb ≤ ceiling` is a budget you choose to
-respect, not one the runtime imposes.
-
-This matters for reading the numbers above: the worst constructible resident set
-(~21.3 weights + 16 prompt cache + up to 12 shedable buffer cache) is larger than
-48 GiB, and that is fine precisely because the limit sheds rather than fails. The
-practical effect of lowering 99 → 48 is *earlier buffer-cache shedding under
-long-context load*, costing some re-allocation latency — not allocation failure.
-
-nix-ai's own prose still says this limit "forces … allocation failure ahead of
-the host wired ceiling" (`options-residency.nix`, `mlx-lm-launch.py`). That
-contradicts upstream semantics — failure arrives at RAM+swap exhaustion, which is
-*behind* the ceiling, not ahead of it. Pre-existing defect in that repo, tracked
-separately; docs-starlight already states it correctly.
+The shared 100 GiB ceiling is unchanged because it also feeds the cluster wired
+limit. This configuration does not change cluster mode, rank, RDMA, or cluster
+memory guards.

@@ -5,14 +5,14 @@
 # per-class flag profiles. The role map picks entries + classes; this host sets
 # host-scoped runtime posture. Add or fix serve args in the catalog, not here.
 let
-  # THE proxy admission ceiling for this host. Per-model concurrency comes
-  # from the role map (modelConcurrencyLimits); this is the upper bound the
-  # proxy advertises.
+  # The local proxy's fallback admission ceiling. Per-model worker and
+  # admission limits below this default are projected from the role map.
   #
   # MLX's published admission limit is separate from the active GPU profile.
   # dryvist/tofu-proxmox publishes serving.mlx_llm_concurrency; this flake is
   # hermetic, so CI checks this literal against that field.
   serveConcurrency = 2;
+  singleSequence = 1;
 in
 {
   # Network identity. `system` omitted (mkHost defaults to aarch64-darwin).
@@ -23,12 +23,22 @@ in
   class = "server";
   # Logical roles, catalog selection and per-model concurrency come from the
   # role map by host class (hosts/common/role-map.nix).
+  # The Studio keeps one active sequence per resident model. Its serving gate
+  # separately admits at most one active plus one waiting request.
+  modelConcurrency = {
+    qwen38-27b = singleSequence;
+    mimo-9b = singleSequence;
+  };
 
   mlx = {
-    # Catalog selection, preload, per-model concurrency and the resident-worker
-    # count derive from the role map (hosts/common/role-map.nix); the host adds
-    # only runtime posture. The OCR model unloads after 600 s idle.
-    catalog.unlimited-ocr.tweaks.ttl = 600;
+    # Keep only the two declared resident models. The separate Qwen worker is
+    # the sole router-facing model; no other catalog model can load on demand.
+    catalog.unlimited-ocr.enable = false;
+
+    # Two resident workers at 32 GiB each leave room for the session reserve
+    # under the existing 100 GiB wired ceiling. MLX treats this as a sizing
+    # guideline, so the configured ceiling still requires a measured soak.
+    memoryHardLimitGb = 32;
 
     cacheMemoryMb = 8192;
     prefillBatchSize = 2048;
