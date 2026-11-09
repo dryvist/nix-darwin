@@ -1,13 +1,20 @@
 # macmon Prometheus exporter: GPU active residency and power metrics on
 # /metrics, scraped by the homelab Prometheus for accelerator busy %.
-_: {
-  launchd.daemons.macmon-exporter.serviceConfig = {
+{ lib, config, ... }:
+{
+  options.services.macmon-exporter.port = lib.mkOption {
+    type = lib.types.port;
+    default = 9090;
+    description = "TCP port the macmon exporter serves /metrics on.";
+  };
+
+  config.launchd.daemons.macmon-exporter.serviceConfig = {
     Label = "dev.local.macmon-exporter";
     ProgramArguments = [
       "/run/current-system/sw/bin/macmon"
       "serve"
       "--port"
-      "9090"
+      (toString config.services.macmon-exporter.port)
     ];
     RunAtLoad = true;
     KeepAlive = true;

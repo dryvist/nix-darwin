@@ -48,8 +48,34 @@ in
   };
   users.knownUsers = [ hostAdminUser ];
 
-  security.sshCaPublicKey = "/etc/ssh/trusted-user-ca-keys.pem";
-  security.sshCaPrincipals.${hostAdminUser} = [ "ai-agent" ];
+  # SSH CA trust and the pf service passes grouped under one `security`
+  # attrset (statix W20: avoid repeated top-level keys).
+  security = {
+    sshCaPublicKey = "/etc/ssh/trusted-user-ca-keys.pem";
+    sshCaPrincipals.${hostAdminUser} = [ "ai-agent" ];
+
+    # Inbound services admitted through the pf anchor (pf-hardening.nix) before
+    # its default-deny. Sources reuse security.pf.allowedSshSources; the flake's
+    # pf-anchor-syntax check pins each pass to sit before `block in all` in the
+    # rendered anchor.
+    pf.allowedTcpServices = [
+      # macmon exporter port.
+      {
+        sources = config.security.pf.allowedSshSources;
+        port = config.services.macmon-exporter.port;
+      }
+      # llm-gate API port.
+      {
+        sources = config.security.pf.allowedSshSources;
+        port = config.programs.llm-gate.apiPort;
+      }
+      # llm-gate cluster-mode port.
+      {
+        sources = config.security.pf.allowedSshSources;
+        port = config.programs.llm-gate.clusterPort;
+      }
+    ];
+  };
 
   environment.etc."sudoers.d/host-admin".text = ''
     ${hostAdminUser} ALL=(ALL) NOPASSWD: ALL
@@ -171,7 +197,12 @@ in
       # The clustered site still mirrors its loopback service port. That
       # service's specific loopback bind keeps local HTTP callers from being
       # captured by Caddy's wildcard TLS listener. The regular API gate targets
-      # the catalog-selected resident on its worker port.
+      # the catalog-selected Qwen resident on its worker port.
+      #
+      # Keep the edge connection cap single-sourced from the Studio's local
+      # proxy admission ceiling.
+      apiMaxUpstreamConnections = hostConfig.mlx.proxy.concurrencyLimit;
+      #
       # Clustered-mode endpoint (mlx-lm rank 0 on loopback :11440, see
       # lib/hosts/mac-studio.nix clusterMode): second gated site, same
       # bearer token and cert, mirrored external:loopback port convention.

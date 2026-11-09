@@ -469,14 +469,50 @@
               inherit configs userConfig;
             };
 
+            studio-lane = import ./lib/checks/studio-lane.nix {
+              pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+              studio = configs.${hosts.mac-studio.hostName};
+              inherit userConfig;
+            };
+
             pf-anchor-syntax =
               let
                 darwinPkgs = nixpkgs.legacyPackages.aarch64-darwin;
-                anchorText = configs.${primaryHost.hostName}.config.environment.etc."pf.anchors/nix-hardening".text;
-                anchorFile = darwinPkgs.writeText "nix-hardening-anchor.conf" anchorText;
+                anchorTextOf = cfg: cfg.config.environment.etc."pf.anchors/nix-hardening".text;
+                # Each service pass in the rendered anchor must sit before
+                # `block in all`; last-match-wins only helps what a rule
+                # already admitted.
+                studio = configs.${hosts.mac-studio.hostName};
+                servingPorts = builtins.map toString [
+                  studio.config.services.macmon-exporter.port
+                  studio.config.programs.llm-gate.apiPort
+                  studio.config.programs.llm-gate.clusterPort
+                ];
+                # The source set pf-hardening.nix renders into every service
+                # pass: `from { <sources joined ", "> }`.
+                sshSourceSet = "from { ${lib.concatStringsSep ", " studio.config.security.pf.allowedSshSources} }";
+                studioAnchor = darwinPkgs.writeText "mac-studio-nix-hardening-anchor.conf" (anchorTextOf studio);
+                grepCmd = "${darwinPkgs.gnugrep}/bin/grep";
+                orderChecks = builtins.concatStringsSep "\n" (
+                  builtins.map (port: ''
+                    passLine=$(${grepCmd} -n 'pass in quick proto tcp ${sshSourceSet} to any port ${port} no state' ${studioAnchor}) || {
+                      echo "rendered anchor does not pass ${port} from security.pf.allowedSshSources" >&2
+                      exit 1
+                    }
+                    blockLine=$(${grepCmd} -n '^block in all$' ${studioAnchor})
+                    [ "''${passLine%%:*}" -lt "''${blockLine%%:*}" ] || {
+                      echo "${port} pass is not before block in all" >&2
+                      exit 1
+                    }
+                  '') servingPorts
+                );
               in
               darwinPkgs.runCommand "check-pf-anchor-syntax" { } ''
-                /sbin/pfctl -n -f ${anchorFile}
+                /sbin/pfctl -n -f ${
+                  darwinPkgs.writeText "nix-hardening-anchor.conf" (anchorTextOf configs.${primaryHost.hostName})
+                }
+                /sbin/pfctl -n -f ${studioAnchor}
+                ${orderChecks}
                 touch $out
               '';
           };
