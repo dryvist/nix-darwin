@@ -414,9 +414,8 @@
           # text lives here) with `pfctl -n -f` (syntax-only, does not load
           # it), so a bad anchor fails `nix flake check` instead of shipping
           # silently broken (see modules/darwin/pf-hardening.nix).
-          # One owner per AI CLI. Homebrew installs Claude Code and Codex on
-          # darwin, so nix-ai leaves `package = null` and Nix must not build a
-          # second copy. Placed here, not in lib/checks.nix, because that call
+          # One owner per AI CLI: a Claude Code brew cask (programs.claude.brewCask)
+          # must be declared, and its binary not also built by Nix. Placed here, not in lib/checks.nix, because that call
           # receives `darwinConfigurations = { }` — a check there would never
           # evaluate a host and would pass vacuously.
           aarch64-darwin = {
