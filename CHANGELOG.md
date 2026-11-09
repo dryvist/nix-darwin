@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.21.1](https://github.com/dryvist/nix-darwin/compare/v4.21.0...v4.21.1) (2026-11-09)
+
+
+### Bug Fixes
+
+* **darwin:** admit the metrics scrape and LLM serving ports through pf ([#3194](https://github.com/dryvist/nix-darwin/issues/3194)) ([facf3e7](https://github.com/dryvist/nix-darwin/commit/facf3e7d8b46da8df821100135ea285268b9c93c))
+
 ## [4.21.0](https://github.com/dryvist/nix-darwin/compare/v4.20.2...v4.21.0) (2026-11-09)
 
 
