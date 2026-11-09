@@ -59,10 +59,10 @@ in
     # pf-anchor-syntax check pins each pass to sit before `block in all` in the
     # rendered anchor.
     pf.allowedTcpServices = [
-      # macmon exporter port (pinned in macmon-exporter.nix).
+      # macmon exporter port.
       {
         sources = config.security.pf.allowedSshSources;
-        port = 9090;
+        port = config.services.macmon-exporter.port;
       }
       # llm-gate API port.
       {
