@@ -1,5 +1,18 @@
 # Changelog
 
+## [4.21.0](https://github.com/dryvist/nix-darwin/compare/v4.20.2...v4.21.0) (2026-11-09)
+
+
+### Features
+
+* **pf:** add security.pf.enforce to make the hardening anchor filter traffic ([#3180](https://github.com/dryvist/nix-darwin/issues/3180)) ([fec6425](https://github.com/dryvist/nix-darwin/commit/fec64255c223d2e330d230e91be791c7188e8a52))
+
+
+### Bug Fixes
+
+* **alf:** report a failed stale-entry removal as not removed ([#3183](https://github.com/dryvist/nix-darwin/issues/3183)) ([c4baf28](https://github.com/dryvist/nix-darwin/commit/c4baf2824ffd9cf86205bc328334937fc149c02d))
+* **pf:** count a failed rule listing as flushed only when the anchor is gone ([#3182](https://github.com/dryvist/nix-darwin/issues/3182)) ([9bea93f](https://github.com/dryvist/nix-darwin/commit/9bea93f3b9dcbd62f444483c081b7404c4ba14a0))
+
 ## [4.20.2](https://github.com/dryvist/nix-darwin/compare/v4.20.1...v4.20.2) (2026-11-08)
 
 
