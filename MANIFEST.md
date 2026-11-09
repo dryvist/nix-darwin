@@ -195,8 +195,6 @@ installed cask or formula not declared in the Nix configuration; it removes noth
 | granola | yes | AI-powered meeting notes |
 | claudebar | yes | Claude Code menu bar utility |
 | neat | yes | Neat device management app |
-| claude-code@latest | no | Anthropic Claude Code CLI |
-| codex | no | OpenAI Codex CLI (nix-ai's agent launcher execs it) |
 | claude | yes | Anthropic Claude desktop app (workstation capability) |
 | chatgpt | yes | OpenAI ChatGPT desktop app (workstation capability) |
 | antigravity | yes | Google Antigravity 2.0 standalone agent command center (workstation capability) |
