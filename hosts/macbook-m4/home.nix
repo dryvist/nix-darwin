@@ -35,6 +35,8 @@
       modelBootstrap = true;
       localTranscriptionProvider = "whisper";
       whisperModel = "base";
+      # renovate: datasource=github-releases depName=OpenWhispr/openwhispr
+      version = "1.11.0";
     };
 
     openHarness = {
