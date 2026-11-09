@@ -474,7 +474,7 @@
                 darwinPkgs = nixpkgs.legacyPackages.aarch64-darwin;
                 anchorTextOf = cfg: cfg.config.environment.etc."pf.anchors/nix-hardening".text;
                 # The Studio is the enforced host: its rendered anchor must
-                # pass the metrics scrape (macmon-exporter.nix pins port 9090)
+                # pass the metrics scrape (the exporter's port, set in macmon-exporter.nix)
                 # and the llm-gate serving ports from the LAN, and each pass
                 # must sit before `block in all` — last-match-wins only helps
                 # what a rule already admitted.
