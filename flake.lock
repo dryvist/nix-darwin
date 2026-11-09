@@ -1781,11 +1781,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1794214374,
-        "narHash": "sha256-7Bz9DYKKsEHXKaFkRBc8fNImNTxuR4/7mmWAPpAny4Y=",
+        "lastModified": 1794221122,
+        "narHash": "sha256-pLah91nD1vhBvwBPbuuph92ESws3T6lg5wsX4ZSLiGI=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "a890448b619f45a18426714438137896da6fada0",
+        "rev": "2547d60f26b7c465bce42b2c8da805f46afccb4c",
         "type": "github"
       },
       "original": {
