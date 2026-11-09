@@ -1,12 +1,15 @@
 # Minimal pf inbound baseline on top of the application firewall.
 #
-# The ALF (networking.applicationFirewall) is per-application and stealth
-# mode is deliberately off (hosts/common/default.nix) so LAN services keep
-# answering. This adds a packet-filter anchor loaded at boot by a launchd
-# daemon: default-deny inbound except established connections, ICMP echo,
-# SSH from an allow-listed CIDR set, and traffic on explicitly exempted
-# interfaces (loopback, plus anything named in security.pf.exemptInterfaces).
-# The anchor filters traffic only when security.pf.enforce is true.
+# The ALF (networking.applicationFirewall) is per-application and sits in
+# series with this anchor: a packet this anchor passes is only delivered to a
+# binary the ALF also admits (networking.applicationFirewall.allowedApps).
+# Stealth mode is ON fleet-wide (hosts/common/networking.nix), so unsolicited
+# probes go unanswered; allowed apps keep answering. This adds a packet-filter
+# anchor loaded at boot by a launchd daemon: default-deny inbound except
+# explicitly allowed TCP services, ICMP echo, SSH from an allow-listed CIDR
+# set, and traffic on explicitly exempted interfaces (loopback, plus anything
+# named in security.pf.exemptInterfaces). The anchor filters traffic only
+# when security.pf.enforce is true.
 #
 # flake.nix's aarch64-darwin checks build environment.etc."pf.anchors/
 # nix-hardening".text straight from the real host config and run
@@ -46,9 +49,15 @@ let
     pass in quick proto udp from any port 67 to any port 68
     pass in quick inet6 proto ipv6-icmp all icmp6-type { routeradv, neighbrsol, neighbradv } no state
     pass in quick proto udp from any to { 224.0.0.251, ff02::fb } port 5353
+    # Service passes are stateless (`no state`), like the exemptions above:
+    # `flags S/SA keep state` matches only a TCP SYN, so every packet of a
+    # flow established before enforcement began — a Prometheus keep-alive
+    # scrape, a streaming LLM client — falls through to the default-deny
+    # below and the flow is black-holed mid-stream. A stateless pass admits
+    # each packet of the service's flows on its own merits.
     ${lib.concatMapStrings (
       service:
-      "pass in quick proto tcp from { ${lib.concatStringsSep ", " service.sources} } to any port ${toString service.port} flags S/SA keep state\n"
+      "pass in quick proto tcp from { ${lib.concatStringsSep ", " service.sources} } to any port ${toString service.port} no state\n"
     ) cfg.allowedTcpServices}
     block in all
     pass out all keep state
