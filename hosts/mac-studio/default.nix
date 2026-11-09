@@ -52,26 +52,26 @@ in
   security.sshCaPrincipals.${hostAdminUser} = [ "ai-agent" ];
 
   # Inbound services admitted through the pf anchor (pf-hardening.nix) before
-  # its default-deny. Sources mirror the single broad RFC1918 default of
-  # security.pf.allowedSshSources; the flake's pf-anchor-syntax check pins
-  # each pass to sit before `block in all` in the rendered anchor.
+  # its default-deny. Sources reuse security.pf.allowedSshSources; the flake's
+  # pf-anchor-syntax check pins each pass to sit before `block in all` in the
+  # rendered anchor.
   security.pf.allowedTcpServices = [
     # macmon Prometheus exporter — the port is pinned in macmon-exporter.nix's
-    # launchd argv; scraped from the metrics VLAN.
+    # launchd argv.
     {
-      sources = [ "10.0.0.0/8" ];
+      sources = config.security.pf.allowedSshSources;
       port = 9090;
     }
     # llm-gate API site on the LAN bind address (the router's Studio lane
     # targets programs.llm-gate.apiPort).
     {
-      sources = [ "10.0.0.0/8" ];
+      sources = config.security.pf.allowedSshSources;
       port = config.programs.llm-gate.apiPort;
     }
     # llm-gate cluster-mode site, rendered above via clusterUpstreamPort
     # (the same external:loopback mirrored-port convention).
     {
-      sources = [ "10.0.0.0/8" ];
+      sources = config.security.pf.allowedSshSources;
       port = config.programs.llm-gate.clusterPort;
     }
   ];

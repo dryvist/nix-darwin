@@ -484,14 +484,15 @@
                   studio.config.programs.llm-gate.apiPort
                   studio.config.programs.llm-gate.clusterPort
                 ];
-                studioAnchor = darwinPkgs.writeText "mac-studio-nix-hardening-anchor.conf" (
-                  anchorTextOf studio
-                );
+                # The source set pf-hardening.nix renders into every service
+                # pass: `from { <sources joined ", "> }`.
+                sshSourceSet = "from { ${lib.concatStringsSep ", " studio.config.security.pf.allowedSshSources} }";
+                studioAnchor = darwinPkgs.writeText "mac-studio-nix-hardening-anchor.conf" (anchorTextOf studio);
                 grepCmd = "${darwinPkgs.gnugrep}/bin/grep";
                 orderChecks = builtins.concatStringsSep "\n" (
                   builtins.map (port: ''
-                    passLine=$(${grepCmd} -n 'pass in quick proto tcp from { 10.0.0.0/8 } to any port ${port} no state' ${studioAnchor}) || {
-                      echo "rendered anchor does not pass ${port} from 10.0.0.0/8" >&2
+                    passLine=$(${grepCmd} -n 'pass in quick proto tcp ${sshSourceSet} to any port ${port} no state' ${studioAnchor}) || {
+                      echo "rendered anchor does not pass ${port} from security.pf.allowedSshSources" >&2
                       exit 1
                     }
                     blockLine=$(${grepCmd} -n '^block in all$' ${studioAnchor})
@@ -503,9 +504,9 @@
                 );
               in
               darwinPkgs.runCommand "check-pf-anchor-syntax" { } ''
-                /sbin/pfctl -n -f ${darwinPkgs.writeText "nix-hardening-anchor.conf" (
-                  anchorTextOf configs.${primaryHost.hostName}
-                )}
+                /sbin/pfctl -n -f ${
+                  darwinPkgs.writeText "nix-hardening-anchor.conf" (anchorTextOf configs.${primaryHost.hostName})
+                }
                 /sbin/pfctl -n -f ${studioAnchor}
                 ${orderChecks}
                 touch $out
