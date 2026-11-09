@@ -59,20 +59,17 @@ in
     # pf-anchor-syntax check pins each pass to sit before `block in all` in the
     # rendered anchor.
     pf.allowedTcpServices = [
-      # macmon Prometheus exporter — the port is pinned in macmon-exporter.nix's
-      # launchd argv.
+      # macmon exporter port (pinned in macmon-exporter.nix).
       {
         sources = config.security.pf.allowedSshSources;
         port = 9090;
       }
-      # llm-gate API site on the LAN bind address (the router's Studio lane
-      # targets programs.llm-gate.apiPort).
+      # llm-gate API port.
       {
         sources = config.security.pf.allowedSshSources;
         port = config.programs.llm-gate.apiPort;
       }
-      # llm-gate cluster-mode site, rendered above via clusterUpstreamPort
-      # (the same external:loopback mirrored-port convention).
+      # llm-gate cluster-mode port.
       {
         sources = config.security.pf.allowedSshSources;
         port = config.programs.llm-gate.clusterPort;
