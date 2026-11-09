@@ -48,8 +48,37 @@ in
   };
   users.knownUsers = [ hostAdminUser ];
 
-  security.sshCaPublicKey = "/etc/ssh/trusted-user-ca-keys.pem";
-  security.sshCaPrincipals.${hostAdminUser} = [ "ai-agent" ];
+  # SSH CA trust and the pf service passes grouped under one `security`
+  # attrset (statix W20: avoid repeated top-level keys).
+  security = {
+    sshCaPublicKey = "/etc/ssh/trusted-user-ca-keys.pem";
+    sshCaPrincipals.${hostAdminUser} = [ "ai-agent" ];
+
+    # Inbound services admitted through the pf anchor (pf-hardening.nix) before
+    # its default-deny. Sources reuse security.pf.allowedSshSources; the flake's
+    # pf-anchor-syntax check pins each pass to sit before `block in all` in the
+    # rendered anchor.
+    pf.allowedTcpServices = [
+      # macmon Prometheus exporter — the port is pinned in macmon-exporter.nix's
+      # launchd argv.
+      {
+        sources = config.security.pf.allowedSshSources;
+        port = 9090;
+      }
+      # llm-gate API site on the LAN bind address (the router's Studio lane
+      # targets programs.llm-gate.apiPort).
+      {
+        sources = config.security.pf.allowedSshSources;
+        port = config.programs.llm-gate.apiPort;
+      }
+      # llm-gate cluster-mode site, rendered above via clusterUpstreamPort
+      # (the same external:loopback mirrored-port convention).
+      {
+        sources = config.security.pf.allowedSshSources;
+        port = config.programs.llm-gate.clusterPort;
+      }
+    ];
+  };
 
   environment.etc."sudoers.d/host-admin".text = ''
     ${hostAdminUser} ALL=(ALL) NOPASSWD: ALL
