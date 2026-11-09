@@ -473,10 +473,8 @@
               let
                 darwinPkgs = nixpkgs.legacyPackages.aarch64-darwin;
                 anchorTextOf = cfg: cfg.config.environment.etc."pf.anchors/nix-hardening".text;
-                # The Studio is the enforced host: its rendered anchor must
-                # pass the metrics scrape and the llm-gate serving ports from
-                # security.pf.allowedSshSources, and each pass must sit before
-                # `block in all` — last-match-wins only helps what a rule
+                # Each service pass in the rendered anchor must sit before
+                # `block in all`; last-match-wins only helps what a rule
                 # already admitted.
                 studio = configs.${hosts.mac-studio.hostName};
                 servingPorts = builtins.map toString [
