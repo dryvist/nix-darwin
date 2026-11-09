@@ -41,7 +41,12 @@ pkgs.writeText "llm-gate.Caddyfile" ''
     }
     @unauthorized not header Authorization "Bearer {env.LLM_LARGE_BEARER_TOKEN}"
     respond @unauthorized 401
-    reverse_proxy 127.0.0.1:${toString cfg.apiUpstreamPort}
+    reverse_proxy 127.0.0.1:${toString cfg.apiUpstreamPort} {
+      transport http {
+        versions 1.1
+        max_conns_per_host ${toString cfg.apiMaxUpstreamConnections}
+      }
+    }
   }
 
   ${clusterSite}

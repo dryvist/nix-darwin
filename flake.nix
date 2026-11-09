@@ -469,6 +469,12 @@
               inherit configs userConfig;
             };
 
+            studio-lane = import ./lib/checks/studio-lane.nix {
+              pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+              studio = configs.${hosts.mac-studio.hostName};
+              inherit userConfig;
+            };
+
             pf-anchor-syntax =
               let
                 darwinPkgs = nixpkgs.legacyPackages.aarch64-darwin;

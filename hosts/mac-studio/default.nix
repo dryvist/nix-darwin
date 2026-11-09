@@ -197,7 +197,12 @@ in
       # The clustered site still mirrors its loopback service port. That
       # service's specific loopback bind keeps local HTTP callers from being
       # captured by Caddy's wildcard TLS listener. The regular API gate targets
-      # the catalog-selected resident on its worker port.
+      # the catalog-selected Qwen resident on its worker port.
+      #
+      # Keep the edge connection cap single-sourced from the Studio's local
+      # proxy admission ceiling.
+      apiMaxUpstreamConnections = hostConfig.mlx.proxy.concurrencyLimit;
+      #
       # Clustered-mode endpoint (mlx-lm rank 0 on loopback :11440, see
       # lib/hosts/mac-studio.nix clusterMode): second gated site, same
       # bearer token and cert, mirrored external:loopback port convention.
