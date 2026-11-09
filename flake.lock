@@ -1056,11 +1056,11 @@
         "systems": "systems_4"
       },
       "locked": {
-        "lastModified": 1731533236,
-        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
+        "lastModified": 1791914995,
+        "narHash": "sha256-Zf/xfQEAasnwnmEfHqW/4hjDE/s44yn2hD4RuVIZRjA=",
         "owner": "numtide",
         "repo": "flake-utils",
-        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
+        "rev": "b7a79d3fea1e214f6d668d521cecec0c01e26544",
         "type": "github"
       },
       "original": {
@@ -1446,11 +1446,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792811453,
-        "narHash": "sha256-PPPvyo0vn5uoaupFEPll4dpHgmtNCw8dBaUMOZBrnTM=",
+        "lastModified": 1794021513,
+        "narHash": "sha256-p5+VgpRuEICtsZxt+BExOB4G3E8MMOAkeLOFVkXs8yA=",
         "owner": "dryvist",
         "repo": "homelab-contracts",
-        "rev": "dc4182d54f7ecadec5de61dd9dbeae60bb27e9f8",
+        "rev": "88d2c7980531e5da1a7d56d9332f4c58d123801a",
         "type": "github"
       },
       "original": {
@@ -2073,11 +2073,11 @@
         "tofu-github": "tofu-github_2"
       },
       "locked": {
-        "lastModified": 1793998020,
-        "narHash": "sha256-MbEGUQa63wA0+M9V9u6Wj6ey3/v6zHCcyS/I5KN0IEU=",
+        "lastModified": 1794234563,
+        "narHash": "sha256-c7jNVy73ag4/QrzhAupNDO0xSOzYSx1WnKHzNQ/ip1I=",
         "owner": "dryvist",
         "repo": "nix-home",
-        "rev": "ecc9cd8f8ce970a74e90ca81d38b76b5e5704327",
+        "rev": "c3423dc49cb2250b906f5e7b6bdc701dba9a08e0",
         "type": "github"
       },
       "original": {
