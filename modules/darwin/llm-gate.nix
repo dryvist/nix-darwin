@@ -50,8 +50,9 @@ let
     lib.unique ([ cfg.domain ] ++ cfg.extraHostnames)
   );
 
-  # Bind each listener explicitly. The safe default is loopback-only; a
-  # host-specific overlay supplies any inventory-derived LAN listener.
+  # Pin every listener to the host's LAN address(es) so Caddy never binds the
+  # wildcard socket (INC-17114). Empty list keeps Caddy's default. See
+  # ./llm-gate.md and the bindAddresses option.
   bindDirective = lib.optionalString (cfg.bindAddresses != [ ]) (
     "bind " + lib.concatStringsSep " " cfg.bindAddresses
   );
@@ -124,13 +125,12 @@ in
 
     bindAddresses = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = [ "127.0.0.1" ];
+      default = [ ];
+      example = [ "10.0.0.2" ];
       description = ''
-        Address(es) each gate site binds its listener to. The loopback-only
-        default keeps the gate private until a host-specific configuration
-        supplies its approved LAN address(es). A non-empty value restricts
-        every site to exactly those addresses, so Caddy never binds the
-        wildcard/all-interfaces socket by default.
+        LAN-facing IP address(es) each gate site binds its listener to. When
+        non-empty a `bind` directive restricts every site to exactly these
+        addresses, so Caddy never binds the wildcard/all-interfaces socket.
 
         Required whenever a gate port mirrors its loopback upstream (the default
         apiPort == apiUpstreamPort, likewise the cluster port): a wildcard bind
@@ -140,9 +140,8 @@ in
         the LAN address guarantees loopback:PORT is answered by the upstream or
         refused, never by the gate.
 
-        Caddy's `bind` takes socket addresses, not DNS names. An explicitly
-        empty list retains Caddy's wildcard default; leave this option unset to
-        keep the safe loopback-only default.
+        A literal is required — Caddy's `bind` takes socket addresses, not DNS
+        names — so set the host's fixed LAN address. Empty keeps Caddy's default.
       '';
     };
 

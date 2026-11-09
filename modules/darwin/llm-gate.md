@@ -6,10 +6,10 @@ in its header comment.
 
 ## Role
 
-ADR: `llm-large-studio-serving`. The model server stays on loopback; this Caddy
-front terminates TLS on configured addresses and enforces a bearer token (the
-OpenAI `api_key` field, native in every consumer). It is the only network path
-to the model port.
+[ADR](https://docs.dryvist.com/d/decisions/llm-large-studio-serving/): the model
+server stays bound to 127.0.0.1; this Caddy front terminates TLS on the host's
+LAN address and enforces a bearer token (the OpenAI `api_key` field, native in
+every consumer). It is the only network path to the model port.
 
 API-only: the chat UI moved to the single cluster-hosted Open WebUI, so this
 gate no longer fronts a local web UI. `extraHostnames` lets the one API site
@@ -18,16 +18,15 @@ cert/SNI covers them alongside the host FQDN.
 
 ## Loopback bind
 
-Each gate site binds to `bindAddresses`. Its default is loopback-only; a
-host-specific configuration must supply approved LAN addresses before router
-traffic can reach the API. The PF allow list is configured separately and
-admits only the router sources to the API port.
+Each gate site pins its listener to the host's LAN address via `bindAddresses`,
+never the wildcard socket. `apiPort`/`clusterPort` mirror their loopback
+upstream ports, so a wildcard listener would also own `127.0.0.1:PORT`; when
+llama-swap drops its specific loopback bind, Caddy would capture loopback
+traffic into its own TLS listener and clients would see "Client sent an HTTP
+request to an HTTPS server". Binding the LAN address guarantees `127.0.0.1:PORT`
+is answered by llama-swap or refused, never by the gate.
 
-`apiPort`/`clusterPort` mirror their loopback upstream ports, so a wildcard
-listener would also own `127.0.0.1:PORT`; when llama-swap drops its specific
-loopback bind, Caddy would capture loopback traffic into its own TLS listener
-and clients would see "Client sent an HTTP request to an HTTPS server". An
-unset bind list no longer selects that wildcard behavior.
+## Upstream connection cap
 
 The API upstream uses HTTP/1.1 with `apiMaxUpstreamConnections`. Its module
 default is `1`; the Studio sets it from its existing two-request local proxy
