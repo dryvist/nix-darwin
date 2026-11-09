@@ -139,8 +139,10 @@ in
     # ========================================================================
     # llm-large Serving Gate (ADR: llm-large-studio-serving)
     # ========================================================================
-    # Caddy terminates TLS on the LAN address and enforces the bearer token; the
-    # model server stays on 127.0.0.1. Runs as a user LaunchAgent wrapped in
+    # Caddy terminates TLS on configured addresses and enforces the bearer
+    # token; its module default is loopback-only. A host-specific overlay
+    # supplies the inventory-derived LAN address and router-only PF sources.
+    # The model server stays on loopback. Runs as a user LaunchAgent wrapped in
     # `openbao-run` — the bearer token, Route53 ACME creds, and region are pulled
     # live from OpenBao (never stored on this host or in sops; see llm-gate.nix).
     # route53 mode issues a real Let's Encrypt cert via DNS-01, so the cert covers
@@ -159,19 +161,15 @@ in
       # the public zone issues cleanly, same as the host FQDN. (A future
       # public-facing capability name is tracked separately.)
       extraHostnames = [ "llm-large.${userConfig.baseDomain}" ];
-      # bindAddresses is deliberately UNSET: the gate listens on all interfaces
-      # and the firewall is the boundary.
+      # The unset bindAddresses option retains the safe loopback-only default.
+      # A host-specific overlay supplies the LAN listener and the firewall
+      # allows the API port only from the router source list.
+      # Keep the edge connection cap single-sourced from the Studio's local
+      # proxy admission ceiling.
+      apiMaxUpstreamConnections = hostConfig.mlx.proxy.concurrencyLimit;
       #
-      # It previously pinned one interface's address. This host has interfaces
-      # on two networks, the published A record points at the other one, and the
-      # gate therefore refused every caller that resolved its own name while the
-      # service itself was healthy. Pinning one address means the bind list and
-      # DNS are two places that must agree, and nothing detects them disagreeing.
-      #
-      # The clustered site still mirrors its loopback service port. That
-      # service's specific loopback bind keeps local HTTP callers from being
-      # captured by Caddy's wildcard TLS listener. The regular API gate targets
-      # the catalog-selected resident on its worker port.
+      # The clustered site still mirrors its loopback service port. The regular
+      # API gate targets the catalog-selected Qwen resident on its worker port.
       # Clustered-mode endpoint (mlx-lm rank 0 on loopback :11440, see
       # lib/hosts/mac-studio.nix clusterMode): second gated site, same
       # bearer token and cert, mirrored external:loopback port convention.
