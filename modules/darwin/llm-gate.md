@@ -26,6 +26,15 @@ traffic into its own TLS listener and clients would see "Client sent an HTTP
 request to an HTTPS server". Binding the LAN address guarantees `127.0.0.1:PORT`
 is answered by llama-swap or refused, never by the gate.
 
+## Upstream connection cap
+
+The API upstream uses HTTP/1.1 with `apiMaxUpstreamConnections`. Its module
+default is `1`; the Studio sets it from its existing two-request local proxy
+admission ceiling. Caddy's `max_conns_per_host` limit caps simultaneous
+forwarded API requests. The model worker separately caps active decode
+concurrency; together they allow one active and one waiting request at the
+Studio lane.
+
 ## Secrets
 
 Secrets are NOT stored on this host. Nothing sensitive is baked into the

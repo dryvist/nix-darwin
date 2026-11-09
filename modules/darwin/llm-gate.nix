@@ -172,6 +172,17 @@ in
       description = "Loopback MLX endpoint port the API site proxies to.";
     };
 
+    apiMaxUpstreamConnections = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 1;
+      description = ''
+        Maximum connections from the API gate to its model server. Default 1
+        is conservative. The API transport uses HTTP/1.1 and Caddy's
+        max_conns_per_host limit, so this also caps simultaneous forwarded API
+        requests. The separate cluster site is not changed by this option.
+      '';
+    };
+
     clusterPort = lib.mkOption {
       type = lib.types.port;
       default = 11440;

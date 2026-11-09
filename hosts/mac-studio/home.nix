@@ -6,7 +6,9 @@
 # (from the registry class) already drops the GUI/desktop features.
 
 {
+  config,
   lib,
+  osConfig,
   ...
 }:
 
@@ -31,6 +33,16 @@
   # Ceiling: any session run natively on this host goes uncollected too —
   # move the replica outside the transcript roots before re-enabling.
   programs = {
+    mlx.modelAdmissionLimits =
+      let
+        roleModels = config.programs.mlx.roleMap.models;
+        admissionLimit = osConfig.programs.llm-gate.apiMaxUpstreamConnections;
+      in
+      {
+        ${roleModels.qwen38-27b.id} = admissionLimit;
+        ${roleModels.mimo-9b.id} = admissionLimit;
+      };
+
     claudeUsageCollector.enable = lib.mkForce false;
 
     litellmLocal = {
