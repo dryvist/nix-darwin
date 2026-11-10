@@ -167,6 +167,6 @@ in
 
   # Keep interactive Homebrew commands on the same pinned taps as activation.
   environment.variables.HOMEBREW_NO_INSTALL_FROM_API = "1";
-  # Taps are read-only flake pins, so `brew upgrade` must not try to fetch them.
+  # Homebrew commands do not update taps.
   environment.variables.HOMEBREW_NO_AUTO_UPDATE = "1";
 }
