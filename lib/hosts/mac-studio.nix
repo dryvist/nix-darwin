@@ -77,8 +77,8 @@ in
     };
   };
 
-  # The Studio hosts the agent sessions: Ghostty is their terminal, and the AI
-  # desktop apps match the workstation's. mkHost merges this over the server profile.
+  # Ghostty and the same AI desktop apps as the workstation profile. mkHost
+  # merges this over the server profile.
   homebrew = {
     ghostty = true;
     ai = {
