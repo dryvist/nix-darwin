@@ -34,10 +34,10 @@
         ${roleModels.mimo-9b.id} = admissionLimit;
       };
 
-    # Claude Code uses a 1M-token auto-compact window and compacts at 85% of it.
+    # Claude Code uses a 750k-token auto-compact window and compacts at 75% of it.
     claude.settings = {
-      autoCompactThresholdPercent = 85;
-      env.CLAUDE_CODE_AUTO_COMPACT_WINDOW = "1000000";
+      autoCompactThresholdPercent = 75;
+      env.CLAUDE_CODE_AUTO_COMPACT_WINDOW = "750000";
     };
 
     litellmLocal = {
