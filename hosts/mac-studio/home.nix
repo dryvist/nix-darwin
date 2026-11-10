@@ -45,6 +45,12 @@
 
     claudeUsageCollector.enable = lib.mkForce false;
 
+    # Claude Code uses a 750k-token auto-compact window and compacts at 75% of it.
+    claude.settings = {
+      autoCompactThresholdPercent = 75;
+      env.CLAUDE_CODE_AUTO_COMPACT_WINDOW = "750000";
+    };
+
     litellmLocal = {
       enable = true;
     };

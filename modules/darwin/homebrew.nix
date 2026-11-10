@@ -2,6 +2,7 @@
 # Formulae and casks come from the flake-pinned core and cask taps.
 
 {
+  config,
   lib,
   nix-ai,
   hostConfig,
@@ -21,6 +22,13 @@ let
   # passes the host's single default-off capability set.
   aiHomebrew = nix-ai.lib.homebrewFor homebrew.ai;
 
+  # Claude Code casks selected per user by programs.claude.install = "brew".
+  claudeCasks = lib.unique (
+    lib.filter (c: c != null) (
+      lib.mapAttrsToList (_: u: u.programs.claude.brewCask or null) config.home-manager.users
+    )
+  );
+
   workstationBrews = [
     # Versioned runtime remains available alongside the Nix-managed Node.js.
     "node@22"
@@ -29,27 +37,17 @@ let
     "whisperkit-cli"
   ];
 
-  workstationCasks = [
-    # Casks install stable /Applications copies, preserving macOS TCC grants.
-    # greedy lets Homebrew upgrade apps with built-in updaters.
-
+  ghosttyCasks = [
     # --- Terminal ---
-    # THE most TCC-sensitive app here: every agent session and every
-    # darwin-rebuild runs inside it, so a lapsed Full Disk Access grant does not
-    # merely annoy — it stops the machine being manageable until a human
-    # re-grants it. Moved off nixpkgs copyApps on 2026-07-29 because activation
-    # replaces the bundle wholesale, and a delete-and-recreate is a new bundle to
-    # TCC even at a stable path and even for a Developer-ID-signed app.
-    # Local Network is a THIRD grant this app needs, and the one that fails
-    # silently — but only while the machine is attached to a subnet it also
-    # talks to. macOS gates same-subnet connections and exempts routed ones, so
-    # on a client VLAN the grant is moot. No MDM payload and no tccutil verb
-    # exist, so only a human can grant it, and greedy compounds that: each
-    # upgrade is a new bundle to TCC, revoking it.
     {
       name = "ghostty";
       greedy = true;
     } # Terminal emulator — needs Full Disk Access + App Management + Local Network
+  ];
+
+  workstationCasks = [
+    # Casks install into /Applications. greedy lets Homebrew upgrade apps with
+    # built-in updaters.
 
     # --- Productivity / Communication ---
     # nixpkgs trails upstream releases past the 2-week threshold; greedy cask
@@ -147,10 +145,16 @@ in
     taps = [ "homebrew/cask" ] ++ aiHomebrew.taps;
     brews =
       baseBrews ++ aiHomebrew.brews ++ lib.optionals homebrew.enableWorkstationApps workstationBrews;
-    casks = aiHomebrew.casks ++ lib.optionals homebrew.enableWorkstationApps workstationCasks;
+    casks =
+      aiHomebrew.casks
+      ++ claudeCasks
+      ++ lib.optionals homebrew.ghostty ghosttyCasks
+      ++ lib.optionals homebrew.enableWorkstationApps workstationCasks;
     masApps = lib.optionalAttrs homebrew.enableWorkstationApps workstationMasApps;
   };
 
   # Keep interactive Homebrew commands on the same pinned taps as activation.
   environment.variables.HOMEBREW_NO_INSTALL_FROM_API = "1";
+  # Homebrew commands do not update taps.
+  environment.variables.HOMEBREW_NO_AUTO_UPDATE = "1";
 }

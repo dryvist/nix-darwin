@@ -84,10 +84,12 @@ let
     })
     (app "/Applications/Omi.app" { mas = 6502156163; })
     (app "/Applications/Granola.app" { cask = "granola"; })
-
+  ]
+  ++ lib.optionals hostConfig.homebrew.ghostty [
     # Terminal
     (app "/Applications/Ghostty.app" { cask = "ghostty"; })
-
+  ]
+  ++ lib.optionals enableWorkstationApps [
     # Development & Editors
     (app "${hmApps}/Visual Studio Code.app" { nixpkgs = "vscode"; })
 
@@ -95,11 +97,25 @@ let
     (app "/Applications/ProxMan.app" {
       manual = "vendor download; no Homebrew cask or Mac App Store listing";
     })
+  ]
+  ++ lib.optionals hostConfig.homebrew.ai.claudeDesktop [
     (app "/Applications/Claude.app" { cask = "claude"; })
+  ]
+  ++ lib.optionals enableWorkstationApps [
     (app "${homeDir}/Applications/Gemini.app" {
       manual = "vendor download; the Homebrew gemini cask installs a different app bundle";
     })
+  ]
+  ++ lib.optionals hostConfig.homebrew.ai.chatgptDesktop [
     (app "/Applications/ChatGPT.app" { cask = "chatgpt"; })
+  ]
+  ++ lib.optionals hostConfig.homebrew.ai.codexDesktop [
+    (app "/Applications/Codex.app" { cask = "codex-app"; })
+  ]
+  ++ lib.optionals hostConfig.homebrew.ai.antigravityDesktop [
+    (app "/Applications/Antigravity.app" { cask = "antigravity"; })
+  ]
+  ++ lib.optionals enableWorkstationApps [
 
     # Remote Desktop (positioned at the very end of app icons)
     (app "/Applications/Windows App.app" { mas = 1295203466; })

@@ -3,11 +3,8 @@
 # Apple Silicon Mac Studio (M4 Max, 128 GB RAM). Headless, always-on LAN
 # inference / batch server (`class = server`).
 #
-# Shared system config — module imports, networking.hostName, OrbStack, the
-# MLX model-server Cribl log-shipping pipeline, and server-class macOS defaults
-# (Wake-on-LAN, network tuning, energyMode) — lives in ../common/default.nix.
-# This file adds the host-unique bits: ComputerName, headless inference/power
-# tuning, the llm-large serving gate, and the ephemeral GitHub Actions runner.
+# Shared config lives in ../common/default.nix. This file adds the host-unique
+# bits: ComputerName, inference/power tuning, the llm-large gate, the CI runner.
 
 {
   config,
@@ -76,6 +73,9 @@ in
       }
     ];
   };
+
+  # Application firewall stealth mode is off on this host.
+  networking.applicationFirewall.enableStealthMode = lib.mkForce false;
 
   environment.etc."sudoers.d/host-admin".text = ''
     ${hostAdminUser} ALL=(ALL) NOPASSWD: ALL

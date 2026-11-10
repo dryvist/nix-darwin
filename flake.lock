@@ -25,15 +25,15 @@
         ]
       },
       "locked": {
-        "lastModified": 1794104589,
-        "narHash": "sha256-/8/gzEugwUw0c6JXiv8R5efurlTFsMHs7OK3+jcbArU=",
-        "owner": "dryvist",
+        "lastModified": 1794262646,
+        "narHash": "sha256-q5lU9lmN0sAUz1K/Lns2+o5cNWYu4PnCjvQK/JDyWek=",
+        "owner": "JacobPEvans-ai",
         "repo": "ai-llm-prompts",
-        "rev": "90ebdda28ae0b436ccf4112e66f897166d812cae",
+        "rev": "3ec6a8b78aa7d8ffe28af4c220cea1a508fce704",
         "type": "github"
       },
       "original": {
-        "owner": "dryvist",
+        "owner": "JacobPEvans-ai",
         "ref": "v1",
         "repo": "ai-llm-prompts",
         "type": "github"
@@ -485,23 +485,6 @@
         "type": "github"
       }
     },
-    "claude-swap": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1793167745,
-        "narHash": "sha256-uESik88Anao+fhAIqIfU8+ATSM8ps129LL7PgkmgUdc=",
-        "owner": "realiti4",
-        "repo": "claude-swap",
-        "rev": "480d194d920091dd568e9d1b3ab76a36be6867ff",
-        "type": "github"
-      },
-      "original": {
-        "owner": "realiti4",
-        "ref": "v0.29.0",
-        "repo": "claude-swap",
-        "type": "github"
-      }
-    },
     "collie-upstream": {
       "inputs": {
         "nixpkgs": [
@@ -913,11 +896,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790898470,
-        "narHash": "sha256-zTwuwezD0w3hpga6a6P8emidzAZFyWqlNeRBlpWOOl8=",
+        "lastModified": 1793576659,
+        "narHash": "sha256-V1h85lUaJBQoHFrB2vpXZOE0Ju1MYSnIpsehoVZYlDo=",
         "owner": "hercules-ci",
         "repo": "flake-parts",
-        "rev": "024633cd702b10285db5cb19b40ad48d2399ba60",
+        "rev": "ea2630b7470978622c7689a1ff75d2b389175399",
         "type": "github"
       },
       "original": {
@@ -1582,11 +1565,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1792832837,
-        "narHash": "sha256-9roACN0TYCVsoyaQvXl4LKIWGoBCdzxVSEO9JSM1td8=",
+        "lastModified": 1794236353,
+        "narHash": "sha256-rcmzzR+kdb4yKL+NPfF/M0I6oXA9YfzVazBzWDlG2Xg=",
         "owner": "numtide",
         "repo": "llm-agents.nix",
-        "rev": "688d92a2d0396506e8cde81f0bb63dec7e6d64db",
+        "rev": "4c6c37495fc45a46cb6f86cc6b0865e363fb77f2",
         "type": "github"
       },
       "original": {
@@ -1781,11 +1764,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1794221122,
-        "narHash": "sha256-pLah91nD1vhBvwBPbuuph92ESws3T6lg5wsX4ZSLiGI=",
+        "lastModified": 1794305820,
+        "narHash": "sha256-u3IbDKO7xhUk6sEazr9B7tiqRz2qG+dadb4BQvOVMF8=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "2547d60f26b7c465bce42b2c8da805f46afccb4c",
+        "rev": "68a4194b4dba8558e12accc7cb28c7db365ff8c1",
         "type": "github"
       },
       "original": {
@@ -1888,7 +1871,6 @@
         "claude-cookbooks": "claude-cookbooks",
         "claude-plugins-official": "claude-plugins-official",
         "claude-skills": "claude-skills",
-        "claude-swap": "claude-swap",
         "dryvist-github": "dryvist-github",
         "fabric-src": [
           "nix-ai",
@@ -1917,11 +1899,11 @@
         "visual-explainer-marketplace": "visual-explainer-marketplace"
       },
       "locked": {
-        "lastModified": 1794187449,
-        "narHash": "sha256-lPXLGdckmcsJOiedDkOpxQb4oU+QSw5l1LKV/vYvy24=",
+        "lastModified": 1794268630,
+        "narHash": "sha256-rjCC+K+Y9BVD1j/PwP8M+AyXCKn1MOm3UNBuGJefMcA=",
         "owner": "dryvist",
         "repo": "nix-claude-code",
-        "rev": "f4be7a66e0659f82d4589e80581512f22488fcef",
+        "rev": "aeb13f8a24b61a02dc291a520fc6a1439a408022",
         "type": "github"
       },
       "original": {
@@ -1934,11 +1916,11 @@
     "nix-claude-code-launcher-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1793364190,
-        "narHash": "sha256-dhIjFgLMhvEF1ownq0pz4IG3O9cwhGMUwe83SPx4P6s=",
+        "lastModified": 1794268630,
+        "narHash": "sha256-rjCC+K+Y9BVD1j/PwP8M+AyXCKn1MOm3UNBuGJefMcA=",
         "owner": "dryvist",
         "repo": "nix-claude-code",
-        "rev": "49f53858dcc9df00116a9c2816eda9b40d294852",
+        "rev": "aeb13f8a24b61a02dc291a520fc6a1439a408022",
         "type": "github"
       },
       "original": {
@@ -2040,14 +2022,15 @@
         "nixpkgs": [
           "nix-ai",
           "nixpkgs-unstable"
-        ]
+        ],
+        "penso-tap": "penso-tap"
       },
       "locked": {
-        "lastModified": 1793973790,
-        "narHash": "sha256-DSq6Lv0oX9cZX1RwXgrV5iBo2S6VgWx27kaGHaSTAH8=",
+        "lastModified": 1794283656,
+        "narHash": "sha256-07qDg+bO4Y9fDcBYdMNlbiR0A7KtcER5sDulqBrn9H8=",
         "owner": "jpe-nix",
         "repo": "nix-herdr",
-        "rev": "543374aaef1ae3f25a924b6fede546c8edd86943",
+        "rev": "3617bbe542622d73018424991c8e703e28e8fdee",
         "type": "github"
       },
       "original": {
@@ -2073,11 +2056,11 @@
         "tofu-github": "tofu-github_2"
       },
       "locked": {
-        "lastModified": 1794234563,
-        "narHash": "sha256-c7jNVy73ag4/QrzhAupNDO0xSOzYSx1WnKHzNQ/ip1I=",
+        "lastModified": 1794343161,
+        "narHash": "sha256-rcqjC3Y2v5FQLJhixKPsZ07NwYu7duUG0NeXerAIHiA=",
         "owner": "dryvist",
         "repo": "nix-home",
-        "rev": "c3423dc49cb2250b906f5e7b6bdc701dba9a08e0",
+        "rev": "2939ce8be7e703bd8aed2477a21c16693c9bd9ca",
         "type": "github"
       },
       "original": {
@@ -2115,11 +2098,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791682365,
-        "narHash": "sha256-4XXQTY9a6SLPOPrWsRIQ27tPrUIrKMPcTWxhydW0vzg=",
+        "lastModified": 1794260083,
+        "narHash": "sha256-TqvEtYeh5qRbrJszZAww5QnEM2Y3ZTmt3hnm2OMpIgA=",
         "owner": "dryvist",
         "repo": "nix-openwhispr",
-        "rev": "19f2e0c0c48fd7b4d7d61b876a0d0f62d29e9d11",
+        "rev": "1b77924c67e56f01e89b3a275337083143abd6cf",
         "type": "github"
       },
       "original": {
@@ -2312,11 +2295,11 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1792116957,
-        "narHash": "sha256-EjZqHKObBfIOeHZnMRVV87HB3pPq/WBkmRJWyFxmZu8=",
+        "lastModified": 1793826729,
+        "narHash": "sha256-D5H7H+qMoTGI/jJtxKP4u7BdjkFnUyhOovTrf3pTOr0=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "f20cd90e28fe0403873f473b29e42662cd86e8c4",
+        "rev": "6dadaf4375be35033e1c84395adbd53ff5fded96",
         "type": "github"
       },
       "original": {
@@ -2388,6 +2371,22 @@
         "owner": "dryvist",
         "ref": "v2.0.6",
         "repo": "orbstack-kubernetes",
+        "type": "github"
+      }
+    },
+    "penso-tap": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793169243,
+        "narHash": "sha256-cBADammNcFl+N0PnoA4fCHJczSF8Ck6FWU8pnVR1B/s=",
+        "owner": "penso",
+        "repo": "homebrew-tap",
+        "rev": "238454b44704bcf382d4f2db51dd20496899f14f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "penso",
+        "repo": "homebrew-tap",
         "type": "github"
       }
     },
