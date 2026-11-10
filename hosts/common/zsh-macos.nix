@@ -42,6 +42,16 @@ in
         )
       ''}
 
+      # Refuses `brew update`; taps come from flake inputs
+      # (modules/darwin/nix-homebrew.nix).
+      brew() {
+        if [[ $1 == update ]]; then
+          print -u2 "brew update: taps are pinned by the nix-darwin flake; pull develop and run darwin-rebuild switch."
+          return 1
+        fi
+        command brew "$@"
+      }
+
       # --- Keychain helper (persists for runtime token switching) ---
 
       _get_keychain_secret() {

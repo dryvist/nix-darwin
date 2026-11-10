@@ -77,6 +77,19 @@ in
     };
   };
 
+  # Ghostty and the same AI desktop apps as the workstation profile. mkHost
+  # merges this over the server profile.
+  homebrew = {
+    ghostty = true;
+    ai = {
+      antigravityDesktop = true;
+      antigravityIde = true;
+      chatgptDesktop = true;
+      claudeDesktop = true;
+      codexDesktop = true;
+    };
+  };
+
   # OrbStack stays OFF — this host uses the Apple `container` runtime, not
   # OrbStack. The ContainerData volume is still created (apfsVolumes below).
   orbstack.enable = false;

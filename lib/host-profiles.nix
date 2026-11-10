@@ -5,8 +5,11 @@
 let
   default = {
     homebrew = {
-      cleanup = "zap";
+      # `uninstall` removes undeclared casks without running their zap stanzas.
+      cleanup = "uninstall";
       enableWorkstationApps = false;
+      # The Ghostty terminal cask, and its Dock tile.
+      ghostty = false;
       ai = {
         antigravityDesktop = false;
         antigravityIde = false;
@@ -19,11 +22,9 @@ let
     };
   };
 
-  # Headless hosts still receive every shared AI CLI.
+  # AI CLIs come from Nix on every host; servers add only goose.
   server = lib.recursiveUpdate default {
-    homebrew.ai = {
-      goose = true;
-    };
+    homebrew.ai.goose = true;
   };
 
   # Workstations add graphical applications to the shared CLI baseline.
@@ -33,11 +34,13 @@ let
       # configuration does not declare; it never deletes one.
       cleanup = "check";
       enableWorkstationApps = true;
+      ghostty = true;
       ai = {
         antigravityDesktop = true;
         antigravityIde = true;
         chatgptDesktop = true;
         claudeDesktop = true;
+        codexDesktop = true;
       };
     };
   };
