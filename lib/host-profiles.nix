@@ -5,7 +5,8 @@
 let
   default = {
     homebrew = {
-      cleanup = "zap";
+      # `uninstall` removes undeclared casks without running their zap stanzas.
+      cleanup = "uninstall";
       enableWorkstationApps = false;
       ai = {
         antigravityDesktop = false;
