@@ -37,10 +37,7 @@ let
     "whisperkit-cli"
   ];
 
-  workstationCasks = [
-    # Casks install stable /Applications copies, preserving macOS TCC grants.
-    # greedy lets Homebrew upgrade apps with built-in updaters.
-
+  ghosttyCasks = [
     # --- Terminal ---
     # THE most TCC-sensitive app here: every agent session and every
     # darwin-rebuild runs inside it, so a lapsed Full Disk Access grant does not
@@ -58,6 +55,11 @@ let
       name = "ghostty";
       greedy = true;
     } # Terminal emulator — needs Full Disk Access + App Management + Local Network
+  ];
+
+  workstationCasks = [
+    # Casks install stable /Applications copies, preserving macOS TCC grants.
+    # greedy lets Homebrew upgrade apps with built-in updaters.
 
     # --- Productivity / Communication ---
     # nixpkgs trails upstream releases past the 2-week threshold; greedy cask
@@ -156,10 +158,15 @@ in
     brews =
       baseBrews ++ aiHomebrew.brews ++ lib.optionals homebrew.enableWorkstationApps workstationBrews;
     casks =
-      aiHomebrew.casks ++ claudeCasks ++ lib.optionals homebrew.enableWorkstationApps workstationCasks;
+      aiHomebrew.casks
+      ++ claudeCasks
+      ++ lib.optionals homebrew.ghostty ghosttyCasks
+      ++ lib.optionals homebrew.enableWorkstationApps workstationCasks;
     masApps = lib.optionalAttrs homebrew.enableWorkstationApps workstationMasApps;
   };
 
   # Keep interactive Homebrew commands on the same pinned taps as activation.
   environment.variables.HOMEBREW_NO_INSTALL_FROM_API = "1";
+  # Taps are read-only flake pins, so `brew upgrade` must not try to fetch them.
+  environment.variables.HOMEBREW_NO_AUTO_UPDATE = "1";
 }

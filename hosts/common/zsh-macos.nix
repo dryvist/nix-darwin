@@ -42,6 +42,16 @@ in
         )
       ''}
 
+      # Taps are read-only flake pins (modules/darwin/nix-homebrew.nix): update
+      # them by relocking the flake and rebuilding, never with `brew update`.
+      brew() {
+        if [[ $1 == update ]]; then
+          print -u2 "brew update: taps are pinned by the nix-darwin flake; pull develop and run darwin-rebuild switch."
+          return 1
+        fi
+        command brew "$@"
+      }
+
       # --- Keychain helper (persists for runtime token switching) ---
 
       _get_keychain_secret() {
