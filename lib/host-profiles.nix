@@ -38,6 +38,7 @@ let
         antigravityIde = true;
         chatgptDesktop = true;
         claudeDesktop = true;
+        codexDesktop = true;
       };
     };
   };

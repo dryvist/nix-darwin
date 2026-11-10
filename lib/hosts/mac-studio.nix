@@ -77,11 +77,17 @@ in
     };
   };
 
-  # The Studio hosts the agent sessions: Ghostty is their terminal, and Claude
-  # Desktop sits beside them. mkHost merges this over the server profile.
+  # The Studio hosts the agent sessions: Ghostty is their terminal, and the AI
+  # desktop apps match the workstation's. mkHost merges this over the server profile.
   homebrew = {
     ghostty = true;
-    ai.claudeDesktop = true;
+    ai = {
+      antigravityDesktop = true;
+      antigravityIde = true;
+      chatgptDesktop = true;
+      claudeDesktop = true;
+      codexDesktop = true;
+    };
   };
 
   # OrbStack stays OFF — this host uses the Apple `container` runtime, not
