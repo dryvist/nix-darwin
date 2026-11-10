@@ -77,6 +77,13 @@ in
     };
   };
 
+  # The Studio hosts the agent sessions: Ghostty is their terminal, and Claude
+  # Desktop sits beside them. mkHost merges this over the server profile.
+  homebrew = {
+    ghostty = true;
+    ai.claudeDesktop = true;
+  };
+
   # OrbStack stays OFF — this host uses the Apple `container` runtime, not
   # OrbStack. The ContainerData volume is still created (apfsVolumes below).
   orbstack.enable = false;
