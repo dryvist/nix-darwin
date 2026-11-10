@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.23.1](https://github.com/dryvist/nix-darwin/compare/v4.23.0...v4.23.1) (2026-11-10)
+
+
+### Bug Fixes
+
+* **deps:** point ai-llm-prompts input at JacobPEvans-ai ([#3217](https://github.com/dryvist/nix-darwin/issues/3217)) ([fc0fef4](https://github.com/dryvist/nix-darwin/commit/fc0fef451d580a150220eef0836dfb89b0943374))
+
 ## [4.23.0](https://github.com/dryvist/nix-darwin/compare/v4.22.1...v4.23.0) (2026-11-09)
 
 
