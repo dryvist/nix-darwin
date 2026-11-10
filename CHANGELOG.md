@@ -1,5 +1,18 @@
 # Changelog
 
+## [4.24.0](https://github.com/dryvist/nix-darwin/compare/v4.23.1...v4.24.0) (2026-11-10)
+
+
+### Features
+
+* **homebrew:** Claude Code and Codex no longer come from Homebrew casks ([#3215](https://github.com/dryvist/nix-darwin/issues/3215)) ([4aa8885](https://github.com/dryvist/nix-darwin/commit/4aa8885ca0c12a5a43551042d480280f0fa90fc0))
+* **hosts:** make the Studio the agent session host ([#3219](https://github.com/dryvist/nix-darwin/issues/3219)) ([0683f14](https://github.com/dryvist/nix-darwin/commit/0683f14c8d81d88553ace958e9c4e6e5780d7cd9))
+
+
+### Bug Fixes
+
+* **mac-studio:** turn application firewall stealth mode off ([#3220](https://github.com/dryvist/nix-darwin/issues/3220)) ([bec27db](https://github.com/dryvist/nix-darwin/commit/bec27db703d4ab0d5dbe7127e87c93a3e1ae20d0))
+
 ## [4.23.1](https://github.com/dryvist/nix-darwin/compare/v4.23.0...v4.23.1) (2026-11-10)
 
 
