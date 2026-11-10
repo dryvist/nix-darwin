@@ -2056,11 +2056,11 @@
         "tofu-github": "tofu-github_2"
       },
       "locked": {
-        "lastModified": 1794234563,
-        "narHash": "sha256-c7jNVy73ag4/QrzhAupNDO0xSOzYSx1WnKHzNQ/ip1I=",
+        "lastModified": 1794343161,
+        "narHash": "sha256-rcqjC3Y2v5FQLJhixKPsZ07NwYu7duUG0NeXerAIHiA=",
         "owner": "dryvist",
         "repo": "nix-home",
-        "rev": "c3423dc49cb2250b906f5e7b6bdc701dba9a08e0",
+        "rev": "2939ce8be7e703bd8aed2477a21c16693c9bd9ca",
         "type": "github"
       },
       "original": {
