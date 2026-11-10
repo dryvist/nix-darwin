@@ -7,6 +7,7 @@
 
 {
   config,
+  lib,
   osConfig,
   ...
 }:
@@ -23,6 +24,14 @@
   # -currentHost`, as this user, no activation script needed).
   targets.darwin.currentHostDefaults."com.apple.screensaver".idleTime = 0;
 
+  # This host's transcript roots still hold a replica of another host's
+  # coding-agent transcripts (from the retired sessionSync). ../common/home.nix enables
+  # programs.claudeUsageCollector on every host, so this host's collector
+  # would re-read the replica and post the source host's cumulative totals a
+  # second time under its own identity. mkForce disables it here; the
+  # replica's owning host remains the single source for those transcripts.
+  # Ceiling: any session run natively on this host goes uncollected too —
+  # move the replica outside the transcript roots before re-enabling.
   programs = {
     mlx.modelAdmissionLimits =
       let
@@ -33,6 +42,8 @@
         ${roleModels.qwen38-27b.id} = admissionLimit;
         ${roleModels.mimo-9b.id} = admissionLimit;
       };
+
+    claudeUsageCollector.enable = lib.mkForce false;
 
     # Claude Code uses a 750k-token auto-compact window and compacts at 75% of it.
     claude.settings = {
