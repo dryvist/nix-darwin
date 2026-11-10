@@ -11,9 +11,7 @@ let
         antigravityDesktop = false;
         antigravityIde = false;
         chatgptDesktop = false;
-        claudeCode = false;
         claudeDesktop = false;
-        codex = false;
         codexDesktop = false;
         goose = false;
         langgraphCli = false;
@@ -24,8 +22,6 @@ let
   # Headless hosts still receive every shared AI CLI.
   server = lib.recursiveUpdate default {
     homebrew.ai = {
-      claudeCode = true;
-      codex = true;
       goose = true;
     };
   };

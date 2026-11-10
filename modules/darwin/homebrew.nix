@@ -2,6 +2,7 @@
 # Formulae and casks come from the flake-pinned core and cask taps.
 
 {
+  config,
   lib,
   nix-ai,
   hostConfig,
@@ -20,6 +21,13 @@ let
   # AI package identities and package types come from nix-ai. This module only
   # passes the host's single default-off capability set.
   aiHomebrew = nix-ai.lib.homebrewFor homebrew.ai;
+
+  # Claude Code casks selected per user by programs.claude.install = "brew".
+  claudeCasks = lib.unique (
+    lib.filter (c: c != null) (
+      lib.mapAttrsToList (_: u: u.programs.claude.brewCask or null) config.home-manager.users
+    )
+  );
 
   workstationBrews = [
     # Versioned runtime remains available alongside the Nix-managed Node.js.
@@ -147,7 +155,8 @@ in
     taps = [ "homebrew/cask" ] ++ aiHomebrew.taps;
     brews =
       baseBrews ++ aiHomebrew.brews ++ lib.optionals homebrew.enableWorkstationApps workstationBrews;
-    casks = aiHomebrew.casks ++ lib.optionals homebrew.enableWorkstationApps workstationCasks;
+    casks =
+      aiHomebrew.casks ++ claudeCasks ++ lib.optionals homebrew.enableWorkstationApps workstationCasks;
     masApps = lib.optionalAttrs homebrew.enableWorkstationApps workstationMasApps;
   };
 

@@ -72,6 +72,7 @@ in
       EnvironmentVariables = {
         HOME = homeDir;
         PATH = agentPath;
+        CLAUDE_BIN = config.home-manager.users.${cfg.user}.programs.claude.binaryPath;
       };
     };
 
