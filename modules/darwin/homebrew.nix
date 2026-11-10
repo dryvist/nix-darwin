@@ -39,18 +39,6 @@ let
 
   ghosttyCasks = [
     # --- Terminal ---
-    # THE most TCC-sensitive app here: every agent session and every
-    # darwin-rebuild runs inside it, so a lapsed Full Disk Access grant does not
-    # merely annoy — it stops the machine being manageable until a human
-    # re-grants it. Moved off nixpkgs copyApps on 2026-07-29 because activation
-    # replaces the bundle wholesale, and a delete-and-recreate is a new bundle to
-    # TCC even at a stable path and even for a Developer-ID-signed app.
-    # Local Network is a THIRD grant this app needs, and the one that fails
-    # silently — but only while the machine is attached to a subnet it also
-    # talks to. macOS gates same-subnet connections and exempts routed ones, so
-    # on a client VLAN the grant is moot. No MDM payload and no tccutil verb
-    # exist, so only a human can grant it, and greedy compounds that: each
-    # upgrade is a new bundle to TCC, revoking it.
     {
       name = "ghostty";
       greedy = true;
@@ -58,8 +46,8 @@ let
   ];
 
   workstationCasks = [
-    # Casks install stable /Applications copies, preserving macOS TCC grants.
-    # greedy lets Homebrew upgrade apps with built-in updaters.
+    # Casks install into /Applications. greedy lets Homebrew upgrade apps with
+    # built-in updaters.
 
     # --- Productivity / Communication ---
     # nixpkgs trails upstream releases past the 2-week threshold; greedy cask
