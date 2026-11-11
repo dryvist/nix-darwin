@@ -549,6 +549,9 @@ in
                 - "*/access.*"
                 # Clustered-mode site's own access log (llm-gate clusterSite).
                 - "*/cluster-access.*"
+                # The gateway process's own launchd stdout and stderr.
+                - "*/llm-gate.log"
+                - "*/llm-gate.error.log"
               tailOnly: false
               sendToRoutes: false
               connections:
