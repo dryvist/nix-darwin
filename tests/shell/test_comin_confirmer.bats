@@ -93,6 +93,21 @@ run_confirmer() {
   [ "$(grep -c '^comin confirmation' "$CALLS")" = 0 ]
 }
 
+@test "an unreachable comin control server logs alert=comin-control-unreachable on one capped line" {
+  write_stub "$STUB_DIR/comin" << 'STUB'
+echo "comin $*" >> "$CALLS"
+printf 'dial unix /run/comin-grpc.sock: connect: connection refused %0300d\nsecond line\n' 0 >&2
+exit 1
+STUB
+  GATE=allow run_confirmer
+  [ "$status" -eq 0 ]
+  [ "${#lines[@]}" -eq 1 ]
+  [[ "$output" == *"comin-confirmer: alert=comin-control-unreachable comin state unreadable; confirming nothing: dial unix /run/comin-grpc.sock: connect: connection refused"* ]]
+  [ "${#output}" -lt 320 ]
+  no_gate
+  no_confirmation
+}
+
 @test "a non-JSON comin state confirms nothing" {
   GATE=allow COMIN_STATUS='not json' run_confirmer
   [ "$status" -eq 0 ]

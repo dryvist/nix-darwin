@@ -16,7 +16,8 @@
 # logged and treated as absent. The file is read as data only, never sourced.
 #
 # A generation waiting more than 24 hours logs `alert=generation-waiting-24h` on each run; its
-# first-seen time is kept in COMIN_WAITING_FILE.
+# first-seen time is kept in COMIN_WAITING_FILE. A `comin status` that fails logs
+# `alert=comin-control-unreachable` on each run.
 #
 # Environment:
 #   CLUSTER_REBUILD_GATE_BIN  path to cluster-rebuild-gate (injected by the module; a test seam otherwise)
@@ -36,8 +37,9 @@ one_line() { tr '\n' ' ' <<< "$1" | sed 's/[[:space:]]*$//'; }
 clean() { printf '%s' "$1" | tr -d '\000-\037\177' | cut -c1-200; }
 log() { echo "$(ts) comin-confirmer: $*"; }
 
+# comin's control server is down or refusing: a fault to alert on, not a wait.
 if ! status="$(comin status --json 2>&1)"; then
-  log "comin state unreadable; confirming nothing: $(one_line "$status")"
+  log "alert=comin-control-unreachable comin state unreadable; confirming nothing: $(one_line "$status" | cut -c1-200)"
   exit 0
 fi
 
