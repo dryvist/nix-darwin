@@ -544,6 +544,27 @@ in
               sendToRoutes: false
               connections:
                 - output: cribl_gate
+        ''
+        # Appended only where the comin GitOps service is enabled: the confirmer's
+        # decisions, its HOLD lines and alert= tokens. Same pipeline as
+        # in_local_jobs (index=workstation, sourcetype=macos:local_job);
+        # full-path-matched pattern, "*/" lead (see above).
+        + lib.optionalString config.services.cominGitOps.enable ''
+          # comin confirmer log (modules/darwin/comin.nix). The comment line sets
+          # the string's common indent, keeping the entry under `inputs:`.
+            in_comin_confirmer:
+              type: file
+              disabled: false
+              mode: manual
+              interval: 10
+              path: /var/log/
+              filenames:
+                - "*/comin-confirmer.log"
+              tailOnly: false
+              sendToRoutes: false
+              connections:
+                - pipeline: workstation_jobs
+                  output: cribl_stream
         '';
         "outputs.yml" = ''
           outputs:
