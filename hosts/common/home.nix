@@ -8,6 +8,7 @@
 {
   config,
   lib,
+  options,
   osConfig,
   pkgs,
   hostConfig,
@@ -145,6 +146,34 @@ in
     #
     # The pinned nix-ai revision has no openwhispr entry. Restore this line
     # in the same change that relocks nix-ai to a revision that defines it.
+
+    # OpenWhispr notes directory parameterization:
+    # Resolves in order:
+    # 1. hostConfig.openwhispr.notesDirectory (per-host override)
+    # 2. Local deployment.json (if present from RustFS sync or operator edit)
+    # 3. userConfig.notes.openwhisprDirectory (user baseline)
+    # 4. config.workspace.notes.openwhisprNotesDirectory (nix-home module parameter)
+    openwhispr = lib.mkIf (options.programs ? openwhispr) {
+      notesDirectory =
+        let
+          localDeployment =
+            if builtins.pathExists "/etc/deployment.json" then
+              builtins.fromJSON (builtins.readFile "/etc/deployment.json")
+            else
+              { };
+          deploymentNotesDir = localDeployment.workstation.openwhispr_notes_dir or null;
+          resolvedDir =
+            if hostConfig.openwhispr.notesDirectory or null != null then
+              hostConfig.openwhispr.notesDirectory
+            else if deploymentNotesDir != null then
+              deploymentNotesDir
+            else if userConfig.notes.openwhisprDirectory or null != null then
+              userConfig.notes.openwhisprDirectory
+            else
+              config.workspace.notes.openwhisprNotesDirectory or null;
+        in
+        lib.mkDefault resolvedDir;
+    };
 
     # cecli (nix-ai's Aider fork) is disabled — unused, and its
     # tree-sitter-language-pack<=0.13.0 pin fails to build on nixpkgs 26.05

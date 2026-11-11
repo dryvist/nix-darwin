@@ -176,4 +176,13 @@ in
 
   # Workspace roots whose CLAUDE.md external imports are auto-approved.
   trustedProjectDirs = [ "~/git/public/" ];
+
+  # ==========================================================================
+  # Personal Knowledge Base & Notes Configuration
+  # ==========================================================================
+  notes = {
+    obsidianHome = "${homeDir}/obsidian";
+    # Single source of truth: change here when renaming vault to obsidian-meetings
+    openwhisprDirectory = "${homeDir}/obsidian/obsidian-granola/openwhispr";
+  };
 }

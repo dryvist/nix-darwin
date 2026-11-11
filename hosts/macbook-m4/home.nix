@@ -5,6 +5,7 @@
 # This file adds only the host-unique bits — the TCC-sensitive GUI app list.
 
 {
+  config,
   lib,
   pkgs,
   userConfig,
