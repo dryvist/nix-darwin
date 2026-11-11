@@ -123,6 +123,7 @@ in
           test_check_file_sizes.bats \
           test_cluster_rebuild_gate.bats \
           test_cluster_maintenance_window.bats \
+          test_comin_confirmer.bats \
           test_comin_token_reload.bats \
           test_cribl_llm_classifier.bats \
           test_cribl_session_mask.bats \
