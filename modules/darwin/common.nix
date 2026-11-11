@@ -53,7 +53,6 @@ in
     ./dock-apps-present.nix # Warn when a declared Dock app path is missing
     ./llm-gate.nix
     ./nix-storage.nix
-    ./notification-center-restart.nix # Daily restart of the process that grows and loads WindowServer
     ./ws-monitor.nix
     ./eslogger.nix
     ./apple-silicon-tunables.nix
