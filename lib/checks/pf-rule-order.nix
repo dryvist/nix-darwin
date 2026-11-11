@@ -27,6 +27,8 @@ let
     (studio.extendModules {
       modules = [
         {
+          # Substituted sources: this never checks a host's real lists; the host
+          # flake runs lib.pfAnchorCheck on its own rendered anchor for that.
           security.pf = {
             allowedSshSources = lib.mkForce [ "192.0.2.0/24" ];
             exemptNetworks = lib.mkForce [ "198.51.100.0/24" ];
@@ -207,11 +209,50 @@ let
       }
     )
     (case "35 A non-SYN to an unlistened port" "block" (tcpIn a 60000 "A"))
+    (
+      caseBy "36 Studio sends from :22 to X, no state" "block" "block in all" (
+        tcpIn x 22 "A" // { sport = 50999; }
+      )
+      // {
+        opener = tcpOut 22 x 50999 "A";
+      }
+    )
+    (
+      caseBy "37 X SYN to :22 after the Studio sent from :22" "block" "block in all" (
+        syn x 22 // { sport = 50999; }
+      )
+      // {
+        opener = tcpOut 22 x 50999 "A";
+      }
+    )
+    (
+      caseBy "38 X SYN to metrics after the Studio sent from that port" "block" "block in all" (
+        syn x metricsPort // { sport = 50999; }
+      )
+      // {
+        opener = tcpOut metricsPort x 50999 "A";
+      }
+    )
+    (
+      caseBy "39 Studio client flow from an ephemeral port is picked up" "pass" "matches existing state" (
+        tcpIn x 49200 "A" // { sport = 22; }
+      )
+      // {
+        opener = tcpOut 49200 x 22 "A";
+      }
+    )
   ];
 
-  unknownRule = pkgs.writeText "pf-unknown-rule.conf" ''
-    rdr pass on en0 proto tcp to any port 80 -> 127.0.0.1
-  '';
+  # Rule forms pfctl accepts but the evaluator does not model; each must
+  # make it exit 2 rather than be read wrongly.
+  unknownRules = map (rule: pkgs.writeText "pf-unknown-rule.conf" "${rule}\n") [
+    "rdr pass on en0 proto tcp to any port 80 -> 127.0.0.1"
+    "pass in quick proto tcp from ! 192.0.2.0/24 to any port 80 no state"
+    "pass in quick proto tcp from !192.0.2.0/24 to any port 80 no state"
+    "pass in quick proto tcp from any to any port ssh no state"
+    "pass in quick proto tcp from any to any port 20:30 no state"
+    "pass in quick inet proto icmp icmp-type 8 keep state"
+  ];
 in
 pkgs.runCommand "check-pf-rule-order"
   {
@@ -222,14 +263,16 @@ pkgs.runCommand "check-pf-rule-order"
     };
   }
   ''
-    status=0
-    ${pkgs.python3}/bin/python3 -I ${./pf-rule-order.py} ${unknownRule} \
-      ${
-        pkgs.writeText "one-case.json" (builtins.toJSON [ (case "any" "pass" (syn a 80)) ])
-      } || status=$?
-    [ "$status" -eq 2 ] || {
-      echo "pf-rule-order accepted a rule form it does not understand (exit $status)" >&2
-      exit 1
-    }
+    for rule in ${lib.concatStringsSep " " unknownRules}; do
+      status=0
+      ${pkgs.python3}/bin/python3 -I ${./pf-rule-order.py} "$rule" \
+        ${
+          pkgs.writeText "one-case.json" (builtins.toJSON [ (case "any" "pass" (syn a 80)) ])
+        } || status=$?
+      [ "$status" -eq 2 ] || {
+        echo "pf-rule-order accepted a rule form it does not understand (exit $status): $(cat "$rule")" >&2
+        exit 1
+      }
+    done
     touch $out
   ''

@@ -50,6 +50,20 @@ def take_list(toks, i):
     return items, i + 1
 
 
+def check_addrs(items, line):
+    for item in items:
+        if item.startswith("!"):
+            raise ParseError(f"negated address not supported: {line}")
+    return items
+
+
+def check_ports(items, line):
+    for item in items:
+        if not item.isdigit():
+            raise ParseError(f"only numeric single ports are supported: {line}")
+    return items
+
+
 def flag_set(text):
     return set(text)
 
@@ -87,13 +101,17 @@ def parse_rule(line):
         i += 1
     elif at("from"):
         r["src"], i = take_list(toks, i + 1)
+        check_addrs(r["src"], line)
         if at("port"):
             r["sport"], i = take_list(toks, i + 1)
+            check_ports(r["sport"], line)
         if not at("to"):
             raise ParseError(f"expected `to`: {line}")
         r["dst"], i = take_list(toks, i + 1)
+        check_addrs(r["dst"], line)
         if at("port"):
             r["dport"], i = take_list(toks, i + 1)
+            check_ports(r["dport"], line)
     if at("flags"):
         spec = toks[i + 1]
         if spec != "any":
@@ -106,6 +124,8 @@ def parse_rule(line):
         i += 2
     if at("icmp-type", "icmp6-type"):
         r["icmp"], i = take_list(toks, i + 1)
+        if any(t.isdigit() for t in r["icmp"]):
+            raise ParseError(f"numeric ICMP types not supported: {line}")
     if at("no"):
         if toks[i + 1] != "state":
             raise ParseError(f"unknown `no` option: {line}")
