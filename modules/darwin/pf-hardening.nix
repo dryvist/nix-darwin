@@ -3,8 +3,8 @@
 # The ALF (networking.applicationFirewall) is per-application and sits in
 # series with this anchor: a packet this anchor passes is only delivered to a
 # binary the ALF also admits (networking.applicationFirewall.allowedApps).
-# Stealth mode is ON fleet-wide (hosts/common/networking.nix), so unsolicited
-# probes go unanswered; allowed apps keep answering. This adds a packet-filter
+# Stealth mode is on by default (hosts/common/networking.nix), so unsolicited
+# probes go unanswered; allowed apps keep answering. A host may turn it off. This adds a packet-filter
 # anchor loaded at boot by a launchd daemon: default-deny inbound except
 # explicitly allowed TCP services, ICMP echo, SSH from an allow-listed CIDR
 # set, and traffic on explicitly exempted interfaces (loopback, plus anything
@@ -60,22 +60,24 @@ let
     # each packet of the service's flows on its own merits.
     ${lib.concatMapStrings (
       service:
-      let
-        sources = "{ ${lib.concatStringsSep ", " service.sources} }";
-        port = toString service.port;
-      in
-      "pass in quick proto tcp from ${sources} to any port ${port} no state\n"
-      + "pass out quick proto tcp from any port ${port} to ${sources} no state\n"
+      "pass in quick proto tcp from { ${lib.concatStringsSep ", " service.sources} } to any port ${toString service.port} no state\n"
     ) cfg.allowedTcpServices}
     # The same for SSH packets other than a connection-opening SYN: a session
     # from an allowed source keeps working when enforcement starts. The SYN
     # itself takes the stateful rule at the end, which keeps max-src-conn.
     pass in quick proto tcp from ${sshSources} to any port 22 flags /S no state
-    pass out quick proto tcp from any port 22 to ${sshSources} no state
+    # Nothing that leaves a listening port creates state, whoever it goes to:
+    # such a state would admit that peer's later packets, a SYN included,
+    # without rule evaluation. Outbound client connections use ephemeral
+    # source ports (49152-65535 on macOS), so these rules do not catch them.
+    ${lib.concatMapStrings (
+      port: "pass out quick proto tcp from any port ${toString port} to any no state\n"
+    ) (lib.unique ([ 22 ] ++ map (service: service.port) cfg.allowedTcpServices))}
     block in all
     # `flags any` lets an outbound packet of a flow opened before enforcement
-    # create its state, so the replies that follow pass. The quick reply
-    # rules above keep service and SSH flows out of this rule: a state
+    # create its state; replies arriving after that packet pass. Replies that
+    # arrive before the host sends anything are blocked, so a receive-only
+    # flow may stall until the host sends or the client reconnects. A state
     # picked up mid-flow lacks the window-scale details pf.conf(5) names.
     pass out all flags any keep state
     pass in quick proto tcp from ${sshSources} to any port 22 flags S/SA keep state (max-src-conn 10)
