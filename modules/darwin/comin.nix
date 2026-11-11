@@ -45,13 +45,14 @@ let
       CLUSTER_REBUILD_GATE_BIN = lib.getExe config.system.clusterRebuildGate.gatePkg;
       COMIN_HOLD_FILE = cfg.holdFile;
     };
-    text = builtins.readFile ./scripts/comin-confirmer.sh;
+    text =
+      builtins.readFile ./scripts/comin-hold-lib.sh + builtins.readFile ./scripts/comin-confirmer.sh;
   };
   holdPkg = pkgs.writeShellApplication {
     name = "comin-hold";
     runtimeInputs = [ pkgs.coreutils ];
     runtimeEnv.COMIN_HOLD_FILE = cfg.holdFile;
-    text = builtins.readFile ./scripts/comin-hold.sh;
+    text = builtins.readFile ./scripts/comin-hold-lib.sh + builtins.readFile ./scripts/comin-hold.sh;
   };
 in
 {

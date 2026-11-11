@@ -9,14 +9,14 @@
 #     for the next run.
 # A comin that cannot report its state gets nothing confirmed. Every decision is one log line.
 #
-# Hold: while COMIN_HOLD_FILE holds a valid hold (key=value lines by=, why=, set=, until=, times as
-# UTC YYYY-MM-DDTHH:MM:SSZ, until after set and at most 12 hours after set and after now), nothing
-# is confirmed and the gate is not run; each run logs one HOLD line. An expired hold logs
-# `alert=hold-expired` and the run proceeds as without a hold. An unreadable or malformed hold is
-# logged and treated as absent. The file is read as data only, never sourced.
+# Hold: while COMIN_HOLD_FILE holds a valid hold (format and validity in ./comin-hold-lib.sh, which
+# the module prepends to this script), nothing is confirmed and the gate is not run; each run logs one
+# HOLD line. An expired hold logs `alert=hold-expired` and the run proceeds as without a hold. An
+# unreadable or malformed hold is logged and treated as absent.
 #
 # A generation waiting more than 24 hours logs `alert=generation-waiting-24h` on each run; its
-# first-seen time is kept in COMIN_WAITING_FILE. A `comin status` that fails logs
+# first-seen time is kept in COMIN_WAITING_FILE, read only when it is a regular file holding a
+# plausible epoch; anything else is logged and restarts the clock. A `comin status` that fails logs
 # `alert=comin-control-unreachable` on each run.
 #
 # Environment:
@@ -28,13 +28,10 @@
 gate="${CLUSTER_REBUILD_GATE_BIN:?CLUSTER_REBUILD_GATE_BIN not set}"
 hold_file="${COMIN_HOLD_FILE:?COMIN_HOLD_FILE not set}"
 waiting_file="${COMIN_WAITING_FILE:-/var/run/comin-confirmer.waiting}"
-max_hold=43200
 waiting_alert=86400
 
 ts() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 one_line() { tr '\n' ' ' <<< "$1" | sed 's/[[:space:]]*$//'; }
-# Hold values are input: control characters stripped, length capped.
-clean() { printf '%s' "$1" | tr -d '\000-\037\177' | cut -c1-200; }
 log() { echo "$(ts) comin-confirmer: $*"; }
 
 # comin's control server is down or refusing: a fault to alert on, not a wait.
@@ -50,75 +47,39 @@ fi
 
 now="$(date -u +%s)"
 
-# Sets hold_state to absent, held or expired, and hold_by, hold_why, hold_until.
-read_hold() {
-  hold_state=absent
-  [ -e "$hold_file" ] || return 0
-  local text line key value by="" why="" set="" until="" seen=" " set_s until_s
-  if [ ! -f "$hold_file" ] || ! text="$(head -c 4096 "$hold_file" 2> /dev/null)"; then
-    log "hold file $hold_file ignored (unreadable); treated as absent"
-    return 0
-  fi
-  while IFS= read -r line; do
-    [ -n "$line" ] || continue
-    key="${line%%=*}"
-    value="${line#*=}"
-    case "$key" in
-      by | why | set | until) ;;
-      *) continue ;;
-    esac
-    if [[ $seen == *" $key "* ]]; then
-      log "hold file $hold_file ignored (duplicate $key); treated as absent"
-      return 0
-    fi
-    seen+="$key "
-    printf -v "$key" '%s' "$(clean "$value")"
-  done <<< "$text"
-  for key in by why set until; do
-    if [ -z "${!key}" ]; then
-      log "hold file $hold_file ignored (missing $key); treated as absent"
-      return 0
-    fi
-  done
-  for key in set until; do
-    if [[ ! ${!key} =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$ ]] \
-      || ! date -u -d "${!key}" +%s > /dev/null 2>&1; then
-      log "hold file $hold_file ignored (bad $key time); treated as absent"
-      return 0
-    fi
-  done
-  set_s="$(date -u -d "$set" +%s)"
-  until_s="$(date -u -d "$until" +%s)"
-  if [ "$until_s" -le "$set_s" ]; then
-    log "hold file $hold_file ignored (until is not after set); treated as absent"
-    return 0
-  fi
-  if [ $((until_s - set_s)) -gt "$max_hold" ] || [ $((until_s - now)) -gt "$max_hold" ]; then
-    log "hold file $hold_file ignored (longer than 12 hours); treated as absent"
-    return 0
-  fi
-  hold_by="$by" hold_why="$why" hold_until="$until"
-  if [ "$now" -ge "$until_s" ]; then
-    hold_state=expired
-  else
-    hold_state=held
-  fi
-}
-
 read_hold
-if [ "$hold_state" = expired ]; then
-  log "alert=hold-expired hold=$hold_file by=$hold_by until=$hold_until; treated as absent"
-fi
+case "$hold_state" in
+  unreadable) log "hold file $hold_file ignored (unreadable); treated as absent" ;;
+  malformed) log "hold file $hold_file ignored ($hold_reason); treated as absent" ;;
+  expired) log "alert=hold-expired hold=$hold_file by=$hold_by until=$hold_until; treated as absent" ;;
+esac
 
-# First-seen time of the waiting generation, for the 24-hour alert.
+# First-seen time of the waiting generation, for the 24-hour alert. The file is read only when it is
+# a regular file, at most 256 bytes; the epoch must be 9 to 12 plain decimal digits, no leading zero,
+# not in the future. It is replaced by rename, so a FIFO or other file there never blocks the run.
+record_waiting() {
+  local tmp
+  if tmp="$(mktemp "$waiting_file.XXXXXX" 2> /dev/null)" \
+    && printf '%s %s\n' "$submitted" "$now" > "$tmp" && mv -f "$tmp" "$waiting_file"; then
+    return 0
+  fi
+  rm -f "$tmp" 2> /dev/null || true
+  log "cannot write $waiting_file; the 24-hour waiting alert is not tracked"
+}
 if [ -n "$submitted" ]; then
-  first=""
-  if read -r seen_gen seen_at 2> /dev/null < "$waiting_file" \
-    && [ "$seen_gen" = "$submitted" ] && [[ $seen_at =~ ^[0-9]+$ ]]; then
+  first="" seen_gen="" seen_at=""
+  if [ -f "$waiting_file" ]; then
+    read -r seen_gen seen_at < <(head -c 256 "$waiting_file" 2> /dev/null) || true
+  fi
+  if [ "$seen_gen" = "$submitted" ] && [[ $seen_at =~ ^[1-9][0-9]{8,11}$ ]] && [ "$seen_at" -le "$now" ]; then
     first="$seen_at"
   else
-    printf '%s %s\n' "$submitted" "$now" > "$waiting_file" 2> /dev/null \
-      || log "cannot write $waiting_file; the 24-hour waiting alert is not tracked"
+    if [ -e "$waiting_file" ] && [ "$seen_gen" = "$submitted" ]; then
+      log "waiting state $waiting_file unreadable or corrupt; generation $submitted first seen now"
+    elif [ -e "$waiting_file" ] && [ ! -f "$waiting_file" ]; then
+      log "waiting state $waiting_file is not a regular file; generation $submitted first seen now"
+    fi
+    record_waiting
   fi
   if [ -n "$first" ] && [ $((now - first)) -gt "$waiting_alert" ]; then
     log "alert=generation-waiting-24h generation=$submitted since=$(date -u -d "@$first" +%Y-%m-%dT%H:%M:%SZ)"

@@ -5,8 +5,9 @@
 #   comin-hold show
 #   comin-hold clear
 #
-# The hold file is root-owned (mode 0644), so set and clear need root. Values are stored on one line
-# each with control characters stripped and length capped.
+# The hold file is root-owned (mode 0644), so set and clear need root. Values are stored with
+# clean() from ./comin-hold-lib.sh (prepended by the module). show prints the verdict the confirmer
+# reaches, from the same read_hold.
 #
 # Environment:
 #   COMIN_HOLD_FILE  hold file path (injected by the module)
@@ -18,7 +19,6 @@ usage() {
   echo "usage: comin-hold set --by <who> --why <text> --for <N>h|<N>m (at most 12h) | show | clear" >&2
   exit 2
 }
-clean() { printf '%s' "$1" | tr -d '\000-\037\177' | cut -c1-200; }
 
 case "${1:-}" in
   set)
@@ -55,11 +55,15 @@ case "${1:-}" in
     cat "$hold_file"
     ;;
   show)
-    if [ -f "$hold_file" ]; then
-      tr -d '\000-\010\013-\037\177' < "$hold_file"
-    else
-      echo "comin-hold: no hold at $hold_file"
-    fi
+    now="$(date -u +%s)"
+    read_hold
+    case "$hold_state" in
+      absent) echo "comin-hold: no hold at $hold_file" ;;
+      unreadable) echo "comin-hold: hold at $hold_file is unreadable; the confirmer treats it as absent" ;;
+      malformed) echo "comin-hold: hold at $hold_file is malformed ($hold_reason); the confirmer treats it as absent" ;;
+      expired) echo "comin-hold: hold expired at $hold_until (by=$hold_by why=$hold_why); the confirmer treats it as absent" ;;
+      held) echo "comin-hold: hold valid until $hold_until (by=$hold_by why=$hold_why); the confirmer confirms nothing" ;;
+    esac
     ;;
   clear)
     rm -f "$hold_file"

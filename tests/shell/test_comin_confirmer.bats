@@ -55,11 +55,20 @@ no_confirmation() { [ "$(grep -c '^comin confirmation' "$CALLS")" = 0 ]; }
 no_gate() { [ "$(grep -c '^gate' "$CALLS")" = 0 ]; }
 
 run_hold() {
-  run bash -euo pipefail "$SCRIPTS/comin-hold.sh" "$@"
+  run_with_lib "$SCRIPTS/comin-hold.sh" "$@"
+}
+
+# UTC timestamp for an epoch.
+iso() { date -u -d "@$1" +%Y-%m-%dT%H:%M:%SZ; }
+
+# The module prepends comin-hold-lib.sh to both scripts; the suite sources it the same way.
+run_with_lib() {
+  run bash -euo pipefail -c 'source "$1"; script="$2"; shift 2; source "$script" "$@"' _ \
+    "$SCRIPTS/comin-hold-lib.sh" "$@"
 }
 
 run_confirmer() {
-  run bash -euo pipefail "$SCRIPTS/comin-confirmer.sh"
+  run_with_lib "$SCRIPTS/comin-confirmer.sh"
 }
 
 @test "a clustered host confirms nothing and logs the gate's refusal" {
@@ -179,27 +188,88 @@ STUB
   grep -qx 'comin confirmation accept' "$CALLS"
 }
 
-@test "malformed holds are treated as absent and logged" {
+@test "malformed holds are treated as absent and logged with their reason" {
   now_set="$(at '-1 minutes')"
   for hold in \
-    "missing-why|by=a|set=$now_set|until=$(at '+1 hours')" \
-    "bad-time|by=a|why=b|set=$now_set|until=tomorrow" \
-    "over-12h-from-set|by=a|why=b|set=$(at '-1 hours')|until=$(at '+11 hours 30 minutes')" \
-    "over-12h-ahead|by=a|why=b|set=$(at '+1 hours')|until=$(at '+12 hours 30 minutes')" \
-    "until-before-set|by=a|why=b|set=$now_set|until=$(at '-2 minutes')" \
-    "duplicate-key|by=a|by=c|why=b|set=$now_set|until=$(at '+1 hours')" \
-    "empty|"; do
-    name="${hold%%|*}"
+    "missing why|by=a|set=$now_set|until=$(at '+1 hours')" \
+    "bad until time|by=a|why=b|set=$now_set|until=tomorrow" \
+    "longer than 12 hours|by=a|why=b|set=$(at '-1 hours')|until=$(at '+11 hours 30 minutes')" \
+    "longer than 12 hours|by=a|why=b|set=$(at '+1 hours')|until=$(at '+12 hours 30 minutes')" \
+    "until is not after set|by=a|why=b|set=$now_set|until=$(at '-2 minutes')" \
+    "duplicate by|by=a|by=c|why=b|set=$now_set|until=$(at '+1 hours')" \
+    "line without key=value|by|why|set=$now_set|until=$(at '+1 hours')" \
+    "line without key=value|by=a|why=b|=c|set=$now_set|until=$(at '+1 hours')" \
+    "missing by|"; do
+    reason="${hold%%|*}"
     IFS='|' read -r -a fields <<< "${hold#*|}"
     : > "$COMIN_HOLD_FILE"
     for field in "${fields[@]}"; do [ -n "$field" ] && printf '%s\n' "$field" >> "$COMIN_HOLD_FILE"; done
     : > "$CALLS"
     GATE=allow run_confirmer
-    [ "$status" -eq 0 ] || { echo "$name: exit $status"; false; }
-    [[ "$output" == *"hold file $COMIN_HOLD_FILE ignored ("*"); treated as absent"* ]] || { echo "$name: $output"; false; }
-    [[ "$output" != *"alert=hold-expired"* ]] || { echo "$name: alerted"; false; }
-    grep -qx 'comin confirmation accept' "$CALLS" || { echo "$name: not confirmed"; false; }
+    [ "$status" -eq 0 ] || { echo "$reason: exit $status"; false; }
+    [[ "$output" == *"hold file $COMIN_HOLD_FILE ignored ($reason); treated as absent"* ]] || { echo "$reason: $output"; false; }
+    [[ "$output" != *"HOLD "* ]] || { echo "$reason: held"; false; }
+    grep -qx 'comin confirmation accept' "$CALLS" || { echo "$reason: not confirmed"; false; }
   done
+}
+
+@test "bare key lines never make a hold valid" {
+  printf 'by\nwhy\nset=%s\nuntil=%s\n' "$(at '-1 minutes')" "$(at '+1 hours')" > "$COMIN_HOLD_FILE"
+  GATE=allow run_confirmer
+  [[ "$output" == *"ignored (line without key=value); treated as absent"* ]]
+  [[ "$output" != *"HOLD by=by"* ]]
+  grep -qx 'comin confirmation accept' "$CALLS"
+}
+
+@test "comment and blank lines are skipped" {
+  printf '# set by a team\n\nby=a\nwhy=b\nset=%s\nuntil=%s\n' "$(at '-1 minutes')" "$(at '+1 hours')" > "$COMIN_HOLD_FILE"
+  GATE=allow run_confirmer
+  [[ "$output" == *"HOLD by=a why=b"* ]]
+  no_confirmation
+}
+
+@test "exactly 12 hours from set is held; 12 hours and 1 second is absent" {
+  set_s=$(($(date -u +%s) - 60))
+  write_hold "by=a" "why=b" "set=$(iso "$set_s")" "until=$(iso $((set_s + 43200)))"
+  GATE=allow run_confirmer
+  [[ "$output" == *"HOLD by=a why=b"* ]]
+  no_confirmation
+  write_hold "by=a" "why=b" "set=$(iso "$set_s")" "until=$(iso $((set_s + 43201)))"
+  GATE=allow run_confirmer
+  [[ "$output" == *"ignored (longer than 12 hours); treated as absent"* ]]
+  grep -qx 'comin confirmation accept' "$CALLS"
+}
+
+@test "until equal to now is expired" {
+  now_s=$(date -u +%s)
+  write_hold "by=a" "why=b" "set=$(iso $((now_s - 3600)))" "until=$(iso "$now_s")"
+  GATE=allow run_confirmer
+  [[ "$output" == *"alert=hold-expired"* ]]
+  grep -qx 'comin confirmation accept' "$CALLS"
+}
+
+@test "a FIFO hold file is unreadable, never blocks, and is treated as absent" {
+  mkfifo "$COMIN_HOLD_FILE"
+  GATE=allow run timeout 20 bash -euo pipefail -c 'source "$1"; source "$2"' _ "$SCRIPTS/comin-hold-lib.sh" "$SCRIPTS/comin-confirmer.sh"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"ignored (unreadable); treated as absent"* ]]
+  grep -qx 'comin confirmation accept' "$CALLS"
+}
+
+@test "command substitution in a value is not executed and is logged literally" {
+  printf 'by=$(touch %s/pwned)\nwhy=`id`\nset=%s\nuntil=%s\n' "$BATS_TEST_TMPDIR" "$(at '-1 minutes')" "$(at '+1 hours')" > "$COMIN_HOLD_FILE"
+  GATE=allow run_confirmer
+  [ ! -e "$BATS_TEST_TMPDIR/pwned" ]
+  [[ "$output" == *'HOLD by=$(touch '"$BATS_TEST_TMPDIR"'/pwned) why=`id` until='* ]]
+  no_confirmation
+}
+
+@test "a value cannot forge an alert token, and Unicode line separators are stripped" {
+  printf 'by=a\nwhy=x alert=hold-expired\xe2\x80\xa8y\xc2\x85z\nset=%s\nuntil=%s\n' "$(at '-1 minutes')" "$(at '+1 hours')" > "$COMIN_HOLD_FILE"
+  GATE=allow run_confirmer
+  [[ "$output" == *"HOLD by=a why=x alert:hold-expiredyz until="* ]]
+  [[ "$output" != *"alert=hold-expired"* ]]
+  no_confirmation
 }
 
 @test "an unreadable hold is treated as absent and logged" {
@@ -264,4 +334,36 @@ STUB
   [ ! -e "$COMIN_HOLD_FILE" ]
   run_hold set --by a --why b --for 12h
   [ "$status" -eq 0 ]
+}
+
+@test "a FIFO waiting file never blocks and restarts the clock" {
+  mkfifo "$COMIN_WAITING_FILE"
+  GATE=refuse run timeout 20 bash -euo pipefail -c 'source "$1"; source "$2"' _ "$SCRIPTS/comin-hold-lib.sh" "$SCRIPTS/comin-confirmer.sh"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"waiting state $COMIN_WAITING_FILE is not a regular file; generation gen-1 first seen now"* ]]
+  [ -f "$COMIN_WAITING_FILE" ]
+  [ "$(cut -d' ' -f1 "$COMIN_WAITING_FILE")" = gen-1 ]
+}
+
+@test "a corrupt waiting epoch restarts the clock without an alert or an arithmetic error" {
+  for epoch in 0100 09 12abc 99999999999999 "$(( $(date -u +%s) + 3600 ))"; do
+    printf 'gen-1 %s\n' "$epoch" > "$COMIN_WAITING_FILE"
+    GATE=refuse run_confirmer
+    [ "$status" -eq 0 ] || { echo "$epoch: exit $status: $output"; false; }
+    [[ "$output" == *"waiting state $COMIN_WAITING_FILE unreadable or corrupt; generation gen-1 first seen now"* ]] || { echo "$epoch: $output"; false; }
+    [[ "$output" != *"alert=generation-waiting-24h"* ]] || { echo "$epoch: alerted"; false; }
+    [[ "$(cut -d' ' -f2 "$COMIN_WAITING_FILE")" =~ ^[1-9][0-9]{8,11}$ ]]
+  done
+}
+
+@test "comin-hold show prints the confirmer's verdict" {
+  write_hold "by=a" "why=b" "set=$(at '-1 minutes')" "until=$(at '+1 hours')"
+  run_hold show
+  [[ "$output" == *"hold valid until"*"(by=a why=b); the confirmer confirms nothing"* ]]
+  write_hold "by=a" "why=b" "set=$(at '-3 hours')" "until=$(at '-1 hours')"
+  run_hold show
+  [[ "$output" == *"hold expired at"*"the confirmer treats it as absent"* ]]
+  write_hold "by=a" "set=$(at '-1 minutes')" "until=$(at '+1 hours')"
+  run_hold show
+  [[ "$output" == *"is malformed (missing why); the confirmer treats it as absent"* ]]
 }
