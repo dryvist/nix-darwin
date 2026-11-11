@@ -29,31 +29,47 @@ STUB
   chmod +x "$PF_HARDENING_PFCTL" "$PF_HARDENING_LOGGER"
 }
 
-@test "loads PF_ANCHOR, flushes the other name, enables pf and checks both results" {
+@test "flushes the other name, then loads PF_ANCHOR, enables pf and checks both results" {
   run bash "$SCRIPT_UNDER_TEST"
   [ "$status" -eq 0 ]
   run grep '^pfctl' "$PF_CALL_LOG"
-  [ "${lines[0]}" = "pfctl -a com.apple/nix-hardening -f /etc/pf.anchors/nix-hardening" ]
-  [ "${lines[1]}" = "pfctl -a nix-hardening -F rules" ]
-  [ "${lines[2]}" = "pfctl -a nix-hardening -s rules" ]
+  [ "${lines[0]}" = "pfctl -a nix-hardening -F rules" ]
+  [ "${lines[1]}" = "pfctl -a nix-hardening -s rules" ]
+  [ "${lines[2]}" = "pfctl -a com.apple/nix-hardening -f /etc/pf.anchors/nix-hardening" ]
   [ "${lines[3]}" = "pfctl -e" ]
   [ "${lines[4]}" = "pfctl -s info" ]
   [ "${#lines[@]}" -eq 5 ]
 }
 
-@test "a failed load exits non-zero and leaves the other anchor and pf state untouched" {
+@test "enforce on: a failed load exits non-zero with the inert name already flushed" {
   PF_FAIL_LOAD=1 run bash "$SCRIPT_UNDER_TEST"
   [ "$status" -ne 0 ]
   run grep '^pfctl' "$PF_CALL_LOG"
-  [ "${#lines[@]}" -eq 1 ]
+  [ "${lines[0]}" = "pfctl -a nix-hardening -F rules" ]
+  [ "${lines[1]}" = "pfctl -a nix-hardening -s rules" ]
+  [ "${lines[2]}" = "pfctl -a com.apple/nix-hardening -f /etc/pf.anchors/nix-hardening" ]
+  [ "${#lines[@]}" -eq 3 ]
   grep -q 'FAILED: load /etc/pf.anchors/nix-hardening into com.apple/nix-hardening' "$PF_CALL_LOG"
 }
 
-@test "rules left in the other anchor after the flush fail the run before pf is touched" {
+@test "enforce off: a failed load still flushes the enforced name first" {
+  PF_ANCHOR=nix-hardening PF_OTHER_ANCHOR=com.apple/nix-hardening PF_FAIL_LOAD=1 run bash "$SCRIPT_UNDER_TEST"
+  [ "$status" -ne 0 ]
+  run grep '^pfctl' "$PF_CALL_LOG"
+  [ "${lines[0]}" = "pfctl -a com.apple/nix-hardening -F rules" ]
+  [ "${lines[1]}" = "pfctl -a com.apple/nix-hardening -s rules" ]
+  [ "${lines[2]}" = "pfctl -a nix-hardening -f /etc/pf.anchors/nix-hardening" ]
+  [ "${#lines[@]}" -eq 3 ]
+  grep -q 'FAILED: load /etc/pf.anchors/nix-hardening into nix-hardening' "$PF_CALL_LOG"
+}
+
+@test "rules left in the other anchor after the flush fail the run before the load" {
   PF_STALE_RULES=1 run bash "$SCRIPT_UNDER_TEST"
   [ "$status" -ne 0 ]
   grep -q 'FAILED: flush nix-hardening' "$PF_CALL_LOG"
-  ! grep -q '^pfctl -e' "$PF_CALL_LOG"
+  # A bare `! cmd` never fails a bats test, so the absence checks use `run`.
+  run grep -q -e ' -f ' -e '^pfctl -e' "$PF_CALL_LOG"
+  [ "$status" -eq 1 ]
 }
 
 @test "a failed rule listing counts as flushed only when the anchor list omits the name" {
@@ -71,7 +87,8 @@ STUB
 @test "a failed rule listing and a failed anchor list fail the run" {
   PF_RULES_QUERY_FAILS=1 PF_ANCHORS_FAIL=1 run bash "$SCRIPT_UNDER_TEST"
   [ "$status" -ne 0 ]
-  ! grep -q '^pfctl -e' "$PF_CALL_LOG"
+  run grep -q '^pfctl -e' "$PF_CALL_LOG"
+  [ "$status" -eq 1 ]
 }
 
 @test "a nested other anchor is looked up in its parent's anchor list" {

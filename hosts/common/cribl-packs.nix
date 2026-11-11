@@ -32,12 +32,6 @@
     hash = "sha256-kj3EBCdIcjTmsNwuJpzOwzP0QpjGgVR0rf4BfCrORAk=";
     stripRoot = false;
   };
-  cc-edge-macos-ws-monitor-io = pkgs.fetchzip {
-    url = "https://github.com/jpe-cribl/cc-edge-macos-ws-monitor-io/releases/download/v0.1.0/cc-edge-macos-ws-monitor-io-0.1.0.crbl";
-    extension = "tar.gz";
-    hash = "sha256-oNMeQSIImjNbzxSxmLqazz6/f7vlgozzIFryFZVmW4E=";
-    stripRoot = false;
-  };
   cc-edge-ai-transcript-shared-io = pkgs.fetchzip {
     url = "https://github.com/jpe-cribl/cc-edge-ai-transcript-shared-io/releases/download/v0.2.0/cc-edge-ai-transcript-shared-io-0.2.0.crbl";
     extension = "tar.gz";

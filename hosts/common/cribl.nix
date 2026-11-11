@@ -31,7 +31,6 @@ let
   workerPacks = lib.attrVals [
     "cc-edge-macos-diagnostic-reports-io"
     "cc-edge-macos-power-thermal-io"
-    "cc-edge-macos-ws-monitor-io"
     "cc-edge-ai-transcript-shared-io"
     "cc-edge-mlx-serving-io"
     "cc-edge-macos-process-telemetry-io"
@@ -294,9 +293,6 @@ in
               connections:
                 - pipeline: macos_wired_memory
                   output: cribl_stream
-            ${macosMonitorInputsBlock.wsMonitor}
-            ${macosMonitorInputsBlock.wsMonitorCaptures}
-            ${macosMonitorInputsBlock.wsMonitorErrors}
             ${macosMonitorInputsBlock.eslogger}
             # Thermal/perf pressure levels (pmset -g therm) — not in the native
             # System Metrics Source on macOS. Exec, 60s.
