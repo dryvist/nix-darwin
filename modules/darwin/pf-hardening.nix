@@ -69,7 +69,8 @@ let
     # Nothing that leaves a listening port creates state, whoever it goes to:
     # such a state would admit that peer's later packets, a SYN included,
     # without rule evaluation. Outbound client connections use ephemeral
-    # source ports (49152-65535 on macOS), so these rules do not catch them.
+    # source ports (49152-65535 on macOS), so these rules do not catch them;
+    # an assertion below keeps every allowed service port under that range.
     ${lib.concatMapStrings (
       port: "pass out quick proto tcp from any port ${toString port} to any no state\n"
     ) (lib.unique ([ 22 ] ++ map (service: service.port) cfg.allowedTcpServices))}
@@ -203,6 +204,13 @@ in
   };
 
   config = {
+    assertions = [
+      {
+        assertion = lib.all (service: service.port < 49152) cfg.allowedTcpServices;
+        message = "security.pf.allowedTcpServices ports must be below 49152, the macOS ephemeral port range.";
+      }
+    ];
+
     environment.etc."pf.anchors/nix-hardening".text = anchorText;
 
     launchd.daemons.pf-hardening = {
