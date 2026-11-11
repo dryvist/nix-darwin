@@ -473,6 +473,11 @@
               inherit configs userConfig;
             };
 
+            comin-grpc = import ./lib/checks/comin-grpc.nix {
+              pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+              studio = configs.${hosts.mac-studio.hostName};
+            };
+
             studio-lane = import ./lib/checks/studio-lane.nix {
               pkgs = nixpkgs.legacyPackages.aarch64-darwin;
               studio = configs.${hosts.mac-studio.hostName};

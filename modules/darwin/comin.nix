@@ -123,6 +123,9 @@ in
         }
       ];
       deployConfirmer.mode = "manual";
+      # The upstream default group, `users`, does not exist on macOS, so comin's control
+      # server would fail to start. Root clients only: the confirmer and token reload run as root.
+      grpc.unix_socket_group = "wheel";
     };
 
     launchd.daemons.comin-token-reload.serviceConfig = {
