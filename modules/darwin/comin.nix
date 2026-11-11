@@ -27,7 +27,10 @@ let
       config.services.comin.package
       pkgs.jq
     ];
-    runtimeEnv.COMIN_LABEL = cominLabel;
+    runtimeEnv = {
+      COMIN_LABEL = cominLabel;
+      COMIN_TOKEN_PATH = cfg.accessTokenPath;
+    };
     text = builtins.readFile ./scripts/comin-token-reload.sh;
   };
   # coreutils first in PATH: the scripts parse hold times with GNU `date -d`.
@@ -138,7 +141,9 @@ in
       ];
       # The directory, not the file: a token written by rename replaces the file's inode.
       WatchPaths = [ (dirOf cfg.accessTokenPath) ];
-      RunAtLoad = false;
+      # Also once when loaded (boot, or a changed plist), so a comin still holding an older
+      # token is restarted without waiting for the next rewrite.
+      RunAtLoad = true;
       KeepAlive = false;
       StandardOutPath = "/var/log/comin-token-reload.log";
       StandardErrorPath = "/var/log/comin-token-reload.log";
