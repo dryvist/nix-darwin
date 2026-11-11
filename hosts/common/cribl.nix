@@ -189,7 +189,8 @@ in
               connections:
                 - pipeline: llm_logs
                   output: cribl_stream
-            # Clustered-mode logs (rank and lifecycle commands, both hosts).
+            # Clustered-mode logs (rank, lifecycle commands and the schedule's
+            # guard decisions, both hosts).
             # Same proven path and pipeline as in_llm_logs above; the "*/"
             # lead on every pattern is the #1623 lesson.
             in_cluster_logs:
@@ -200,6 +201,7 @@ in
               path: ${userConfig.user.homeDir}/Library/Logs/mlx-cluster/
               filenames:
                 - "*/cluster-*.log"
+                - "*/schedule-*.log"
               tailOnly: false
               sendToRoutes: false
               connections:
