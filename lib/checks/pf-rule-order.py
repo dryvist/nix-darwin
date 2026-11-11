@@ -10,10 +10,16 @@ It understands only the rule forms modules/darwin/pf-hardening.nix emits
 and exits non-zero on any other line.
 
 usage: python3 -I pf-rule-order.py <anchor-file> <cases.json>
-cases.json: [{"name", "expect": "pass"|"block", "packet", "opener"?}];
+cases.json: [{"name", "expect": "pass"|"block", "packet", "opener"?, "by"?}];
 a packet is {"dir", "proto", "src", "dst", "iface"?, "sport"?, "dport"?,
 "flags"?, "icmp_type"?}. An opener is evaluated first; it must pass, and
-the state it creates is in place for the packet.
+the state it creates is in place for the packet. `by`, when given, must be
+part of the deciding rule line (or "matches existing state").
+
+The state model is pf's lookup by protocol, addresses and ports in both
+directions. It assumes a state matches every later packet of its flow and
+does not model TCP sequence or window tracking, so it cannot show what a
+state created from a mid-flow packet (`flags any`) does with window scaling.
 """
 
 import ipaddress
@@ -230,7 +236,7 @@ def main(anchor_file, cases_file):
                 continue
             note = f" (opener passed by `{why}`)"
         action, why = verdict(rules, case["packet"], states)
-        ok = action == case["expect"]
+        ok = action == case["expect"] and case.get("by", "") in why
         failed += not ok
         print(f"{'ok  ' if ok else 'FAIL'} {case['name']}: {action} by `{why}`{note}")
     print(f"{len(cases) - failed}/{len(cases)} cases match")

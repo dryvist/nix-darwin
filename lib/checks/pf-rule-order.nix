@@ -66,6 +66,22 @@ let
   };
   syn = src: dport: tcpIn src dport "S";
   case = name: expect: packet: { inherit name expect packet; };
+  # `by` pins the mechanism: part of the deciding rule line, or the state.
+  caseBy =
+    name: expect: by: packet:
+    case name expect packet // { inherit by; };
+  # A packet the Studio sends mid-flow, as the first packet pf sees of it.
+  tcpOut = sport: dst: dport: flags: {
+    dir = "out";
+    proto = "tcp";
+    src = me;
+    inherit
+      sport
+      dst
+      dport
+      flags
+      ;
+  };
 
   cases = [
     (case "01 A ssh new" "pass" (syn a 22))
@@ -136,10 +152,15 @@ let
         };
       }
     )
-    (case "17 A ssh session open before enforce" "pass" (tcpIn a 22 "A"))
-    (case "18 X reply to outbound tcp open before enforce" "pass" (
-      tcpIn x 50001 "PA" // { sport = 443; }
-    ))
+    (caseBy "17 A ssh session open before enforce" "pass" "port 22 flags /S no state" (tcpIn a 22 "A"))
+    (
+      caseBy "18 X reply to outbound tcp open before enforce, after the Studio sends" "pass"
+        "matches existing state"
+        (tcpIn x 50001 "PA" // { sport = 443; })
+      // {
+        opener = tcpOut 50001 x 443 "A";
+      }
+    )
     (case "19 A remote management" "block" (syn a 3283))
     (case "20 A airplay 5000" "block" (syn a 5000))
     (case "21 A airplay 7000" "block" (syn a 7000))
@@ -147,7 +168,7 @@ let
     (case "23 M on B screen sharing" "pass" (syn m 5900))
     (case "24 M on B metrics" "block" (syn m metricsPort))
     (case "25 X screen sharing" "block" (syn x 5900))
-    (case "26 X non-SYN to ssh reaches the TCP stack" "pass" (tcpIn x 22 "A"))
+    (case "26 X non-SYN to ssh" "block" (tcpIn x 22 "A"))
     (case "27 A remote management udp" "block" {
       dir = "in";
       proto = "udp";
@@ -164,6 +185,28 @@ let
       dst = me;
       dport = 50002;
     })
+    (case "29 X non-SYN to metrics" "block" (tcpIn x metricsPort "A"))
+    (case "30 X non-SYN to an unlistened port" "block" (tcpIn x 60000 "A"))
+    (caseBy "31 A screen sharing mid-stream" "pass" "port 5900 no state" (tcpIn a 5900 "PA"))
+    (case "32 X reply to outbound tcp open before enforce, before the Studio sends" "block" (
+      tcpIn x 50001 "PA" // { sport = 443; }
+    ))
+    (
+      caseBy "33 A metrics mid-stream after the Studio's reply creates no state" "pass"
+        "port ${toString metricsPort} no state"
+        (tcpIn a metricsPort "A")
+      // {
+        opener = tcpOut metricsPort a 50123 "A";
+      }
+    )
+    (
+      caseBy "34 A ssh session open before enforce, Studio sends first" "pass" "port 22 flags /S no state"
+        (tcpIn a 22 "A")
+      // {
+        opener = tcpOut 22 a 50123 "PA";
+      }
+    )
+    (case "35 A non-SYN to an unlistened port" "block" (tcpIn a 60000 "A"))
   ];
 
   unknownRule = pkgs.writeText "pf-unknown-rule.conf" ''
