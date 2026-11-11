@@ -14,7 +14,8 @@
 # flake.nix's aarch64-darwin checks build environment.etc."pf.anchors/
 # nix-hardening".text straight from the real host config and run
 # `pfctl -n -f` (syntax-only parse) against it, so a bad anchor here fails
-# `nix flake check` instead of shipping.
+# `nix flake check` instead of shipping; pf-rule-order asserts packet
+# verdicts against the rendered rules (lib/checks/pf-rule-order.nix).
 {
   lib,
   config,
@@ -60,6 +61,12 @@ let
       service:
       "pass in quick proto tcp from { ${lib.concatStringsSep ", " service.sources} } to any port ${toString service.port} no state\n"
     ) cfg.allowedTcpServices}
+    # Only a SYN without ACK opens a TCP connection, so the source filters
+    # above and below need to judge only those. Every other TCP packet passes
+    # statelessly: a flow open when enforcement starts (an SSH session, an
+    # outbound request awaiting its reply) has no state entry and would
+    # otherwise fall through to the block.
+    pass in quick proto tcp all flags /S no state
     block in all
     pass out all keep state
     pass in quick proto tcp from { ${lib.concatStringsSep ", " cfg.allowedSshSources} } to any port 22 flags S/SA keep state (max-src-conn 10)
