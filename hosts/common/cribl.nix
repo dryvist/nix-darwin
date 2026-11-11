@@ -78,6 +78,15 @@ let
     builtins.readFile "${powerThermalPack}/default/exec/macos-battery.cmd"
   );
   mlxModels = config.home-manager.users.${userConfig.user.name}.services.aiStack.models or { };
+  # launchd log files of the root guard daemons, each where its module is enabled.
+  guardDaemonLogs = [
+    "pf-hardening.log"
+  ]
+  ++ lib.optional config.system.clusterLinkPrep.enable "cluster-link-prep.log"
+  ++ lib.optionals config.services.cominGitOps.enable [
+    "comin-confirmer.log"
+    "comin-token-reload.log"
+  ];
   judgeModel = mlxModels.judge or null;
   judgeEnabled = judgeModel != null;
   judgeMetadataYaml = lib.optionalString judgeEnabled (
@@ -545,21 +554,21 @@ in
               connections:
                 - output: cribl_gate
         ''
-        # Appended only where the comin GitOps service is enabled: the confirmer's
-        # decisions, its HOLD lines and alert= tokens. Same pipeline as
-        # in_local_jobs (index=workstation, sourcetype=macos:local_job);
-        # full-path-matched pattern, "*/" lead (see above).
-        + lib.optionalString config.services.cominGitOps.enable ''
-          # comin confirmer log (modules/darwin/comin.nix). The comment line sets
-          # the string's common indent, keeping the entry under `inputs:`.
-            in_comin_confirmer:
+        # Root guard daemons' launchd logs under /var/log, one pattern per daemon
+        # whose module is enabled here (pf-hardening is always on). Same pipeline
+        # as in_local_jobs; full-path-matched patterns, "*/" lead (see above). The
+        # comment line in the string sets its common indent, keeping the entry
+        # under `inputs:`.
+        + ''
+          # Root guard daemons (comin, cluster-link-prep, pf-hardening).
+            in_guard_daemons:
               type: file
               disabled: false
               mode: manual
               interval: 10
               path: /var/log/
               filenames:
-                - "*/comin-confirmer.log"
+          ${lib.concatMapStringsSep "\n" (name: "      - \"*/${name}\"") guardDaemonLogs}
               tailOnly: false
               sendToRoutes: false
               connections:
