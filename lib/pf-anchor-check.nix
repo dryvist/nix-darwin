@@ -13,7 +13,9 @@
 # `pfctl -n -f` parses and expands the anchor without loading it; host names in
 # the anchor must resolve where the check runs. With `cases`, each case is
 # evaluated against the rule lines by lib/checks/pf-rule-order.py (case format in
-# its header). Darwin-only: pfctl is a macOS system binary.
+# its header), which accepts only `any`, addresses and CIDRs as sources, so an
+# anchor with host-name sources fails there. Darwin-only: pfctl is a macOS
+# system binary.
 {
   pkgs,
   name,
