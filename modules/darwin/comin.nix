@@ -8,7 +8,7 @@
 # The deploy confirmer stays `manual`. The `comin-confirmer` daemon confirms a waiting generation
 # only when the cluster rebuild gate allows activation; while the host is clustered it confirms
 # nothing, logs the gate's refusal, and checks again on the next interval. A hold file
-# (services.cominGitOps.holdFile) stops confirmation for at most 12 hours. See
+# (services.cominGitOps.holdFile, set with `comin-hold`) stops confirmation for at most 12 hours. See
 # ./scripts/comin-confirmer.sh.
 {
   config,
@@ -43,6 +43,12 @@ let
       COMIN_HOLD_FILE = cfg.holdFile;
     };
     text = builtins.readFile ./scripts/comin-confirmer.sh;
+  };
+  holdPkg = pkgs.writeShellApplication {
+    name = "comin-hold";
+    runtimeInputs = [ pkgs.coreutils ];
+    runtimeEnv.COMIN_HOLD_FILE = cfg.holdFile;
+    text = builtins.readFile ./scripts/comin-hold.sh;
   };
 in
 {
@@ -79,8 +85,8 @@ in
       # declared configuration).
       default = "/var/db/comin-hold";
       description = ''
-        Hold file read by the confirmer. While it holds a valid hold the confirmer confirms nothing.
-        See ./scripts/comin-confirmer.sh for the format.
+        Hold file read by the confirmer. While it holds a valid hold the confirmer confirms nothing;
+        set and clear it with `comin-hold` (root). See ./scripts/comin-confirmer.sh for the format.
       '';
     };
   };
@@ -100,6 +106,8 @@ in
         message = "services.cominGitOps.accessTokenPath must be set when enabled.";
       }
     ];
+
+    environment.systemPackages = [ holdPkg ];
 
     services.comin = {
       enable = true;

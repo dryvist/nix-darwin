@@ -54,6 +54,10 @@ write_hold() {
 no_confirmation() { [ "$(grep -c '^comin confirmation' "$CALLS")" = 0 ]; }
 no_gate() { [ "$(grep -c '^gate' "$CALLS")" = 0 ]; }
 
+run_hold() {
+  run bash -euo pipefail "$SCRIPTS/comin-hold.sh" "$@"
+}
+
 run_confirmer() {
   run bash -euo pipefail "$SCRIPTS/comin-confirmer.sh"
 }
@@ -214,3 +218,35 @@ STUB
   [ ! -e "$COMIN_WAITING_FILE" ]
 }
 
+@test "comin-hold set writes a hold the confirmer honours; show prints it; clear removes it" {
+  run_hold set --by agent-team --why "mid-task" --for 2h
+  [ "$status" -eq 0 ]
+  grep -qx 'by=agent-team' "$COMIN_HOLD_FILE"
+  grep -qx 'why=mid-task' "$COMIN_HOLD_FILE"
+  [ "$(stat -c %a "$COMIN_HOLD_FILE" 2> /dev/null || stat -f %Lp "$COMIN_HOLD_FILE")" = 644 ]
+  run_hold show
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"by=agent-team"* ]]
+  GATE=allow run_confirmer
+  [[ "$output" == *"HOLD by=agent-team why=mid-task"* ]]
+  no_confirmation
+  run_hold clear
+  [ "$status" -eq 0 ]
+  [ ! -e "$COMIN_HOLD_FILE" ]
+  run_hold show
+  [[ "$output" == *"no hold"* ]]
+}
+
+@test "comin-hold set rejects more than 12 hours, a missing --why and an unknown duration" {
+  run_hold set --by a --why b --for 13h
+  [ "$status" -ne 0 ]
+  run_hold set --by a --why b --for 721m
+  [ "$status" -ne 0 ]
+  run_hold set --by a --for 1h
+  [ "$status" -ne 0 ]
+  run_hold set --by a --why b --for 1d
+  [ "$status" -ne 0 ]
+  [ ! -e "$COMIN_HOLD_FILE" ]
+  run_hold set --by a --why b --for 12h
+  [ "$status" -eq 0 ]
+}
