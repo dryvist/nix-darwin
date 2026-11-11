@@ -54,6 +54,11 @@ def check_addrs(items, line):
     for item in items:
         if item.startswith("!"):
             raise ParseError(f"negated address not supported: {line}")
+        if item != "any":
+            try:
+                ipaddress.ip_network(item, strict=False)
+            except ValueError:
+                raise ParseError(f"only `any`, addresses and CIDRs are supported: {line}") from None
     return items
 
 
@@ -96,6 +101,8 @@ def parse_rule(line):
         i += 1
     if at("proto"):
         r["proto"] = toks[i + 1]
+        if r["proto"] not in ("tcp", "udp", "icmp", "ipv6-icmp"):
+            raise ParseError(f"unsupported protocol: {line}")
         i += 2
     if at("all"):
         i += 1
@@ -165,10 +172,7 @@ def parse_anchor(text):
 def addr_match(token, addr):
     if token == "any":
         return True
-    try:
-        net = ipaddress.ip_network(token, strict=False)
-    except ValueError:
-        return token == addr  # a host name matches only the same name
+    net = ipaddress.ip_network(token, strict=False)  # parse_rule refused anything else
     try:
         ip = ipaddress.ip_address(addr)
     except ValueError:

@@ -234,6 +234,14 @@ let
       }
     )
     (
+      caseBy "40 X SYN to screen sharing after the Studio sent from that port" "block" "block in all" (
+        syn x 5900 // { sport = 50999; }
+      )
+      // {
+        opener = tcpOut 5900 x 50999 "A";
+      }
+    )
+    (
       caseBy "39 Studio client flow from an ephemeral port is picked up" "pass" "matches existing state" (
         tcpIn x 49200 "A" // { sport = 22; }
       )
@@ -242,6 +250,23 @@ let
       }
     )
   ];
+
+  # A service port in the ephemeral range must fail evaluation.
+  ephemeralPortRefused =
+    !(builtins.tryEval
+      (studio.extendModules {
+        modules = [
+          {
+            security.pf.allowedTcpServices = [
+              {
+                port = 49152;
+                sources = [ a ];
+              }
+            ];
+          }
+        ];
+      }).config.system.build.toplevel.drvPath
+    ).success;
 
   # Rule forms pfctl accepts but the evaluator does not model; each must
   # make it exit 2 rather than be read wrongly.
@@ -252,8 +277,11 @@ let
     "pass in quick proto tcp from any to any port ssh no state"
     "pass in quick proto tcp from any to any port 20:30 no state"
     "pass in quick inet proto icmp icmp-type 8 keep state"
+    "block in quick proto tcp from { bad.example.net } to any port 22"
+    "pass in quick proto 6 from any to any port 80 no state"
   ];
 in
+assert ephemeralPortRefused;
 pkgs.runCommand "check-pf-rule-order"
   {
     hostCheck = pfAnchorCheck {
