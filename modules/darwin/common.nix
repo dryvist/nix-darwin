@@ -53,7 +53,6 @@ in
     ./dock-apps-present.nix # Warn when a declared Dock app path is missing
     ./llm-gate.nix
     ./nix-storage.nix
-    ./ws-monitor.nix
     ./eslogger.nix
     ./apple-silicon-tunables.nix
     ./system-limits.nix

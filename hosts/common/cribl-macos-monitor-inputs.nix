@@ -107,62 +107,6 @@ let
           output: cribl_stream
   '';
 
-  wsMonitorRaw = ''
-    # Loop timing and resource samples from the lightweight stall
-    # monitor. The capture source sends one spindump summary per file.
-    in_ws_monitor:
-      type: file
-      disabled: false
-      mode: manual
-      interval: 15
-      path: /var/log/ws-monitor/
-      filenames:
-        - "*/ws-monitor.jsonl"
-      recurse: false
-      tailOnly: true
-      sendToRoutes: false
-      connections:
-        - pipeline: macos_ws_monitor
-          output: cribl_stream
-  '';
-
-  wsMonitorCapturesRaw = ''
-    in_ws_monitor_captures:
-      type: file
-      disabled: false
-      mode: manual
-      interval: 15
-      path: /var/log/ws-monitor/captures/
-      filenames:
-        - "*/*.summary.txt"
-      recurse: false
-      tailOnly: false
-      sendToRoutes: false
-      breakerRulesets:
-        - WS Monitor Captures
-      connections:
-        - pipeline: macos_ws_monitor_captures
-          output: cribl_stream
-  '';
-
-  # The monitor's stderr (modules/darwin/ws-monitor.nix StandardErrorPath).
-  wsMonitorErrorsRaw = ''
-    in_ws_monitor_errors:
-      type: file
-      disabled: false
-      mode: manual
-      interval: 15
-      path: /var/log/ws-monitor/
-      filenames:
-        - "*/ws-monitor.err.log"
-      recurse: false
-      tailOnly: true
-      sendToRoutes: false
-      connections:
-        - pipeline: macos_ws_monitor_errors
-          output: cribl_stream
-  '';
-
   # eslogger's own output (modules/darwin/eslogger.nix). The subsystem and
   # category are the defaults `eslogger --help` names for --oslog.
   esloggerRaw = ''
@@ -179,8 +123,5 @@ let
 in
 {
   unifiedLogs = indentInputFragment unifiedLogsRaw;
-  wsMonitor = indentInputFragment wsMonitorRaw;
-  wsMonitorCaptures = indentInputFragment wsMonitorCapturesRaw;
-  wsMonitorErrors = indentInputFragment wsMonitorErrorsRaw;
   eslogger = indentInputFragment esloggerRaw;
 }
