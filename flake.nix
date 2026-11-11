@@ -448,6 +448,11 @@
               inherit configs;
             };
 
+            cluster-link-prep = import ./lib/checks/cluster-link-prep.nix {
+              pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+              src = ./.;
+            };
+
             ssh-principals = import ./lib/checks/ssh-principals.nix {
               pkgs = nixpkgs.legacyPackages.aarch64-darwin;
               macbook = configs.${hosts.macbook-m4.hostName};

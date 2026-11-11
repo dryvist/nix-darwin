@@ -1,5 +1,5 @@
 # shellcheck shell=bash
-# Cluster-link prep (root, boot + rebuild) — static Thunderbolt link config.
+# Cluster-link prep (root: boot, every 127 s, and rebuild) — static Thunderbolt link config.
 #
 # One idempotent pass, persisted by macOS SystemConfiguration — no runtime
 # daemon. Disables the Thunderbolt Bridge network service (macOS otherwise
@@ -9,14 +9,78 @@
 # peer; inactive services install no routes), and sweeps any residual
 # Thunderbolt member out of bridge0.
 #
+# The boot and interval runs (the LaunchDaemon) set CLUSTER_LINK_PREP_GUARD=1 and first decide,
+# read-only, whether a pass is needed (see the guard below), so a cable plugged in after boot is
+# addressed within one interval. The rebuild run (postActivation) leaves it unset and always runs
+# the full pass.
+#
 # Consumed environment:
-#   CLUSTER_LINK_IP        this host's link address (role-derived synthetic)
-#   CLUSTER_PEER_LINK_IP   the other end's link address, removed if present here
+#   CLUSTER_LINK_IP                 this host's link address (role-derived synthetic)
+#   CLUSTER_PEER_LINK_IP            the other end's link address, removed if present here
+#   CLUSTER_LINK_PREP_GUARD         1 = decide first, run the full pass only when needed
+#   CLUSTER_LINK_PREP_STATE_FILE    previous guard decision (default under /var/run, cleared at boot)
+#   CLUSTER_LINK_PREP_IFCONFIG      ifconfig to call (test seam; default /sbin/ifconfig)
+#   CLUSTER_LINK_PREP_NETWORKSETUP  networksetup to call (test seam; default /usr/sbin/networksetup)
 
 : "${CLUSTER_LINK_IP:?CLUSTER_LINK_IP must be set}"
 : "${CLUSTER_PEER_LINK_IP:?CLUSTER_PEER_LINK_IP must be set}"
+IFCONFIG=${CLUSTER_LINK_PREP_IFCONFIG:-/sbin/ifconfig}
+NETWORKSETUP=${CLUSTER_LINK_PREP_NETWORKSETUP:-/usr/sbin/networksetup}
+state_file=${CLUSTER_LINK_PREP_STATE_FILE:-/var/run/cluster-link-prep.guard}
 
 prefix="[cluster-link-prep]"
+
+tb_devices() {
+  "$NETWORKSETUP" -listallhardwareports \
+    | /usr/bin/awk '/^Hardware Port: Thunderbolt [0-9]/{getline; sub(/^Device: /, ""); print}'
+}
+
+# Guard (daemon runs only). Read-only; decides in this order:
+#   1. a carrier-active Thunderbolt device already carries CLUSTER_LINK_IP: skip, address-present.
+#      This wins over every other condition. The full pass deletes and re-adds that address (step 2),
+#      which must never happen under a live cluster, and a live cluster always has the address on its
+#      active port.
+#   2. a carrier-active device without the address: run, carrier-without-address.
+#   3. a device administratively down: run, port-down.
+#   4. a device in bridge0: run, bridge-member.
+#   5. otherwise (no carrier, all up, none bridged): skip, no-carrier.
+# One log line only when the decision or reason differs from the previous run, so an uncabled host
+# does not log every interval.
+if [ "${CLUSTER_LINK_PREP_GUARD:-}" = 1 ]; then
+  present_dev="" active_dev="" down_dev="" member_dev=""
+  bridge="$("$IFCONFIG" bridge0 2> /dev/null || true)"
+  while IFS= read -r tb_dev; do
+    [ -n "$tb_dev" ] || continue
+    dev_state="$("$IFCONFIG" "$tb_dev" 2> /dev/null || true)"
+    case "$dev_state" in *"status: active"*)
+      case "$dev_state" in
+        *"inet $CLUSTER_LINK_IP "*) present_dev=${present_dev:-$tb_dev} ;;
+        *) active_dev=${active_dev:-$tb_dev} ;;
+      esac
+      ;;
+    esac
+    case "${dev_state%%$'\n'*}" in *"<UP,"* | *"<UP>"*) ;; *) down_dev=${down_dev:-$tb_dev} ;; esac
+    case "$bridge" in *"member: $tb_dev "*) member_dev=${member_dev:-$tb_dev} ;; esac
+  done < <(tb_devices)
+
+  decision=skip reason=no-carrier dev=-
+  if [ -n "$present_dev" ]; then
+    reason=address-present dev=$present_dev
+  elif [ -n "$active_dev" ]; then
+    decision=run reason=carrier-without-address dev=$active_dev
+  elif [ -n "$down_dev" ]; then
+    decision=run reason=port-down dev=$down_dev
+  elif [ -n "$member_dev" ]; then
+    decision=run reason=bridge-member dev=$member_dev
+  fi
+
+  if [ "$(cat "$state_file" 2> /dev/null || true)" != "$decision $reason" ]; then
+    echo "$prefix guard=link-prep decision=$decision reason=$reason dev=$dev"
+    printf '%s\n' "$decision $reason" > "$state_file" \
+      || echo "$prefix WARN could not record the guard decision in $state_file" >&2
+  fi
+  [ "$decision" = run ] || exit 0
+fi
 
 # 0. Wait for SystemConfiguration to publish the network service list. From a
 #    rebuild this returns on the first read and costs nothing. From the BOOT
@@ -30,7 +94,7 @@ prefix="[cluster-link-prep]"
 order=""
 waited=0
 while [ "$waited" -lt 60 ]; do
-  order="$(/usr/sbin/networksetup -listnetworkserviceorder 2>/dev/null || true)"
+  order="$("$NETWORKSETUP" -listnetworkserviceorder 2>/dev/null || true)"
   if [ -n "$order" ]; then
     break
   fi
@@ -46,7 +110,7 @@ fi
 bridge_svc="$(printf '%s\n' "$order" \
   | /usr/bin/awk '/Device: bridge0\)/{print prev; exit} {sub(/^\([0-9*]+\) /,""); prev=$0}')"
 if [ -n "$bridge_svc" ]; then
-  if /usr/sbin/networksetup -setnetworkserviceenabled "$bridge_svc" off 2>/dev/null; then
+  if "$NETWORKSETUP" -setnetworkserviceenabled "$bridge_svc" off 2>/dev/null; then
     echo "$prefix disabled network service '$bridge_svc' (device bridge0)"
   else
     echo "$prefix WARN failed to disable network service '$bridge_svc'" >&2
@@ -62,15 +126,14 @@ fi
 #     (the old sweep read the service order and so swept nothing, ever).
 while IFS= read -r tb_dev; do
   [ -n "$tb_dev" ] || continue
-  if /sbin/ifconfig bridge0 2>/dev/null | /usr/bin/grep -q "member: $tb_dev "; then
-    if /sbin/ifconfig bridge0 deletem "$tb_dev" 2>/dev/null; then
+  if "$IFCONFIG" bridge0 2>/dev/null | /usr/bin/grep -q "member: $tb_dev "; then
+    if "$IFCONFIG" bridge0 deletem "$tb_dev" 2>/dev/null; then
       echo "$prefix removed $tb_dev from bridge0"
     else
       echo "$prefix WARN failed to remove $tb_dev from bridge0" >&2
     fi
   fi
-done < <(/usr/sbin/networksetup -listallhardwareports \
-  | /usr/bin/awk '/^Hardware Port: Thunderbolt [0-9]/{getline; sub(/^Device: /, ""); print}')
+done < <(tb_devices)
 
 # 1.5 Bring every Thunderbolt device UP before any carrier is read. Removing a
 #     port from bridge0 leaves the device administratively down (flags=8822,
@@ -91,15 +154,14 @@ done < <(/usr/sbin/networksetup -listallhardwareports \
 #     is skipped there exactly as before.
 while IFS= read -r tb_dev; do
   [ -n "$tb_dev" ] || continue
-  /sbin/ifconfig "$tb_dev" up 2>/dev/null \
+  "$IFCONFIG" "$tb_dev" up 2>/dev/null \
     || echo "$prefix WARN failed to bring $tb_dev up" >&2
-done < <(/usr/sbin/networksetup -listallhardwareports \
-  | /usr/bin/awk '/^Hardware Port: Thunderbolt [0-9]/{getline; sub(/^Device: /, ""); print}')
+done < <(tb_devices)
 
 # Thunderbolt negotiation is not instant after `up`; reading carrier in the
 # same breath can still see `inactive` on a cabled port and skip it. One short
-# settle rather than a per-device poll — the prep reruns at every boot and
-# rebuild, so a rare miss self-heals instead of needing a retry loop here.
+# settle rather than a per-device poll — the prep reruns at every boot, every
+# interval and every rebuild, so a rare miss self-heals instead of needing a retry loop here.
 /bin/sleep 3
 
 # 2. Same link IPv4 directly on every physical Thunderbolt DEVICE via
@@ -121,12 +183,12 @@ done < <(/usr/sbin/networksetup -listallhardwareports \
 assigned=false
 while IFS= read -r tb_dev; do
   [ -n "$tb_dev" ] || continue
-  dev_state="$(/sbin/ifconfig "$tb_dev" 2>/dev/null)"
+  dev_state="$("$IFCONFIG" "$tb_dev" 2>/dev/null)"
   has_ip=false
   case "$dev_state" in *"inet $CLUSTER_LINK_IP "*) has_ip=true ;; esac
   # A role change leaves the old role's address behind; on this host it shadows the peer.
   case "$dev_state" in *"inet $CLUSTER_PEER_LINK_IP "*)
-    if /sbin/ifconfig "$tb_dev" inet "$CLUSTER_PEER_LINK_IP" delete; then
+    if "$IFCONFIG" "$tb_dev" inet "$CLUSTER_PEER_LINK_IP" delete; then
       echo "$prefix removed peer address $CLUSTER_PEER_LINK_IP from $tb_dev"
     else
       echo "$prefix WARN failed to remove peer address $CLUSTER_PEER_LINK_IP from $tb_dev" >&2
@@ -144,23 +206,22 @@ while IFS= read -r tb_dev; do
     # Guarded so a transient delete failure neither aborts the script under
     # an inherited `set -e` nor skips the alias re-add below.
     if $has_ip; then
-      /sbin/ifconfig "$tb_dev" inet "$CLUSTER_LINK_IP" delete \
+      "$IFCONFIG" "$tb_dev" inet "$CLUSTER_LINK_IP" delete \
         || echo "$prefix WARN failed to delete $CLUSTER_LINK_IP from $tb_dev before re-add" >&2
     fi
-    if /sbin/ifconfig "$tb_dev" inet "$CLUSTER_LINK_IP" netmask 255.255.255.0 alias; then
+    if "$IFCONFIG" "$tb_dev" inet "$CLUSTER_LINK_IP" netmask 255.255.255.0 alias; then
       echo "$prefix set $CLUSTER_LINK_IP on $tb_dev (carrier active)"
     else
       echo "$prefix WARN failed to set $CLUSTER_LINK_IP on $tb_dev" >&2
     fi
   elif ! $is_active && $has_ip; then
-    if /sbin/ifconfig "$tb_dev" inet "$CLUSTER_LINK_IP" delete; then
+    if "$IFCONFIG" "$tb_dev" inet "$CLUSTER_LINK_IP" delete; then
       echo "$prefix removed $CLUSTER_LINK_IP from $tb_dev (no carrier)"
     else
       echo "$prefix WARN failed to remove $CLUSTER_LINK_IP from $tb_dev" >&2
     fi
   fi
-done < <(/usr/sbin/networksetup -listallhardwareports \
-  | /usr/bin/awk '/^Hardware Port: Thunderbolt [0-9]/{getline; sub(/^Device: /, ""); print}')
+done < <(tb_devices)
 
 # Say so when nothing was addressed. This prep is invoked from postActivation
 # with `|| echo "…non-fatal failure"` so it can never fail a rebuild — which

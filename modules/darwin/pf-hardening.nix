@@ -19,6 +19,7 @@
   lib,
   config,
   pkgs,
+  launchdTrampolineArgs,
   ...
 }:
 
@@ -189,7 +190,7 @@ in
     launchd.daemons.pf-hardening = {
       serviceConfig = {
         Label = "com.nix-darwin.pf-hardening";
-        ProgramArguments = [ (lib.getExe loadAnchor) ];
+        ProgramArguments = launchdTrampolineArgs "pf-hardening" [ (lib.getExe loadAnchor) ];
         RunAtLoad = true;
         # A boot-time load can fail before DNS answers (sources may be host
         # names); launchd reruns a failed load every 30 s until one succeeds.

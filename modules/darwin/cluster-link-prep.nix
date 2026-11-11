@@ -9,10 +9,12 @@
 # defaults must match it.
 #
 # Everything is applied by one idempotent root pass, triggered at rebuild
-# (postActivation) and again at boot (a RunAtLoad LaunchDaemon). Still no
-# runtime daemon: nothing polls, nothing stays resident. macOS
-# SystemConfiguration persists most of the settings, but not all of them —
-# see the boot trigger below for what a reboot undoes:
+# (postActivation), at boot, and every 127 seconds (a LaunchDaemon). The
+# daemon runs first decide, read-only, whether a pass is needed, so a cable
+# plugged in after boot is addressed within one interval; nothing stays
+# resident. macOS SystemConfiguration persists most of the settings, but not
+# all of them — see the boot and interval trigger below for what a reboot
+# undoes:
 #   1. The "Thunderbolt Bridge" network service is disabled, so macOS never
 #      enslaves a Thunderbolt port into bridge0 (RDMA needs exclusive L2).
 #   2. Every physical Thunderbolt port's network service gets the SAME manual
@@ -142,7 +144,7 @@ in
         '';
     };
 
-    # Boot trigger (root, RunAtLoad): the SAME prep, one more time to run it.
+    # Boot and interval trigger (root, RunAtLoad + StartInterval): the SAME prep.
     #
     # This repo deliberately does not run a full activation at boot —
     # ./boot-activation.nix restores only the /run/current-system symlink,
@@ -153,9 +155,15 @@ in
     # every restart until the link prep ran again on both hosts. The manual
     # join checks the prepared link before attempting rank formation.
     #
-    # Idempotent and self-limiting: the prep is the same one-shot pass, and
-    # the daemon exists only while clusterLinkPrep is enabled, so a host with
-    # cluster mode off installs nothing.
+    # A cable plugged in after boot got no address until the next boot or
+    # rebuild, so the daemon also runs every 127 seconds. Daemon runs set
+    # CLUSTER_LINK_PREP_GUARD=1: the script first decides, read-only, whether a
+    # pass is needed, never re-plumbs an active port that already has the
+    # address, and logs a decision only when it changes. See the guard in
+    # ./scripts/cluster-link-prep.sh.
+    #
+    # Self-limiting: the daemon exists only while clusterLinkPrep is enabled,
+    # so a host with cluster mode off installs nothing.
     launchd.daemons.cluster-link-prep.serviceConfig = {
       Label = "com.nix-darwin.cluster-link-prep";
       # The named trampoline waits for /nix/store before execing this argument vector.
@@ -167,14 +175,16 @@ in
       EnvironmentVariables = {
         CLUSTER_LINK_IP = cfg.linkIps.${cfg.role};
         CLUSTER_PEER_LINK_IP = cfg.linkIps.${peerRole};
+        CLUSTER_LINK_PREP_GUARD = "1";
       };
       RunAtLoad = true;
+      StartInterval = 127;
       KeepAlive = false;
       StandardOutPath = "/var/log/cluster-link-prep.log";
       StandardErrorPath = "/var/log/cluster-link-prep.log";
     };
 
-    # postActivation (root, rebuild): idempotent one-shot link config;
+    # postActivation (root, rebuild): an unconditional full pass (no guard);
     # never allowed to fail activation.
     system.activationScripts.postActivation.text = lib.mkAfter ''
       CLUSTER_LINK_IP=${lib.escapeShellArg cfg.linkIps.${cfg.role}} \
