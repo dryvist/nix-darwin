@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.24.1](https://github.com/dryvist/nix-darwin/compare/v4.24.0...v4.24.1) (2026-11-11)
+
+
+### Bug Fixes
+
+* **pf:** start the pf anchor loader through the launchd trampoline ([#3226](https://github.com/dryvist/nix-darwin/issues/3226)) ([ade1dab](https://github.com/dryvist/nix-darwin/commit/ade1dab74342811a650f691a3d9385e5e052f3f0))
+
 ## [4.24.0](https://github.com/dryvist/nix-darwin/compare/v4.23.1...v4.24.0) (2026-11-10)
 
 
