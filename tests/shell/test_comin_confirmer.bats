@@ -40,7 +40,19 @@ STUB
   export PATH="$STUB_DIR:$PATH"
   export CLUSTER_REBUILD_GATE_BIN="$STUB_DIR/cluster-rebuild-gate"
   export COMIN_STATUS='{"deploy_confirmer":{"submitted":"gen-1"},"deployer":{"is_deploying":false}}'
+  export COMIN_HOLD_FILE="$BATS_TEST_TMPDIR/comin-hold"
+  export COMIN_WAITING_FILE="$BATS_TEST_TMPDIR/comin-confirmer.waiting"
 }
+
+# UTC timestamp offset from now by a GNU date relative expression ("+2 hours").
+at() { date -u -d "$1" +%Y-%m-%dT%H:%M:%SZ; }
+
+write_hold() {
+  printf '%s\n' "$@" > "$COMIN_HOLD_FILE"
+}
+
+no_confirmation() { [ "$(grep -c '^comin confirmation' "$CALLS")" = 0 ]; }
+no_gate() { [ "$(grep -c '^gate' "$CALLS")" = 0 ]; }
 
 run_confirmer() {
   run bash -euo pipefail "$SCRIPTS/comin-confirmer.sh"
@@ -108,3 +120,97 @@ STUB
   [[ "$output" == *"CONFIRMING generation gen-1: cluster-rebuild-gate: ALLOWING — no cluster rank is live on this host; link-state down."* ]]
   grep -qx 'comin confirmation accept' "$CALLS"
 }
+
+@test "a valid hold confirms nothing, skips the gate and logs who, why, until and the generation" {
+  until_ts="$(at '+2 hours')"
+  write_hold "by=agent-team" "why=mid-task on this host" "set=$(at '-10 minutes')" "until=$until_ts"
+  GATE=allow run_confirmer
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"HOLD by=agent-team why=mid-task on this host until=$until_ts; confirming nothing, cluster gate not consulted; waiting generation: gen-1"* ]]
+  no_gate
+  no_confirmation
+}
+
+@test "a valid hold with nothing waiting logs the hold and confirms nothing" {
+  write_hold "by=agent-team" "why=mid-task" "set=$(at '-1 minutes')" "until=$(at '+1 hours')"
+  GATE=allow COMIN_STATUS='{"deploy_confirmer":{"submitted":""}}' run_confirmer
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"HOLD by=agent-team why=mid-task"*"waiting generation: none"* ]]
+  no_gate
+  no_confirmation
+}
+
+@test "hold values are logged on one line with control characters stripped and length capped" {
+  long="$(printf 'x%.0s' $(seq 1 400))"
+  printf 'by=agent\033[31mteam\nwhy=%s\nset=%s\nuntil=%s\n' "$long" "$(at '-1 minutes')" "$(at '+1 hours')" > "$COMIN_HOLD_FILE"
+  GATE=allow run_confirmer
+  [ "$status" -eq 0 ]
+  [ "${#lines[@]}" -eq 1 ]
+  [[ "$output" == *"by=agent[31mteam why=$(printf 'x%.0s' $(seq 1 200)) until="* ]]
+  [[ "$output" != *$'\033'* ]]
+  no_confirmation
+}
+
+@test "an expired hold confirms as today and logs alert=hold-expired" {
+  write_hold "by=agent-team" "why=done" "set=$(at '-3 hours')" "until=$(at '-1 hours')"
+  GATE=allow run_confirmer
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"comin-confirmer: alert=hold-expired"* ]]
+  [[ "$output" == *"CONFIRMING generation gen-1: cluster-rebuild-gate: ALLOWING"* ]]
+  grep -qx 'comin confirmation accept' "$CALLS"
+}
+
+@test "malformed holds are treated as absent and logged" {
+  now_set="$(at '-1 minutes')"
+  for hold in \
+    "missing-why|by=a|set=$now_set|until=$(at '+1 hours')" \
+    "bad-time|by=a|why=b|set=$now_set|until=tomorrow" \
+    "over-12h-from-set|by=a|why=b|set=$(at '-1 hours')|until=$(at '+11 hours 30 minutes')" \
+    "over-12h-ahead|by=a|why=b|set=$(at '+1 hours')|until=$(at '+12 hours 30 minutes')" \
+    "until-before-set|by=a|why=b|set=$now_set|until=$(at '-2 minutes')" \
+    "duplicate-key|by=a|by=c|why=b|set=$now_set|until=$(at '+1 hours')" \
+    "empty|"; do
+    name="${hold%%|*}"
+    IFS='|' read -r -a fields <<< "${hold#*|}"
+    : > "$COMIN_HOLD_FILE"
+    for field in "${fields[@]}"; do [ -n "$field" ] && printf '%s\n' "$field" >> "$COMIN_HOLD_FILE"; done
+    : > "$CALLS"
+    GATE=allow run_confirmer
+    [ "$status" -eq 0 ] || { echo "$name: exit $status"; false; }
+    [[ "$output" == *"hold file $COMIN_HOLD_FILE ignored ("*"); treated as absent"* ]] || { echo "$name: $output"; false; }
+    [[ "$output" != *"alert=hold-expired"* ]] || { echo "$name: alerted"; false; }
+    grep -qx 'comin confirmation accept' "$CALLS" || { echo "$name: not confirmed"; false; }
+  done
+}
+
+@test "an unreadable hold is treated as absent and logged" {
+  mkdir "$COMIN_HOLD_FILE"
+  GATE=allow run_confirmer
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"hold file $COMIN_HOLD_FILE ignored (unreadable); treated as absent"* ]]
+  grep -qx 'comin confirmation accept' "$CALLS"
+}
+
+@test "alert=generation-waiting-24h appears only past 24 hours and clears when the generation changes" {
+  GATE=refuse run_confirmer
+  [[ "$output" != *"alert=generation-waiting-24h"* ]]
+  [ "$(cut -d' ' -f1 "$COMIN_WAITING_FILE")" = gen-1 ]
+
+  printf 'gen-1 %s\n' "$(date -u -d '-23 hours' +%s)" > "$COMIN_WAITING_FILE"
+  GATE=refuse run_confirmer
+  [[ "$output" != *"alert=generation-waiting-24h"* ]]
+
+  printf 'gen-1 %s\n' "$(date -u -d '-25 hours' +%s)" > "$COMIN_WAITING_FILE"
+  GATE=refuse run_confirmer
+  [[ "$output" == *"comin-confirmer: alert=generation-waiting-24h generation=gen-1 since="* ]]
+  no_confirmation
+
+  GATE=refuse COMIN_STATUS='{"deploy_confirmer":{"submitted":"gen-2"}}' run_confirmer
+  [[ "$output" != *"alert=generation-waiting-24h"* ]]
+  [ "$(cut -d' ' -f1 "$COMIN_WAITING_FILE")" = gen-2 ]
+
+  GATE=refuse COMIN_STATUS='{"deploy_confirmer":{"submitted":""}}' run_confirmer
+  [ -z "$output" ]
+  [ ! -e "$COMIN_WAITING_FILE" ]
+}
+

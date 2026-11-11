@@ -7,7 +7,8 @@
 #
 # The deploy confirmer stays `manual`. The `comin-confirmer` daemon confirms a waiting generation
 # only when the cluster rebuild gate allows activation; while the host is clustered it confirms
-# nothing, logs the gate's refusal, and checks again on the next interval. See
+# nothing, logs the gate's refusal, and checks again on the next interval. A hold file
+# (services.cominGitOps.holdFile) stops confirmation for at most 12 hours. See
 # ./scripts/comin-confirmer.sh.
 {
   config,
@@ -29,13 +30,18 @@ let
     runtimeEnv.COMIN_LABEL = cominLabel;
     text = builtins.readFile ./scripts/comin-token-reload.sh;
   };
+  # coreutils first in PATH: the scripts parse hold times with GNU `date -d`.
   confirmerPkg = pkgs.writeShellApplication {
     name = "comin-confirmer";
     runtimeInputs = [
+      pkgs.coreutils
       config.services.comin.package
       pkgs.jq
     ];
-    runtimeEnv.CLUSTER_REBUILD_GATE_BIN = lib.getExe config.system.clusterRebuildGate.gatePkg;
+    runtimeEnv = {
+      CLUSTER_REBUILD_GATE_BIN = lib.getExe config.system.clusterRebuildGate.gatePkg;
+      COMIN_HOLD_FILE = cfg.holdFile;
+    };
     text = builtins.readFile ./scripts/comin-confirmer.sh;
   };
 in
@@ -65,6 +71,17 @@ in
       type = lib.types.int;
       default = 293;
       description = "Seconds between confirmer runs; bounds how long an allowed generation waits for confirmation.";
+    };
+
+    holdFile = lib.mkOption {
+      type = lib.types.str;
+      # /var/db: root-owned state that survives a reboot (/var/run is cleared at boot; /etc is
+      # declared configuration).
+      default = "/var/db/comin-hold";
+      description = ''
+        Hold file read by the confirmer. While it holds a valid hold the confirmer confirms nothing.
+        See ./scripts/comin-confirmer.sh for the format.
+      '';
     };
   };
 
