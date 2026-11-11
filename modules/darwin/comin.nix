@@ -1,7 +1,43 @@
-{ config, lib, ... }:
+# comin GitOps service.
+#
+# comin reads `access_token_path` once, when it loads its configuration at start. The
+# `comin-token-reload` daemon watches the token's directory and restarts comin when it changes, so a
+# refreshed token reaches the next fetch. It restarts comin at most once per token rewrite, and not
+# while comin is fetching, evaluating, building or deploying; see ./scripts/comin-token-reload.sh.
+#
+# The deploy confirmer stays `manual`. The `comin-confirmer` daemon confirms a waiting generation
+# only when the cluster rebuild gate allows activation; while the host is clustered it confirms
+# nothing, logs the gate's refusal, and checks again on the next interval. See
+# ./scripts/comin-confirmer.sh.
+{
+  config,
+  lib,
+  pkgs,
+  launchdTrampolineArgs,
+  ...
+}:
 
 let
   cfg = config.services.cominGitOps;
+  cominLabel = "com.github.nlewo.comin";
+  tokenReloadPkg = pkgs.writeShellApplication {
+    name = "comin-token-reload";
+    runtimeInputs = [
+      config.services.comin.package
+      pkgs.jq
+    ];
+    runtimeEnv.COMIN_LABEL = cominLabel;
+    text = builtins.readFile ./scripts/comin-token-reload.sh;
+  };
+  confirmerPkg = pkgs.writeShellApplication {
+    name = "comin-confirmer";
+    runtimeInputs = [
+      config.services.comin.package
+      pkgs.jq
+    ];
+    runtimeEnv.CLUSTER_REBUILD_GATE_BIN = lib.getExe config.system.clusterRebuildGate.gatePkg;
+    text = builtins.readFile ./scripts/comin-confirmer.sh;
+  };
 in
 {
   options.services.cominGitOps = {
@@ -23,6 +59,12 @@ in
       type = lib.types.str;
       default = "";
       description = "Path to the file containing the remote access token.";
+    };
+
+    confirmInterval = lib.mkOption {
+      type = lib.types.int;
+      default = 293;
+      description = "Seconds between confirmer runs; bounds how long an allowed generation waits for confirmation.";
     };
   };
 
@@ -56,6 +98,37 @@ in
         }
       ];
       deployConfirmer.mode = "manual";
+    };
+
+    launchd.daemons.comin-token-reload.serviceConfig = {
+      Label = "com.nix-darwin.comin-token-reload";
+      # The named trampoline waits for /nix/store before execing this argument vector.
+      ProgramArguments = launchdTrampolineArgs "comin-token-reload" [
+        "/bin/sh"
+        "-c"
+        "/bin/wait4path /nix/store && exec ${lib.getExe tokenReloadPkg}"
+      ];
+      # The directory, not the file: a token written by rename replaces the file's inode.
+      WatchPaths = [ (dirOf cfg.accessTokenPath) ];
+      RunAtLoad = false;
+      KeepAlive = false;
+      StandardOutPath = "/var/log/comin-token-reload.log";
+      StandardErrorPath = "/var/log/comin-token-reload.log";
+    };
+
+    launchd.daemons.comin-confirmer.serviceConfig = {
+      Label = "com.nix-darwin.comin-confirmer";
+      # The named trampoline waits for /nix/store before execing this argument vector.
+      ProgramArguments = launchdTrampolineArgs "comin-confirmer" [
+        "/bin/sh"
+        "-c"
+        "/bin/wait4path /nix/store && exec ${lib.getExe confirmerPkg}"
+      ];
+      StartInterval = cfg.confirmInterval;
+      RunAtLoad = false;
+      KeepAlive = false;
+      StandardOutPath = "/var/log/comin-confirmer.log";
+      StandardErrorPath = "/var/log/comin-confirmer.log";
     };
   };
 }
