@@ -1,5 +1,18 @@
 # Changelog
 
+## [4.25.0](https://github.com/dryvist/nix-darwin/compare/v4.24.1...v4.25.0) (2026-11-11)
+
+
+### Features
+
+* **cribl:** ship the cluster schedule logs ([#3231](https://github.com/dryvist/nix-darwin/issues/3231)) ([25b8da9](https://github.com/dryvist/nix-darwin/commit/25b8da9d6043bd0c9f676eb6ccc1365a1e21aef5))
+
+
+### Bug Fixes
+
+* **cluster:** run link prep on an interval with a read-only guard ([#3228](https://github.com/dryvist/nix-darwin/issues/3228)) ([cbae986](https://github.com/dryvist/nix-darwin/commit/cbae9865c43ba174587fd7c554dab026330debc0))
+* **comin:** reload the access token and confirm deployments unless clustered ([#3227](https://github.com/dryvist/nix-darwin/issues/3227)) ([3b38cf8](https://github.com/dryvist/nix-darwin/commit/3b38cf8b958e3ec08cb3560d65b130079079dc47))
+
 ## [4.24.1](https://github.com/dryvist/nix-darwin/compare/v4.24.0...v4.24.1) (2026-11-11)
 
 
