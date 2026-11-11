@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.26.1](https://github.com/dryvist/nix-darwin/compare/v4.26.0...v4.26.1) (2026-11-11)
+
+
+### Bug Fixes
+
+* **pf:** flush the other anchor before loading ([#3236](https://github.com/dryvist/nix-darwin/issues/3236)) ([98b35f4](https://github.com/dryvist/nix-darwin/commit/98b35f4505df5ec1f8bc4c7763132d3a9b75945e))
+
+## [4.26.0](https://github.com/dryvist/nix-darwin/compare/v4.25.0...v4.26.0) (2026-11-11)
+
+
+### Features
+
+* **comin:** hold file for the deploy confirmer ([#3235](https://github.com/dryvist/nix-darwin/issues/3235)) ([f2c48f6](https://github.com/dryvist/nix-darwin/commit/f2c48f64245740fb8d12ab5322a64498986ed1b2))
+
 ## [4.25.0](https://github.com/dryvist/nix-darwin/compare/v4.24.1...v4.25.0) (2026-11-11)
 
 

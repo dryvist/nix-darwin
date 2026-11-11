@@ -43,6 +43,8 @@ setup() {
   [ "${lines[0]}" = "pfctl -a com.apple/nix-hardening -F rules" ]
   [ "${lines[1]}" = "pfctl -a com.apple/nix-hardening -s rules" ]
   [ "${lines[2]}" = "pfctl -a nix-hardening -f /etc/pf.anchors/nix-hardening" ]
+  run grep -q '^pfctl -e' "$PF_CALL_LOG"
+  [ "$status" -eq 1 ]
   grep -q 'FAILED: load /etc/pf.anchors/nix-hardening into nix-hardening' "$PF_CALL_LOG"
 }
 
