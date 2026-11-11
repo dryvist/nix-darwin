@@ -10,11 +10,13 @@ It understands only the rule forms modules/darwin/pf-hardening.nix emits
 and exits non-zero on any other line.
 
 usage: python3 -I pf-rule-order.py <anchor-file> <cases.json>
-cases.json: [{"name", "expect": "pass"|"block", "packet", "opener"?, "by"?}];
+cases.json: [{"name", "expect": "pass"|"block", "packet", "opener"?, "by"?,
+"opener_by"?}];
 a packet is {"dir", "proto", "src", "dst", "iface"?, "sport"?, "dport"?,
 "flags"?, "icmp_type"?}. An opener is evaluated first; it must pass, and
 the state it creates is in place for the packet. `by`, when given, must be
-part of the deciding rule line (or "matches existing state").
+part of the deciding rule line (or "matches existing state"); `opener_by`
+likewise for the opener.
 
 The state model is pf's lookup by protocol, addresses and ports in both
 directions. It assumes a state matches every later packet of its flow and
@@ -62,11 +64,23 @@ def check_addrs(items, line):
     return items
 
 
-def check_ports(items, line):
+def take_ports(toks, i, line):
+    """Read `port N`, `port { N, M }` or `port >= N` as a list of (op, number)."""
+    if toks[i] == ">=":
+        items, i, op = [toks[i + 1]], i + 2, ">="
+    else:
+        items, i = take_list(toks, i)
+        op = "="
     for item in items:
         if not item.isdigit():
-            raise ParseError(f"only numeric single ports are supported: {line}")
-    return items
+            raise ParseError(f"only numeric ports, alone or after >=, are supported: {line}")
+    return [(op, int(item)) for item in items], i
+
+
+def port_match(spec, port):
+    if port is None:
+        return False
+    return any(port >= n if op == ">=" else port == n for op, n in spec)
 
 
 def flag_set(text):
@@ -110,15 +124,13 @@ def parse_rule(line):
         r["src"], i = take_list(toks, i + 1)
         check_addrs(r["src"], line)
         if at("port"):
-            r["sport"], i = take_list(toks, i + 1)
-            check_ports(r["sport"], line)
+            r["sport"], i = take_ports(toks, i + 1, line)
         if not at("to"):
             raise ParseError(f"expected `to`: {line}")
         r["dst"], i = take_list(toks, i + 1)
         check_addrs(r["dst"], line)
         if at("port"):
-            r["dport"], i = take_list(toks, i + 1)
-            check_ports(r["dport"], line)
+            r["dport"], i = take_ports(toks, i + 1, line)
     if at("flags"):
         spec = toks[i + 1]
         if spec != "any":
@@ -202,9 +214,9 @@ def matches(rule, pkt):
         return False
     if rule["dst"] and not any(addr_match(t, pkt["dst"]) for t in rule["dst"]):
         return False
-    if rule["sport"] and str(pkt.get("sport")) not in rule["sport"]:
+    if rule["sport"] and not port_match(rule["sport"], pkt.get("sport")):
         return False
-    if rule["dport"] and str(pkt.get("dport")) not in rule["dport"]:
+    if rule["dport"] and not port_match(rule["dport"], pkt.get("dport")):
         return False
     if rule["flags"] and pkt["proto"] == "tcp":
         want, mask = rule["flags"]
@@ -254,9 +266,9 @@ def main(anchor_file, cases_file):
         note = ""
         if case.get("opener"):
             action, why = verdict(rules, case["opener"], states)
-            if action != "pass":
+            if action != "pass" or case.get("opener_by", "") not in why:
                 failed += 1
-                print(f"FAIL {case['name']}: opener blocked by `{why}`")
+                print(f"FAIL {case['name']}: opener {action} by `{why}`")
                 continue
             note = f" (opener passed by `{why}`)"
         action, why = verdict(rules, case["packet"], states)
