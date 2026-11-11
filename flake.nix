@@ -527,6 +527,12 @@
                 ${orderChecks}
                 touch $out
               '';
+
+            pf-rule-order = import ./lib/checks/pf-rule-order.nix {
+              pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+              studio = configs.${hosts.mac-studio.hostName};
+              pfAnchorCheck = import ./lib/pf-anchor-check.nix;
+            };
           };
         };
 
