@@ -1,8 +1,8 @@
 #!/usr/bin/env bats
 #
 # comin-token-reload, driven against a stub comin and a stub launchctl. The cases that matter:
-# a changed token restarts comin, a deployment in progress defers the restart, and an unreadable
-# comin state still restarts (a comin that cannot answer is not mid-deployment by its own report).
+# a changed token restarts an idle comin; fetching, evaluating, building or deploying defers the
+# restart; and an unreadable comin state still restarts (a comin that cannot answer reports no work).
 
 SCRIPTS="$BATS_TEST_DIRNAME/../../modules/darwin/scripts"
 
@@ -37,7 +37,7 @@ run_reload() {
 }
 
 @test "an idle comin is restarted after the token changes" {
-  COMIN_STATUS='{"deployer":{"is_deploying":false}}' run_reload
+  COMIN_STATUS='{"fetcher":{"is_fetching":false},"builder":{"is_evaluating":false,"is_building":false},"deployer":{"is_deploying":false}}' run_reload
   [ "$status" -eq 0 ]
   [[ "$output" == *"token directory changed; restarting com.github.nlewo.comin."* ]]
   grep -qx 'launchctl kickstart -k system/com.github.nlewo.comin' "$CALLS"
@@ -46,7 +46,28 @@ run_reload() {
 @test "a deployment in progress defers the restart" {
   COMIN_STATUS='{"deployer":{"is_deploying":true}}' run_reload
   [ "$status" -eq 0 ]
-  [[ "$output" == *"restart deferred because a deployment is in progress."* ]]
+  [[ "$output" == *"restart deferred because comin is deploying."* ]]
+  [ "$(grep -c '^launchctl' "$CALLS")" = 0 ]
+}
+
+@test "a build in progress defers the restart" {
+  COMIN_STATUS='{"builder":{"is_evaluating":false,"is_building":true},"deployer":{"is_deploying":false}}' run_reload
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"restart deferred because comin is building."* ]]
+  [ "$(grep -c '^launchctl' "$CALLS")" = 0 ]
+}
+
+@test "an evaluation in progress defers the restart" {
+  COMIN_STATUS='{"builder":{"is_evaluating":true,"is_building":false}}' run_reload
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"restart deferred because comin is evaluating."* ]]
+  [ "$(grep -c '^launchctl' "$CALLS")" = 0 ]
+}
+
+@test "a fetch in progress defers the restart" {
+  COMIN_STATUS='{"fetcher":{"is_fetching":true}}' run_reload
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"restart deferred because comin is fetching."* ]]
   [ "$(grep -c '^launchctl' "$CALLS")" = 0 ]
 }
 

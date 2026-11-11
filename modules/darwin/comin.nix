@@ -2,8 +2,8 @@
 #
 # comin reads `access_token_path` once, when it loads its configuration at start. The
 # `comin-token-reload` daemon watches the token's directory and restarts comin when it changes, so a
-# refreshed token reaches the next fetch. It never restarts comin during a deployment; see
-# ./scripts/comin-token-reload.sh.
+# refreshed token reaches the next fetch. It restarts comin at most once per token rewrite, and not
+# while comin is fetching, evaluating, building or deploying; see ./scripts/comin-token-reload.sh.
 #
 # The deploy confirmer stays `manual`. The `comin-confirmer` daemon confirms a waiting generation
 # only when the cluster rebuild gate allows activation; while the host is clustered it confirms
