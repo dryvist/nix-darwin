@@ -34,6 +34,7 @@ let
             exemptNetworks = lib.mkForce [ "198.51.100.0/24" ];
             # The shapes a host flake adds: a proxy-only port, router sources on
             # the API port, and the laptop's SSH and Screen Sharing on any LAN.
+            extraSshSources = [ m ];
             allowedTcpServices = [
               {
                 port = 8787;
@@ -42,10 +43,6 @@ let
               {
                 port = studio.config.programs.llm-gate.apiPort;
                 sources = [ r ];
-              }
-              {
-                port = 22;
-                sources = [ m ];
               }
               {
                 port = 5900;
@@ -166,9 +163,10 @@ let
     (case "19 A remote management" "block" (syn a 3283))
     (case "20 A airplay 5000" "block" (syn a 5000))
     (case "21 A airplay 7000" "block" (syn a 7000))
-    (case "22 M on B ssh new" "pass" (syn m 22))
+    (caseBy "22 M on B ssh new" "pass" "flags S/SA keep state (max-src-conn 10)" (syn m 22))
     (case "23 M on B screen sharing" "pass" (syn m 5900))
     (case "24 M on B metrics" "block" (syn m metricsPort))
+    (caseBy "24b M on B ssh mid-stream" "pass" "port 22 flags /S no state" (tcpIn m 22 "A"))
     (case "25 X screen sharing" "block" (syn x 5900))
     (case "26 X non-SYN to ssh" "block" (tcpIn x 22 "A"))
     (case "27 A remote management udp" "block" {
@@ -214,6 +212,7 @@ let
         tcpIn x 22 "A" // { sport = 50999; }
       )
       // {
+        opener_by = "no rule matched";
         opener = tcpOut 22 x 50999 "A";
       }
     )
@@ -222,6 +221,7 @@ let
         syn x 22 // { sport = 50999; }
       )
       // {
+        opener_by = "no rule matched";
         opener = tcpOut 22 x 50999 "A";
       }
     )
@@ -230,6 +230,7 @@ let
         syn x metricsPort // { sport = 50999; }
       )
       // {
+        opener_by = "no rule matched";
         opener = tcpOut metricsPort x 50999 "A";
       }
     )
@@ -238,6 +239,7 @@ let
         syn x 5900 // { sport = 50999; }
       )
       // {
+        opener_by = "no rule matched";
         opener = tcpOut 5900 x 50999 "A";
       }
     )
@@ -249,24 +251,81 @@ let
         opener = tcpOut 49200 x 22 "A";
       }
     )
+    (
+      caseBy "41 X SYN to undeclared 7000 after the Studio sent from it" "block" "block in all" (
+        syn x 7000 // { sport = 50999; }
+      )
+      // {
+        opener_by = "no rule matched";
+        opener = tcpOut 7000 x 50999 "A";
+      }
+    )
+    (
+      caseBy "42 X SYN to undeclared 3283 after the Studio sent from it" "block" "block in all" (
+        syn x 3283 // { sport = 50999; }
+      )
+      // {
+        opener_by = "no rule matched";
+        opener = tcpOut 3283 x 50999 "PA";
+      }
+    )
+    (
+      caseBy "43 Studio's non-SYN from undeclared 7000 creates no state; X's next packet blocks" "block"
+        "block in all"
+        (tcpIn x 7000 "A" // { sport = 50999; })
+      // {
+        opener_by = "no rule matched";
+        opener = tcpOut 7000 x 50999 "A";
+      }
+    )
+    # Pre-existing behaviour of `pass out all keep state`, documented here: UDP
+    # sent from a listening port (mDNS unicast) creates state admitting the reply.
+    (
+      caseBy "44 X unicast mDNS reply after the Studio's query" "pass" "matches existing state" {
+        dir = "in";
+        proto = "udp";
+        src = x;
+        sport = 5353;
+        dst = me;
+        dport = 5353;
+      }
+      // {
+        opener = {
+          dir = "out";
+          proto = "udp";
+          src = me;
+          sport = 5353;
+          dst = x;
+          dport = 5353;
+        };
+      }
+    )
   ];
 
-  # A service port in the ephemeral range must fail evaluation.
+  # Assertions that must fail, by their exact message, for a bad service port.
+  failedAssertions =
+    services:
+    map (assertion: assertion.message) (
+      lib.filter (assertion: !assertion.assertion)
+        (studio.extendModules { modules = [ { security.pf.allowedTcpServices = services; } ]; })
+        .config.assertions
+    );
   ephemeralPortRefused =
-    !(builtins.tryEval
-      (studio.extendModules {
-        modules = [
-          {
-            security.pf.allowedTcpServices = [
-              {
-                port = 49152;
-                sources = [ a ];
-              }
-            ];
-          }
-        ];
-      }).config.system.build.toplevel.drvPath
-    ).success;
+    lib.elem "security.pf.allowedTcpServices ports must be below 49152, the macOS ephemeral port range."
+      (failedAssertions [
+        {
+          port = 49152;
+          sources = [ a ];
+        }
+      ]);
+  sshPortRefused =
+    lib.elem "security.pf.allowedTcpServices must not include port 22; use security.pf.extraSshSources."
+      (failedAssertions [
+        {
+          port = 22;
+          sources = [ a ];
+        }
+      ]);
 
   # Rule forms pfctl accepts but the evaluator does not model; each must
   # make it exit 2 rather than be read wrongly.
@@ -279,9 +338,12 @@ let
     "pass in quick inet proto icmp icmp-type 8 keep state"
     "block in quick proto tcp from { bad.example.net } to any port 22"
     "pass in quick proto 6 from any to any port 80 no state"
+    "pass out proto tcp from any port > 49151 to any flags any keep state"
+    "pass out proto tcp from any port 49152:65535 to any flags any keep state"
   ];
 in
 assert ephemeralPortRefused;
+assert sshPortRefused;
 pkgs.runCommand "check-pf-rule-order"
   {
     hostCheck = pfAnchorCheck {
