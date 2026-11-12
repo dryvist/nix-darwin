@@ -1758,17 +1758,18 @@
         "nixpkgs-unstable": [
           "nixpkgs-unstable"
         ],
+        "orca-skills": "orca-skills",
         "ponytail": "ponytail",
         "token-meter-src": "token-meter-src",
         "vct-cribl-cli": "vct-cribl-cli",
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1794305820,
-        "narHash": "sha256-u3IbDKO7xhUk6sEazr9B7tiqRz2qG+dadb4BQvOVMF8=",
+        "lastModified": 1794469472,
+        "narHash": "sha256-6M35sl130M0wQzoepUexiv2xeF8V44duYiuNOZdA+Ws=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "68a4194b4dba8558e12accc7cb28c7db365ff8c1",
+        "rev": "a0bee30423fb613f5df9a2b982707e0669f120e2",
         "type": "github"
       },
       "original": {
@@ -1899,11 +1900,11 @@
         "visual-explainer-marketplace": "visual-explainer-marketplace"
       },
       "locked": {
-        "lastModified": 1794268630,
-        "narHash": "sha256-rjCC+K+Y9BVD1j/PwP8M+AyXCKn1MOm3UNBuGJefMcA=",
+        "lastModified": 1794433316,
+        "narHash": "sha256-c/XtnF03H4/3oykq4NIF7GjrAiQW5b+0CjPEtcDeGTs=",
         "owner": "dryvist",
         "repo": "nix-claude-code",
-        "rev": "aeb13f8a24b61a02dc291a520fc6a1439a408022",
+        "rev": "dd9874320e0b1f21c9d49ce7926d44aa39292fc0",
         "type": "github"
       },
       "original": {
@@ -1916,11 +1917,11 @@
     "nix-claude-code-launcher-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1794268630,
-        "narHash": "sha256-rjCC+K+Y9BVD1j/PwP8M+AyXCKn1MOm3UNBuGJefMcA=",
+        "lastModified": 1794341664,
+        "narHash": "sha256-hEwvyyQXDzOMYmmKbGdQuTC7qy48g4QQTINQaSQm3s0=",
         "owner": "dryvist",
         "repo": "nix-claude-code",
-        "rev": "aeb13f8a24b61a02dc291a520fc6a1439a408022",
+        "rev": "1100b7a57127f2e8e39857b970ba72d567222c7d",
         "type": "github"
       },
       "original": {
@@ -2374,6 +2375,22 @@
         "type": "github"
       }
     },
+    "orca-skills": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1794459274,
+        "narHash": "sha256-Z/KuytxmK1megg/0RyQa/Nif4Wz6Jlwd/KzeCSvzI8g=",
+        "owner": "stablyai",
+        "repo": "orca",
+        "rev": "e902c9a65b691fdffcc5b4200bbf4fda2a12dc73",
+        "type": "github"
+      },
+      "original": {
+        "owner": "stablyai",
+        "repo": "orca",
+        "type": "github"
+      }
+    },
     "penso-tap": {
       "flake": false,
       "locked": {
@@ -2782,11 +2799,11 @@
     "vct-cribl-cli": {
       "flake": false,
       "locked": {
-        "lastModified": 1789417551,
-        "narHash": "sha256-6x6c7rOUTBYF7U4QaYFNSYj2h960kY8czBeimZJL4WA=",
+        "lastModified": 1794466088,
+        "narHash": "sha256-w6MSSIM4IQWJkQZUSlVJj/P6RBbpVIjs5qRHIvD3R54=",
         "owner": "VisiCore",
         "repo": "vct-cribl-cli",
-        "rev": "b7bc6b7a3809448f6c5b36afa459e2b294f29072",
+        "rev": "60f20d765ad65dc6f093603f3db1a77bf1532fda",
         "type": "github"
       },
       "original": {
