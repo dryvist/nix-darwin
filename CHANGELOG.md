@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.28.1](https://github.com/dryvist/nix-darwin/compare/v4.28.0...v4.28.1) (2026-11-12)
+
+
+### Bug Fixes
+
+* **hosts:** use the nix-ai auto-compact defaults on the Studio ([#3249](https://github.com/dryvist/nix-darwin/issues/3249)) ([1ea6724](https://github.com/dryvist/nix-darwin/commit/1ea672429bd5ecd6be54a2647acf4422d848be48))
+
 ## [4.28.0](https://github.com/dryvist/nix-darwin/compare/v4.27.0...v4.28.0) (2026-11-12)
 
 
