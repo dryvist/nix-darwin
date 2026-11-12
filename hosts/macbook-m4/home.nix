@@ -54,10 +54,9 @@
           deploymentNotesDir
         else if userConfig.notes.openwhisprDirectory or null != null then
           userConfig.notes.openwhisprDirectory
-        else if config.workspace.notes ? dictationNotesDirectory then
-          config.workspace.notes.dictationNotesDirectory
         else
-          config.workspace.notes.openwhisprNotesDirectory or null;
+          config.workspace.notes.dictationNotesDirectory or config.workspace.notes.openwhisprNotesDirectory
+            or null;
     };
 
     openHarness = {
