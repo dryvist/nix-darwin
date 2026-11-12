@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.27.0](https://github.com/dryvist/nix-darwin/compare/v4.26.1...v4.27.0) (2026-11-12)
+
+
+### Features
+
+* **openwhispr:** parameterize notesDirectory across userConfig, nix-home, and deployment.json ([51dae79](https://github.com/dryvist/nix-darwin/commit/51dae79a37e446dcb2e6d17e901d4d4ef342fb97))
+
 ## [4.26.1](https://github.com/dryvist/nix-darwin/compare/v4.26.0...v4.26.1) (2026-11-11)
 
 
