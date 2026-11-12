@@ -111,6 +111,9 @@ in
   programs = {
     jpe-ai-voice.enable = true;
 
+    # Installs Orca on every Mac.
+    orca.enable = true;
+
     # Coding-agent usage metrics. The transcripts carry the 5m-vs-1h cache
     # split, thinking tokens, and injected-context sizes that the OTEL exporter
     # does not emit, so this reads them directly and posts counters. Reached

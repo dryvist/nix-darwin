@@ -89,17 +89,35 @@ let
 
   # writeShellApplication sets -euo pipefail: a failed load aborts and launchd
   # records a non-zero exit instead of silently leaving pf unloaded.
-  loadAnchor = pkgs.writeShellApplication {
-    name = "pf-hardening-load";
-    # tee comes from coreutils whatever PATH launchd or activation provides.
-    runtimeInputs = [ pkgs.coreutils ];
-    text = ''
+  logFile = "/var/log/pf-hardening.log";
+  trialDeadlineFile = "/var/run/pf-hardening-trial";
+  trial = cfg.enforceTrialSeconds != null;
+  # GNU date (`date -d @epoch`) and head, cut, mktemp from coreutils whatever
+  # PATH launchd or activation provides.
+  pfScript =
+    name: env:
+    pkgs.writeShellApplication {
+      inherit name;
+      runtimeInputs = [ pkgs.coreutils ];
+      text =
+        env + builtins.readFile ./scripts/pf-hardening-lib.sh + builtins.readFile ./scripts/${name}.sh;
+    };
+  loadAnchor = pfScript "pf-hardening-load" (
+    ''
       export PF_ANCHOR=${if cfg.enforce then enforcedAnchor else inertAnchor}
       export PF_OTHER_ANCHOR=${if cfg.enforce then inertAnchor else enforcedAnchor}
       export PF_ANCHOR_FILE=${anchorPath}
+      export PF_HARDENING_LOG=${logFile}
     ''
-    + builtins.readFile ./scripts/pf-hardening-load.sh;
-  };
+    + lib.optionalString (trial && cfg.enforce) ''
+      export PF_TRIAL_SECONDS=${toString cfg.enforceTrialSeconds}
+      export PF_TRIAL_DEADLINE_FILE=${trialDeadlineFile}
+    ''
+  );
+  trialExpire = pfScript "pf-hardening-trial" ''
+    export PF_HARDENING_LOG=${logFile}
+    export PF_TRIAL_DEADLINE_FILE=${trialDeadlineFile}
+  '';
 in
 {
   options.security.pf = {
@@ -114,6 +132,23 @@ in
         default), it loads as `nix-hardening`, which nothing evaluates.
         Activation flushes the other name, so turning this off and
         re-activating removes enforcement.
+      '';
+    };
+
+    enforceTrialSeconds = lib.mkOption {
+      type = lib.types.nullOr lib.types.ints.positive;
+      default = null;
+      example = 900;
+      description = ''
+        Time-box enforcement. When set, a missing or invalid deadline is armed
+        before loading; existing deadlines are preserved through failed retries,
+        and an expired deadline is renewed only after a successful load. A
+        launchd job checking every 30 s flushes `com.apple/nix-hardening` once
+        the deadline passes, or at once if that anchor holds rules with no valid
+        deadline. The job reads no anchor file, resolves no name and needs no
+        network. A reboot clears pf's anchors; the boot load re-arms the full
+        time before it enforces. Each load also logs the listening sockets. Null
+        (the default) means no time box.
       '';
     };
 
@@ -234,14 +269,25 @@ in
         # names); launchd reruns a failed load every 30 s until one succeeds.
         KeepAlive.SuccessfulExit = false;
         ThrottleInterval = 30;
-        StandardOutPath = "/var/log/pf-hardening.log";
-        StandardErrorPath = "/var/log/pf-hardening.log";
+        StandardOutPath = logFile;
+        StandardErrorPath = logFile;
+      };
+    };
+
+    launchd.daemons.pf-hardening-trial = lib.mkIf trial {
+      serviceConfig = {
+        Label = "com.nix-darwin.pf-hardening-trial";
+        ProgramArguments = launchdTrampolineArgs "pf-hardening-trial" [ (lib.getExe trialExpire) ];
+        RunAtLoad = true;
+        StartInterval = 30;
+        StandardOutPath = logFile;
+        StandardErrorPath = logFile;
       };
     };
 
     system.activationScripts.postActivation.text = lib.mkAfter (
       ''
-        ${lib.getExe loadAnchor} || echo "pf-hardening-load: non-fatal failure (see log above)"
+        ${lib.getExe loadAnchor} || echo "pf-hardening-load: non-fatal failure (see ${logFile})"
       ''
       + lib.optionalString (allowedApps != [ ]) ''
         ${lib.getExe alfAllowApps} ${lib.escapeShellArgs allowedApps} || echo "alf-allow-apps: non-fatal failure (see log above)"

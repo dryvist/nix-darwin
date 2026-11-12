@@ -5,7 +5,9 @@
 # This file adds only the host-unique bits — the TCC-sensitive GUI app list.
 
 {
+  config,
   lib,
+  options,
   pkgs,
   userConfig,
   ...
@@ -37,6 +39,18 @@
       whisperModel = "base";
       # renovate: datasource=github-releases depName=OpenWhispr/openwhispr
       version = "1.11.0";
+    }
+    // lib.optionalAttrs (options.programs.openwhispr ? notesDirectory) {
+      # Notes directory resolution, in order:
+      # 1. userConfig.notes.openwhisprDirectory
+      # 2. config.workspace.notes.dictationNotesDirectory
+      # 3. config.workspace.notes.openwhisprNotesDirectory
+      notesDirectory =
+        if userConfig.notes.openwhisprDirectory or null != null then
+          userConfig.notes.openwhisprDirectory
+        else
+          config.workspace.notes.dictationNotesDirectory or config.workspace.notes.openwhisprNotesDirectory
+            or null;
     };
 
     openHarness = {

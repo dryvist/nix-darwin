@@ -31,7 +31,6 @@ let
   workerPacks = lib.attrVals [
     "cc-edge-macos-diagnostic-reports-io"
     "cc-edge-macos-power-thermal-io"
-    "cc-edge-macos-ws-monitor-io"
     "cc-edge-ai-transcript-shared-io"
     "cc-edge-mlx-serving-io"
     "cc-edge-macos-process-telemetry-io"
@@ -78,6 +77,15 @@ let
     builtins.readFile "${powerThermalPack}/default/exec/macos-battery.cmd"
   );
   mlxModels = config.home-manager.users.${userConfig.user.name}.services.aiStack.models or { };
+  # launchd log files of the root guard daemons, each where its module is enabled.
+  guardDaemonLogs = [
+    "pf-hardening.log"
+  ]
+  ++ lib.optional config.system.clusterLinkPrep.enable "cluster-link-prep.log"
+  ++ lib.optionals config.services.cominGitOps.enable [
+    "comin-confirmer.log"
+    "comin-token-reload.log"
+  ];
   judgeModel = mlxModels.judge or null;
   judgeEnabled = judgeModel != null;
   judgeMetadataYaml = lib.optionalString judgeEnabled (
@@ -285,9 +293,6 @@ in
               connections:
                 - pipeline: macos_wired_memory
                   output: cribl_stream
-            ${macosMonitorInputsBlock.wsMonitor}
-            ${macosMonitorInputsBlock.wsMonitorCaptures}
-            ${macosMonitorInputsBlock.wsMonitorErrors}
             ${macosMonitorInputsBlock.eslogger}
             # Thermal/perf pressure levels (pmset -g therm) — not in the native
             # System Metrics Source on macOS. Exec, 60s.
@@ -540,10 +545,34 @@ in
                 - "*/access.*"
                 # Clustered-mode site's own access log (llm-gate clusterSite).
                 - "*/cluster-access.*"
+                # The gateway process's own launchd stdout and stderr.
+                - "*/llm-gate.log"
+                - "*/llm-gate.error.log"
               tailOnly: false
               sendToRoutes: false
               connections:
                 - output: cribl_gate
+        ''
+        # Root guard daemons' launchd logs under /var/log, one pattern per daemon
+        # whose module is enabled here (pf-hardening is always on). Same pipeline
+        # as in_local_jobs; full-path-matched patterns, "*/" lead (see above). The
+        # comment line in the string sets its common indent, keeping the entry
+        # under `inputs:`.
+        + ''
+          # Root guard daemons (comin, cluster-link-prep, pf-hardening).
+            in_guard_daemons:
+              type: file
+              disabled: false
+              mode: manual
+              interval: 10
+              path: /var/log/
+              filenames:
+          ${lib.concatMapStringsSep "\n" (name: "      - \"*/${name}\"") guardDaemonLogs}
+              tailOnly: false
+              sendToRoutes: false
+              connections:
+                - pipeline: workstation_jobs
+                  output: cribl_stream
         '';
         "outputs.yml" = ''
           outputs:

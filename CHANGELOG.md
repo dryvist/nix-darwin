@@ -1,5 +1,46 @@
 # Changelog
 
+## [4.28.1](https://github.com/dryvist/nix-darwin/compare/v4.28.0...v4.28.1) (2026-11-12)
+
+
+### Bug Fixes
+
+* **hosts:** use the nix-ai auto-compact defaults on the Studio ([#3249](https://github.com/dryvist/nix-darwin/issues/3249)) ([1ea6724](https://github.com/dryvist/nix-darwin/commit/1ea672429bd5ecd6be54a2647acf4422d848be48))
+
+## [4.28.0](https://github.com/dryvist/nix-darwin/compare/v4.27.0...v4.28.0) (2026-11-12)
+
+
+### Features
+
+* **dock:** add Orca on every Mac, drop ChatGPT and Antigravity tiles ([#3250](https://github.com/dryvist/nix-darwin/issues/3250)) ([f124b8c](https://github.com/dryvist/nix-darwin/commit/f124b8cc3dd68ef8a08f327e4e6cba48591ba666))
+* **pf:** time-box enforcement and log pf state from the root side ([#3239](https://github.com/dryvist/nix-darwin/issues/3239)) ([55a10e1](https://github.com/dryvist/nix-darwin/commit/55a10e1a057cf57a6ca1df981952e2cdd3fb0124))
+
+
+### Bug Fixes
+
+* **home:** drop the eval-time deployment file read from notes directory resolution ([#3248](https://github.com/dryvist/nix-darwin/issues/3248)) ([cdc13f1](https://github.com/dryvist/nix-darwin/commit/cdc13f102fdebb1a10a7e743ebd91c2218b3de0f))
+
+## [4.27.0](https://github.com/dryvist/nix-darwin/compare/v4.26.1...v4.27.0) (2026-11-12)
+
+
+### Features
+
+* **openwhispr:** parameterize notesDirectory across userConfig, nix-home, and deployment.json ([51dae79](https://github.com/dryvist/nix-darwin/commit/51dae79a37e446dcb2e6d17e901d4d4ef342fb97))
+
+## [4.26.1](https://github.com/dryvist/nix-darwin/compare/v4.26.0...v4.26.1) (2026-11-11)
+
+
+### Bug Fixes
+
+* **pf:** flush the other anchor before loading ([#3236](https://github.com/dryvist/nix-darwin/issues/3236)) ([98b35f4](https://github.com/dryvist/nix-darwin/commit/98b35f4505df5ec1f8bc4c7763132d3a9b75945e))
+
+## [4.26.0](https://github.com/dryvist/nix-darwin/compare/v4.25.0...v4.26.0) (2026-11-11)
+
+
+### Features
+
+* **comin:** hold file for the deploy confirmer ([#3235](https://github.com/dryvist/nix-darwin/issues/3235)) ([f2c48f6](https://github.com/dryvist/nix-darwin/commit/f2c48f64245740fb8d12ab5322a64498986ed1b2))
+
 ## [4.25.0](https://github.com/dryvist/nix-darwin/compare/v4.24.1...v4.25.0) (2026-11-11)
 
 
