@@ -147,12 +147,38 @@ setup() {
   [ "$status" -ne 0 ]
   grep -q 'trial armed' "$PF_HARDENING_LOG"
   grep -q 'FAILED: load' "$PF_HARDENING_LOG"
+  [ "$(cat "$PF_TRIAL_DEADLINE_FILE")" = 1800000900 ]
+  PF_HARDENING_NOW=1800000030 PF_FAIL_LOAD=1 run bash "$SCRIPT_UNDER_TEST"
+  [ "$status" -ne 0 ]
+  [ "$(cat "$PF_TRIAL_DEADLINE_FILE")" = 1800000900 ]
+  run grep -c 'trial armed:' "$PF_HARDENING_LOG"
+  [ "$output" -eq 1 ]
 }
 
-@test "trial: after a reboot the boot load re-arms the full time before enforcing" {
+@test "trial: a failed retry preserves an existing future deadline" {
+  export PF_TRIAL_SECONDS=900 PF_TRIAL_DEADLINE_FILE="$BATS_TEST_TMPDIR/trial"
+  echo 1800000600 >"$PF_TRIAL_DEADLINE_FILE"
+  PF_HARDENING_NOW=1800000030 PF_FAIL_LOAD=1 run bash "$SCRIPT_UNDER_TEST"
+  [ "$status" -ne 0 ]
+  [ "$(cat "$PF_TRIAL_DEADLINE_FILE")" = 1800000600 ]
+  run grep -q 'trial armed' "$PF_HARDENING_LOG"
+  [ "$status" -eq 1 ]
+}
+
+@test "trial: a successful load after an expired deadline re-arms the full time" {
   export PF_TRIAL_SECONDS=900 PF_TRIAL_DEADLINE_FILE="$BATS_TEST_TMPDIR/trial"
   echo 1799999000 >"$PF_TRIAL_DEADLINE_FILE" # left from before the reboot, already passed
   run bash "$SCRIPT_UNDER_TEST"
   [ "$status" -eq 0 ]
-  grep -Fqx 'probe deadline-at-load 1800000900' "$PF_CALL_LOG"
+  [ "$(cat "$PF_TRIAL_DEADLINE_FILE")" = 1800000900 ]
+  grep -Fqx 'probe deadline-at-load 1799999000' "$PF_CALL_LOG"
+  grep -q 'trial armed: com.apple/nix-hardening is flushed at 2027-01-15T08:15:00Z (900 s)' "$PF_HARDENING_LOG"
+}
+
+@test "trial: a failed load with an expired deadline leaves it expired for the timer" {
+  export PF_TRIAL_SECONDS=900 PF_TRIAL_DEADLINE_FILE="$BATS_TEST_TMPDIR/trial"
+  echo 1799999000 >"$PF_TRIAL_DEADLINE_FILE"
+  PF_FAIL_LOAD=1 run bash "$SCRIPT_UNDER_TEST"
+  [ "$status" -ne 0 ]
+  [ "$(cat "$PF_TRIAL_DEADLINE_FILE")" = 1799999000 ]
 }

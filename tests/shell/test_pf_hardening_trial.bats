@@ -32,6 +32,51 @@ setup() {
   grep -q '^snapshot info: ' "$PF_HARDENING_LOG"
 }
 
+@test "expiry waits for the shared lock and reads the replacement deadline" {
+  echo 1799999999 >"$PF_TRIAL_DEADLINE_FILE"
+  lock_file="$PF_TRIAL_DEADLINE_FILE.lock"
+  ready="$BATS_TEST_TMPDIR/lock-ready"
+  release="$BATS_TEST_TMPDIR/lock-release"
+  attempted="$BATS_TEST_TMPDIR/lock-attempted"
+  lockf_wrapper="$BATS_TEST_TMPDIR/lockf"
+  mkfifo "$release"
+  cat >"$lockf_wrapper" <<'LOCKF'
+#!/bin/bash
+: >"$PF_LOCK_ATTEMPTED"
+exec /usr/bin/lockf "$@"
+LOCKF
+  chmod +x "$lockf_wrapper"
+  export PF_HARDENING_LOCKF="$lockf_wrapper" PF_LOCK_ATTEMPTED="$attempted"
+
+  (
+    /usr/bin/lockf -k "$lock_file" bash -c '
+      : > "$1"
+      read -r _ < "$2"
+      printf "1800000900\\n" > "$3"
+    ' bash "$ready" "$release" "$PF_TRIAL_DEADLINE_FILE"
+  ) &
+  holder=$!
+  while [ ! -f "$ready" ]; do sleep 0.01; done
+
+  bash "$SCRIPT_UNDER_TEST" >"$BATS_TEST_TMPDIR/expire.out" 2>&1 &
+  expiry=$!
+  attempts=0
+  while [ ! -f "$attempted" ] && [ "$attempts" -lt 100 ]; do
+    sleep 0.01
+    attempts=$((attempts + 1))
+  done
+  lock_attempted=false
+  [ ! -f "$attempted" ] || lock_attempted=true
+  printf 'release\n' >"$release"
+  wait "$holder"
+  wait "$expiry"
+  [ "$lock_attempted" = true ]
+  [ -f "$PF_ENFORCED_RULES" ]
+  [ "$(cat "$PF_TRIAL_DEADLINE_FILE")" = 1800000900 ]
+  run grep -Fqx 'pfctl -a com.apple/nix-hardening -F rules' "$PF_CALL_LOG"
+  [ "$status" -eq 1 ]
+}
+
 @test "the deadline itself counts as passed" {
   echo 1800000000 >"$PF_TRIAL_DEADLINE_FILE"
   run bash "$SCRIPT_UNDER_TEST"

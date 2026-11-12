@@ -8,9 +8,10 @@
 # removes it even when the new rules cannot load.
 #
 # With PF_TRIAL_SECONDS set (security.pf.enforceTrialSeconds, enforce on), the trial
-# deadline is written to PF_TRIAL_DEADLINE_FILE before every enforced load, so no
-# enforced load runs without a timer; pf-hardening-trial flushes the enforced name
-# once the deadline passes. The first listening-socket snapshot is logged with it.
+# deadline is armed before an enforced load when none is valid. A valid deadline is
+# preserved across retries; an expired deadline is renewed only after a successful
+# load. pf-hardening-trial flushes the enforced name once the deadline passes. The
+# first listening-socket snapshot is logged with it.
 #
 # Every run ends with a snapshot of pf state in the file log (./pf-hardening-lib.sh,
 # prepended by the module). Any failure exits non-zero so launchd records it and retries.
@@ -19,11 +20,24 @@ set -euo pipefail
 : "${PF_ANCHOR:?}" "${PF_OTHER_ANCHOR:?}" "${PF_ANCHOR_FILE:?}"
 if [ -n "${PF_TRIAL_SECONDS:-}" ]; then
   : "${PF_TRIAL_DEADLINE_FILE:?}"
-  deadline=$(($(now) + PF_TRIAL_SECONDS))
-  tmp=$(mktemp "$PF_TRIAL_DEADLINE_FILE.XXXXXX")
-  echo "$deadline" >"$tmp"
-  mv -f "$tmp" "$PF_TRIAL_DEADLINE_FILE"
-  say "trial armed: $PF_ANCHOR is flushed at $(iso "$deadline") (${PF_TRIAL_SECONDS} s)"
+  lock_trial "$@"
+  trial_deadline=""
+  if [ -f "$PF_TRIAL_DEADLINE_FILE" ]; then
+    trial_deadline=$(head -c 32 "$PF_TRIAL_DEADLINE_FILE" 2>/dev/null | tr -d '\n')
+    [[ $trial_deadline =~ ^[1-9][0-9]{8,11}$ ]] || trial_deadline=""
+  fi
+  arm_trial_deadline() {
+    local deadline tmp
+    deadline=$(($(now) + PF_TRIAL_SECONDS))
+    tmp=$(mktemp "$PF_TRIAL_DEADLINE_FILE.XXXXXX")
+    echo "$deadline" >"$tmp"
+    mv -f "$tmp" "$PF_TRIAL_DEADLINE_FILE"
+    trial_deadline=$deadline
+    say "trial armed: $PF_ANCHOR is flushed at $(iso "$deadline") (${PF_TRIAL_SECONDS} s)"
+  }
+  if [ -z "$trial_deadline" ]; then
+    arm_trial_deadline
+  fi
   listeners
 fi
 
@@ -38,5 +52,8 @@ fi
 "$PFCTL" -e 2>&1 | tee -a "$LOG" >("$LOGGER" -t pf-hardening) || true
 info=$("$PFCTL" -s info 2>/dev/null || true)
 [[ $info == *"Status: Enabled"* ]] || { snapshot; fail "enable pf - pf is disabled"; }
+if [ -n "${PF_TRIAL_SECONDS:-}" ] && [ "$trial_deadline" -le "$(now)" ]; then
+  arm_trial_deadline
+fi
 say "anchor $PF_ANCHOR loaded and pf enabled"
 snapshot

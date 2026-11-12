@@ -124,14 +124,15 @@ in
       default = null;
       example = 900;
       description = ''
-        Time-box enforcement. When set, every enforced load first writes a
-        deadline this many seconds ahead, and a launchd job checking every 30 s
-        flushes `com.apple/nix-hardening` once the deadline passes, or at once
-        if that anchor holds rules with no valid deadline. The job reads no
-        anchor file, resolves no name and needs no network. A reboot clears
-        pf's anchors; the boot load re-arms the full time before it enforces.
-        Each load also logs the listening sockets. Null (the default) means no
-        time box.
+        Time-box enforcement. When set, a missing or invalid deadline is armed
+        before loading; existing deadlines are preserved through failed retries,
+        and an expired deadline is renewed only after a successful load. A
+        launchd job checking every 30 s flushes `com.apple/nix-hardening` once
+        the deadline passes, or at once if that anchor holds rules with no valid
+        deadline. The job reads no anchor file, resolves no name and needs no
+        network. A reboot clears pf's anchors; the boot load re-arms the full
+        time before it enforces. Each load also logs the listening sockets. Null
+        (the default) means no time box.
       '';
     };
 

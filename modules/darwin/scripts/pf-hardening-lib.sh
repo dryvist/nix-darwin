@@ -7,11 +7,13 @@
 # read from the shipped log without root.
 #
 # Environment (test seams; defaults are the system paths):
-#   PF_HARDENING_PFCTL, PF_HARDENING_LOGGER, PF_HARDENING_LSOF, PF_HARDENING_LOG, PF_HARDENING_NOW
+#   PF_HARDENING_PFCTL, PF_HARDENING_LOGGER, PF_HARDENING_LSOF, PF_HARDENING_LOCKF,
+#   PF_HARDENING_LOG, PF_HARDENING_NOW
 
 PFCTL=${PF_HARDENING_PFCTL:-/sbin/pfctl}
 LOGGER=${PF_HARDENING_LOGGER:-/usr/bin/logger}
 LSOF=${PF_HARDENING_LSOF:-/usr/sbin/lsof}
+LOCKF=${PF_HARDENING_LOCKF:-/usr/bin/lockf}
 LOG=${PF_HARDENING_LOG:-/var/log/pf-hardening.log}
 ENFORCED_ANCHOR=com.apple/nix-hardening
 INERT_ANCHOR=nix-hardening
@@ -21,6 +23,14 @@ SNAPSHOT_WIDTH=300
 
 now() { echo "${PF_HARDENING_NOW:-$(date -u +%s)}"; }
 iso() { date -u -d "@$1" +%Y-%m-%dT%H:%M:%SZ; }
+
+# Keep activation loads and timer expiry from acting on different deadlines. lockf
+# holds the stable adjacent lock file until the re-executed script exits.
+lock_trial() {
+  [ "${PF_TRIAL_LOCKED:-}" = 1 ] && return
+  export PF_TRIAL_LOCKED=1
+  exec "$LOCKF" -k "${PF_TRIAL_DEADLINE_FILE}.lock" "${BASH:-bash}" "$0" "$@"
+}
 
 say() {
   printf '%s pf-hardening: %s\n' "$(iso "$(now)")" "$1" >>"$LOG"
