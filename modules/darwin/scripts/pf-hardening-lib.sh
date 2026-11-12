@@ -32,6 +32,15 @@ lock_trial() {
   exec "$LOCKF" -k "${PF_TRIAL_DEADLINE_FILE}.lock" "${BASH:-bash}" "$0" "$@"
 }
 
+read_trial_deadline() {
+  local deadline=""
+  if [ -f "$PF_TRIAL_DEADLINE_FILE" ]; then
+    deadline=$(head -c 32 "$PF_TRIAL_DEADLINE_FILE" 2>/dev/null | tr -d '\n')
+    [[ $deadline =~ ^[1-9][0-9]{8,11}$ ]] || return 1
+  fi
+  printf '%s' "$deadline"
+}
+
 say() {
   printf '%s pf-hardening: %s\n' "$(iso "$(now)")" "$1" >>"$LOG"
   "$LOGGER" -t pf-hardening "$1" </dev/null || true

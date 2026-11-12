@@ -21,11 +21,7 @@ set -euo pipefail
 if [ -n "${PF_TRIAL_SECONDS:-}" ]; then
   : "${PF_TRIAL_DEADLINE_FILE:?}"
   lock_trial "$@"
-  trial_deadline=""
-  if [ -f "$PF_TRIAL_DEADLINE_FILE" ]; then
-    trial_deadline=$(head -c 32 "$PF_TRIAL_DEADLINE_FILE" 2>/dev/null | tr -d '\n')
-    [[ $trial_deadline =~ ^[1-9][0-9]{8,11}$ ]] || trial_deadline=""
-  fi
+  trial_deadline=$(read_trial_deadline) || trial_deadline=""
   arm_trial_deadline() {
     local deadline tmp
     deadline=$(($(now) + PF_TRIAL_SECONDS))

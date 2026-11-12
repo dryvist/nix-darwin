@@ -15,11 +15,7 @@ set +e # flushed() is a test; writeShellApplication turned -e on
 : "${PF_TRIAL_DEADLINE_FILE:?}"
 lock_trial "$@"
 
-deadline=""
-if [ -f "$PF_TRIAL_DEADLINE_FILE" ]; then
-  deadline=$(head -c 32 "$PF_TRIAL_DEADLINE_FILE" 2>/dev/null | tr -d '\n')
-  [[ $deadline =~ ^[1-9][0-9]{8,11}$ ]] || deadline="corrupt"
-fi
+deadline=$(read_trial_deadline) || deadline="corrupt"
 t=$(now)
 
 if [[ $deadline =~ ^[0-9]+$ ]] && [ "$t" -lt "$deadline" ]; then
