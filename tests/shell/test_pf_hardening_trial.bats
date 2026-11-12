@@ -39,24 +39,43 @@ setup() {
   release="$BATS_TEST_TMPDIR/lock-release"
   attempted="$BATS_TEST_TMPDIR/lock-attempted"
   lockf_wrapper="$BATS_TEST_TMPDIR/lockf"
+  # A real advisory locker held while the holder command runs: lockf(1) ships
+  # with macOS, flock(1) is in the shell-tests closure for Linux. Both sides
+  # of the race go through the same binary and file, so exclusion holds.
+  if command -v lockf >/dev/null 2>&1; then
+    real_lockf=lockf
+    hold_flag=-k
+  elif command -v flock >/dev/null 2>&1; then
+    real_lockf=flock
+    hold_flag=""
+  else
+    fail "neither lockf nor flock is available"
+  fi
   mkfifo "$release"
-  cat >"$lockf_wrapper" <<'LOCKF'
-#!/bin/bash
-: >"$PF_LOCK_ATTEMPTED"
-exec /usr/bin/lockf "$@"
+  # flock has no -k: holding the lock for the command is its default.
+  cat >"$lockf_wrapper" <<LOCKF
+#!$BASH
+: >"\$PF_LOCK_ATTEMPTED"
+if [ "\$1" = -k ] && [ -z "$hold_flag" ]; then shift; fi
+exec "$real_lockf" "\$@"
 LOCKF
   chmod +x "$lockf_wrapper"
   export PF_HARDENING_LOCKF="$lockf_wrapper" PF_LOCK_ATTEMPTED="$attempted"
 
   (
-    /usr/bin/lockf -k "$lock_file" bash -c '
+    "$real_lockf" ${hold_flag:+"$hold_flag"} "$lock_file" bash -c '
       : > "$1"
       read -r _ < "$2"
       printf "1800000900\\n" > "$3"
     ' bash "$ready" "$release" "$PF_TRIAL_DEADLINE_FILE"
   ) &
   holder=$!
-  while [ ! -f "$ready" ]; do sleep 0.01; done
+  attempts=0
+  while [ ! -f "$ready" ] && [ "$attempts" -lt 100 ]; do
+    sleep 0.01
+    attempts=$((attempts + 1))
+  done
+  [ -f "$ready" ]
 
   bash "$SCRIPT_UNDER_TEST" >"$BATS_TEST_TMPDIR/expire.out" 2>&1 &
   expiry=$!

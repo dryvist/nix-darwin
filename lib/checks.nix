@@ -102,9 +102,12 @@ in
   shell-tests =
     pkgs.runCommand "check-shell-tests"
       {
+        # flock: the pf-hardening trial suite serializes two processes through
+        # a real advisory lock; Linux has no lockf(1), macOS does.
         nativeBuildInputs = with pkgs; [
           bats
           bash
+          flock
           jq
           perl
           python3
