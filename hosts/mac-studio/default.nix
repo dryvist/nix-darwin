@@ -53,7 +53,8 @@ in
 
     # Inbound services admitted through the pf anchor (pf-hardening.nix) before
     # its default-deny. Sources reuse security.pf.allowedSshSources; the flake's
-    # pf-rule-order check asserts each pass's verdict in the rendered anchor.
+    # pf-anchor-syntax check pins each pass to sit before `block in all` in the
+    # rendered anchor.
     pf.allowedTcpServices = [
       # macmon exporter port.
       {
@@ -69,11 +70,6 @@ in
       {
         sources = config.security.pf.allowedSshSources;
         port = config.programs.llm-gate.clusterPort;
-      }
-      # Screen Sharing, the recovery path when sshd is unreachable.
-      {
-        sources = config.security.pf.allowedSshSources;
-        port = 5900;
       }
     ];
   };
