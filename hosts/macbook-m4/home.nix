@@ -5,7 +5,9 @@
 # This file adds only the host-unique bits — the TCC-sensitive GUI app list.
 
 {
+  config,
   lib,
+  options,
   pkgs,
   userConfig,
   ...
@@ -37,6 +39,24 @@
       whisperModel = "base";
       # renovate: datasource=github-releases depName=OpenWhispr/openwhispr
       version = "1.11.0";
+    }
+    // lib.optionalAttrs (options.programs.openwhispr ? notesDirectory) {
+      notesDirectory =
+        let
+          localDeployment =
+            if builtins.pathExists "/etc/deployment.json" then
+              builtins.fromJSON (builtins.readFile "/etc/deployment.json")
+            else
+              { };
+          deploymentNotesDir = localDeployment.workstation.openwhispr_notes_dir or null;
+        in
+        if deploymentNotesDir != null then
+          deploymentNotesDir
+        else if userConfig.notes.openwhisprDirectory or null != null then
+          userConfig.notes.openwhisprDirectory
+        else
+          config.workspace.notes.dictationNotesDirectory or config.workspace.notes.openwhisprNotesDirectory
+            or null;
     };
 
     openHarness = {
