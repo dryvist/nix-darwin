@@ -98,6 +98,10 @@ let
       manual = "vendor download; no Homebrew cask or Mac App Store listing";
     })
   ]
+  ++ [
+    # Orca is always present in the Dock.
+    (app "${hmApps}/Orca.app" { nixpkgs = "orca"; })
+  ]
   ++ lib.optionals hostConfig.homebrew.ai.claudeDesktop [
     (app "/Applications/Claude.app" { cask = "claude"; })
   ]
@@ -106,14 +110,8 @@ let
       manual = "vendor download; the Homebrew gemini cask installs a different app bundle";
     })
   ]
-  ++ lib.optionals hostConfig.homebrew.ai.chatgptDesktop [
-    (app "/Applications/ChatGPT.app" { cask = "chatgpt"; })
-  ]
   ++ lib.optionals hostConfig.homebrew.ai.codexDesktop [
     (app "/Applications/Codex.app" { cask = "codex-app"; })
-  ]
-  ++ lib.optionals hostConfig.homebrew.ai.antigravityDesktop [
-    (app "/Applications/Antigravity.app" { cask = "antigravity"; })
   ]
   ++ lib.optionals enableWorkstationApps [
 
