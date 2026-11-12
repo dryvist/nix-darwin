@@ -1,5 +1,18 @@
 # Changelog
 
+## [4.28.0](https://github.com/dryvist/nix-darwin/compare/v4.27.0...v4.28.0) (2026-11-12)
+
+
+### Features
+
+* **dock:** add Orca on every Mac, drop ChatGPT and Antigravity tiles ([#3250](https://github.com/dryvist/nix-darwin/issues/3250)) ([f124b8c](https://github.com/dryvist/nix-darwin/commit/f124b8cc3dd68ef8a08f327e4e6cba48591ba666))
+* **pf:** time-box enforcement and log pf state from the root side ([#3239](https://github.com/dryvist/nix-darwin/issues/3239)) ([55a10e1](https://github.com/dryvist/nix-darwin/commit/55a10e1a057cf57a6ca1df981952e2cdd3fb0124))
+
+
+### Bug Fixes
+
+* **home:** drop the eval-time deployment file read from notes directory resolution ([#3248](https://github.com/dryvist/nix-darwin/issues/3248)) ([cdc13f1](https://github.com/dryvist/nix-darwin/commit/cdc13f102fdebb1a10a7e743ebd91c2218b3de0f))
+
 ## [4.27.0](https://github.com/dryvist/nix-darwin/compare/v4.26.1...v4.27.0) (2026-11-12)
 
 
