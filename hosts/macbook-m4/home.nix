@@ -41,18 +41,12 @@
       version = "1.11.0";
     }
     // lib.optionalAttrs (options.programs.openwhispr ? notesDirectory) {
+      # Notes directory resolution, in order:
+      # 1. userConfig.notes.openwhisprDirectory
+      # 2. config.workspace.notes.dictationNotesDirectory
+      # 3. config.workspace.notes.openwhisprNotesDirectory
       notesDirectory =
-        let
-          localDeployment =
-            if builtins.pathExists "/etc/deployment.json" then
-              builtins.fromJSON (builtins.readFile "/etc/deployment.json")
-            else
-              { };
-          deploymentNotesDir = localDeployment.workstation.openwhispr_notes_dir or null;
-        in
-        if deploymentNotesDir != null then
-          deploymentNotesDir
-        else if userConfig.notes.openwhisprDirectory or null != null then
+        if userConfig.notes.openwhisprDirectory or null != null then
           userConfig.notes.openwhisprDirectory
         else
           config.workspace.notes.dictationNotesDirectory or config.workspace.notes.openwhisprNotesDirectory
