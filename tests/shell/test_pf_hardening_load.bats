@@ -1,32 +1,13 @@
 #!/usr/bin/env bats
 
-SCRIPT_UNDER_TEST="$BATS_TEST_DIRNAME/../../modules/darwin/scripts/pf-hardening-load.sh"
+load pf_hardening_stubs
 
 setup() {
-  export PF_HARDENING_PFCTL="$BATS_TEST_TMPDIR/pfctl"
-  export PF_HARDENING_LOGGER="$BATS_TEST_TMPDIR/logger"
-  export PF_CALL_LOG="$BATS_TEST_TMPDIR/calls"
+  pf_stub_setup
+  SCRIPT_UNDER_TEST=$(assemble pf-hardening-load)
   export PF_ANCHOR=com.apple/nix-hardening
   export PF_OTHER_ANCHOR=nix-hardening
   export PF_ANCHOR_FILE=/etc/pf.anchors/nix-hardening
-  : >"$PF_CALL_LOG"
-  printf '#!%s\n' "$BASH" >"$PF_HARDENING_PFCTL"
-  cat >>"$PF_HARDENING_PFCTL" <<'STUB'
-printf 'pfctl %s\n' "$*" >>"$PF_CALL_LOG"
-case "$*" in
-  *" -f "*) [ -z "${PF_FAIL_LOAD:-}" ] || { echo "syntax error" >&2; exit 1; } ;;
-  *"-s rules")
-    [ -z "${PF_RULES_QUERY_FAILS:-}" ] || { echo "DIOCGETRULES: Invalid argument" >&2; exit 1; }
-    [ -z "${PF_STALE_RULES:-}" ] || echo "block drop in all" ;;
-  *"-s Anchors")
-    [ -z "${PF_ANCHORS_FAIL:-}" ] || exit 1
-    printf '  %s\n' ${PF_LISTED_ANCHORS:-com.apple} ;;
-  "-e") echo "pf already enabled" >&2; exit 1 ;;
-  "-s info") [ -n "${PF_DISABLED:-}" ] && echo "Status: Disabled" || echo "Status: Enabled for 0 days 00:01:00" ;;
-esac
-STUB
-  printf '#!%s\ncat >/dev/null\nprintf "logger %%s\\n" "$*" >>"$PF_CALL_LOG"\n' "$BASH" >"$PF_HARDENING_LOGGER"
-  chmod +x "$PF_HARDENING_PFCTL" "$PF_HARDENING_LOGGER"
 }
 
 @test "flushes the other name, then loads PF_ANCHOR, enables pf and checks both results" {
@@ -38,7 +19,9 @@ STUB
   [ "${lines[2]}" = "pfctl -a com.apple/nix-hardening -f /etc/pf.anchors/nix-hardening" ]
   [ "${lines[3]}" = "pfctl -e" ]
   [ "${lines[4]}" = "pfctl -s info" ]
-  [ "${#lines[@]}" -eq 5 ]
+  # Everything after is the snapshot: reads only.
+  run grep -c -e ' -F ' -e ' -f ' -e '^pfctl -e' "$PF_CALL_LOG"
+  [ "$output" -eq 3 ]
 }
 
 @test "enforce on: a failed load exits non-zero with the inert name already flushed" {
@@ -48,7 +31,8 @@ STUB
   [ "${lines[0]}" = "pfctl -a nix-hardening -F rules" ]
   [ "${lines[1]}" = "pfctl -a nix-hardening -s rules" ]
   [ "${lines[2]}" = "pfctl -a com.apple/nix-hardening -f /etc/pf.anchors/nix-hardening" ]
-  [ "${#lines[@]}" -eq 3 ]
+  run grep -q '^pfctl -e' "$PF_CALL_LOG"
+  [ "$status" -eq 1 ]
   grep -q 'FAILED: load /etc/pf.anchors/nix-hardening into com.apple/nix-hardening' "$PF_CALL_LOG"
 }
 
@@ -59,7 +43,8 @@ STUB
   [ "${lines[0]}" = "pfctl -a com.apple/nix-hardening -F rules" ]
   [ "${lines[1]}" = "pfctl -a com.apple/nix-hardening -s rules" ]
   [ "${lines[2]}" = "pfctl -a nix-hardening -f /etc/pf.anchors/nix-hardening" ]
-  [ "${#lines[@]}" -eq 3 ]
+  run grep -q '^pfctl -e' "$PF_CALL_LOG"
+  [ "$status" -eq 1 ]
   grep -q 'FAILED: load /etc/pf.anchors/nix-hardening into nix-hardening' "$PF_CALL_LOG"
 }
 
@@ -109,4 +94,91 @@ STUB
   run bash "$SCRIPT_UNDER_TEST"
   [ "$status" -ne 0 ]
   [ ! -s "$PF_CALL_LOG" ]
+}
+
+@test "decision lines go to the file log as well as the unified log" {
+  run bash "$SCRIPT_UNDER_TEST"
+  [ "$status" -eq 0 ]
+  grep -q 'pf-hardening: anchor com.apple/nix-hardening loaded and pf enabled$' "$PF_HARDENING_LOG"
+  grep -q 'logger -t pf-hardening anchor com.apple/nix-hardening loaded and pf enabled' "$PF_CALL_LOG"
+  PF_FAIL_LOAD=1 run bash "$SCRIPT_UNDER_TEST"
+  grep -q 'pf-hardening: FAILED: load ' "$PF_HARDENING_LOG"
+  grep -q 'no IP address found for example.invalid' "$PF_HARDENING_LOG"
+}
+
+@test "every load ends with a snapshot of pf state in the file log" {
+  run bash "$SCRIPT_UNDER_TEST"
+  grep -q '^snapshot info: Status: Enabled' "$PF_HARDENING_LOG"
+  grep -q '^snapshot info:   current entries' "$PF_HARDENING_LOG"
+  grep -Fqx 'pfctl -a com.apple/nix-hardening -s rules' "$PF_CALL_LOG"
+  grep -Fqx 'pfctl -a nix-hardening -s rules' "$PF_CALL_LOG"
+  grep -q '^snapshot anchors: ' "$PF_HARDENING_LOG"
+  grep -q '^snapshot anchors com.apple: ' "$PF_HARDENING_LOG"
+  : >"$PF_HARDENING_LOG"
+  PF_FAIL_LOAD=1 run bash "$SCRIPT_UNDER_TEST"
+  grep -q '^snapshot info: ' "$PF_HARDENING_LOG"
+}
+
+@test "each snapshot section is bounded" {
+  PF_MANY_RULES=1 run bash "$SCRIPT_UNDER_TEST"
+  run grep -c '^snapshot rules nix-hardening: ' "$PF_HARDENING_LOG"
+  [ "$output" -eq 200 ]
+}
+
+@test "without a trial nothing is armed and no listeners are logged" {
+  run bash "$SCRIPT_UNDER_TEST"
+  run grep -q -e '^lsof' -e 'trial armed' "$PF_CALL_LOG"
+  [ "$status" -eq 1 ]
+}
+
+@test "trial: the deadline is written before the enforced load, then listeners are logged" {
+  export PF_TRIAL_SECONDS=900 PF_TRIAL_DEADLINE_FILE="$BATS_TEST_TMPDIR/trial"
+  run bash "$SCRIPT_UNDER_TEST"
+  [ "$status" -eq 0 ]
+  [ "$(cat "$PF_TRIAL_DEADLINE_FILE")" = 1800000900 ]
+  grep -Fqx 'probe deadline-at-load 1800000900' "$PF_CALL_LOG"
+  grep -q 'trial armed: com.apple/nix-hardening is flushed at 2027-01-15T08:15:00Z (900 s)' "$PF_HARDENING_LOG"
+  grep -q '^snapshot listen tcp: sshd' "$PF_HARDENING_LOG"
+}
+
+@test "trial: a failed load is still armed and logged" {
+  export PF_TRIAL_SECONDS=900 PF_TRIAL_DEADLINE_FILE="$BATS_TEST_TMPDIR/trial"
+  PF_FAIL_LOAD=1 run bash "$SCRIPT_UNDER_TEST"
+  [ "$status" -ne 0 ]
+  grep -q 'trial armed' "$PF_HARDENING_LOG"
+  grep -q 'FAILED: load' "$PF_HARDENING_LOG"
+  [ "$(cat "$PF_TRIAL_DEADLINE_FILE")" = 1800000900 ]
+  PF_HARDENING_NOW=1800000030 PF_FAIL_LOAD=1 run bash "$SCRIPT_UNDER_TEST"
+  [ "$status" -ne 0 ]
+  [ "$(cat "$PF_TRIAL_DEADLINE_FILE")" = 1800000900 ]
+  run grep -c 'trial armed:' "$PF_HARDENING_LOG"
+  [ "$output" -eq 1 ]
+}
+
+@test "trial: a failed retry preserves an existing future deadline" {
+  export PF_TRIAL_SECONDS=900 PF_TRIAL_DEADLINE_FILE="$BATS_TEST_TMPDIR/trial"
+  echo 1800000600 >"$PF_TRIAL_DEADLINE_FILE"
+  PF_HARDENING_NOW=1800000030 PF_FAIL_LOAD=1 run bash "$SCRIPT_UNDER_TEST"
+  [ "$status" -ne 0 ]
+  [ "$(cat "$PF_TRIAL_DEADLINE_FILE")" = 1800000600 ]
+  run grep -q 'trial armed' "$PF_HARDENING_LOG"
+  [ "$status" -eq 1 ]
+}
+
+@test "trial: a successful load after an expired deadline re-arms the full time" {
+  export PF_TRIAL_SECONDS=900 PF_TRIAL_DEADLINE_FILE="$BATS_TEST_TMPDIR/trial"
+  echo 1799999000 >"$PF_TRIAL_DEADLINE_FILE" # left from before the reboot, already passed
+  run bash "$SCRIPT_UNDER_TEST"
+  [ "$status" -eq 0 ]
+  [ "$(cat "$PF_TRIAL_DEADLINE_FILE")" = 1800000900 ]
+  grep -Fqx 'probe deadline-at-load 1799999000' "$PF_CALL_LOG"
+  grep -q 'trial armed: com.apple/nix-hardening is flushed at 2027-01-15T08:15:00Z (900 s)' "$PF_HARDENING_LOG"
+}
+
+@test "trial: a failed load with an expired deadline leaves it expired for the timer" {
+  export PF_TRIAL_SECONDS=900 PF_TRIAL_DEADLINE_FILE="$BATS_TEST_TMPDIR/trial"
+  echo 1799999000 >"$PF_TRIAL_DEADLINE_FILE"
+  PF_FAIL_LOAD=1 run bash "$SCRIPT_UNDER_TEST"
+  [ "$status" -ne 0 ]
+  [ "$(cat "$PF_TRIAL_DEADLINE_FILE")" = 1799999000 ]
 }

@@ -102,9 +102,12 @@ in
   shell-tests =
     pkgs.runCommand "check-shell-tests"
       {
+        # flock: the pf-hardening trial suite serializes two processes through
+        # a real advisory lock; Linux has no lockf(1), macOS does.
         nativeBuildInputs = with pkgs; [
           bats
           bash
+          flock
           jq
           perl
           python3
@@ -131,6 +134,7 @@ in
           test_hm_collision_clear.bats \
           test_openbao_run.bats \
           test_pf_hardening_load.bats \
+          test_pf_hardening_trial.bats \
           test_system_limits.bats \
           test_validate_nix_before_all.bats \
           test_verify_symlinks.bats; do
