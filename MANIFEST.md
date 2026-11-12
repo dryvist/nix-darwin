@@ -132,6 +132,14 @@ the Cursor D2 extension's live preview; other hosts still use `nix run nixpkgs#d
 
 ---
 
+## All-host GUI applications
+
+Source: nix-ai (`programs.orca`, enabled in `hosts/common/home.nix`)
+
+| Package | Description |
+| --- | --- |
+| orca | Orca desktop app; the `orca` CLI is on `PATH` |
+
 ## Workstation GUI applications
 
 Source: `hosts/macbook-m4/home.nix`
