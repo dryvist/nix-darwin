@@ -182,7 +182,7 @@ in
   # ==========================================================================
   notes = {
     obsidianHome = "${homeDir}/obsidian";
-    # Single source of truth: change here when renaming vault to obsidian-meetings
-    openwhisprDirectory = "${homeDir}/obsidian/obsidian-granola/openwhispr";
+    # Optional path supplied by host or deployment configuration.
+    openwhisprDirectory = null;
   };
 }
