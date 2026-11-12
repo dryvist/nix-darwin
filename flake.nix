@@ -360,7 +360,6 @@
       # hmActivationPackage still requires Darwin (kept for macOS CI)
       lib = {
         agentNofile = import ./lib/agent-nofile.nix;
-        pfAnchorCheck = import ./lib/pf-anchor-check.nix;
         homebrewAvailable =
           package:
           lib.meta.availableOn nixpkgs.legacyPackages.aarch64-darwin.stdenv.hostPlatform package
@@ -409,6 +408,12 @@
               };
             };
 
+          # pf anchor syntax check — Darwin-only (pfctl is a macOS system
+          # binary, not a nixpkgs package): parses the REAL rendered anchor
+          # from the primary host's own config (DRY — no copy of the anchor
+          # text lives here) with `pfctl -n -f` (syntax-only, does not load
+          # it), so a bad anchor fails `nix flake check` instead of shipping
+          # silently broken (see modules/darwin/pf-hardening.nix).
           # One owner per AI CLI: a Claude Code brew cask (programs.claude.brewCask)
           # must be declared, and its binary not also built by Nix. Placed here, not in lib/checks.nix, because that call
           # receives `darwinConfigurations = { }` — a check there would never
@@ -479,32 +484,55 @@
               inherit userConfig;
             };
 
-            # Parses each host's rendered anchor with `pfctl -n -f`
-            # (lib/pf-anchor-check.nix); pf-rule-order asserts verdicts.
             pf-anchor-syntax =
               let
                 darwinPkgs = nixpkgs.legacyPackages.aarch64-darwin;
-                parse =
-                  label:
-                  self.lib.pfAnchorCheck {
-                    pkgs = darwinPkgs;
-                    name = label;
-                    anchorText =
-                      configs.${hosts.${label}.hostName}.config.environment.etc."pf.anchors/nix-hardening".text;
-                  };
-              in
-              darwinPkgs.runCommand "check-pf-anchor-syntax" {
-                hosts = map parse [
-                  "macbook-m4"
-                  "mac-studio"
+                anchorTextOf = cfg: cfg.config.environment.etc."pf.anchors/nix-hardening".text;
+                # Each service pass in the rendered anchor must sit before
+                # `block in all`; last-match-wins only helps what a rule
+                # already admitted.
+                studio = configs.${hosts.mac-studio.hostName};
+                servingPorts = builtins.map toString [
+                  studio.config.services.macmon-exporter.port
+                  studio.config.programs.llm-gate.apiPort
+                  studio.config.programs.llm-gate.clusterPort
                 ];
-              } "touch $out";
-
-            pf-rule-order = import ./lib/checks/pf-rule-order.nix {
-              pkgs = nixpkgs.legacyPackages.aarch64-darwin;
-              studio = configs.${hosts.mac-studio.hostName};
-              inherit (self.lib) pfAnchorCheck;
-            };
+                # The source set pf-hardening.nix renders into every service
+                # pass: `from { <sources joined ", "> }`.
+                sshSourceSet = "from { ${lib.concatStringsSep ", " studio.config.security.pf.allowedSshSources} }";
+                studioAnchor = darwinPkgs.writeText "mac-studio-nix-hardening-anchor.conf" (anchorTextOf studio);
+                grepCmd = "${darwinPkgs.gnugrep}/bin/grep";
+                orderChecks = builtins.concatStringsSep "\n" (
+                  builtins.map (port: ''
+                    passLine=$(${grepCmd} -n 'pass in quick proto tcp ${sshSourceSet} to any port ${port} no state' ${studioAnchor}) || {
+                      echo "rendered anchor does not pass ${port} from security.pf.allowedSshSources" >&2
+                      exit 1
+                    }
+                    blockLine=$(${grepCmd} -n '^block in all$' ${studioAnchor})
+                    [ "''${passLine%%:*}" -lt "''${blockLine%%:*}" ] || {
+                      echo "${port} pass is not before block in all" >&2
+                      exit 1
+                    }
+                  '') servingPorts
+                );
+                flowChecks = ''
+                  sshLine=$(${grepCmd} -nFx 'pass in quick proto tcp ${sshSourceSet} to any port 22 flags /S no state' ${studioAnchor}) || exit 1
+                  blockLine=$(${grepCmd} -nFx 'block in all' ${studioAnchor}) || exit 1
+                  outboundLine=$(${grepCmd} -nFx 'pass out proto tcp from any port >= 49152 to any flags /S keep state' ${studioAnchor}) || exit 1
+                  defaultOutLine=$(${grepCmd} -nFx 'pass out all keep state' ${studioAnchor}) || exit 1
+                  [ "''${sshLine%%:*}" -lt "''${blockLine%%:*}" ] || exit 1
+                  [ "''${outboundLine%%:*}" -gt "''${defaultOutLine%%:*}" ] || exit 1
+                '';
+              in
+              darwinPkgs.runCommand "check-pf-anchor-syntax" { } ''
+                /sbin/pfctl -n -f ${
+                  darwinPkgs.writeText "nix-hardening-anchor.conf" (anchorTextOf configs.${primaryHost.hostName})
+                }
+                /sbin/pfctl -n -f ${studioAnchor}
+                ${orderChecks}
+                ${flowChecks}
+                touch $out
+              '';
           };
         };
 
