@@ -14,6 +14,7 @@ pf_stub_setup() {
   export PF_HARDENING_PFCTL="$BATS_TEST_TMPDIR/pfctl"
   export PF_HARDENING_LOGGER="$BATS_TEST_TMPDIR/logger"
   export PF_HARDENING_LSOF="$BATS_TEST_TMPDIR/lsof"
+  export PF_HARDENING_LOCKF="$BATS_TEST_TMPDIR/lockf"
   export PF_HARDENING_LOG="$BATS_TEST_TMPDIR/pf-hardening.log"
   export PF_HARDENING_NOW=1800000000
   export PF_CALL_LOG="$BATS_TEST_TMPDIR/calls"
@@ -46,5 +47,8 @@ esac
 STUB
   printf '#!%s\nprintf "logger %%s\\n" "$*" >>"$PF_CALL_LOG"\n' "$BASH" >"$PF_HARDENING_LOGGER"
   printf '#!%s\nprintf "lsof %%s\\n" "$*" >>"$PF_CALL_LOG"\necho "sshd 1 root 4u IPv4 TCP *:22 (LISTEN)"\n' "$BASH" >"$PF_HARDENING_LSOF"
-  chmod +x "$PF_HARDENING_PFCTL" "$PF_HARDENING_LOGGER" "$PF_HARDENING_LSOF"
+  # Single-run load cases need the lockf re-exec, not contention. The concurrency test
+  # overrides this fake.
+  printf '#!%s\n[ "$1" = "-k" ] || exit 2\nshift 2\nexec "$@"\n' "$BASH" >"$PF_HARDENING_LOCKF"
+  chmod +x "$PF_HARDENING_PFCTL" "$PF_HARDENING_LOGGER" "$PF_HARDENING_LSOF" "$PF_HARDENING_LOCKF"
 }
