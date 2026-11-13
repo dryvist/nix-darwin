@@ -2,7 +2,7 @@
 #
 # Apple Silicon MacBook Pro (M4 Max, 128GB RAM). Primary development machine.
 #
-# Shared system config (module imports, networking.hostName, OrbStack,
+# Shared system config (module imports, networking.hostName,
 # file-extensions, openssh, and the MLX model-server Cribl log-shipping pipeline shared
 # by all inference hosts) lives in ../common/default.nix. This file adds only the
 # host-unique bits: curated login-item streamlining and this machine's

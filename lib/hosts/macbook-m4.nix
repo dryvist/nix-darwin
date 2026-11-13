@@ -86,15 +86,6 @@
     };
   };
 
-  # OrbStack container runtime. The ContainerData volume is created by
-  # apfs-volumes (see apfsVolumes below); OrbStack only consumes it via the
-  # home-manager Group Container symlink. enable = false omits the runtime +
-  # symlink/env entirely.
-  orbstack = {
-    enable = true;
-    containerVolume = "ContainerData";
-  };
-
   # Dedicated APFS volumes on the internal container (disk3). diskutil apfs list
   # to find the container. A bare name is logical separation only; an attrset
   # with `quota` adds a hard size ceiling (a maximum, not a reservation).
