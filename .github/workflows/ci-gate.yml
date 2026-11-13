@@ -18,11 +18,9 @@
 # required status check context stays exactly "Merge Gate".
 #
 # Fork-PR security guard: nix-darwin is PUBLIC, so `pull_request` from fork
-# branches would otherwise execute fork-author-controlled code on our
-# self-hosted RunsOn runners. The `runs-on:` expression routes same-repo PRs to
-# RunsOn and falls back to `ubuntu-latest` for fork PRs; the shared gate
-# re-applies the identical guard to every label it is handed.
-# Pattern reference: runs-on.com/configuration/job-labels (Fork PRs).
+# branches must not receive a configured runner label. Each runner expression
+# keeps the same-repository guard and falls back to `ubuntu-latest`; the shared
+# gate re-applies the identical guard to every label it is handed.
 #
 # dependency_review is off in this repo.
 
@@ -74,8 +72,8 @@ jobs:
       nix_skip_deps_only: true
       dependency_review: false
       queue_timeout_minutes: 30
-      runner_label: ${{ github.event.pull_request.head.repo.full_name == github.repository && format('runs-on={0}/runner=2cpu-linux-x64', github.run_id) || 'ubuntu-latest' }}
-      nix_validate_runner_label: ${{ github.event.pull_request.head.repo.full_name == github.repository && format('runs-on={0}/cpu=4/ram=16/family=m7+c7/extras=s3-cache', github.run_id) || 'ubuntu-latest' }}
+      runner_label: ${{ github.event.pull_request.head.repo.full_name == github.repository && (vars.CI_RUNNER_LABEL || 'ubuntu-24.04') || 'ubuntu-latest' }}
+      nix_validate_runner_label: ${{ github.event.pull_request.head.repo.full_name == github.repository && (vars.CI_RUNNER_LABEL || 'ubuntu-24.04') || 'ubuntu-latest' }}
       filters: |
         nix:
           - '**.nix'
@@ -105,7 +103,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-    runs-on: ${{ github.event.pull_request.head.repo.full_name == github.repository && format('runs-on={0}/runner=2cpu-linux-x64', github.run_id) || 'ubuntu-latest' }}
+    runs-on: ${{ github.event.pull_request.head.repo.full_name == github.repository && (vars.CI_RUNNER_LABEL || 'ubuntu-24.04') || 'ubuntu-latest' }}
     timeout-minutes: 5
     outputs:
       nix: ${{ steps.filter.outputs.nix }}
@@ -180,7 +178,7 @@ jobs:
     name: Merge Gate
     needs: [shared-gate, changes, nix-build, claude-settings, llm-concurrency-parity, flake-lock-fresh]
     if: ${{ !cancelled() }}
-    runs-on: ${{ github.event.pull_request.head.repo.full_name == github.repository && format('runs-on={0}/runner=2cpu-linux-x64', github.run_id) || 'ubuntu-latest' }}
+    runs-on: ${{ github.event.pull_request.head.repo.full_name == github.repository && (vars.CI_RUNNER_LABEL || 'ubuntu-24.04') || 'ubuntu-latest' }}
     timeout-minutes: 5
     steps:
       - name: Check all results
