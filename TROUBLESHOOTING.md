@@ -355,8 +355,8 @@ This configuration uses multiple layers to ensure TCC permissions persist:
    paths at `~/Applications/Home Manager Apps/` that don't change across
    rebuilds (no wrapper scripts, unlike trampolines)
 
-2. **TCC-sensitive apps as Homebrew casks**: Ghostty and OrbStack are installed
-   as casks (see `modules/darwin/homebrew.nix`), which put them at a fixed
+2. **TCC-sensitive apps as Homebrew casks**: Ghostty is installed as a cask
+   (see `modules/darwin/homebrew.nix`), which puts it at a fixed
    `/Applications/<App>.app` that activation never rewrites
 
 3. **/bin/zsh fallback**: The system shell has a permanent path and can be granted Full Disk Access as a backup

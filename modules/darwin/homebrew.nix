@@ -88,12 +88,6 @@ let
       greedy = true;
     } # API development environment
 
-    # Stable application path preserves TCC grants; the module manages its APFS volume.
-    {
-      name = "orbstack";
-      greedy = true;
-    }
-
     # --- Microsoft ---
     # Teams desktop app. Its .pkg upgrade needs root, so its own updater moves it.
     "microsoft-teams"
@@ -152,6 +146,12 @@ in
     casks =
       aiHomebrew.casks
       ++ claudeCasks
+      ++ lib.optionals (hostConfig.orbstack.enable or false) [
+        {
+          name = "orbstack";
+          greedy = true;
+        }
+      ]
       ++ lib.optionals homebrew.ghostty ghosttyCasks
       ++ lib.optionals homebrew.enableWorkstationApps workstationCasks;
     masApps = lib.optionalAttrs homebrew.enableWorkstationApps workstationMasApps;

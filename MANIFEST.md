@@ -158,9 +158,6 @@ Workstation GUI apps are Homebrew casks and Mac App Store apps under
 | rapidapi | Full-featured HTTP client |
 | swiftbar | Menu bar customization |
 
-Note: OrbStack installed via Homebrew cask (`greedy = true`) in `modules/darwin/homebrew.nix` for TCC permission stability.
-The `programs.orbstack` module (`modules/darwin/apps/orbstack.nix`) still manages the APFS data volume via launchd.
-
 ## Darwin User CLI Packages
 
 Source: nix-home (`modules/home-manager/darwin/default.nix` via flake input)
@@ -208,7 +205,6 @@ installed cask or formula not declared in the Nix configuration; it removes noth
 | antigravity | yes | Google Antigravity 2.0 standalone agent command center (workstation capability) |
 | antigravity-ide | yes | Google Antigravity IDE (workstation capability) |
 | postman | yes | API development environment (moved from nixpkgs — version lag caused schema mismatch) |
-| orbstack | yes | Container/Linux VM runtime — cask for TCC permission stability |
 | microsoft-teams | yes | Teams desktop app (not available on Mac App Store) |
 | libreoffice | yes | Office suite and `soffice` conversion tools |
 | openwebstart | yes | Java Web Start replacement for iDRAC virtual-console files |

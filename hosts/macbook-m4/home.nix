@@ -1,7 +1,7 @@
 # macbook-m4 Home Configuration
 #
 # User environment for the macbook-m4 host. Shared home config (monitoring, zsh
-# keychain/token init, copyApps, MLX, OrbStack wiring) lives in ../common/home.nix.
+# keychain/token init, copyApps, MLX) lives in ../common/home.nix.
 # This file adds only the host-unique bits — the TCC-sensitive GUI app list.
 
 {
@@ -91,8 +91,7 @@
     # wholesale — verified 2026-07-29, every app under ~/Applications/Home Manager
     # Apps/ carrying the same rewrite timestamp — and a delete-and-recreate at a
     # stable path is still a new bundle to TCC. A cask is a real /Applications
-    # copy that Homebrew upgrades IN PLACE, which is the same reason OrbStack
-    # already lives there (see hosts/common/default.nix).
+    # copy that Homebrew upgrades IN PLACE.
     #
     # ghostty-bin.terminfo stays a nix package (hosts/common/ghostty-terminfo.nix):
     # it is terminfo data, not an app, nothing about it is TCC-sensitive, and

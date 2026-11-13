@@ -9,7 +9,6 @@
     antigravity-ide = "Homebrew is selected for early access to the agent IDE";
     claude = "The nixpkgs package is unavailable on aarch64-darwin";
     bitwarden = "The nixpkgs package has an insecure Electron dependency";
-    orbstack = "The in-place app preserves macOS privacy grants";
     postman = "The selected vendor app avoids updater schema mismatches";
     raycast = "The selected vendor app avoids updater schema mismatches";
     ghostty = "The nixpkgs package is unavailable on aarch64-darwin";
