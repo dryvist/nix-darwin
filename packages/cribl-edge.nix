@@ -20,7 +20,7 @@ stdenvNoCC.mkDerivation rec {
 
   src = fetchurl {
     url = "https://cdn.cribl.io/dl/${releaseDir}/cribl-${version}-darwin-universal.pkg";
-    hash = "sha256-Mqlvmc3LP/1y8LU66BVow83k0EniHCUW4grx51ELqkA=";
+    hash = "sha256-+un86iFMRhX3/HCWpiPGvcRs7QHP+MCuErkT+dLwSCs=";
   };
 
   nativeBuildInputs = [
