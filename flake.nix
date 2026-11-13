@@ -317,6 +317,9 @@
                     ;
                   # Host-stamped: see hostUserConfig above.
                   userConfig = hostUserConfig;
+                  # Per-package escape hatch for tools the stable channel
+                  # carries too old to work; hosts opt in one package at a time.
+                  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${host.system or "aarch64-darwin"};
                 };
                 users.${userConfig.user.name} = import ./hosts/${label}/home.nix;
 

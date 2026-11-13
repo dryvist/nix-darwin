@@ -9,6 +9,7 @@
   lib,
   options,
   pkgs,
+  pkgsUnstable,
   userConfig,
   ...
 }:
@@ -141,8 +142,11 @@
 
     # CLI / Media tools (non-GUI, no .app bundle)
     ffmpeg # Complete solution to record, convert and stream audio and video
-    d2 # D2 diagram compiler — kept on PATH for the Cursor D2 extension's live
-    # preview (elsewhere it's on-demand only via `nix run nixpkgs#d2`)
+    # D2 diagram compiler — kept on PATH for the Cursor D2 extension's live
+    # preview (elsewhere it's on-demand only via `nix run nixpkgs#d2`).
+    # Unstable: the stable channel's d2 cannot export PNG, because the browser
+    # driver it downloads at first use was withdrawn upstream.
+    pkgsUnstable.d2
 
     # Developer CLI tools (non-GUI, no .app bundle).
     actionlint # GitHub Actions workflow linter
