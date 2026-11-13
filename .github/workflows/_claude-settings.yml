@@ -16,8 +16,7 @@ permissions:
 jobs:
   validate:
     name: Validate
-    # Self-hosted RunsOn runner — see terraform-runs-on/docs/migration-guide.md
-    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64"
+    runs-on: ${{ vars.CI_RUNNER_LABEL || 'ubuntu-24.04' }}
     timeout-minutes: 5
     permissions:
       contents: read
