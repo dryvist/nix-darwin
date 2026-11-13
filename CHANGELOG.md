@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.29.0](https://github.com/dryvist/nix-darwin/compare/v4.28.1...v4.29.0) (2026-11-13)
+
+
+### Features
+
+* **macbook-m4:** install d2 from the unstable channel ([#3257](https://github.com/dryvist/nix-darwin/issues/3257)) ([c15905e](https://github.com/dryvist/nix-darwin/commit/c15905e7fe4ec8f9f54ff39921302f4a9e27ce27))
+
 ## [4.28.1](https://github.com/dryvist/nix-darwin/compare/v4.28.0...v4.28.1) (2026-11-12)
 
 
