@@ -92,7 +92,6 @@
   apfsContainer = "disk3";
   apfsVolumes = [
     "HuggingFace"
-    "ContainerData"
     # Capped: holds a continuously-appended local data set bounded only by
     # time-based retention, which does not bound a burst. The ceiling keeps it
     # from consuming the container however those retention settings drift.

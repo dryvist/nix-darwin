@@ -134,7 +134,6 @@ in
       spotlightDisabledVolumes = [
         config.system.appleSiliconTunables.huggingfaceVolume
         "/Volumes/Streams"
-        "/Volumes/ContainerData"
         "/Volumes/BinaryStore"
       ];
       timeMachineExcludes = [
