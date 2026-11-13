@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.30.0](https://github.com/dryvist/nix-darwin/compare/v4.29.1...v4.30.0) (2026-11-13)
+
+
+### Features
+
+* **darwin:** install Xcode, Apple Developer and TestFlight from the App Store ([#3264](https://github.com/dryvist/nix-darwin/issues/3264)) ([75246d6](https://github.com/dryvist/nix-darwin/commit/75246d68d6c5436adb8f9ed6442a87532d4cea90))
+* remove OrbStack and the ContainerData volume from macbook-m4 ([#3267](https://github.com/dryvist/nix-darwin/issues/3267)) ([92a27ae](https://github.com/dryvist/nix-darwin/commit/92a27ae8f63fe6e433f3dd5bbb5177499a042016))
+
 ## [4.29.1](https://github.com/dryvist/nix-darwin/compare/v4.29.0...v4.29.1) (2026-11-13)
 
 
