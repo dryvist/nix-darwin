@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.29.1](https://github.com/dryvist/nix-darwin/compare/v4.29.0...v4.29.1) (2026-11-13)
+
+
+### Bug Fixes
+
+* **openwhispr:** leave notes directory and model to the host wrapper ([#3256](https://github.com/dryvist/nix-darwin/issues/3256)) ([16a1e56](https://github.com/dryvist/nix-darwin/commit/16a1e56f7a5b57baf9d2cc20e97ba00af768f16a))
+
 ## [4.29.0](https://github.com/dryvist/nix-darwin/compare/v4.28.1...v4.29.0) (2026-11-13)
 
 
