@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.30.1](https://github.com/dryvist/nix-darwin/compare/v4.30.0...v4.30.1) (2026-11-13)
+
+
+### Bug Fixes
+
+* **cribl:** update Cribl Edge to 4.20.4 ([#3271](https://github.com/dryvist/nix-darwin/issues/3271)) ([7f5f8bb](https://github.com/dryvist/nix-darwin/commit/7f5f8bb51141eb800c6269d953ac73b93ba2ec56))
+
 ## [4.30.0](https://github.com/dryvist/nix-darwin/compare/v4.29.1...v4.30.0) (2026-11-13)
 
 
