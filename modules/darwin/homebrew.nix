@@ -121,6 +121,10 @@ let
     "Microsoft PowerPoint" = 462062816;
     "Microsoft Outlook" = 985367838;
     "Yubico Authenticator" = 1497506650;
+    # Apple developer tools; the App Store serves the Xcode release for the installed macOS.
+    "Xcode" = 497799835;
+    "Apple Developer" = 640199958;
+    "TestFlight" = 899247664;
     # OneDrive (823766827) is intentionally NOT managed via masApps: its
     # first-time install needs an admin-password TTY, unavailable during a
     # non-interactive `darwin-rebuild switch` ("sudo: a terminal is

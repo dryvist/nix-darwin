@@ -182,7 +182,5 @@ in
   # ==========================================================================
   notes = {
     obsidianHome = "${homeDir}/obsidian";
-    # Optional path supplied by host or deployment configuration.
-    openwhisprDirectory = null;
   };
 }
