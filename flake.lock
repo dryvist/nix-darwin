@@ -1765,11 +1765,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1794469472,
-        "narHash": "sha256-6M35sl130M0wQzoepUexiv2xeF8V44duYiuNOZdA+Ws=",
+        "lastModified": 1794584063,
+        "narHash": "sha256-HZBqHuDkShseWOnWxe+BhnUM9ZeabsJqCrp9HPCduTw=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "a0bee30423fb613f5df9a2b982707e0669f120e2",
+        "rev": "3614fc04f578f238a0975cbed45c4d9e6598534f",
         "type": "github"
       },
       "original": {
@@ -2057,11 +2057,11 @@
         "tofu-github": "tofu-github_2"
       },
       "locked": {
-        "lastModified": 1794343161,
-        "narHash": "sha256-rcqjC3Y2v5FQLJhixKPsZ07NwYu7duUG0NeXerAIHiA=",
+        "lastModified": 1794509345,
+        "narHash": "sha256-67qmwU7Iwe4Bo8xl96DDyaN3BUUeedmsHKXAvzlkoYM=",
         "owner": "dryvist",
         "repo": "nix-home",
-        "rev": "2939ce8be7e703bd8aed2477a21c16693c9bd9ca",
+        "rev": "cf36dfbf314a331ec99c0a942693161c360afa15",
         "type": "github"
       },
       "original": {
