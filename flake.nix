@@ -73,7 +73,7 @@
         homelab-contracts.follows = "homelab-contracts";
         # nix-ai declares this source at v1; the sandbox release moves here, one tag at a time.
         nix-agent-sandbox-src = {
-          url = "github:dryvist/nix-agent-sandbox?ref=v1.13.2";
+          url = "github:dryvist/nix-agent-sandbox?ref=v1.22.0";
           flake = false;
         };
       };
