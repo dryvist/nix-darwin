@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.30.3](https://github.com/dryvist/nix-darwin/compare/v4.30.2...v4.30.3) (2026-11-14)
+
+
+### Bug Fixes
+
+* **flake:** resolve homelab-contracts and the prompt catalog from their current owners ([#3278](https://github.com/dryvist/nix-darwin/issues/3278)) ([3572151](https://github.com/dryvist/nix-darwin/commit/35721512aff94e379811400d07f968e625e3c760))
+
 ## [4.30.2](https://github.com/dryvist/nix-darwin/compare/v4.30.1...v4.30.2) (2026-11-14)
 
 
