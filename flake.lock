@@ -408,11 +408,11 @@
     "claude-code-plugins_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1794636116,
-        "narHash": "sha256-nSMu1njk7lp5N6e2VJ9R/seqFzSfs/JX/2e1Mj8Vd8M=",
+        "lastModified": 1794639202,
+        "narHash": "sha256-GxEhq0OoC0ixTD/KiALGahY7RRxBWxmQU5YYl/hDYtQ=",
         "owner": "anthropics",
         "repo": "claude-code",
-        "rev": "f1011887894ba0095fd052f6fd218dea8c1acc46",
+        "rev": "7c589ed54cdbede58b92509593ce32935f25d97c",
         "type": "github"
       },
       "original": {
@@ -1365,11 +1365,11 @@
     "homebrew-core": {
       "flake": false,
       "locked": {
-        "lastModified": 1794636958,
-        "narHash": "sha256-E0BAeaZAiVhoR7JSJgzWFYLfBoo+SLvAGsYJKpjsd4o=",
+        "lastModified": 1794639995,
+        "narHash": "sha256-jwkotunjBKhyQMUX2NeIUc0KHbhThMg+1w+b0KLn8FQ=",
         "owner": "Homebrew",
         "repo": "homebrew-core",
-        "rev": "8277be9101076ed1c1cdeb3316d83fcd0a4d8a04",
+        "rev": "dedcada63a6d9432900825d88f93b3232871214f",
         "type": "github"
       },
       "original": {
