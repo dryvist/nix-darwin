@@ -91,7 +91,7 @@ in
   };
 
   # OrbStack stays OFF — this host uses the Apple `container` runtime, not
-  # OrbStack. The ContainerData volume is still created (apfsVolumes below).
+  # OrbStack.
   orbstack.enable = false;
 
   # Same dedicated APFS volumes as the workstation, created identically.
@@ -99,6 +99,5 @@ in
   apfsContainer = "disk3";
   apfsVolumes = [
     "HuggingFace"
-    "ContainerData"
   ];
 }

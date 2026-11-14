@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.30.2](https://github.com/dryvist/nix-darwin/compare/v4.30.1...v4.30.2) (2026-11-14)
+
+
+### Bug Fixes
+
+* **flake:** resolve ai-llm-prompts from its current owner ([#3275](https://github.com/dryvist/nix-darwin/issues/3275)) ([2c49322](https://github.com/dryvist/nix-darwin/commit/2c4932267378c3649816a021a6a2e8b8b7c0c2e6))
+
 ## [4.30.1](https://github.com/dryvist/nix-darwin/compare/v4.30.0...v4.30.1) (2026-11-13)
 
 

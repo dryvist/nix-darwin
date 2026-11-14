@@ -35,7 +35,7 @@
       flake = false;
     };
     ai-llm-prompts = {
-      url = "github:JacobPEvans-ai/ai-llm-prompts?ref=v1";
+      url = "github:jpe-ai-agents/ai-llm-prompts?ref=v1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     claude-code-plugins = {
