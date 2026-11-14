@@ -408,11 +408,11 @@
     "claude-code-plugins_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1794639202,
-        "narHash": "sha256-GxEhq0OoC0ixTD/KiALGahY7RRxBWxmQU5YYl/hDYtQ=",
+        "lastModified": 1794640953,
+        "narHash": "sha256-5G4zrl6DyhIiCNHD97bvtGX+tYEhV/qiWza11+nr8zs=",
         "owner": "anthropics",
         "repo": "claude-code",
-        "rev": "7c589ed54cdbede58b92509593ce32935f25d97c",
+        "rev": "f1f87e56d3b823cedf87c55d7b972150644ae310",
         "type": "github"
       },
       "original": {
@@ -1349,11 +1349,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1794631521,
-        "narHash": "sha256-7sqdXUBlGQwHTcAY3uhIKTyB51pro9Stur4eOaLYngg=",
+        "lastModified": 1794643500,
+        "narHash": "sha256-LF1OEB+vaOWTqRE6n8jOX0mv09S/bqCHuBoYkt0q6M0=",
         "owner": "Homebrew",
         "repo": "homebrew-cask",
-        "rev": "70622cec8e3857a3c6100f26e0fd544690172a19",
+        "rev": "d9a693ee84cbaface3654cb4c33499e083ed4155",
         "type": "github"
       },
       "original": {
@@ -1365,11 +1365,11 @@
     "homebrew-core": {
       "flake": false,
       "locked": {
-        "lastModified": 1794639995,
-        "narHash": "sha256-jwkotunjBKhyQMUX2NeIUc0KHbhThMg+1w+b0KLn8FQ=",
+        "lastModified": 1794644178,
+        "narHash": "sha256-x8JRDHjWToZKT6+IUl6NjQSmvumY5AlYKlvbpsePcc0=",
         "owner": "Homebrew",
         "repo": "homebrew-core",
-        "rev": "dedcada63a6d9432900825d88f93b3232871214f",
+        "rev": "6336786c320c7b068cb3dd454376c50f97bc55ae",
         "type": "github"
       },
       "original": {
