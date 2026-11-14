@@ -26,7 +26,7 @@ repos:
 
   # Markdown linting (uses .markdownlint-cli2.yaml — canonical from JacobPEvans/.github)
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.24.0
+    rev: v0.24.1
     hooks:
       - id: markdownlint-cli2
         files: \.md$
@@ -44,7 +44,7 @@ repos:
   # Config: .github/zizmor.yml for rule customization
   # See: https://docs.zizmor.sh/audits/
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.31.1
+    rev: v1.32.0
     hooks:
       - id: zizmor
         args: ['--persona=regular', '--min-severity=medium', '--min-confidence=medium']
@@ -54,7 +54,7 @@ repos:
   # Runs security-audit rules on all supported languages
   # See: https://semgrep.dev/docs/extensions/pre-commit
   - repo: https://github.com/semgrep/pre-commit
-    rev: v1.183.0
+    rev: v1.185.0
     hooks:
       - id: semgrep
         args: ['--config', 'p/security-audit', '--skip-unknown-extensions']
