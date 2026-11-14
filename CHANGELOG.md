@@ -1,5 +1,18 @@
 # Changelog
 
+## [4.31.0](https://github.com/dryvist/nix-darwin/compare/v4.30.3...v4.31.0) (2026-11-14)
+
+
+### Features
+
+* **agent:** zcode run j-dd667c3ba4e0135f ([ce3e4f0](https://github.com/dryvist/nix-darwin/commit/ce3e4f04b436f5f2aa2391fe729424ad248986eb))
+
+
+### Bug Fixes
+
+* **ci:** read the dependency review prompt from the locked flake input ([#3294](https://github.com/dryvist/nix-darwin/issues/3294)) ([59e84f8](https://github.com/dryvist/nix-darwin/commit/59e84f8b8f3f2fcd766f4adff4ffcb73aebc6023))
+* **deps:** move the agent sandbox source to v1.22.0 ([#3293](https://github.com/dryvist/nix-darwin/issues/3293)) ([72de310](https://github.com/dryvist/nix-darwin/commit/72de310de339167baa197afa645a9be05cdaad99))
+
 ## [4.30.3](https://github.com/dryvist/nix-darwin/compare/v4.30.2...v4.30.3) (2026-11-14)
 
 
