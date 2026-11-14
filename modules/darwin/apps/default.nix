@@ -27,7 +27,7 @@ _:
     ./streamline-login.nix
   ];
 
-  # APFS volumes (HuggingFace, ContainerData) are created by apfs-volumes.nix;
+  # APFS volumes (for example HuggingFace) are created by apfs-volumes.nix;
   # host-specific apfsContainer + volume list come from lib/hosts.nix.
   # The OrbStack data symlink (hosts/<host>/home.nix) consumes the ContainerData
   # volume on hosts that run OrbStack.
