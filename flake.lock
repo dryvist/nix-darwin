@@ -1626,6 +1626,22 @@
         "type": "github"
       }
     },
+    "modern-web-guidance": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1794280113,
+        "narHash": "sha256-bqsUEI1yaGy1sd8DBJzG5cOv4Yv0RSYac6e9egqYFJU=",
+        "owner": "GoogleChrome",
+        "repo": "modern-web-guidance",
+        "rev": "4dd968349e54ca45a05dd5c818fb035c9054b022",
+        "type": "github"
+      },
+      "original": {
+        "owner": "GoogleChrome",
+        "repo": "modern-web-guidance",
+        "type": "github"
+      }
+    },
     "native-ui": {
       "inputs": {
         "nixpkgs": [
@@ -1745,6 +1761,7 @@
         "llm-agents": "llm-agents",
         "managing-dependencies": "managing-dependencies",
         "mattpocock-skills": "mattpocock-skills",
+        "modern-web-guidance": "modern-web-guidance",
         "nix-agent-sandbox-src": "nix-agent-sandbox-src",
         "nix-agy": "nix-agy",
         "nix-claude-code": "nix-claude-code",
@@ -1765,11 +1782,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1794584063,
-        "narHash": "sha256-HZBqHuDkShseWOnWxe+BhnUM9ZeabsJqCrp9HPCduTw=",
+        "lastModified": 1794629409,
+        "narHash": "sha256-sGe6+iLpowukN6sF9sJDAr9TkXcjOl+Npq/BNZfxokE=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "3614fc04f578f238a0975cbed45c4d9e6598534f",
+        "rev": "b29ae8638229e318607ed035908054260630bde9",
         "type": "github"
       },
       "original": {
