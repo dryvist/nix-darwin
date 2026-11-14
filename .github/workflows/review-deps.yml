@@ -30,15 +30,6 @@ jobs:
         with:
           fetch-depth: 0 # Full history for diff analysis
 
-      - name: Checkout prompt catalog
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          repository: JacobPEvans-ai/ai-llm-prompts
-          ref: 0431be6994d51169b9f705ddeba958eb8a4d0fc4
-          path: .prompt-catalog
-          sparse-checkout: developer-tools/nix-darwin-flake-review.md
-          sparse-checkout-cone-mode: false
-
       - name: Install Nix
         uses: DeterminateSystems/determinate-nix-action@92957199488000b908fdad19f63711000965d8f3 # v3.24.1
 
@@ -58,8 +49,10 @@ jobs:
       - name: Render review prompt
         id: prompt
         run: |
+          # The prompt catalog is already a locked flake input; read it from there.
+          catalog=$(nix eval --raw --impure --expr '(builtins.getFlake (toString ./.)).inputs.ai-llm-prompts.outPath')
           awk 'BEGIN { markers = 0 } /^---$/ { markers++; next } markers >= 2 { print }' \
-            .prompt-catalog/developer-tools/nix-darwin-flake-review.md \
+            "$catalog/developer-tools/nix-darwin-flake-review.md" \
             | DIFF_FILE="$RUNNER_TEMP/flake-lock.diff" awk \
               '/steps\.diff\.outputs\.content/ { while ((getline line < ENVIRON["DIFF_FILE"]) > 0) print line; next } { print }' \
               > "$RUNNER_TEMP/review-prompt.md"
