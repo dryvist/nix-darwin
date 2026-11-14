@@ -40,7 +40,7 @@ jobs:
           sparse-checkout-cone-mode: false
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@92957199488000b908fdad19f63711000965d8f3 # v3.24.1
+        uses: DeterminateSystems/determinate-nix-action@16f94ba7aae399b9f9077c254b6719ec6de7e3e3 # v3.24.2
 
       - name: Generate flake.lock diff
         id: diff
@@ -71,7 +71,7 @@ jobs:
 
       - name: Run Claude Code Review
         id: claude-review
-        uses: anthropics/claude-code-action@d535f5172dec02b204866b393d6b20b9b2aaf98d # v1.0.266
+        uses: anthropics/claude-code-action@f3b070c88125d33dbae5653df5f143101d4ea9dc # v1.0.276
         env:
           ANTHROPIC_BASE_URL: ${{ secrets.OPENROUTER_BASE_URL }}
         with:
