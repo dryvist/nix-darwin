@@ -60,6 +60,7 @@ jobs:
     uses: JacobPEvans/.github/.github/workflows/_ci-gate.yml@v1
     secrets:
       TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+      AUTOMATION_APP_PRIVATE_KEY: ${{ secrets.GH_ACTION_RELEASE_PLEASE_PRIVATE_KEY }}
     with:
       osv_scan: true
       nix_validate: true
