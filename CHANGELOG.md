@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.32.0](https://github.com/dryvist/nix-darwin/compare/v4.31.0...v4.32.0) (2026-11-15)
+
+
+### Features
+
+* **homebrew:** add Edovia Screens remote access apps ([#3304](https://github.com/dryvist/nix-darwin/issues/3304)) ([6db9d64](https://github.com/dryvist/nix-darwin/commit/6db9d640877b51e73db1a85dd6abf9114b07ddf7))
+
 ## [4.31.0](https://github.com/dryvist/nix-darwin/compare/v4.30.3...v4.31.0) (2026-11-14)
 
 
