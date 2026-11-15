@@ -1,0 +1,178 @@
+diff --git a/.github/workflows/ci-gate.yml b/.github/workflows/ci-gate.yml
+index d2f63f51..2d140f70 100644
+--- a/.github/workflows/ci-gate.yml
++++ b/.github/workflows/ci-gate.yml
+@@ -1,4 +1,4 @@
+-# CI Gate — thin caller of the org reusable gate, plus the three checks it
++# CI Gate — thin caller of the org reusable gate, plus the two checks it
+ # cannot host.
+ #
+ # Change detection, Nix Validate, Markdown Lint and File Size all run inside
+@@ -8,14 +8,18 @@
+ # same `nix` and `extra` filters, so they do not wait for the shared gate.
+ #
+ # What stays local, and why the shared gate cannot own it:
+-#   nix-build              — the macOS system build, on this repo's own
+-#                            `_nix-build.yml` (mac-fleet runner, cache purge).
+ #   claude-settings        — validates the rendered Claude settings; keyed on
+ #                            the `extra` filter (.claude/** and flake.lock).
+ #   llm-concurrency-parity — a cross-repo constant check specific to this repo.
+ #
+-# The local `Merge Gate` re-aggregates the shared gate plus those three so the
+-# required status check context stays exactly "Merge Gate".
++# The full macOS system build settles after merge: post-merge.yml (push to
++# develop) calls the shared _post-merge.yml, which re-runs the gate on HEAD
++# with `nix_build` enabled and moves the `green` ref or reverts the deferred
++# pull requests.
++#
++# The local `Merge Gate` re-aggregates the shared gate, flake-lock-fresh and
++# the two repo-local checks so the required status check context stays exactly
++# "Merge Gate".
+ #
+ # Fork-PR security guard: nix-darwin is PUBLIC, so `pull_request` from fork
+ # branches must not receive a configured runner label. Each runner expression
+@@ -29,14 +33,14 @@ name: CI Gate
+ on:
+   pull_request:
+     types: [opened, synchronize, reopened]
+-  # The full macOS build is post-merge; PRs use the shared Nix Validate check.
+-  push:
+-    branches: [main]
++  # The gate reports from pull_request and merge queue runs only; the full
++  # macOS build is post-merge (post-merge.yml on push to develop).
++  merge_group:
+ 
+ concurrency:
+   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+-  # Main merge builds populate the Nix cache; let them finish. PR updates cancel.
+-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
++  # A queue entry is never cancelled; PR updates cancel.
++  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+ 
+ permissions:
+   contents: read
+@@ -71,6 +75,14 @@ jobs:
+       # changed — a lockfile bump must still validate.
+       nix_skip_deps_only: true
+       dependency_review: false
++      # Lane classifier paths, forwarded to _lane.yml. Each list replaces the
++      # shared default, so it starts from that default and adds this
++      # repository's paths (.claude/** and **/instructions/** instruction
++      # files; the whole .github tree and *sops* files guarded). Instruction
++      # markdown is never tiny even though **.md is low-risk.
++      low_risk_paths: 'docs/**,**.md,**.mdx,tests/**'
++      instruction_paths: 'AGENTS.md,**/AGENTS.md,**/prompts/**,**/skills/**,**/rules/**,.claude/**,**/instructions/**'
++      guarded_paths: '.github/workflows/**,**/*secret*,**/*credential*,**/*token*,**/vault/**,*.sops.*,.sops.yaml,.github/**,**/*sops*'
+       queue_timeout_minutes: 30
+       runner_label: ${{ github.event.pull_request.head.repo.full_name == github.repository && (vars.CI_RUNNER_LABEL || 'ubuntu-24.04') || 'ubuntu-latest' }}
+       nix_validate_runner_label: ${{ github.event.pull_request.head.repo.full_name == github.repository && (vars.CI_RUNNER_LABEL || 'ubuntu-24.04') || 'ubuntu-latest' }}
+@@ -96,8 +108,8 @@ jobs:
+   # REPO-LOCAL CHECKS (reusable workflows the shared gate cannot host)
+   # ==========================================================================
+   # Local change detection for the two checks below. The filters match the
+-  # shared gate's `nix` and `extra` filters. Pushes to main diff against the
+-  # previous main commit; pull requests diff against their base branch.
++  # shared gate's `nix` and `extra` filters. Pull requests and merge queue
++  # entries diff against their base branch.
+   changes:
+     name: Changes
+     permissions:
+@@ -128,26 +140,6 @@ jobs:
+               - '.claude/**'
+               - 'flake.lock'
+ 
+-  # Full-build placement: only a commit that has landed on main runs the
+-  # macOS build. Every PR, including promotion PRs and lockfile updates, uses
+-  # Nix Validate; ci-nix.yml also validates develop pushes.
+-  nix-build:
+-    name: Nix Build
+-    needs: shared-gate
+-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.shared-gate.outputs.nix == 'true'
+-    permissions:
+-      contents: read
+-      # _nix-build.yml's cache step purges superseded entries through the
+-      # Actions cache API. A called workflow can never exceed its caller's
+-      # grant, and this job inherits the workflow-level block above, which does
+-      # not include actions:write — so without this the whole run dies at graph
+-      # validation. That failure produces NO check-runs at all, so a PR shows
+-      # mergeStateStatus CLEAN with no failing check while nothing has run.
+-      # The actions:write on the shared-gate job does not cover this one;
+-      # permissions are per-job.
+-      actions: write
+-    uses: ./.github/workflows/_nix-build.yml
+-
+   claude-settings:
+     name: Claude Settings
+     needs: changes
+@@ -176,7 +168,7 @@ jobs:
+   # ==========================================================================
+   gate:
+     name: Merge Gate
+-    needs: [shared-gate, changes, nix-build, claude-settings, llm-concurrency-parity, flake-lock-fresh]
++    needs: [shared-gate, changes, claude-settings, llm-concurrency-parity, flake-lock-fresh]
+     if: ${{ !cancelled() }}
+     runs-on: ${{ github.event.pull_request.head.repo.full_name == github.repository && (vars.CI_RUNNER_LABEL || 'ubuntu-24.04') || 'ubuntu-latest' }}
+     timeout-minutes: 5
+@@ -186,5 +178,5 @@ jobs:
+         with:
+           # Each job's own `if:` decides when it runs; a failure always fails
+           # the gate, so every conditional job may be skipped.
+-          allowed-skips: nix-build, claude-settings, llm-concurrency-parity
++          allowed-skips: claude-settings, llm-concurrency-parity
+           jobs: ${{ toJSON(needs) }}
+diff --git a/.github/workflows/post-merge.yml b/.github/workflows/post-merge.yml
+new file mode 100644
+index 00000000..195330f7
+--- /dev/null
++++ b/.github/workflows/post-merge.yml
+@@ -0,0 +1,50 @@
++# Post-merge settlement for the hot tier: the checks a fast-lane merge
++# deferred run here on HEAD. The shared _post-merge.yml collects the
++# checks:deferred pull requests between the `green` ref and HEAD, re-runs the
++# gate on this push event (the full tier, so `nix_build` runs the macOS build
++# on macos-latest), then fast-forwards `green` or reverts the deferred pull
++# requests.
++#
++# The profile and filters mirror ci-gate.yml's shared-gate call so the gate
++# config cannot drift; the lane path lists stay on the gate caller.
++
++name: Post-Merge
++
++on:
++  push:
++    branches: [develop]
++
++jobs:
++  post-merge:
++    permissions:
++      contents: write    # green ref moves, post-merge-red dispatches
++      pull-requests: write
++      checks: read       # AI Merge Gate verdicts on the head commits
++      actions: read      # the gate's run report reads this run's jobs
++    uses: JacobPEvans/.github/.github/workflows/_post-merge.yml@v1
++    with:
++      profile: nix       # the caller's gate stack, forwarded verbatim
++      # Same filters body as ci-gate.yml's shared-gate call.
++      filters: |
++        nix:
++          - '**.nix'
++          - 'flake.lock'
++          - 'modules/**'
++          - 'hosts/**'
++          - 'scripts/**'
++        markdown:
++          - '**.md'
++          - '.markdownlint.json'
++          - '.markdownlint.yml'
++        extra:
++          - '.claude/**'
++          # flake.lock changes the rendered settings via the nix-ai input
++          # (e.g. homelab.allowRules), so settings validation must run on a
++          # deps-only lock bump too — otherwise a stale pin ships unchecked.
++          - 'flake.lock'
++      # The one heavy tier a profile does not enable by itself: the full
++      # macOS build settles here, never on pull requests.
++      nix_build: true
++    secrets:
++      GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
++      slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
