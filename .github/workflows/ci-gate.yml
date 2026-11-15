@@ -29,14 +29,16 @@ name: CI Gate
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  merge_group:
   # The full macOS build is post-merge; PRs use the shared Nix Validate check.
   push:
     branches: [main]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  # Main merge builds populate the Nix cache; let them finish. PR updates cancel.
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  # Main merge builds populate the Nix cache and queue entries run to the end.
+  # PR updates cancel.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -71,6 +73,10 @@ jobs:
       # changed — a lockfile bump must still validate.
       nix_skip_deps_only: true
       dependency_review: false
+      # Lane classifier paths. Each list replaces the shared default, so it
+      # repeats that default and adds this repository's paths.
+      instruction_paths: 'AGENTS.md,**/AGENTS.md,**/prompts/**,**/skills/**,**/rules/**,.claude/**,**/instructions/**'
+      guarded_paths: '.github/**,**/*secret*,**/*credential*,**/*token*,**/vault/**,*.sops.*,.sops.yaml,**/*sops*'
       queue_timeout_minutes: 30
       runner_label: ${{ github.event.pull_request.head.repo.full_name == github.repository && (vars.CI_RUNNER_LABEL || 'ubuntu-24.04') || 'ubuntu-latest' }}
       nix_validate_runner_label: ${{ github.event.pull_request.head.repo.full_name == github.repository && (vars.CI_RUNNER_LABEL || 'ubuntu-24.04') || 'ubuntu-latest' }}
@@ -97,7 +103,8 @@ jobs:
   # ==========================================================================
   # Local change detection for the two checks below. The filters match the
   # shared gate's `nix` and `extra` filters. Pushes to main diff against the
-  # previous main commit; pull requests diff against their base branch.
+  # previous main commit; pull requests and merge queue entries diff against
+  # their base branch.
   changes:
     name: Changes
     permissions:
