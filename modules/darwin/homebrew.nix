@@ -45,7 +45,7 @@ let
     } # Terminal emulator — needs Full Disk Access + App Management + Local Network
   ];
 
-  # Remote access to either Mac from Edovia's Screens clients, on every host. Both
+  # Remote access to either Mac from Screens clients, on every host. Both
   # apps update themselves, so greedy keeps Homebrew from holding them back.
   remoteAccessCasks = [
     {
@@ -121,7 +121,7 @@ let
   workstationMasApps = {
     "Monarch Money Tweaks" = 6753774259; # Personal finance enhancements
     "Windows App" = 1295203466; # Microsoft Remote Desktop / Windows 365 / AVD client
-    "Screens 5: VNC Remote Desktop" = 1663047912; # Edovia Screens client for other Macs and PCs
+    "Screens 5: VNC Remote Desktop" = 1663047912; # Screens client for other Macs and PCs
     "Omi - Smart Meeting Notes" = 6502156163; # AI meeting notes & memory assistant
     # Microsoft 365 applications.
     "Microsoft Word" = 462054704;
