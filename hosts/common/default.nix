@@ -41,11 +41,12 @@ in
     openssh.enable = true;
   };
 
-  # Screen Sharing (VNC) — on for every Mac: each is reached remotely through
-  # Screens Connect (modules/darwin/homebrew.nix, remoteAccessCasks), which
-  # rides on it, and every session still needs the user's macOS login. See
+  # Screen Sharing (VNC) — off by default (network attack surface with no
+  # authentication policy declared here). The Studio is headless and its own
+  # host file documents why it opts back in for remote recovery; the laptop
+  # has physical console access and stays off. See
   # modules/darwin/apps/screen-sharing.nix.
-  programs.screenSharing.enable = lib.mkDefault true;
+  programs.screenSharing.enable = lib.mkDefault false;
 
   # Restart automatically once mains power returns, so an always-on host needs
   # no console visit after an outage. Servers only, and deliberately left null
