@@ -61,11 +61,9 @@
 
   };
 
-  # Nothing session- or audit-related starts on its own on this host.
-  launchd.agents = {
-    herdr.enable = lib.mkForce false;
-    ai-stack-drift-check.enable = lib.mkForce false;
-  };
+  # The herdr server starts at login as a LaunchAgent, inside the GUI session,
+  # so its panes can read the login keychain. The audit check stays off.
+  launchd.agents.ai-stack-drift-check.enable = lib.mkForce false;
 
   # ==========================================================================
   # TCC-Sensitive GUI Applications (using copyApps for stable paths)
