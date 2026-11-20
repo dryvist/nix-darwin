@@ -138,6 +138,15 @@ in
 
       unset _KC_USER _KC_AI_ACCOUNT _KC_AI_DB
 
+      # security exits 36 when the login keychain cannot be read from this
+      # session, which makes doppler and every launcher built on it fail.
+      ${lib.optionalString (!hostConfig.isServer) ''
+        security show-keychain-info "$HOME/Library/Keychains/login.keychain-db" >/dev/null 2>&1
+        if [ $? -eq 36 ]; then
+          print -u2 "[keychain] login keychain unreadable in this session. Run: security unlock-keychain ~/Library/Keychains/login.keychain-db  then: exec zsh"
+        fi
+      ''}
+
       # --- Custom-auth launcher for `claude` ---
       # Defines av-claude <profile> (aws-vault exec <profile> -- claude).
       source ${./claude-launchers.zsh}
