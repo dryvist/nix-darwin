@@ -59,6 +59,16 @@
       trigger = "session-end";
     };
 
+    # Docker is not installed here, so the shared plugin list's docker entry
+    # only prints an error in every new shell.
+    # shortcut: restates nix-home's plugin list minus docker, so it must follow
+    # any change there.
+    zsh.oh-my-zsh.plugins = lib.mkForce [
+      "macos"
+      "git"
+      "z"
+      "colored-man-pages"
+    ];
   };
 
   # The herdr server starts at login as a LaunchAgent, inside the GUI session,
