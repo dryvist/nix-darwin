@@ -65,7 +65,15 @@ in
 
     # Custom file extensions recognized as tar.gz archives (Finder auto-extract
     # + shell autocomplete).
-    file-extensions.enable = true;
+    file-extensions = {
+      enable = true;
+      # VS Code is the default editor for plain text and Markdown on every Mac
+      # (also the app `open -t` uses).
+      utiHandlers = {
+        "public.plain-text" = "com.microsoft.VSCode";
+        "net.daringfireball.markdown" = "com.microsoft.VSCode";
+      };
+    };
 
     # --- OrbStack ---
     # Container runtime as a system-level application on a dedicated APFS volume.
