@@ -518,6 +518,14 @@
                     }
                   '') servingPorts
                 );
+                flowChecks = ''
+                  sshLine=$(${grepCmd} -nFx 'pass in quick proto tcp ${sshSourceSet} to any port 22 flags /S no state' ${studioAnchor}) || exit 1
+                  blockLine=$(${grepCmd} -nFx 'block in all' ${studioAnchor}) || exit 1
+                  outboundLine=$(${grepCmd} -nFx 'pass out proto tcp from any port >= 49152 to any flags /S keep state' ${studioAnchor}) || exit 1
+                  defaultOutLine=$(${grepCmd} -nFx 'pass out all keep state' ${studioAnchor}) || exit 1
+                  [ "''${sshLine%%:*}" -lt "''${blockLine%%:*}" ] || exit 1
+                  [ "''${outboundLine%%:*}" -gt "''${defaultOutLine%%:*}" ] || exit 1
+                '';
               in
               darwinPkgs.runCommand "check-pf-anchor-syntax" { } ''
                 /sbin/pfctl -n -f ${
@@ -525,6 +533,7 @@
                 }
                 /sbin/pfctl -n -f ${studioAnchor}
                 ${orderChecks}
+                ${flowChecks}
                 touch $out
               '';
           };
