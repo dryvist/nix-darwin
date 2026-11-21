@@ -104,7 +104,7 @@ in
 
     image = lib.mkOption {
       type = lib.types.str;
-      default = "ghcr.io/cirruslabs/macos-tahoe-base@sha256:87f3aa5ce21b5c876268f233bdfecf38b4c2a8116fe9bbb718e714cbae187377"; # renovate: macos-tahoe-base
+      default = "ghcr.io/cirruslabs/macos-tahoe-base@sha256:65c3133a633fda8753cf1f71f2d55727792d534a2125b0032466563dcc8e58fd"; # renovate: macos-tahoe-base
       description = "Digest-pinned OCI base image cloned for each job.";
     };
 

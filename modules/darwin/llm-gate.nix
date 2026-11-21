@@ -21,7 +21,7 @@ let
     if cfg.tlsMode == "route53" then
       pkgs.caddy.withPlugins {
         plugins = [ "github.com/caddy-dns/route53@v1.6.2" ];
-        hash = "sha256-tDFYgWalHKeN/TGqI3o4FBAnWb0GDo4oNEiwZ3yhZPM=";
+        hash = "sha256-/G82qaQUcNaCSmSHWnyOIYbK+K6oHHUHWEpR+4lke54=";
       }
     else
       pkgs.caddy;

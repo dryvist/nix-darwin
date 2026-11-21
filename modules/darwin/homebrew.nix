@@ -45,6 +45,19 @@ let
     } # Terminal emulator — needs Full Disk Access + App Management + Local Network
   ];
 
+  # Remote access to either Mac from Screens clients, on every host. Both
+  # apps update themselves, so greedy keeps Homebrew from holding them back.
+  remoteAccessCasks = [
+    {
+      name = "screens-connect";
+      greedy = true;
+    } # Reaches this Mac's Screen Sharing from Screens on other devices, without a VPN
+    {
+      name = "screens-assist";
+      greedy = true;
+    } # Shares this screen by a one-time link
+  ];
+
   workstationCasks = [
     # Casks install into /Applications. greedy lets Homebrew upgrade apps with
     # built-in updaters.
@@ -108,6 +121,7 @@ let
   workstationMasApps = {
     "Monarch Money Tweaks" = 6753774259; # Personal finance enhancements
     "Windows App" = 1295203466; # Microsoft Remote Desktop / Windows 365 / AVD client
+    "Screens 5: VNC Remote Desktop" = 1663047912; # Screens client for other Macs and PCs
     "Omi - Smart Meeting Notes" = 6502156163; # AI meeting notes & memory assistant
     # Microsoft 365 applications.
     "Microsoft Word" = 462054704;
@@ -153,6 +167,7 @@ in
         }
       ]
       ++ lib.optionals homebrew.ghostty ghosttyCasks
+      ++ remoteAccessCasks
       ++ lib.optionals homebrew.enableWorkstationApps workstationCasks;
     masApps = lib.optionalAttrs homebrew.enableWorkstationApps workstationMasApps;
   };
