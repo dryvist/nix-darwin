@@ -15,7 +15,7 @@ Each dryvist input names a floating major tag: `github:dryvist/<repo>?ref=vN`.
 
 - **Renovate** (`github>JacobPEvans/.github:renovate-nix`): one Saturday `lockFileMaintenance` PR that relocks
   this repository's own inputs, plus tag bumps for inputs that name a release tag.
-- **`review-deps.yml`**: reviews lock-file diffs and enables auto-merge.
+- **`ai-pr-care.yml`**: the shared `cc-dep-review` job posts an AI risk review on Renovate major and minor PRs.
 - Shared roots in this repo's lock (`nixpkgs`, `nixpkgs-unstable`, `home-manager`, `darwin`) only feed CI. The
   deployed hosts override them from the top-level flake's pins, so a revision here never reaches a Mac.
 
@@ -36,7 +36,7 @@ This command:
 ## Related Files
 
 - `renovate.json5` — Renovate config, including lock-file maintenance
-- `.github/workflows/review-deps.yml` — Lock-file diff review and auto-merge
+- `.github/workflows/ai-pr-care.yml` — AI risk review of Renovate PRs
 - `flake.nix` — Input declarations
 - `flake.lock` — Locked revisions
 - `/flake-rebuild` command — Manual full update + rebuild trigger

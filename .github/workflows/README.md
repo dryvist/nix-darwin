@@ -151,7 +151,7 @@ jobs:
 | Workflow | Purpose |
 | --- | --- |
 | `review-code.yml` | Claude Code PR review |
-| `review-deps.yml` | Dependency update reviews |
+| `ai-pr-care.yml` | AI risk review of Renovate PRs and release notes |
 
 ## Configuration
 
