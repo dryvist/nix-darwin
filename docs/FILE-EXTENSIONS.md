@@ -195,3 +195,16 @@ To add new default mappings to the module:
 - [Uniform Type Identifiers](https://developer.apple.com/documentation/uniformtypeidentifiers)
 - [duti - Command-line Utility to Set Default Apps](https://github.com/moretension/duti)
 - [nix-darwin Documentation](https://daiderd.com/nix-darwin/)
+
+## Default App per UTI
+
+`programs.file-extensions.utiHandlers` sets the default app for a UTI (Uniform Type Identifier). Each key is a UTI and each value is an app bundle identifier.
+
+```nix
+programs.file-extensions.utiHandlers = {
+  "public.plain-text" = "com.microsoft.VSCode";
+  "net.daringfireball.markdown" = "com.microsoft.VSCode";
+};
+```
+
+`hosts/common` sets VS Code for plain text and Markdown on every Mac. The `public.plain-text` handler is also the app that `open -t` uses.

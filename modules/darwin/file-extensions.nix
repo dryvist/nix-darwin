@@ -37,6 +37,19 @@ in
         ".custom" = "public.zip-archive";
       };
     };
+
+    utiHandlers = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = { };
+      description = ''
+        Default app per UTI (Uniform Type Identifier), keyed by UTI and set to
+        an app bundle identifier. Written to duti as `<bundle-id> <uti> all`.
+        Setting `public.plain-text` also changes the app `open -t` uses.
+      '';
+      example = {
+        "public.plain-text" = "com.microsoft.VSCode";
+      };
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -63,11 +76,12 @@ in
       printf '%s\n' ${
         lib.concatMapStringsSep " " lib.escapeShellArg (
           lib.mapAttrsToList (ext: uti: "${uti} ${ext} all") cfg.customMappings
+          ++ lib.mapAttrsToList (uti: bundleId: "${bundleId} ${uti} all") cfg.utiHandlers
         )
       } > "$DUTI_CONFIG"
 
       if ${pkgs.duti}/bin/duti "$DUTI_CONFIG" 2>/dev/null; then
-        echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Successfully registered ${toString (lib.length (lib.attrNames cfg.customMappings))} file extension(s)"
+        echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Successfully registered ${toString (lib.length (lib.attrNames cfg.customMappings))} file extension(s) and ${toString (lib.length (lib.attrNames cfg.utiHandlers))} UTI handler(s)"
 
         if /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f -domain user 2>"$LS_ERROR_LOG" >/dev/null; then
           echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Launch Services database refreshed (user domain)"

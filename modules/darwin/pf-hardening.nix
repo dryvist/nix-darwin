@@ -60,8 +60,12 @@ let
       service:
       "pass in quick proto tcp from { ${lib.concatStringsSep ", " service.sources} } to any port ${toString service.port} no state\n"
     ) cfg.allowedTcpServices}
+    # Keep existing SSH sessions; new SYNs still use the state-limited rule below.
+    pass in quick proto tcp from { ${lib.concatStringsSep ", " cfg.allowedSshSources} } to any port 22 flags /S no state
     block in all
     pass out all keep state
+    # macOS client sockets use ephemeral source ports; recreate state if enforcement starts mid-flow.
+    pass out proto tcp from any port >= 49152 to any flags /S keep state
     pass in quick proto tcp from { ${lib.concatStringsSep ", " cfg.allowedSshSources} } to any port 22 flags S/SA keep state (max-src-conn 10)
     pass in quick inet proto icmp icmp-type echoreq keep state
   '';
@@ -220,6 +224,13 @@ in
   };
 
   config = {
+    assertions = [
+      {
+        assertion = lib.all (service: service.port != 22) cfg.allowedTcpServices;
+        message = "security.pf.allowedTcpServices must not include port 22; use security.pf.allowedSshSources.";
+      }
+    ];
+
     environment.etc."pf.anchors/nix-hardening".text = anchorText;
 
     launchd.daemons.pf-hardening = {
