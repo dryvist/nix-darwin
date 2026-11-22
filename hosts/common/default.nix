@@ -24,6 +24,7 @@ in
     ../../modules/darwin/common.nix
     # Cribl Edge log shipping (self-gated on `hostConfig ? mlx`).
     ./cribl.nix
+    ./cribl-process-names.nix
     # Shared OpenBao-backed credential/config wrapper family.
     ./openbao-clients.nix
     ./resolver-services.nix
