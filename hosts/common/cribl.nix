@@ -95,6 +95,11 @@ let
       "        value: \"'judge'\""
     ]
   );
+  # Resident model ids from services.aiStack.models, one process set per
+  # distinct id. The judge model already has its own set, so it is excluded.
+  residentModelIds = lib.unique (
+    lib.filter (id: id != null && id != judgeModel) (lib.attrValues mlxModels)
+  );
   # Per-process metrics: one process set per name, matched on the executable
   # path (args[0]); name and exe_path filters match nothing on macOS. The "mds"
   # filter also covers mds_stores.
@@ -122,6 +127,7 @@ let
       "      sets:"
     ]
     ++ lib.optionals judgeEnabled (processSetLines "judge" "cmdline.args.includes('${judgeModel}')")
+    ++ lib.concatMap (id: processSetLines id "cmdline.args.includes('${id}')") residentModelIds
     ++ lib.concatMap (name: processSetLines name "args[0].includes('${name}')") processSetNames
   );
   workstationLoadConnectionYaml =
