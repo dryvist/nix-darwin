@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.33.0](https://github.com/dryvist/nix-darwin/compare/v4.32.0...v4.33.0) (2026-11-22)
+
+
+### Features
+
+* **pf:** keep allowed SSH and client flows across enforcement and assert rule order ([#3324](https://github.com/dryvist/nix-darwin/issues/3324)) ([8893f3b](https://github.com/dryvist/nix-darwin/commit/8893f3b1d6615f730f857f1d97edaa2f1c4542a3))
+* set VS Code as the default plain-text and Markdown editor on every Mac ([#3319](https://github.com/dryvist/nix-darwin/issues/3319)) ([7bafd26](https://github.com/dryvist/nix-darwin/commit/7bafd26b0123214db92bf9ce3ded36783b33061e))
+
+
+### Bug Fixes
+
+* **deps:** move the agent sandbox source to v1.27.0 ([#3328](https://github.com/dryvist/nix-darwin/issues/3328)) ([18efe33](https://github.com/dryvist/nix-darwin/commit/18efe33c4ea37863679854ebf70c6ef8b807fad5))
+* **llm-gate:** refresh the Caddy plugin source hash ([f9c9e34](https://github.com/dryvist/nix-darwin/commit/f9c9e3429eac725e608bb2cea069b209a135d36c))
+
 ## [4.32.0](https://github.com/dryvist/nix-darwin/compare/v4.31.0...v4.32.0) (2026-11-15)
 
 
