@@ -52,4 +52,3 @@ rules:
       - ci-package-staleness.yml
       - ci-validate.yml
       - deps-update-flake.yml
-      - review-deps.yml
