@@ -123,7 +123,7 @@ in
       # L1 wired ceiling is exact: 65536 * 1024^2 = 64 GiB (68.72 GB decimal).
       # Memory safety is now layered in absolute bytes, furthest-from-OS first:
       # per-model serving budget < L2 in-process cap (programs.mlx.memoryHardLimitGb,
-      # 30 GiB per worker, see lib/hosts/macbook-m4.nix) < L1 wired ceiling < RAM,
+      # 15 GiB per worker, see lib/hosts/macbook-m4.nix) < L1 wired ceiling < RAM,
       # with the 64 GiB reserve keeping WindowServer + desktop out of swap.
       # Interactive box, LLM-first.
       # https://docs.jacobpevans.com/d/hosts/ai/apple-silicon-memory-model/

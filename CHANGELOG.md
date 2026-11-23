@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.34.0](https://github.com/dryvist/nix-darwin/compare/v4.33.2...v4.34.0) (2026-11-23)
+
+
+### Features
+
+* **macbook-m4:** serve the four shared MLX residents ([#3345](https://github.com/dryvist/nix-darwin/issues/3345)) ([e9ec954](https://github.com/dryvist/nix-darwin/commit/e9ec954e6044bf8db66f3e682c3e2fa35091a4c6))
+
 ## [4.33.2](https://github.com/dryvist/nix-darwin/compare/v4.33.1...v4.33.2) (2026-11-23)
 
 

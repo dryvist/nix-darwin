@@ -13,38 +13,35 @@
   # CI hmActivationPackage output. Exactly one host should set this.
   primary = true;
 
-  # Serving width per role-map model on this host, wider than the shared
-  # catalog's single-slot default: the small model decodes four requests at a
-  # time and the medium model two. nix-ai derives each worker's decode flags,
-  # LiteLLM admission and request timeouts from these numbers.
+  # Serving width per role-map resident on this host. Inkling 2 Mini decodes
+  # two requests at a time; Gemma 4 12B, the speech-to-text and the
+  # text-to-speech residents decode four. nix-ai derives each worker's decode
+  # flags, LiteLLM admission and request timeouts from these numbers.
   modelConcurrency = {
-    qwen35-9b = 4;
-    qwen38-27b = 2;
+    inkling-2-mini = 2;
+    gemma-4-12b = 4;
+    qwen3-asr-1-7b = 4;
+    ming-3-0-tts = 4;
   };
 
-  # Local official MLX inference server sizing. Both static residents stay well
-  # inside their 30 GiB L2 worker budgets: the 9B resident uses the shared 8 GiB
-  # prompt-cache cap (~8.3 GiB weights + 8 GiB cache) and the 27B resident uses
-  # a 12 GiB prompt-cache override (~16.1 GiB weights + 12 GiB cache).
+  # Local official MLX inference server sizing for the four static residents.
+  # Weights: Inkling 2 Mini 17.31 GB (KV capped by the catalog's --max-kv-size),
+  # Gemma 4 12B 6.74 GB plus the 6 GiB prompt-cache cap, Qwen3-ASR 2.46 GB and
+  # Ming TTS 1.6 GB.
   mlx = {
     # Catalog selection, preload, per-model concurrency and the resident-worker
     # count derive from the role map (hosts/common/role-map.nix).
 
-    cacheMemoryMb = 8192;
+    cacheMemoryMb = 6144;
     prefillBatchSize = 2048;
 
     # MLX retained free-buffer pool. The host wired-memory ceiling is the
     # Metal guardrail; this limits reclaimable framework buffers below it.
     bufferCacheLimitGb = 8;
 
-    # Per-worker L2 memory limit for each static resident (both residents use
-    # this value): two workers at 30 GiB fit the 64 GiB wired ceiling less its
-    # 4 GiB baseline.
-    memoryHardLimitGb = 30;
-
-    # Larger prompt-cache budget for the 27B resident so 131k-context slots
-    # remain cached across interleaved turns while staying under the 30 GiB L2 cap.
-    modelFlagOverrides."mlx-community/Qwen3.8-27B-4bit".cacheMemoryMb = 12288;
+    # Per-worker L2 memory limit (every resident uses this value): four workers
+    # at 15 GiB fit the 64 GiB wired ceiling less its 4 GiB baseline.
+    memoryHardLimitGb = 15;
 
     # proxy.concurrencyLimit is deliberately NOT set here. nix-ai's module
     # already defaults it to 1 (modules/mlx/options-proxy.nix), so restating it

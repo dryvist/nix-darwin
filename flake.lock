@@ -1103,11 +1103,11 @@
     "gh-stack": {
       "flake": false,
       "locked": {
-        "lastModified": 1792781289,
-        "narHash": "sha256-ZJiWfQJhhV07d5BH7H6yHSkPpeBPtj8P8FlAz1zF7Ak=",
+        "lastModified": 1794845793,
+        "narHash": "sha256-bctwLafwZ2MhfyfmriEZhcfO9VkMuDDH/dK7yx5GFGY=",
         "owner": "github",
         "repo": "gh-stack",
-        "rev": "c477b7d1f290a9df463b86773742a5237d14b980",
+        "rev": "80b6d6e910cc1b7eaa26b961d7721ade21084fed",
         "type": "github"
       },
       "original": {
@@ -1413,11 +1413,11 @@
     "homelab-contracts": {
       "flake": false,
       "locked": {
-        "lastModified": 1795212329,
-        "narHash": "sha256-iaG65Qg7kNFWGgJD+T1CWOFRiXI4p4AQXYh43Ia9MFs=",
+        "lastModified": 1795417946,
+        "narHash": "sha256-Qwy3v6KxHP1v1VYIHlyHZ8Iw+mBZdghH/xYC9nD3tfU=",
         "owner": "jpe-ansible",
         "repo": "homelab-contracts",
-        "rev": "4d6d10124ae4abb2ca1dc65196def4d3ad2c753d",
+        "rev": "da0f3a0adf3aa7dda4bfb80947cdb13a336e34e4",
         "type": "github"
       },
       "original": {
@@ -1494,11 +1494,11 @@
     "jacobpevans-cc-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1795203291,
-        "narHash": "sha256-FAhK8GDKdUHIBYhG0gmbRBXwipVXyRzEjoUeHH4VTgk=",
+        "lastModified": 1795446971,
+        "narHash": "sha256-oboZHzheqcwmSYdSGuRBbnU5bwS26WwbKtX/ffx7Q2c=",
         "owner": "dryvist",
         "repo": "claude-code-plugins",
-        "rev": "d3c785cbbb584e795ba6f605cb7e2a1f4fce3968",
+        "rev": "e82ea9809c1cb6e871c498229284ce498e98aee8",
         "type": "github"
       },
       "original": {
@@ -1559,11 +1559,11 @@
     "langfuse-skills": {
       "flake": false,
       "locked": {
-        "lastModified": 1792763876,
-        "narHash": "sha256-e/xpLgPBJSifYKeFu3sbHhzgEZsOtX9IKEf/2oIDBRE=",
+        "lastModified": 1794318838,
+        "narHash": "sha256-OvM5lt8l+6qWFhaxzogTsg+cVYDba8VgWv5HTdWOCW8=",
         "owner": "langfuse",
         "repo": "skills",
-        "rev": "4429a94b309980e1cee2f5960c271e123347cb42",
+        "rev": "f0bcb13088b490c04b3f4870bace17f6d57b199c",
         "type": "github"
       },
       "original": {
@@ -1816,11 +1816,11 @@
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1795317846,
-        "narHash": "sha256-R7DTkoflmaoXjNLJYb9N2BWPK+tEIciY0FE627paIeo=",
+        "lastModified": 1795446042,
+        "narHash": "sha256-p2e95ApPVEM5JAh3fYByU+Ri0DfzNiGM/dyVVPY4lvU=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "8ee670e383d1279f5c1f586bcaeea6c91fdbcbdb",
+        "rev": "b1d202985685ec6faeee663d9f2ddd6b4e966419",
         "type": "github"
       },
       "original": {
@@ -2883,11 +2883,11 @@
     "vct-splunk-cli": {
       "flake": false,
       "locked": {
-        "lastModified": 1792763279,
-        "narHash": "sha256-zt8qy9PypU36Q3QsArFcxq0yC4NXt0RbeFQ1A4H16UQ=",
+        "lastModified": 1792840060,
+        "narHash": "sha256-cX9YjlrwQXmRSgvD4OeHpKnbbXUt3EnhXsLHZYdznpQ=",
         "owner": "VisiCore",
         "repo": "vct-splunk-cli",
-        "rev": "f0147948c9d3d138cdc637605580d2903d0bc88e",
+        "rev": "a2f4a5ccf279f82cfaa089b0f98f2c1e3deee592",
         "type": "github"
       },
       "original": {
