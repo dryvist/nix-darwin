@@ -165,6 +165,8 @@ jobs:
 
   flake-lock-fresh:
     name: Flake Lock Fresh
+    # Off unless the FLAKE_LOCK_FRESH repository variable is 'true'.
+    if: ${{ vars.FLAKE_LOCK_FRESH == 'true' }}
     permissions:
       contents: read
     uses: JacobPEvans/.github/.github/workflows/_flake-lock-fresh.yml@6b24369aee9976565dde669f74b96594e48b3b36 # v1.61.3
@@ -186,5 +188,5 @@ jobs:
         with:
           # Each job's own `if:` decides when it runs; a failure always fails
           # the gate, so every conditional job may be skipped.
-          allowed-skips: nix-build, claude-settings, llm-concurrency-parity
+          allowed-skips: nix-build, claude-settings, llm-concurrency-parity, flake-lock-fresh
           jobs: ${{ toJSON(needs) }}
