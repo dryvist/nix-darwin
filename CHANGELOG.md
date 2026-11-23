@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.33.2](https://github.com/dryvist/nix-darwin/compare/v4.33.1...v4.33.2) (2026-11-23)
+
+
+### Bug Fixes
+
+* herdr LaunchAgent, shell notice, docker plugin removal ([#3313](https://github.com/dryvist/nix-darwin/issues/3313)) ([49c6cdb](https://github.com/dryvist/nix-darwin/commit/49c6cdbfc315e862b06cde0e631c9e64d0a167aa))
+
 ## [4.33.1](https://github.com/dryvist/nix-darwin/compare/v4.33.0...v4.33.1) (2026-11-23)
 
 
