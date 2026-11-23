@@ -72,11 +72,13 @@ let
 
   # A host's own `modelConcurrency` reaches the worker widths nix-ai renders.
   expectedWidths.jevans-mbp = {
-    qwen35-9b = 4;
-    qwen38-27b = 2;
+    inkling-2-mini = 2;
+    gemma-4-12b = 4;
+    qwen3-asr-1-7b = 4;
+    ming-3-0-tts = 4;
   };
   expectedSmallModels = {
-    jevans-mbp = "mlx-community/Qwen3.5-9B-OptiQ-4bit";
+    jevans-mbp = "mlx-community/gemma-4-12B-it-4bit";
     jevans-ms = "mlx-community/MiMo-V2.6-Distill-Qwen-9B-OptiQ-4bit";
   };
   roleFailures = lib.concatMap (
