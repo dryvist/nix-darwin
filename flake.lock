@@ -1413,11 +1413,11 @@
     "homelab-contracts": {
       "flake": false,
       "locked": {
-        "lastModified": 1795212329,
-        "narHash": "sha256-iaG65Qg7kNFWGgJD+T1CWOFRiXI4p4AQXYh43Ia9MFs=",
+        "lastModified": 1795417946,
+        "narHash": "sha256-Qwy3v6KxHP1v1VYIHlyHZ8Iw+mBZdghH/xYC9nD3tfU=",
         "owner": "jpe-ansible",
         "repo": "homelab-contracts",
-        "rev": "4d6d10124ae4abb2ca1dc65196def4d3ad2c753d",
+        "rev": "da0f3a0adf3aa7dda4bfb80947cdb13a336e34e4",
         "type": "github"
       },
       "original": {
