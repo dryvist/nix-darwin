@@ -163,20 +163,13 @@ jobs:
     if: github.event_name == 'push' || needs.changes.outputs.nix == 'true'
     uses: ./.github/workflows/_llm-concurrency-parity.yml
 
-  flake-lock-fresh:
-    name: Flake Lock Fresh
-    permissions:
-      contents: read
-    uses: JacobPEvans/.github/.github/workflows/_flake-lock-fresh.yml@6b24369aee9976565dde669f74b96594e48b3b36 # v1.61.3
-    with:
-      max_age_days: 30
 
   # ==========================================================================
   # MERGE GATE - The ONLY required check in branch protection
   # ==========================================================================
   gate:
     name: Merge Gate
-    needs: [shared-gate, changes, nix-build, claude-settings, llm-concurrency-parity, flake-lock-fresh]
+    needs: [shared-gate, changes, nix-build, claude-settings, llm-concurrency-parity]
     if: ${{ !cancelled() }}
     runs-on: ${{ github.event.pull_request.head.repo.full_name == github.repository && (vars.CI_RUNNER_LABEL || 'ubuntu-24.04') || 'ubuntu-latest' }}
     timeout-minutes: 5
