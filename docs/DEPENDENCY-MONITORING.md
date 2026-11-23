@@ -34,7 +34,7 @@ Renovate still owns the following local configuration:
 
 - [Renovate configuration](../renovate.json5)
 - [Flake inputs](../flake.nix)
-- [AI review workflow](../.github/workflows/review-deps.yml)
+- [AI review workflow](../.github/workflows/ai-pr-care.yml)
 - [Package staleness check](../.github/workflows/ci-package-staleness.yml)
 - [Handling Renovate PRs](../RUNBOOK.md#handling-renovate-prs)
 - [Troubleshooting Renovate](../RUNBOOK.md#troubleshooting-renovate)

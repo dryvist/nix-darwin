@@ -13,7 +13,6 @@
     raycast = "The selected vendor app avoids updater schema mismatches";
     ghostty = "The nixpkgs package is unavailable on aarch64-darwin";
     libreoffice = "The nixpkgs package is unavailable on aarch64-darwin";
-    neat = "The nixpkgs package is a different application";
     chatgpt = "The vendor app is updated in place under /Applications";
     slack = "The vendor app is updated in place under /Applications";
     # Set only when a host selects programs.claude.install = "brew".

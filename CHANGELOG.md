@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.33.1](https://github.com/dryvist/nix-darwin/compare/v4.33.0...v4.33.1) (2026-11-23)
+
+
+### Bug Fixes
+
+* **sudo:** cache sudo authentication per terminal for 15 minutes ([#3335](https://github.com/dryvist/nix-darwin/issues/3335)) ([3e54683](https://github.com/dryvist/nix-darwin/commit/3e546835893bf12ab347317716a9853daa4c9e49))
+
 ## [4.33.0](https://github.com/dryvist/nix-darwin/compare/v4.32.0...v4.33.0) (2026-11-22)
 
 

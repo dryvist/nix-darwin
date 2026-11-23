@@ -96,21 +96,9 @@ let
     ]
   );
   # Per-process metrics: one process set per name, matched on the executable
-  # path (args[0]); name and exe_path filters match nothing on macOS. The "mds"
-  # filter also covers mds_stores.
-  processSetNames = [
-    "WindowServer"
-    "cribl"
-    "python"
-    "node"
-    "codex"
-    "claude"
-    "osascript"
-    "gpg-agent"
-    "socketfilterfw"
-    "runningboardd"
-    "mds"
-  ];
+  # path (args[0]); name and exe_path filters match nothing on macOS. The list
+  # lives in ./cribl-process-names.nix so private overlays can append to it.
+  processSetNames = config.programs.criblEdgeProcessNames;
   processSetLines = name: filter: [
     "        - name: ${name}"
     "          filter: \"${filter}\""
