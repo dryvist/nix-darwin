@@ -199,7 +199,6 @@ installed cask or formula not declared in the Nix configuration; it removes noth
 | wispr-flow | yes | AI-powered voice dictation |
 | granola | yes | AI-powered meeting notes |
 | claudebar | yes | Claude Code menu bar utility |
-| neat | yes | Neat device management app |
 | claude | yes | Anthropic Claude desktop app (workstation capability) |
 | chatgpt | yes | OpenAI ChatGPT desktop app (workstation capability) |
 | antigravity | yes | Google Antigravity 2.0 standalone agent command center (workstation capability) |

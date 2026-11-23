@@ -90,10 +90,6 @@ let
       name = "claudebar";
       greedy = true;
     } # Claude Code menu bar utility
-    {
-      name = "neat";
-      greedy = true;
-    } # Neat device management app
 
     # --- API Development ---
     {
