@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.34.1](https://github.com/dryvist/nix-darwin/compare/v4.34.0...v4.34.1) (2026-11-25)
+
+
+### Bug Fixes
+
+* **dock:** align shared Mac app tiles and launchers ([#3349](https://github.com/dryvist/nix-darwin/issues/3349)) ([4339b16](https://github.com/dryvist/nix-darwin/commit/4339b16db7fa256511fbe89d9c55d84c69d54c63))
+
 ## [4.34.0](https://github.com/dryvist/nix-darwin/compare/v4.33.2...v4.34.0) (2026-11-23)
 
 
