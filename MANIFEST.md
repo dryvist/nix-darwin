@@ -134,11 +134,11 @@ the Cursor D2 extension's live preview; other hosts still use `nix run nixpkgs#d
 
 ## All-host GUI applications
 
-Source: nix-ai (`programs.orca`, enabled in `hosts/common/home.nix`)
-
 | Package | Description |
 | --- | --- |
 | orca | Orca desktop app; the `orca` CLI is on `PATH` |
+| ProxMan | Mac App Store app for Proxmox management |
+| vscode | Visual Studio Code from nix-home, with the `code` CLI launching the Home Manager copy |
 
 ## Workstation GUI applications
 

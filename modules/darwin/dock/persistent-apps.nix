@@ -42,6 +42,8 @@ let
   };
 
   hmApps = "${homeDir}/Applications/Home Manager Apps";
+  herdrCask = "penso/tap/herdr-gpui";
+  proxManId = config.homebrew.masApps.ProxMan;
 
   # Uses native Nix conditional expressions (`lib.optionals`) driven by
   # `hostConfig` capabilities to include GUI applications only on hosts where
@@ -89,15 +91,14 @@ let
     # Terminal
     (app "/Applications/Ghostty.app" { cask = "ghostty"; })
   ]
-  ++ lib.optionals enableWorkstationApps [
+  ++ [
     # Development & Editors
     (app "${hmApps}/Visual Studio Code.app" { nixpkgs = "vscode"; })
-
-    # AI & API Tools
-    (app "/Applications/ProxMan.app" {
-      manual = "vendor download; no Homebrew cask or Mac App Store listing";
-    })
+    (app "/Applications/ProxMan.app" { mas = proxManId; })
   ]
+  ++ lib.optional (builtins.elem herdrCask declared.casks) (
+    app "/Applications/Herdr.app" { cask = herdrCask; }
+  )
   ++ [
     # Orca is always present in the Dock.
     (app "${hmApps}/Orca.app" { nixpkgs = "orca"; })

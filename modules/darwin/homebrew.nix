@@ -165,7 +165,10 @@ in
       ++ lib.optionals homebrew.ghostty ghosttyCasks
       ++ remoteAccessCasks
       ++ lib.optionals homebrew.enableWorkstationApps workstationCasks;
-    masApps = lib.optionalAttrs homebrew.enableWorkstationApps workstationMasApps;
+    masApps = {
+      ProxMan = 6744579428;
+    }
+    // lib.optionalAttrs homebrew.enableWorkstationApps workstationMasApps;
   };
 
   # Keep interactive Homebrew commands on the same pinned taps as activation.
