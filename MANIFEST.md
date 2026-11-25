@@ -137,7 +137,7 @@ the Cursor D2 extension's live preview; other hosts still use `nix run nixpkgs#d
 | Package | Description |
 | --- | --- |
 | orca | Orca desktop app; the `orca` CLI is on `PATH` |
-| ProxMan | Mac App Store app for Proxmox management |
+| ProxMan | [App Store app](https://apps.apple.com/us/app/proxman/id6744579428) for Proxmox management, installed through the App Store interface |
 | vscode | Visual Studio Code from nix-home, with the `code` CLI launching the Home Manager copy |
 
 ## Workstation GUI applications

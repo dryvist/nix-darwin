@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.34.2](https://github.com/dryvist/nix-darwin/compare/v4.34.1...v4.34.2) (2026-11-25)
+
+
+### Bug Fixes
+
+* **dock:** declare ProxMan as an App Store interface install ([#3353](https://github.com/dryvist/nix-darwin/issues/3353)) ([7ab8302](https://github.com/dryvist/nix-darwin/commit/7ab830236919816bce9024719573c249c42a2298))
+
 ## [4.34.1](https://github.com/dryvist/nix-darwin/compare/v4.34.0...v4.34.1) (2026-11-25)
 
 
