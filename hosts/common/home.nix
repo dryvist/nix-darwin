@@ -217,12 +217,19 @@ in
   # Nix does NOT manage the volume contents — it only creates the symlink. The
   # volume itself is created by a launchd daemon (modules/darwin/apps/orbstack.nix).
   home = {
-    file = {
-      # Launch the same app bundle as the Dock from interactive shells.
-      ".local/bin/code".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/Applications/Home Manager Apps/Visual Studio Code.app/Contents/Resources/app/bin/code";
-    }
-    // lib.optionalAttrs (hostConfig.orbstack.enable or false) {
+    # Prefer the Dock bundle's native CLI within the same profile as pkgs.vscode.
+    packages = [
+      (lib.hiPrio (
+        pkgs.linkFarm "vscode-dock-cli" [
+          {
+            name = "bin/code";
+            path = "${config.home.homeDirectory}/Applications/Home Manager Apps/Visual Studio Code.app/Contents/Resources/app/bin/code";
+          }
+        ]
+      ))
+    ];
+
+    file = lib.mkIf (hostConfig.orbstack.enable or false) {
       # The Group Container symlink is deliberately NOT here — see
       # `linkOrbstackContainer` below. home.file re-links every managed path on
       # every generation, and a write into ~/Library/Group Containers does not
