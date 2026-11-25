@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.34.3](https://github.com/dryvist/nix-darwin/compare/v4.34.2...v4.34.3) (2026-11-25)
+
+
+### Bug Fixes
+
+* **dock:** resolve code to the pinned VS Code bundle ([#3356](https://github.com/dryvist/nix-darwin/issues/3356)) ([72167a9](https://github.com/dryvist/nix-darwin/commit/72167a92d6ba2ae605624596d62f55b004e1ebff))
+
 ## [4.34.2](https://github.com/dryvist/nix-darwin/compare/v4.34.1...v4.34.2) (2026-11-25)
 
 
