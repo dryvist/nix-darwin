@@ -82,6 +82,7 @@ in
   # features; `server` drops them. Driven by the host's registry `class`
   # (normalized in flake.nix mkHost, so the attr always exists).
   home-profile.preset = hostConfig.class;
+  home-profile.features.vscode.enable = true;
 
   # MLX-capable Macs share the same router endpoint and local proxy roles.
   # The bearer source stays in each host config because it depends on how that
@@ -216,7 +217,12 @@ in
   # Nix does NOT manage the volume contents — it only creates the symlink. The
   # volume itself is created by a launchd daemon (modules/darwin/apps/orbstack.nix).
   home = {
-    file = lib.mkIf (hostConfig.orbstack.enable or false) {
+    file = {
+      # Launch the same app bundle as the Dock from interactive shells.
+      ".local/bin/code".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/Applications/Home Manager Apps/Visual Studio Code.app/Contents/Resources/app/bin/code";
+    }
+    // lib.optionalAttrs (hostConfig.orbstack.enable or false) {
       # The Group Container symlink is deliberately NOT here — see
       # `linkOrbstackContainer` below. home.file re-links every managed path on
       # every generation, and a write into ~/Library/Group Containers does not
