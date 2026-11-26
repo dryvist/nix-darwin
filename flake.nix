@@ -71,11 +71,6 @@
         claude-code-plugins.follows = "claude-code-plugins";
         jacobpevans-cc-plugins.follows = "jacobpevans-cc-plugins";
         homelab-contracts.follows = "homelab-contracts";
-        # nix-ai declares this source at v1; the sandbox release moves here, one tag at a time.
-        nix-agent-sandbox-src = {
-          url = "github:dryvist/nix-agent-sandbox?ref=v1.27.0";
-          flake = false;
-        };
       };
     };
 
