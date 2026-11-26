@@ -1722,16 +1722,16 @@
     "nix-agent-sandbox-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1795147153,
-        "narHash": "sha256-k6CWmvgXojQ0xYozZS9rJxESITdsaATMireEHBEvUr8=",
+        "lastModified": 1795523890,
+        "narHash": "sha256-wfEEdGyRRW4fgrz3wrALwOvt7+RuYHdvTnRa7cDnA2g=",
         "owner": "dryvist",
         "repo": "nix-agent-sandbox",
-        "rev": "953ead3a26d7b2fbdb750c07f5fcdab87f6f8d56",
+        "rev": "4340844d975f1b31358d0995eaef8117b2f3eff7",
         "type": "github"
       },
       "original": {
         "owner": "dryvist",
-        "ref": "v1.27.0",
+        "ref": "v1",
         "repo": "nix-agent-sandbox",
         "type": "github"
       }
