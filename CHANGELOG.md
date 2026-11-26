@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.34.4](https://github.com/dryvist/nix-darwin/compare/v4.34.3...v4.34.4) (2026-11-26)
+
+
+### Bug Fixes
+
+* **flake:** float nix-agent-sandbox on its v1 tag ([#3361](https://github.com/dryvist/nix-darwin/issues/3361)) ([34110db](https://github.com/dryvist/nix-darwin/commit/34110db7fe69f42224bee63d63572d1b883072dc))
+
 ## [4.34.3](https://github.com/dryvist/nix-darwin/compare/v4.34.2...v4.34.3) (2026-11-25)
 
 
