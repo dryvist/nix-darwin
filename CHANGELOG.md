@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.34.5](https://github.com/dryvist/nix-darwin/compare/v4.34.4...v4.34.5) (2026-11-27)
+
+
+### Bug Fixes
+
+* **dock:** show Sheprd from its official cask ([#3364](https://github.com/dryvist/nix-darwin/issues/3364)) ([1812ebf](https://github.com/dryvist/nix-darwin/commit/1812ebfdefbe85afcd6b6c2ae3f177b63eac2b79))
+
 ## [4.34.4](https://github.com/dryvist/nix-darwin/compare/v4.34.3...v4.34.4) (2026-11-26)
 
 
