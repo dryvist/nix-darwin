@@ -43,6 +43,7 @@ let
 
   hmApps = "${homeDir}/Applications/Home Manager Apps";
   sheprdCask = "sheprd-labs/tap/sheprd";
+  herdrAppCask = "herdr-app";
 
   # Uses native Nix conditional expressions (`lib.optionals`) driven by
   # `hostConfig` capabilities to include GUI applications only on hosts where
@@ -99,6 +100,9 @@ let
   ]
   ++ lib.optional (builtins.elem sheprdCask declared.casks) (
     app "/Applications/Sheprd.app" { cask = sheprdCask; }
+  )
+  ++ lib.optional (builtins.elem herdrAppCask declared.casks) (
+    app "/Applications/Herdr.app" { cask = herdrAppCask; }
   )
   ++ [
     # Orca is always present in the Dock.
