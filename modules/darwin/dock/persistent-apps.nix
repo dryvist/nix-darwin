@@ -42,7 +42,7 @@ let
   };
 
   hmApps = "${homeDir}/Applications/Home Manager Apps";
-  herdrCask = "penso/tap/herdr-gpui";
+  sheprdCask = "sheprd-labs/tap/sheprd";
 
   # Uses native Nix conditional expressions (`lib.optionals`) driven by
   # `hostConfig` capabilities to include GUI applications only on hosts where
@@ -97,8 +97,8 @@ let
       manual = "iPhone and iPad app installed through the App Store interface on Apple Silicon";
     })
   ]
-  ++ lib.optional (builtins.elem herdrCask declared.casks) (
-    app "/Applications/Herdr.app" { cask = herdrCask; }
+  ++ lib.optional (builtins.elem sheprdCask declared.casks) (
+    app "/Applications/Sheprd.app" { cask = sheprdCask; }
   )
   ++ [
     # Orca is always present in the Dock.
