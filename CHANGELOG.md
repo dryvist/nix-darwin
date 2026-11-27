@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.35.0](https://github.com/dryvist/nix-darwin/compare/v4.34.5...v4.35.0) (2026-11-27)
+
+
+### Features
+
+* **dock:** show the official Herdr app from its cask ([#3371](https://github.com/dryvist/nix-darwin/issues/3371)) ([1e3cc09](https://github.com/dryvist/nix-darwin/commit/1e3cc093b248becbde61f3bd6c60dcf503caac4e))
+
 ## [4.34.5](https://github.com/dryvist/nix-darwin/compare/v4.34.4...v4.34.5) (2026-11-27)
 
 
