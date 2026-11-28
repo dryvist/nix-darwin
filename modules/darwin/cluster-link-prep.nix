@@ -186,13 +186,19 @@ in
 
     # postActivation (root, rebuild): an unconditional full pass (no guard);
     # never allowed to fail activation.
-    system.activationScripts.postActivation.text = lib.mkAfter ''
-      CLUSTER_LINK_IP=${lib.escapeShellArg cfg.linkIps.${cfg.role}} \
-      CLUSTER_PEER_LINK_IP=${lib.escapeShellArg cfg.linkIps.${peerRole}} \
-      ${lib.getExe prepPkg} || echo "cluster-link-prep: non-fatal failure (see log above)"
+    system.activationScripts.postActivation.text = lib.mkAfter (
+      ''
+        CLUSTER_LINK_IP=${lib.escapeShellArg cfg.linkIps.${cfg.role}} \
+        CLUSTER_PEER_LINK_IP=${lib.escapeShellArg cfg.linkIps.${peerRole}} \
+        ${lib.getExe prepPkg} || echo "cluster-link-prep: non-fatal failure (see log above)"
+      ''
       # The JACCL rendezvous listener needs an explicit application-firewall
       # allowance (uv CPython is ad-hoc-signed) — see scripts/cluster-alf-allow.sh.
-      CLUSTER_USER_HOME="${userConfig.user.homeDir}" ${lib.getExe alfAllowPkg} || echo "cluster-alf-allow: non-fatal failure (see log above)"
-    '';
+      # `socketfilterfw --add` turns the firewall on, so a host that declares
+      # it off skips this allowance and pf-hardening's alf-allow-apps.
+      + lib.optionalString (!config.networking.applicationFirewall.disabled) ''
+        CLUSTER_USER_HOME="${userConfig.user.homeDir}" ${lib.getExe alfAllowPkg} || echo "cluster-alf-allow: non-fatal failure (see log above)"
+      ''
+    );
   };
 }

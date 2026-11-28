@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.36.0](https://github.com/dryvist/nix-darwin/compare/v4.35.0...v4.36.0) (2026-11-28)
+
+
+### Features
+
+* **darwin:** add networking.applicationFirewall.disabled and gate firewall allowances on it ([#3375](https://github.com/dryvist/nix-darwin/issues/3375)) ([2f02a7a](https://github.com/dryvist/nix-darwin/commit/2f02a7a12af6cee3c451b6e4f1b90e583a568e68))
+
 ## [4.35.0](https://github.com/dryvist/nix-darwin/compare/v4.34.5...v4.35.0) (2026-11-27)
 
 

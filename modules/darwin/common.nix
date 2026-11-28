@@ -45,6 +45,7 @@ in
     ./security.nix
     ./sudo-touchid.nix # Touch ID for sudo (see the file's header)
     ./ssh-hardening.nix
+    ./application-firewall.nix
     ./pf-hardening.nix
     ./trackpad.nix
     ./system-ui.nix
