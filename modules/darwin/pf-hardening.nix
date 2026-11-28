@@ -262,7 +262,9 @@ in
       ''
         ${lib.getExe loadAnchor} || echo "pf-hardening-load: non-fatal failure (see ${logFile})"
       ''
-      + lib.optionalString (allowedApps != [ ]) ''
+      # `socketfilterfw --add` turns the firewall on, so a host that declares
+      # it off skips the allowances.
+      + lib.optionalString (allowedApps != [ ] && config.networking.applicationFirewall.enable == true) ''
         ${lib.getExe alfAllowApps} ${lib.escapeShellArgs allowedApps} || echo "alf-allow-apps: non-fatal failure (see log above)"
       ''
     );
