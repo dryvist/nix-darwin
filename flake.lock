@@ -17,6 +17,23 @@
         "type": "github"
       }
     },
+    "agentops": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1794337320,
+        "narHash": "sha256-EDnSPP8hCQ68bMDkWu4TDv1J8Pvtaph3sBykrXJZuUQ=",
+        "owner": "boshu2",
+        "repo": "agentops",
+        "rev": "a5cda4888198c824827855285b3c771a233c7293",
+        "type": "github"
+      },
+      "original": {
+        "owner": "boshu2",
+        "ref": "v3.12.0",
+        "repo": "agentops",
+        "type": "github"
+      }
+    },
     "ai-llm-prompts": {
       "inputs": {
         "claude-code-plugins": "claude-code-plugins",
@@ -599,6 +616,22 @@
         "type": "github"
       }
     },
+    "daymade-claude-code-skills": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1794254250,
+        "narHash": "sha256-QJHUi+Xa56uYlABD6AmroFF/ILr0VfuLWuYsSu/QzFc=",
+        "owner": "daymade",
+        "repo": "claude-code-skills",
+        "rev": "9a63300be6d3a321e46291305e0465e1508caac5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "daymade",
+        "repo": "claude-code-skills",
+        "type": "github"
+      }
+    },
     "determinate": {
       "inputs": {
         "determinate-nixd-aarch64-darwin": "determinate-nixd-aarch64-darwin",
@@ -1081,6 +1114,22 @@
       "original": {
         "owner": "numtide",
         "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "flock-check": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1785129672,
+        "narHash": "sha256-XjhrRUJzTQuM+PdE/uKMjriRmHrozeo4rPDAC0ijfZ4=",
+        "owner": "tonbistudio",
+        "repo": "flock-check",
+        "rev": "508062df559a4eafb8257cef48c3812b8bc5e5ba",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tonbistudio",
+        "repo": "flock-check",
         "type": "github"
       }
     },
@@ -1597,11 +1646,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1794236353,
-        "narHash": "sha256-rcmzzR+kdb4yKL+NPfF/M0I6oXA9YfzVazBzWDlG2Xg=",
+        "lastModified": 1795073199,
+        "narHash": "sha256-49gbHL+NhG0ERyskYJX6E854XnsS3EJK7ta5ZCXhmco=",
         "owner": "numtide",
         "repo": "llm-agents.nix",
-        "rev": "4c6c37495fc45a46cb6f86cc6b0865e363fb77f2",
+        "rev": "b2700a2b5e7b94649dd960d08ea3b2304d91b2bc",
         "type": "github"
       },
       "original": {
@@ -1722,11 +1771,11 @@
     "nix-agent-sandbox-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1795523890,
-        "narHash": "sha256-wfEEdGyRRW4fgrz3wrALwOvt7+RuYHdvTnRa7cDnA2g=",
+        "lastModified": 1795147153,
+        "narHash": "sha256-k6CWmvgXojQ0xYozZS9rJxESITdsaATMireEHBEvUr8=",
         "owner": "dryvist",
         "repo": "nix-agent-sandbox",
-        "rev": "4340844d975f1b31358d0995eaef8117b2f3eff7",
+        "rev": "953ead3a26d7b2fbdb750c07f5fcdab87f6f8d56",
         "type": "github"
       },
       "original": {
@@ -1762,6 +1811,7 @@
     "nix-ai": {
       "inputs": {
         "agent-limits-src": "agent-limits-src",
+        "agentops": "agentops",
         "ai-llm-prompts": [
           "ai-llm-prompts"
         ],
@@ -1774,9 +1824,11 @@
         ],
         "context-engineering-kit": "context-engineering-kit",
         "dashmotion": "dashmotion",
+        "daymade-claude-code-skills": "daymade-claude-code-skills",
         "drawio-skill": "drawio-skill",
         "fabric-src": "fabric-src",
         "find-skills-src": "find-skills-src",
+        "flock-check": "flock-check",
         "gh-stack": "gh-stack",
         "herdr-hail-src": "herdr-hail-src",
         "herdr-remote-src": "herdr-remote-src",
@@ -1811,16 +1863,19 @@
         ],
         "orca-skills": "orca-skills",
         "ponytail": "ponytail",
+        "sheprd-skills": "sheprd-skills",
+        "sre-skills": "sre-skills",
         "token-meter-src": "token-meter-src",
+        "trailofbits-skills": "trailofbits-skills",
         "vct-cribl-cli": "vct-cribl-cli",
         "vct-splunk-cli": "vct-splunk-cli"
       },
       "locked": {
-        "lastModified": 1795446042,
-        "narHash": "sha256-p2e95ApPVEM5JAh3fYByU+Ri0DfzNiGM/dyVVPY4lvU=",
+        "lastModified": 1795828838,
+        "narHash": "sha256-JazTUNJirWRUI6qvQcemJZMplipbytZaoO8cBUi+ukQ=",
         "owner": "dryvist",
         "repo": "nix-ai",
-        "rev": "b1d202985685ec6faeee663d9f2ddd6b4e966419",
+        "rev": "b5c3e4e135d8d3dc3546e4de7d419ef18b6a73ad",
         "type": "github"
       },
       "original": {
@@ -2347,11 +2402,11 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1793826729,
-        "narHash": "sha256-D5H7H+qMoTGI/jJtxKP4u7BdjkFnUyhOovTrf3pTOr0=",
+        "lastModified": 1794840529,
+        "narHash": "sha256-ySrWnmZB5UsZTYGHHnBjllT05O5iFjElCRS+mabtfP0=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "6dadaf4375be35033e1c84395adbd53ff5fded96",
+        "rev": "e21fec321d73511849707a7585e4ea155ee4bf40",
         "type": "github"
       },
       "original": {
@@ -2548,6 +2603,22 @@
         "type": "github"
       }
     },
+    "sheprd-skills": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1795823988,
+        "narHash": "sha256-ioGeySFgvbUCL8aXtopv7c+0OHdbRzJpTe/cJA1alVE=",
+        "owner": "sheprd-labs",
+        "repo": "sheprd",
+        "rev": "555326cc7adbee6067c393fbfe7f8fcbf29ca80c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "sheprd-labs",
+        "repo": "sheprd",
+        "type": "github"
+      }
+    },
     "sops-nix": {
       "inputs": {
         "nixpkgs": [
@@ -2565,6 +2636,22 @@
       "original": {
         "owner": "Mic92",
         "repo": "sops-nix",
+        "type": "github"
+      }
+    },
+    "sre-skills": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1791795027,
+        "narHash": "sha256-zozKBvqNGpXSQ37Xf0nURnrprKsrbToj2Y4Dix30bws=",
+        "owner": "gemini-cli-extensions",
+        "repo": "sre",
+        "rev": "4130b149c0b069ef2028e42b3b9f3f84cce935e6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "gemini-cli-extensions",
+        "repo": "sre",
         "type": "github"
       }
     },
@@ -2707,6 +2794,22 @@
         "owner": "dryvist",
         "ref": "v1",
         "repo": "token-meter",
+        "type": "github"
+      }
+    },
+    "trailofbits-skills": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1794505727,
+        "narHash": "sha256-8NBnk9sFW1IMkd+qmTvLKweh3CkeJaALEZBLs3GaxlM=",
+        "owner": "trailofbits",
+        "repo": "skills",
+        "rev": "149d7b21f4067765b82e67029730b42d228ef4b4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "trailofbits",
+        "repo": "skills",
         "type": "github"
       }
     },
