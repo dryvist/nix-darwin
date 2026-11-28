@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.36.1](https://github.com/dryvist/nix-darwin/compare/v4.36.0...v4.36.1) (2026-11-28)
+
+
+### Bug Fixes
+
+* **deps:** update the nix-ai input to v8.59.0 and nix-openwhispr on v1 ([0a99776](https://github.com/dryvist/nix-darwin/commit/0a9977624975c5d1bd06c24e3ab96d3a8d66717c))
+
 ## [4.36.0](https://github.com/dryvist/nix-darwin/compare/v4.35.0...v4.36.0) (2026-11-28)
 
 
