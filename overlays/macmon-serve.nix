@@ -11,7 +11,7 @@ prev.lib.optionalAttrs prev.stdenv.isDarwin {
   macmon = prev.macmon.overrideAttrs (
     finalAttrs: _: {
       # renovate: datasource=github-releases depName=vladkens/macmon
-      version = "0.11.0";
+      version = "0.12.1";
       src = final.fetchFromGitHub {
         owner = "vladkens";
         repo = "macmon";

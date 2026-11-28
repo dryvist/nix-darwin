@@ -36,7 +36,7 @@
       # Speech-to-text and polish use the shared LiteLLM residents.
       modelBootstrap = false;
       # renovate: datasource=github-releases depName=OpenWhispr/openwhispr
-      version = "1.11.0";
+      version = "1.12.1";
     };
 
     openHarness = {
