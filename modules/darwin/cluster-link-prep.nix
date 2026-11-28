@@ -195,7 +195,7 @@ in
       # The JACCL rendezvous listener needs an explicit application-firewall
       # allowance (uv CPython is ad-hoc-signed) — see scripts/cluster-alf-allow.sh.
       # `socketfilterfw --add` turns the firewall on, so a host that declares
-      # it off skips the allowance.
+      # it off skips this allowance and pf-hardening's alf-allow-apps.
       + lib.optionalString (config.networking.applicationFirewall.enable == true) ''
         CLUSTER_USER_HOME="${userConfig.user.homeDir}" ${lib.getExe alfAllowPkg} || echo "cluster-alf-allow: non-fatal failure (see log above)"
       ''
