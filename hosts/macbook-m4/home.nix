@@ -36,7 +36,10 @@
       # Speech-to-text and polish use the shared LiteLLM residents.
       modelBootstrap = false;
       # renovate: datasource=github-releases depName=OpenWhispr/openwhispr
-      version = "1.12.1";
+      # 1.12.x ships no asset in the nix-openwhispr flake (release.json carries
+      # only 1.11.0 and 1.8.3), and its package derivation asserts on
+      # evaluation. Revert to the newest supported version.
+      version = "1.11.0";
     };
 
     openHarness = {
