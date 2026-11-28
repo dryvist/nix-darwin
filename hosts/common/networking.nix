@@ -7,13 +7,11 @@
     inherit (hostConfig) hostName;
     computerName = hostConfig.hostName;
 
-    # Application firewall on every host. The MBP had this enabled by hand; the
-    # Studio shipped disabled, which left the firewall-log-shipping feed with
-    # nothing to say (its `log stream` daemon was alive but the ALF subsystem
-    # was silent). allowSigned/allowSignedApp match the working MBP posture so
-    # LAN services (sshd, llama-swap via signed python) keep accepting inbound.
+    # Application firewall settings; it is on unless a host sets
+    # networking.applicationFirewall.disabled (modules/darwin/application-firewall.nix).
+    # allowSigned/allowSignedApp keep LAN services (sshd, signed python)
+    # accepting inbound.
     applicationFirewall = {
-      enable = true;
       allowSigned = true;
       allowSignedApp = true;
       blockAllIncoming = false;

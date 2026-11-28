@@ -196,7 +196,7 @@ in
       # allowance (uv CPython is ad-hoc-signed) — see scripts/cluster-alf-allow.sh.
       # `socketfilterfw --add` turns the firewall on, so a host that declares
       # it off skips this allowance and pf-hardening's alf-allow-apps.
-      + lib.optionalString (config.networking.applicationFirewall.enable == true) ''
+      + lib.optionalString (!config.networking.applicationFirewall.disabled) ''
         CLUSTER_USER_HOME="${userConfig.user.homeDir}" ${lib.getExe alfAllowPkg} || echo "cluster-alf-allow: non-fatal failure (see log above)"
       ''
     );
